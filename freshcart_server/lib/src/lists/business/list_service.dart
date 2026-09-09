@@ -11,6 +11,26 @@ abstract final class ListService {
   /// How many times to retry on a join-code collision before giving up.
   static const int _joinCodeAttempts = 5;
 
+  /// The message channel carrying changes to one list.
+  ///
+  /// Per list, not global: a client watching one list should not be woken by
+  /// traffic on every other list on the server.
+  static String channelFor(UuidValue listId) => 'list-$listId';
+
+  /// Broadcasts the list's current state — with members — to everyone
+  /// watching it.
+  ///
+  /// Unlike items, this sends the whole entity rather than a delta: a list is
+  /// a single row, not a collection that could run to hundreds, so there is no
+  /// merge to save bandwidth on. Fire-and-forget by design: a dropped
+  /// notification must never fail the write that caused it.
+  static Future<void> _announce(Session session, UuidValue listId) async {
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list == null) return;
+    final withMembers = await _withMembers(session, list);
+    await session.messages.postMessage(channelFor(listId), withMembers);
+  }
+
   /// Every list [userId] is a member of, newest first.
   static Future<List<ShoppingList>> listsFor(
     Session session,
@@ -124,6 +144,9 @@ abstract final class ListService {
           joinedAt: DateTime.now().toUtc(),
         ),
       );
+      // Only announce a genuine join: a re-tap must not wake every other
+      // open client with a no-op notification.
+      await _announce(session, list.id!);
     }
     return _withMembers(session, list);
   }
@@ -143,6 +166,7 @@ abstract final class ListService {
       session,
       list.copyWith(name: name),
     );
+    await _announce(session, listId);
     return _withMembers(session, updated);
   }
 
@@ -156,6 +180,9 @@ abstract final class ListService {
       session,
       where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
     );
+    // The remaining members' member count should drop live, without them
+    // having to reload the list.
+    await _announce(session, listId);
   }
 
   /// Throws [NotAMemberException] unless [userId] belongs to [listId].

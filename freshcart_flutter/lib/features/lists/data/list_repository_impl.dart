@@ -1,6 +1,7 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/features/lists/data/list_realtime_source.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
 
 /// The Serverpod-backed [ListRepository].
@@ -43,12 +44,8 @@ class ListRepositoryImpl implements ListRepository {
       _guard(() => _client.list.leave(_uuid(id.value)));
 
   @override
-  Stream<Result<ShoppingList>> watch(ListId id) {
-    // Implemented in phase 8, against Serverpod's streaming API. Declared now
-    // because it is part of the port's contract; failing loudly beats returning
-    // an empty stream that would look like "no changes".
-    throw UnimplementedError('Real-time list watching lands in phase 8');
-  }
+  Stream<Result<ShoppingList>> watch(ListId id) =>
+      ListRealtimeSource(_client).watch(id);
 
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);

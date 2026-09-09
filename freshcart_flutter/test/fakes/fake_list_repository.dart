@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 
 /// An in-memory [ListRepository] for presentation tests.
@@ -57,8 +59,30 @@ class FakeListRepository implements ListRepository {
   @override
   Future<Result<void>> leave(ListId id) => throw UnimplementedError();
 
+  /// Feeds [watch]. Tests push updates through this to simulate another
+  /// client renaming the list, or someone joining or leaving.
+  final StreamController<Result<ShoppingList>> live =
+      StreamController<Result<ShoppingList>>.broadcast();
+
   @override
-  Stream<Result<ShoppingList>> watch(ListId id) => throw UnimplementedError();
+  Stream<Result<ShoppingList>> watch(ListId id) {
+    // Stream.multi rather than an async* generator so the live listener
+    // attaches synchronously on subscribe — otherwise a test that pushes an
+    // event right after the seed would race the generator (see
+    // FakeItemRepository.watchByList for the same fix).
+    return Stream<Result<ShoppingList>>.multi((controller) {
+      controller.add(byIdResult ?? const Err(Failure.notFound()));
+      final subscription = live.stream.listen(
+        controller.add,
+        onError: controller.addError,
+        onDone: controller.close,
+      );
+      controller.onCancel = subscription.cancel;
+    });
+  }
+
+  /// Closes the live stream. Call from a test teardown.
+  Future<void> dispose() => live.close();
 }
 
 /// Builds a domain [ShoppingList] for tests.

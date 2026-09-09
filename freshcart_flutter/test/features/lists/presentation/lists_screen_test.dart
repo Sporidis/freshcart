@@ -214,5 +214,37 @@ void main() {
 
       expect(find.text('You do not have access to this.'), findsOneWidget);
     });
+
+    testWidgets(
+      'a collaborator joining while the screen is open updates it live',
+      (tester) async {
+        final list = buildList(name: 'Groceries', members: [buildMember()]);
+        repository.myListsResult = Ok([list]);
+        repository.byIdResult = Ok(list);
+        addTearDown(repository.dispose);
+
+        await pump(tester);
+        await tester.tap(find.text('Groceries'));
+        await tester.pumpAndSettle();
+        expect(find.text('1 member'), findsOneWidget);
+
+        // Someone else joins the list on another device — no user action here,
+        // just the server pushing the updated state down the live stream.
+        repository.live.add(
+          Ok(
+            buildList(
+              name: 'Groceries',
+              members: [
+                buildMember(),
+                buildMember(userId: 'user-2', displayName: 'Mom'),
+              ],
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('2 members'), findsOneWidget);
+      },
+    );
   });
 }
