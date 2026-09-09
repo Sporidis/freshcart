@@ -1,0 +1,26 @@
+name: freshcart_web
+description: >-
+  The Jaspr marketing site — FreshCart's SEO surface. Static (SSG) rendering so
+  crawlers get real HTML, unlike a Flutter Web build (docs/decisions.md #11).
+  No app functionality lives here.
+version: 0.0.1
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+dependencies:
+  jaspr: ^0.23.4
+  jaspr_router: ^0.9.0
+
+dev_dependencies:
+  build_runner: ^2.10.0
+  # jaspr_builder 0.23.4 pins analyzer ^12.1.0; build_web_compilers >=4.8.6
+  # requires analyzer >=13.3.0. Loose here so the solver settles on 4.8.5 now
+  # and moves up on its own once jaspr_builder adopts analyzer 13.
+  build_web_compilers: ^4.8.0
+  flutter_lints: ^6.0.0
+  jaspr_builder: ^0.23.4
+
+jaspr:
+  mode: static

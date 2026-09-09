@@ -1,0 +1,11 @@
+# The pure domain is held to a higher bar than the rest of the workspace: it is
+# the part worth documenting, so the API-doc lint the root config deliberately
+# leaves off workspace-wide is switched on here.
+#
+# NOTE: the root config's closing note also suggests `package_api_docs`. That
+# lint was REMOVED in Dart 3.7.0, so only `public_member_api_docs` remains.
+include: ../../analysis_options.yaml
+
+linter:
+  rules:
+    - public_member_api_docs

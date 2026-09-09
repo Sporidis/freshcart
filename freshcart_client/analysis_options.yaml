@@ -1,0 +1,8 @@
+# freshcart_client is generated in full by `serverpod generate` and is never
+# hand-edited, so its library code is excluded from analysis rather than linted
+# into a shape the generator would just overwrite.
+include: ../analysis_options.yaml
+
+analyzer:
+  exclude:
+    - lib/**

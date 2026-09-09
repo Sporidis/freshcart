@@ -1,0 +1,25 @@
+name: freshcart_domain
+description: >-
+  The pure Dart heart of FreshCart: entities, value objects, failures, ports and
+  use cases. Depends on nothing but pure Dart — no Flutter, no Serverpod, no
+  Firebase, no generated client. See docs/architecture.md.
+version: 1.0.0
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+resolution: workspace
+
+dependencies:
+  # freezed_annotation + meta only. Both are pure Dart and carry no I/O.
+  # Deliberately NOT json_serializable: serialization is a wire concern that
+  # belongs to the DTO layer, not to the domain (docs/decisions.md #12).
+  freezed_annotation: ^3.1.0
+  meta: ^1.16.0
+
+dev_dependencies:
+  build_runner: ^2.10.0
+  flutter_lints: ^6.0.0
+  freezed: ^4.0.1
+  test: ^1.25.6
