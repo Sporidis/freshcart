@@ -283,3 +283,33 @@ thirty lines and is covered by tests that assert the exact forms. **Note:** a re
 `LocaleSettings.setPluralResolver` only reaches the singleton behind the global `t`;
 translations built by hand need the resolver passed to `buildSync`, which is exactly what
 `translationsFor()` exists to stop people forgetting.
+
+## 26. Controllers expose `AsyncValue<Result<T>>`, not `AsyncValue<T>`
+
+**Decision:** every controller's state is `AsyncOutcome<T>` — a typedef for
+`AsyncValue<Result<T>>`. **Why:** the two wrappers mean different things and collapsing them
+loses information. `AsyncValue` carries *loading*, a fact about the request. `Result` carries
+*expected failure* — offline, not found, conflict — which `CLAUDE.md` requires to travel as a
+value rather than a thrown exception. Keeping both means `AsyncError` now has a precise
+meaning: something genuinely unexpected happened, i.e. a bug. `AsyncData(Err(...))` means the
+operation completed and failed in a way the UI is expected to handle. **Rejected:** throwing
+the `Failure` into `AsyncValue`'s error channel — the idiomatic Riverpod shortcut. It would
+have blurred bugs and expected failures into one channel, and it does not even typecheck
+cleanly: `Failure` is deliberately not an `Exception`, so the `only_throw_errors` lint
+rejects it and it would have needed a fake exception wrapper built solely to satisfy the
+framework. **Trade-off:** one extra level of pattern matching in each widget, which is
+visible in `lists_screen.dart` and is the honest cost of the distinction. Named
+`AsyncOutcome` because Riverpod 3 already exports an `AsyncResult`.
+
+## 27. List membership is enforced server-side only
+
+**Decision:** the router has no membership guard; `ListService.requireMembership` on the
+server is the single check, and the detail screen renders the resulting
+`Failure.unauthorized()` as "no access". **Why:** a client-side guard would be a second
+source of truth for an authorisation rule, and the client's copy is the one that can be
+stale, tampered with, or simply wrong after someone is removed from a list mid-session. The
+server has to check regardless, so the client check buys nothing but a chance to disagree.
+**Rejected:** a `redirect` that pre-fetches the list and bounces non-members — more code, an
+extra round trip before every navigation, and it still cannot be trusted. **Trade-off:** a
+non-member briefly sees a loading state before the message instead of never routing at all.
+Acceptable: it is an error path that should be rare, and the honest one.

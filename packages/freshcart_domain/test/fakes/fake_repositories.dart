@@ -72,8 +72,16 @@ class FakeListRepository implements ListRepository {
     Failure.unexpected('joinResult not configured'),
   );
 
+  /// What [create] will return.
+  Result<ShoppingList> createResult = const Err<ShoppingList>(
+    Failure.unexpected('createResult not configured'),
+  );
+
   /// Every code [joinByCode] was called with, in order.
   final List<JoinCode> joinCalls = [];
+
+  /// Every name [create] was called with, in order.
+  final List<String> createCalls = [];
 
   @override
   Future<Result<ShoppingList>> joinByCode(JoinCode code) async {
@@ -85,8 +93,10 @@ class FakeListRepository implements ListRepository {
   Future<Result<ShoppingList>> byId(ListId id) => throw UnimplementedError();
 
   @override
-  Future<Result<ShoppingList>> create({required String name}) =>
-      throw UnimplementedError();
+  Future<Result<ShoppingList>> create({required String name}) async {
+    createCalls.add(name);
+    return createResult;
+  }
 
   @override
   Future<Result<void>> leave(ListId id) => throw UnimplementedError();

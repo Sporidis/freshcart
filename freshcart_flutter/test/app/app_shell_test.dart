@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
@@ -18,8 +19,13 @@ void main() {
     WidgetTester tester, {
     AppLocale? locale,
   }) async {
+    // The shell test exercises routing, theming and translation, so the list
+    // fetch is answered with an empty collection rather than left unconfigured.
+    // The element type matters: FakeClient casts to the endpoint's return
+    // type, so an untyped empty list would fail the cast and look like an error.
+    final client = FakeClient()..handler = (_, _, _) => <dto.ShoppingList>[];
     final container = ProviderContainer(
-      overrides: [serverpodClientProvider.overrideWithValue(FakeClient())],
+      overrides: [serverpodClientProvider.overrideWithValue(client)],
     );
     addTearDown(container.dispose);
     if (locale != null) {
@@ -40,7 +46,10 @@ void main() {
       await pumpApp(tester, locale: AppLocale.en);
 
       expect(find.text('My lists'), findsOneWidget);
-      expect(find.text('No lists yet. Create one to get started.'), findsOneWidget);
+      expect(
+        find.text('No lists yet. Create one to get started.'),
+        findsOneWidget,
+      );
     });
 
     testWidgets('renders in the selected locale', (tester) async {
@@ -58,8 +67,9 @@ void main() {
       expect(find.text('Mga listahan ko'), findsOneWidget);
     });
 
-    testWidgets('switching locale at runtime re-renders the strings',
-        (tester) async {
+    testWidgets('switching locale at runtime re-renders the strings', (
+      tester,
+    ) async {
       final container = await pumpApp(tester, locale: AppLocale.en);
       expect(find.text('My lists'), findsOneWidget);
 
