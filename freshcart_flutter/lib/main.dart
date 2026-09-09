@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_client/freshcart_client.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/anonymous_session_bootstrap.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 import 'package:serverpod_flutter/serverpod_flutter.dart';
@@ -23,9 +24,10 @@ Future<void> main() async {
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = FlutterAuthSessionManager();
 
-  // Awaited on purpose: the stored auth session must be restored before the
-  // first frame, otherwise the app renders a signed-out UI and then flips.
-  await client.auth.initialize();
+  // Awaited on purpose: the session must exist before the first frame. Every
+  // endpoint requires login, so without this the first list fetch would come
+  // back unauthorized.
+  await AnonymousSessionBootstrap.ensureSignedIn(client);
 
   runApp(
     ProviderScope(

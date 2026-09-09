@@ -21,9 +21,40 @@ import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i5;
 import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i6;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i7;
-import 'protocol.dart' as _i8;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i8;
+import 'protocol.dart' as _i9;
+
+/// Exposes the anonymous identity provider to clients.
+///
+/// FreshCart is anonymous-first: a user gets a stable `authUserId` on first
+/// launch with no signup form, and Google/email are *linked* to that same id
+/// later (`docs/decisions.md` #6). Every endpoint sets `requireLogin`, so
+/// without this the app could not call anything at all.
+///
+/// Extending the base endpoint is what publishes it — the Flutter side looks
+/// the endpoint up by type and fails loudly if a server has not exposed it.
+/// {@category Endpoint}
+class EndpointAnonymousIdp extends _i1.EndpointAnonymousIdpBase {
+  EndpointAnonymousIdp(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'anonymousIdp';
+
+  /// Creates a new anonymous account and returns its session.
+  ///
+  /// Invokes the [AnonymousIdp.beforeAnonymousAccount] callback if configured,
+  /// which may prevent account creation if the endpoint is protected.
+  @override
+  _i3.Future<_i4.AuthSuccess> login({String? token}) =>
+      caller.callServerEndpoint<_i4.AuthSuccess>(
+        'anonymousIdp',
+        'login',
+        {'token': token},
+      );
+}
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -377,6 +408,18 @@ class EndpointProfile extends _i2.EndpointRef {
   @override
   String get name => 'profile';
 
+  /// Who the caller is.
+  ///
+  /// The client cannot know its own auth user id any other way — it is minted
+  /// server-side — and needs it to render optimistic updates that attribute a
+  /// change to the right person.
+  _i3.Future<_i7.CurrentUser> me() =>
+      caller.callServerEndpoint<_i7.CurrentUser>(
+        'profile',
+        'me',
+        {},
+      );
+
   /// The caller's display name, falling back to a placeholder.
   _i3.Future<String> displayName() => caller.callServerEndpoint<String>(
     'profile',
@@ -385,8 +428,8 @@ class EndpointProfile extends _i2.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i3.Future<_i7.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i7.MemberProfile>(
+  _i3.Future<_i8.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i8.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
@@ -424,7 +467,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i8.Protocol(),
+         _i9.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -433,6 +476,7 @@ class Client extends _i2.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    anonymousIdp = EndpointAnonymousIdp(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     item = EndpointItem(this);
@@ -440,6 +484,8 @@ class Client extends _i2.ServerpodClientShared {
     profile = EndpointProfile(this);
     modules = Modules(this);
   }
+
+  late final EndpointAnonymousIdp anonymousIdp;
 
   late final EndpointEmailIdp emailIdp;
 
@@ -455,6 +501,7 @@ class Client extends _i2.ServerpodClientShared {
 
   @override
   Map<String, _i2.EndpointRef> get endpointRefLookup => {
+    'anonymousIdp': anonymousIdp,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'item': item,

@@ -8,6 +8,19 @@ class ProfileEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
+  /// Who the caller is.
+  ///
+  /// The client cannot know its own auth user id any other way — it is minted
+  /// server-side — and needs it to render optimistic updates that attribute a
+  /// change to the right person.
+  Future<CurrentUser> me(Session session) async {
+    final userId = session.requireUserId;
+    return CurrentUser(
+      userId: userId,
+      displayName: await ProfileService.displayNameFor(session, userId),
+    );
+  }
+
   /// The caller's display name, falling back to a placeholder.
   Future<String> displayName(Session session) =>
       ProfileService.displayNameFor(session, session.requireUserId);

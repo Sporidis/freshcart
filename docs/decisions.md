@@ -313,3 +313,46 @@ server has to check regardless, so the client check buys nothing but a chance to
 extra round trip before every navigation, and it still cannot be trusted. **Trade-off:** a
 non-member briefly sees a loading state before the message instead of never routing at all.
 Acceptable: it is an error path that should be rare, and the honest one.
+
+## 28. Anonymous sign-in is wired at startup, not deferred to phase 10
+
+**Decision:** the server exposes `AnonymousIdpEndpoint` and registers
+`AnonymousIdpConfig`; the app calls `AnonymousSessionBootstrap.ensureSignedIn` before the
+first frame. **Why:** the build plan puts auth at phase 10, but every FreshCart endpoint sets
+`requireLogin`, so without a session the very first list fetch returns unauthorized — phases 5
+and 6 would have passed their tests against fakes while being non-functional against the real
+server. `architecture.md` also says the stable `authUserId` exists "from day one". What phase
+10 actually adds is *linking* Google/email to that existing id, which is a genuinely separate
+problem. **Trade-off:** anonymous accounts can be created by anyone, so the default per-IP
+rate limit on `AnonymousIdpConfig` is kept; app attestation via
+`onBeforeAnonymousAccountCreated` is available if abuse ever appears.
+
+## 29. Adding is not optimistic; checking, editing and removing are
+
+**Decision:** `toggle`, `save` and `remove` apply locally and roll back on failure. `add`
+waits for the server. **Why:** the asymmetry is deliberate. Ticking a box happens while
+walking through a shop and must feel instant, and the entity already knows how to compute the
+result — `ShoppingItem.toggleChecked` is the same rule the server's answer will agree with, so
+the local guess and the eventual truth are computed one way. Adding is different: the server
+mints the `id`, `createdAt` and `updatedAt`, and a placeholder row with a fabricated id could
+not be edited or checked until it was replaced — a worse experience than the one round trip it
+saves. **Trade-off:** a brief pause when adding, which is acceptable because adding is a
+deliberate act the user is already looking at.
+
+## 30. A rolled-back optimistic update is always explained
+
+**Decision:** every mutating controller method returns `Failure?`, and the screen shows a
+snackbar when it is non-null. **Why:** a silent rollback is indistinguishable from a bug — the
+user sees a row tick and then untick itself for no stated reason, and concludes the app is
+broken. Since `Failure.conflict()` is an *expected* outcome on a shared list rather than an
+edge case, this happens often enough to matter. **Rejected:** folding the failure into
+controller state (it is transient, not state) and swallowing it (dishonest).
+
+## 31. Check attribution is server-owned
+
+**Decision:** `ItemService.save` sets `checkedBy`/`checkedAt` from the session, ignoring
+whatever the client sent. **Why:** the whole-entity save is a convenience, not a licence. A
+member could otherwise attribute their tick to someone else, and on a shared list "checked off
+by" is the one label that has to be trustworthy. The client still decides *whether* an item is
+checked; the server decides *who* and *when*. Covered by a test that has one user tick an item
+while claiming to be another.
