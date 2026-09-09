@@ -31,9 +31,11 @@ interaction model); `get_it` + manual providers (runtime-resolved DI, weaker gua
 
 ## 4. slang for i18n
 
-**Decision:** `slang`, locales `nl` (default), `en`, `fr`. **Why:** type-safe keys (a typo is
-a compile error), first-class pluralization/interpolation, good DX — fits the strict-typing
-ethos and the app's i18n headline feature; Belgian context makes nl/fr/en the natural set.
+**Decision:** `slang`, locales `nl` (default), `en`, `fr`, `ru`, `tl`. **Why:** type-safe keys
+(a typo is a compile error), first-class pluralization/interpolation, good DX — fits the
+strict-typing ethos and the app's i18n headline feature. `nl`/`fr`/`en` come from the Belgian
+context; `ru` and `tl` were added to cover the households the app is actually for, and they
+are what turned pluralization from a nice-to-have into a requirement (see #25).
 **Rejected:** Flutter's `gen-l10n`/ARB (official, zero extra dep, but stringly-typed lookups
 and clunkier plurals). **Trade-off:** a third-party dependency and its build step; `gen-l10n`
 is the conservative fallback if that ever bites.
@@ -252,3 +254,32 @@ is rejected rather than merged; the client re-reads and re-applies.
 silently dropped, and only *nullability* makes a generated parameter optional. Optional
 endpoint parameters are therefore declared `int? quantity` with the default applied in the
 endpoint body. Worth knowing before designing any endpoint signature.
+
+
+## 24. `freshcart_l10n` generates plain Dart, not Flutter-integrated slang
+
+**Decision:** slang runs with `flutter_integration: false`, and `lazy: false`. **Why:** the
+integration flag makes the generated classes extend Flutter types, which would stop the Jaspr
+marketing site — plain Dart, no Flutter — from sharing this package, and sharing it is the
+entire reason `freshcart_l10n` is a package rather than a folder in the app. The cost is that
+there is no `TranslationProvider` or `context.t`: choosing a locale becomes the consumer's
+job, which in the app is a Riverpod provider — arguably where locale state belonged anyway.
+`lazy: false` because deferring five locales of roughly a kilobyte each saves nothing
+measurable while making every locale switch async. **Trade-off:** no automatic device-locale
+detection from slang; the app asks the platform itself and calls `LocaleSettings`.
+
+## 25. Plural resolvers are registered for `nl` and `tl`
+
+**Decision:** `freshcart_l10n` ships `freshCartCardinalResolvers` plus a `translationsFor()`
+helper, and callers use that rather than `AppLocale.x.buildSync()` directly. **Why:** slang
+ships built-in CLDR cardinal resolvers for `ar cs de en es fr he it ja pl ru sv uk vi` only.
+FreshCart's **base** locale `nl` is not among them, nor is `tl`. Left alone, both silently use
+a tolerant fallback (`one` only when n == 1) and slang logs an error on every plural lookup.
+For Dutch that fallback happens to be correct — but leaving the default language's grammar to
+a coincidence is not a decision, it is an accident waiting to be noticed by a user. For
+Tagalog it is simply **wrong**: CLDR selects `one` unless the integer ends in 4, 6 or 9, so
+the fallback mis-renders 5, 10, 4, 6, 9 and 14. Registering the two resolvers costs about
+thirty lines and is covered by tests that assert the exact forms. **Note:** a resolver set via
+`LocaleSettings.setPluralResolver` only reaches the singleton behind the global `t`;
+translations built by hand need the resolver passed to `buildSync`, which is exactly what
+`translationsFor()` exists to stop people forgetting.

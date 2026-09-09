@@ -1,0 +1,28 @@
+# Dutch is the base locale: FreshCart is built for a Belgian household, and the
+# base locale is also the fallback, so the language most likely to be complete
+# should be the one users fall back to.
+base_locale: nl
+fallback_strategy: base_locale
+
+input_directory: lib/i18n
+input_file_pattern: .i18n.json
+output_directory: lib/i18n
+output_file_name: translations.g.dart
+
+# flutter_integration is OFF on purpose. It would make the generated code extend
+# Flutter classes, which would stop the Jaspr marketing site — plain Dart, no
+# Flutter — from sharing this package. Locale selection is therefore the app's
+# own concern, held in a Riverpod provider. See docs/decisions.md #24.
+flutter_integration: false
+
+# lazy: false — slang defaults to deferred-loading each locale. With five
+# locales of roughly a kilobyte of strings each, the bundle saving is noise,
+# while the cost is real: every locale switch becomes async and translations
+# cannot be read synchronously. Straightforward beats clever here.
+lazy: false
+
+locale_handling: true
+translate_var: t
+enum_name: AppLocale
+class_name: Translations
+string_interpolation: double_braces

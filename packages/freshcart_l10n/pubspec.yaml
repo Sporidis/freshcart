@@ -1,6 +1,6 @@
 name: freshcart_l10n
 description: >-
-  Shared slang translations (nl default, en, fr) used by both the Flutter app
+  Shared slang translations (nl default, en, fr, ru, tl) used by both the Flutter app
   and the Jaspr marketing site. Pure Dart — the Flutter-specific slang bindings
   are added by freshcart_flutter, not here.
 version: 1.0.0

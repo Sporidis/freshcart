@@ -1,0 +1,39 @@
+{
+  "appName": "FreshCart",
+  "lists": {
+    "title": "Mga listahan ko",
+    "empty": "Wala pang listahan. Gumawa ng isa para makapagsimula.",
+    "create": "Bagong listahan",
+    "join": "Sumali sa listahan gamit ang code",
+    "joinCodeLabel": "Code ng pagsali",
+    "memberCount": {
+      "one": "{{n}} miyembro",
+      "other": "{{n}} na miyembro"
+    }
+  },
+  "items": {
+    "empty": "Walang laman ang listahang ito.",
+    "add": "Magdagdag ng item",
+    "namePlaceholder": "Ano ang kailangan mo?",
+    "notePlaceholder": "Tala (opsyonal)",
+    "checkedBy": "Minarkahan ni {{name}}"
+  },
+  "shops": {
+    "all": "Lahat ng tindahan",
+    "none": "Walang tindahan"
+  },
+  "common": {
+    "cancel": "Kanselahin",
+    "save": "I-save",
+    "delete": "Burahin",
+    "retry": "Subukan muli"
+  },
+  "errors": {
+    "network": "Hindi maabot ang server.",
+    "notFound": "Hindi natagpuan.",
+    "unauthorized": "Wala kang access dito.",
+    "conflict": "May ibang nagbago nito kanina lang. Subukan muli.",
+    "unexpected": "May nangyaring mali.",
+    "validation": "Pakisuri ang iyong inilagay."
+  }
+}

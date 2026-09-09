@@ -67,7 +67,7 @@ clean architecture. The relationship is **mentor, not autopilot**:
 | State + DI         | Riverpod + `riverpod_generator`     | Riverpod 3.x / generator 4.x (needs analyzer 13+) |
 | Routing            | `go_router`                         | latest |
 | Entities / unions  | `freezed` 4.x (domain: **no** `json_serializable`, see decisions #12) | needs analyzer 13+ |
-| i18n               | `slang`                             | locales: `nl` (default), `en`, `fr` |
+| i18n               | `slang`                             | locales: `nl` (default), `en`, `fr`, `ru`, `tl` |
 | Push               | Firebase Cloud Messaging **only**   | behind a port; nothing else from Firebase |
 | Lints              | root `analysis_options.yaml`        | strict — see that file |
 
