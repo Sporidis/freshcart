@@ -72,3 +72,6 @@ firebase_options.dart
 Thumbs.db
 # Widget Preview related
 .widget_preview/
+
+# DevTools local config
+devtools_options.yaml
