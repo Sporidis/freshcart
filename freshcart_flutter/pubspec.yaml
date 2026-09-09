@@ -37,6 +37,9 @@ dependencies:
   # presentation/ must not (docs/architecture.md import matrix).
   freshcart_domain:
     path: ../packages/freshcart_domain
+  freshcart_l10n:
+    path: ../packages/freshcart_l10n
+  go_router: ^18.0.1
   riverpod_annotation: ^4.0.7
   serverpod_auth_idp_flutter: 3.4.13
   serverpod_flutter: 3.4.13
