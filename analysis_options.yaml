@@ -1,0 +1,89 @@
+# Root analysis options for the FreshCart workspace.
+# Every package inherits this via `include: package:.../analysis_options.yaml` or a relative
+# include. Lints are strict on purpose — this is a portfolio piece and warnings are treated
+# as things to fix, not ignore.
+
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    # Promote the ones that matter most to errors so CI fails on them.
+    invalid_annotation_target: ignore   # noisy with freezed/json_serializable
+    missing_required_param: error
+    missing_return: error
+    todo: ignore
+    dead_code: error
+    unused_import: error
+    unused_local_variable: error
+    always_declare_return_types: error
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/*.gr.dart"
+    - "**/generated/**"
+    - "freshcart_client/lib/src/protocol/**"   # Serverpod-generated
+
+linter:
+  rules:
+    # Correctness
+    - avoid_dynamic_calls
+    - avoid_type_to_string
+    - cancel_subscriptions           # important: real-time streams
+    - close_sinks
+    - discarded_futures
+    - unawaited_futures
+    - only_throw_errors
+    - throw_in_finally
+    - use_build_context_synchronously
+
+    # Clean-architecture hygiene
+    - depend_on_referenced_packages
+    - implementation_imports          # don't import another package's src/
+    - library_private_types_in_public_api
+
+    # Immutability / value semantics (entities, freezed)
+    - prefer_final_fields
+    - prefer_final_locals
+    - prefer_const_constructors
+    - prefer_const_constructors_in_immutables
+    - prefer_const_declarations
+    - avoid_equals_and_hash_code_on_mutable_classes
+
+    # Readability / KISS
+    - always_use_package_imports
+    - directives_ordering
+    - prefer_single_quotes
+    - require_trailing_commas
+    - sort_child_properties_last
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - use_super_parameters
+
+    # Naming
+    - camel_case_types
+    - constant_identifier_names
+    - non_constant_identifier_names
+    - file_names
+
+    # Async / error handling
+    - avoid_catches_without_on_clauses
+    - avoid_catching_errors
+
+# NOTE: the public API-doc lint is intentionally NOT enabled here — workspace-wide it
+# would flood the UI layer. It is enabled only in
+# packages/freshcart_domain/analysis_options.yaml, which includes this file and then adds:
+#   linter:
+#     rules:
+#       - public_member_api_docs
+# so the pure domain (the part worth documenting) is held to the higher bar.
+# (`package_api_docs` was also suggested originally, but it was removed in Dart 3.7.0.)
+
+# Serverpod's generated code and the `require_trailing_commas` lint both assume
+# the pre-3.7 formatter behaviour; preserving trailing commas keeps `dart format`
+# from fighting the linter across the workspace.
+formatter:
+  trailing_commas: preserve

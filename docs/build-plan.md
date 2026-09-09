@@ -1,0 +1,188 @@
+# Build plan
+
+Build in this order. Each phase is small, ends in a **compiling, checkable** state, and must
+pass its acceptance commands before the next begins (golden rule 5). Do not stack unverified
+work.
+
+## How to read a phase
+
+- **Goal** — the one thing this phase delivers.
+- **Build** — the files/changes, in dependency order.
+- **Accept** — commands that must pass. If they don't, the phase isn't done.
+- **Learning toggle** — `MENTOR` = hand it to Nikolaos, help only when stuck; `BUILD` = agent
+  writes it. Default per phase is set below; Nikolaos overrides at any time.
+
+> The toggles below are a starting recommendation: infrastructure/plumbing defaults to
+> `BUILD` (little learning value, easy to get wrong), and the parts where clean-arch judgment
+> is actually exercised default to `MENTOR`. Change any of them.
+
+## Phase 0 — Workspace scaffold · `BUILD`
+
+**Goal:** an empty but resolving monorepo with strict lints.
+
+**Build**
+1. `serverpod create freshcart` to generate `freshcart_server`, `freshcart_client`,
+   `freshcart_flutter` (pin Serverpod 3.4.x — verify current stable on pub.dev first).
+2. Add `packages/freshcart_domain` (pure Dart lib) and `packages/freshcart_l10n`.
+3. Add `freshcart_web` via the Jaspr CLI (verify current stable).
+4. Add the root `pubspec.yaml` `workspace:` listing every member; set `resolution: workspace`
+   in each member. Copy the strict root `analysis_options.yaml` and have each package inherit it.
+5. `.gitignore` for Dart/Flutter/Serverpod + Firebase config files. `git init`, first commit.
+
+**Accept**
+```bash
+dart pub get           # resolves the whole workspace, one lockfile
+dart analyze           # clean
+```
+
+## Phase 1 — Domain core · `MENTOR`
+
+**Goal:** the pure heart — `Result`/`Failure`, value objects, the first entities and ports.
+No Flutter, no Serverpod.
+
+**Build** (in `packages/freshcart_domain`)
+1. `core/result.dart`, `core/failure.dart` (freezed unions from `architecture.md`).
+2. Value objects: `ListId`, `ItemId`, `ShopId`, `UserId`, `HexColor`.
+3. Entities: `ShoppingList`, `ListMember`, `ShoppingItem`, `Shop`, `Note`.
+4. Ports (abstract): `ListRepository`, `ItemRepository`, `ShopRepository`, `AuthPort`,
+   `PushPort`.
+5. First use cases: `JoinList`, `AddItem`, `ToggleItemChecked`.
+
+**Accept**
+```bash
+dart test packages/freshcart_domain      # use-case unit tests pass
+dart analyze packages/freshcart_domain   # clean; grep confirms no forbidden imports
+```
+> Purity check: `! grep -rE "package:(flutter|serverpod|firebase|freshcart_client)" packages/freshcart_domain/lib`
+
+## Phase 2 — Server: models, migrations, first endpoints · `BUILD`
+
+**Goal:** DB models + endpoints for lists and items, with real Postgres migrations.
+
+**Build** (in `freshcart_server`)
+1. Serverpod model YAML: `ShoppingList`, `ListMember`, `ShoppingItem`, `Shop`, `Note`, and
+   the anonymous identity linkage. Use UUID keys.
+2. `serverpod create-migration`; apply against local Postgres (Serverpod's docker compose).
+3. Endpoints: `ListEndpoint` (create, byId, join), `ItemEndpoint` (add, toggle, edit,
+   remove). Keep endpoints thin — validation + a call into a server-side op/service.
+4. `serverpod generate` to produce the client.
+
+**Accept**
+```bash
+cd freshcart_server && serverpod generate
+dart run bin/main.dart --apply-migrations   # boots, DB in sync
+dart test                                    # endpoint tests pass
+```
+
+## Phase 3 — App data layer: repositories + mappers · `MENTOR`
+
+**Goal:** wire the generated client to the domain ports. This is where DTO↔entity mapping is
+exercised — the reason `MENTOR` is the default here.
+
+**Build** (in `freshcart_flutter/lib/features/*/data`)
+1. Mappers for every entity (`toDomain` / `toDto`).
+2. `ListRepositoryImpl`, `ItemRepositoryImpl` implementing the domain ports, returning
+   `Result<T>`, translating `ServerpodClientException` → `Failure`.
+3. A single `Client` provider in `core/di`.
+
+**Accept**
+```bash
+cd freshcart_flutter && flutter analyze     # no dto. types escape data/
+flutter test test/features/*/data           # mapper + repo tests pass
+```
+> Boundary check: `! grep -rE "freshcart_client" freshcart_flutter/lib/features/*/application freshcart_flutter/lib/features/*/presentation`
+
+## Phase 4 — App shell: DI, router, theme, i18n · `BUILD`
+
+**Goal:** the app runs, shows an empty lists screen, is themable and translatable.
+
+**Build**
+1. `core/di` root `ProviderScope`; `core/router` go_router with an auth guard placeholder.
+2. `core/theme`: `ColorScheme.fromSeed`, light/dark, animated scheme swap hook.
+3. `freshcart_l10n` with slang; `nl` default + `en`, `fr`; wire `build_runner`.
+4. Empty `ListsScreen` behind the router.
+
+**Accept**
+```bash
+cd freshcart_flutter && dart run build_runner build --delete-conflicting-outputs
+flutter analyze && flutter test
+flutter run   # app boots to an (empty) translated, themed lists screen
+```
+
+## Phase 5 — Feature: Lists (create, join, view) · `MENTOR`
+
+**Goal:** first vertical slice end-to-end — controller → use case → repo → server → back.
+
+**Build**: `lists_controller.dart` (`@riverpod`), create/join flows, list detail screen,
+membership guard in the router. Widget test for join-by-code.
+
+**Accept**: `flutter analyze && flutter test`; manual: create a list on one client, join it
+from another.
+
+## Phase 6 — Feature: Items (add, edit, check, remove, notes) · `MENTOR`
+
+**Goal:** the core interaction. Optimistic UI: apply locally, reconcile on server response,
+roll back on `ConflictFailure`.
+
+**Accept**: `flutter analyze && flutter test`; add/check/edit an item and see it persist.
+
+## Phase 7 — Feature: Shops + dynamic theming · `BUILD`
+
+**Goal:** shops with colours, filter list by shop, theme shifts to the active shop's seed.
+
+**Accept**: switching the active shop animates the whole scheme; filter narrows the list.
+
+## Phase 8 — Real-time sync (Serverpod streams) · `MENTOR`
+
+**Goal:** two open clients on one list see each other's edits live, no refresh.
+
+**Build**: `list_realtime_source.dart` wrapping the Serverpod stream; a stream provider that
+merges server events into the list state; reconcile with optimistic local state.
+
+**Accept**: edit on client A appears on client B within the stream's latency, no manual reload.
+> Serverpod streaming API: verify against current docs, don't recall from memory.
+
+## Phase 9 — Notifications (in-app + FCM) · `BUILD`
+
+**Goal:** background push via FCM behind `PushPort`; server aggregates + excludes the actor.
+
+**Build**: FCM adapter implementing `PushPort`; server-side debounce/aggregate op; token
+registration on sign-in; per-list mute setting.
+
+**Accept**: closed-app client on Android receives an aggregated push; actor does not.
+> Log the EU-iOS-web-push limitation in-code where token registration would otherwise assume
+> availability.
+
+## Phase 10 — Auth upgrade path (Google/email linking) · `MENTOR`
+
+**Goal:** link a provider to the existing anonymous `authUserId`; data preserved; nudge on
+share/join.
+
+**Accept**: upgrade an anonymous account to Google; all lists/items remain; `authUserId`
+unchanged.
+
+## Phase 11 — Jaspr marketing site · `BUILD`
+
+**Goal:** SEO-friendly public landing page (real HTML/CSS, SSR/SSG), reusing domain copy/types
+where sensible from `freshcart_domain` / `freshcart_l10n`. No app functionality here.
+
+**Accept**: `jaspr build` produces static HTML with meta tags; Lighthouse SEO is green.
+> Jaspr rendering mode + API: verify against current docs.
+
+## Phase 12 — Test coverage + CI polish · `BUILD`
+
+**Goal:** fill gaps to the DoD baseline; GitHub Actions running analyze + test on every push.
+
+**Accept**: CI green; every use case has a unit test; key flows have widget tests.
+
+---
+
+## Scope-fork notes (decide before, not during)
+
+- **Offline-first (drift + local DB + sync/CRDT):** deferred by default. v1 is
+  server-authoritative with optimistic UI and cached reads. Full offline-first is a genuine,
+  defensible over-engineering win for a shopping app, but it multiplies conflict-resolution
+  complexity against real-time sync. Treat it as its own project after Phase 12 — do not let
+  it leak into earlier phases.
+- **3.5 `serverpod start` unified workflow:** nicer DX, but beta. Stay on 3.4.x stable for a
+  reproducible portfolio unless Nikolaos opts in.

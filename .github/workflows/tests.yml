@@ -1,0 +1,45 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: '3.4.13'
+      SERVERPOD_PASSWORD_database: 'ppk6rn6Ew9Kb64WNuwJXKAaB_ncrg5r8'
+      SERVERPOD_PASSWORD_redis: 'NiSEcACkT2yZGP1ZwSOq1qzTmgoNigb0'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+
+      - name: Start containers
+        working-directory: freshcart_server
+        run: docker compose up --quiet-pull --build -d
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Install Serverpod CLI
+        run: dart pub global activate serverpod_cli $VERSION
+
+      - name: Run Serverpod generator
+        working-directory: freshcart_server
+        run: serverpod generate
+
+      - name: Run tests
+        working-directory: freshcart_server
+        run: dart test
+
+      - name: Stop containers
+        if: always()
+        working-directory: freshcart_server
+        run: docker compose down -v

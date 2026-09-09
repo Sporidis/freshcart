@@ -1,0 +1,22 @@
+# Workspace root for the FreshCart monorepo.
+#
+# This package exists only to declare the workspace — it ships no code. Pub
+# workspaces (Dart 3.6+) give every member one shared `pub get` and one
+# lockfile, which is why there is no Melos here (see docs/decisions.md #5).
+name: freshcart_workspace
+publish_to: none
+
+environment:
+  sdk: ^3.13.0
+
+# NOTE: freshcart_web is deliberately NOT a workspace member. jaspr_builder pins
+# analyzer ^12 while freezed/riverpod_generator require analyzer >=13, and a pub
+# workspace has a single resolution. The site is a separately deployed artifact
+# with an unrelated build toolchain, so it keeps its own lockfile. See
+# docs/decisions.md #13.
+workspace:
+  - packages/freshcart_domain
+  - packages/freshcart_l10n
+  - freshcart_client
+  - freshcart_server
+  - freshcart_flutter

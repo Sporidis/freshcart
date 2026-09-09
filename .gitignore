@@ -1,0 +1,72 @@
+# ---------------------------------------------------------------------------
+# Dart / pub
+# ---------------------------------------------------------------------------
+.dart_tool/
+.packages
+pubspec_overrides.yaml
+doc/api/
+
+# Only the workspace root's lockfile is tracked; members share it.
+packages/*/pubspec.lock
+freshcart_client/pubspec.lock
+freshcart_server/pubspec.lock
+freshcart_flutter/pubspec.lock
+
+# ---------------------------------------------------------------------------
+# Build output
+# ---------------------------------------------------------------------------
+build/
+.jaspr/
+
+# ---------------------------------------------------------------------------
+# Generated code
+# ---------------------------------------------------------------------------
+# freezed / json_serializable / riverpod_generator / slang output is NOT tracked:
+# CI regenerates it via build_runner. Serverpod's generated protocol and client
+# ARE tracked, because Serverpod's own tooling and CI assume they are present
+# without running the Serverpod CLI.
+*.freezed.dart
+*.g.dart
+packages/freshcart_l10n/lib/gen/
+!freshcart_client/lib/src/protocol/**
+!freshcart_server/lib/src/generated/**
+
+# ---------------------------------------------------------------------------
+# Secrets — never commit (CLAUDE.md: "No secrets in the repo")
+# ---------------------------------------------------------------------------
+# Contains staging/production database, JWT and service secrets.
+# A placeholder template is tracked as config/passwords.example.yaml.
+freshcart_server/config/passwords.yaml
+.env
+.env.*
+!.env.example
+
+# Firebase — FCM config is per-developer and must stay out of the repo
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+.firebase/
+
+# ---------------------------------------------------------------------------
+# Flutter / platform
+# ---------------------------------------------------------------------------
+.flutter-plugins
+.flutter-plugins-dependencies
+**/ios/Flutter/.last_build_id
+**/ios/Pods/
+**/macos/Pods/
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/android/.gradle
+**/android/local.properties
+**/android/key.properties
+*.jks
+*.keystore
+
+# ---------------------------------------------------------------------------
+# Editors / OS
+# ---------------------------------------------------------------------------
+.idea/
+*.iml
+.DS_Store
+Thumbs.db
