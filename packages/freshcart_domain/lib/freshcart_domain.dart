@@ -29,6 +29,7 @@ export 'src/lists/entities/list_member.dart';
 export 'src/lists/entities/member_role.dart';
 export 'src/lists/entities/shopping_list.dart';
 export 'src/lists/ports/list_repository.dart';
+export 'src/lists/use_cases/create_list.dart';
 export 'src/lists/use_cases/join_list.dart';
 export 'src/lists/value_objects/join_code.dart';
 export 'src/lists/value_objects/list_id.dart';

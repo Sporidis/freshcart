@@ -1,3 +1,5 @@
+import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -8,6 +10,12 @@ part 'app_router.g.dart';
 abstract final class Routes {
   /// The signed-in user's lists — the app's home.
   static const String lists = '/lists';
+
+  /// The path pattern for one list's detail screen.
+  static const String listDetailPattern = '/lists/:listId';
+
+  /// The concrete path for [listId].
+  static String listDetail(ListId listId) => '/lists/${listId.value}';
 }
 
 /// The app's [GoRouter].
@@ -21,12 +29,24 @@ GoRouter appRouter(Ref ref) => GoRouter(
     GoRoute(
       path: Routes.lists,
       builder: (context, state) => const ListsScreen(),
+      routes: <RouteBase>[
+        GoRoute(
+          path: ':listId',
+          builder: (context, state) {
+            // A malformed id in a pasted or stale link is a routing concern,
+            // not a domain one, so it is caught here and redirected rather
+            // than allowed to throw out of ListId's constructor.
+            final raw = state.pathParameters['listId'];
+            if (raw == null || raw.isEmpty) return const ListsScreen();
+            return ListDetailScreen(listId: ListId(raw));
+          },
+        ),
+      ],
     ),
   ],
-  // Auth and list-membership guards attach here. Deliberately empty for now:
-  // sign-in lands in phase 5 and the membership guard in phase 5's list detail
-  // route. A guard that silently allowed everything would be worse than an
-  // obvious gap, so this stays a visible placeholder rather than a stub that
-  // looks finished.
+  // The auth guard attaches here in phase 10, and list membership is already
+  // enforced server-side — ListService.requireMembership answers
+  // NotAMemberException, which the detail screen renders as "no access".
+  // Duplicating that check client-side would be a second source of truth.
   redirect: (context, state) => null,
 );
