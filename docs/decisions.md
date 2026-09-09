@@ -152,3 +152,45 @@ staging/production secrets Serverpod generates are real and must never land in g
 and Serverpod's own file header forbids it); placeholdering everything (a fresh clone cannot
 start the database without out-of-band values). **Trade-off:** the local DB password is public
 in the repo — acceptable because it is bound to a local container and grants nothing remotely.
+
+## 16. `Result` is hand-written; `Failure` and the entities use freezed
+
+**Decision:** `Result<T>` is a plain Dart `sealed class` with `fold`/`map`/`flatMap` and
+hand-written `==`. `Failure` and every entity stay on `freezed`, as `architecture.md`
+specifies. **Why:** golden rule 7 — reach for a pattern only when it earns its keep. What
+`freezed` generates is `copyWith`, `==`, `hashCode` and `toString`. For an *entity* that is
+real value: optimistic-UI rollback needs `copyWith`, and Riverpod needs `==` to decide
+whether to rebuild. For `Result` it is close to nothing — `copyWith` on an `Ok` is
+meaningless, and the `==` is four lines. Meanwhile the things `Result` genuinely wants —
+`fold`, `map`, `flatMap` — cannot be generated and would have been written as extensions
+anyway. Since Dart 3 already gives exhaustive `switch` over any `sealed` type, the generator
+was contributing nothing to the most-used type in the codebase. **Rejected:** `@freezed
+sealed class Result<T>` as written in `architecture.md` (consistent, but adds a generated
+file and a codegen dependency to the one type every layer imports). **Trade-off:** two
+idioms in one package instead of one. The rule that keeps it principled: *codegen where
+data-class boilerplate pays, plain Dart where the language already suffices.*
+
+## 17. Ids are extension types, not wrapper classes
+
+**Decision:** `ListId`, `ItemId`, `ShopId`, `UserId`, plus `JoinCode` and `HexColor`, are
+Dart `extension type`s over `String`/`int`. **Why:** they give the type safety the value
+objects exist for — the compiler refuses to pass an `ItemId` where a `ListId` belongs — at
+genuinely zero runtime cost, because an extension type *is* its representation once
+compiled. A wrapper class would allocate an object per id, and a list screen holds hundreds.
+Validation still happens: the unnamed constructor is a factory that throws `ArgumentError`
+on a malformed id (a programmer error — the server never issues one), while `JoinCode.parse`
+and `HexColor.parse` return a `Result` because those *are* fed from user input.
+**Rejected:** `freezed` wrapper classes (allocation per id, a generated file per value
+object, for no added safety); raw `String` ids (the bug class these exist to prevent).
+**Trade-off:** extension types are erased at runtime, so `is ListId` and runtime reflection
+over them do not discriminate. The domain never does either; if that changes, this is the
+one decision to revisit.
+
+## 18. `Failure.validation(field, message)` added to the union
+
+**Decision:** a sixth `Failure` case beyond the five in `architecture.md`. **Why:** value
+objects and use cases reject input *before* any network call — a malformed join code, a
+blank item name, a quantity below one — and none of the existing cases describe that.
+Folding it into `unexpected` would have lost the field name the UI needs to mark the right
+form field. **Trade-off:** one more case for every exhaustive `switch` to handle, which is
+the point of an exhaustive switch.

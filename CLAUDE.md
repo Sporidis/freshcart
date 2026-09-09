@@ -160,7 +160,9 @@ dart run bin/main.dart --apply-migrations   # run server, apply DB migrations
 serverpod create-migration           # after changing DB model yaml
 
 # app (from freshcart_flutter/)
-dart run build_runner build --delete-conflicting-outputs   # riverpod/freezed/slang codegen
+dart run build_runner build          # riverpod/freezed/slang codegen
+                                     # NB: --delete-conflicting-outputs was REMOVED from
+                                     # build_runner and is now ignored with a warning
 flutter analyze
 flutter test
 flutter run
