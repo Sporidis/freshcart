@@ -1,0 +1,66 @@
+import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'shops_controller.g.dart';
+
+/// The shops belonging to one list.
+@riverpod
+class ShopsController extends _$ShopsController {
+  @override
+  Future<Result<List<Shop>>> build(ListId listId) =>
+      ref.watch(shopRepositoryProvider).byList(listId);
+
+  /// Creates a shop and refreshes the collection on success.
+  Future<Result<Shop>> create({
+    required String name,
+    required HexColor color,
+  }) async {
+    final result = await ref
+        .read(shopRepositoryProvider)
+        .create(listId: listId, name: name, color: color);
+    if (result.isOk) ref.invalidateSelf();
+    return result;
+  }
+
+  /// Deletes a shop. Items tagged to it are untagged, not deleted.
+  Future<Result<void>> remove(ShopId id) async {
+    final result = await ref.read(shopRepositoryProvider).remove(id);
+    if (result.isOk) ref.invalidateSelf();
+    return result;
+  }
+}
+
+/// Which shop the list is currently filtered to, or null for "all shops".
+///
+/// Drives two things at once: which items are visible, and what colour the app
+/// is themed from. Keeping it as one piece of state is what makes those two
+/// stay in step.
+@riverpod
+class ShopFilter extends _$ShopFilter {
+  @override
+  ShopId? build(ListId listId) => null;
+
+  /// Filters to [shopId], or clears the filter when null.
+  void select(ShopId? shopId) => state = shopId;
+}
+
+/// The colour of the active shop, or null when no shop is selected.
+///
+/// Derived rather than stored, so it cannot drift out of step with the filter.
+@riverpod
+HexColor? activeShopColor(Ref ref, ListId listId) {
+  final filter = ref.watch(shopFilterProvider(listId));
+  if (filter == null) return null;
+
+  final shops = ref.watch(shopsControllerProvider(listId));
+  final loaded = switch (shops) {
+    AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
+      value,
+    _ => const <Shop>[],
+  };
+  for (final shop in loaded) {
+    if (shop.id == filter) return shop.color;
+  }
+  return null;
+}

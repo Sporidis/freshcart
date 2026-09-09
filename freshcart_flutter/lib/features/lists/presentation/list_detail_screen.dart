@@ -1,11 +1,16 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// One shopping list.
@@ -14,7 +19,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// here too, but they arrive in phase 6 — this screen is the slot they drop
 /// into, and proving the route, the fetch and the failure paths work is what
 /// phase 5 is for.
-class ListDetailScreen extends ConsumerWidget {
+class ListDetailScreen extends ConsumerStatefulWidget {
   /// Creates the detail screen for [listId].
   const ListDetailScreen({required this.listId, super.key});
 
@@ -22,9 +27,47 @@ class ListDetailScreen extends ConsumerWidget {
   final ListId listId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ListDetailScreen> createState() => _ListDetailScreenState();
+}
+
+class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
+  /// Captured while the widget is still mounted.
+  ///
+  /// `ref` cannot be used from `dispose` — the element is already deactivated
+  /// by then — so the notifier is held onto here instead.
+  ActiveSeedColor? _seedColor;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _seedColor = ref.read(activeSeedColorProvider.notifier);
+  }
+
+  @override
+  void dispose() {
+    // Leaving the list drops its shop colour, so the lists screen is not left
+    // wearing the theme of a shop the user is no longer looking at. Deferred to
+    // a microtask because a provider must not be written during teardown.
+    final notifier = _seedColor;
+    if (notifier != null) {
+      scheduleMicrotask(() => notifier.select(null));
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final listId = widget.listId;
     final t = ref.watch(translationsProvider);
     final list = ref.watch(listByIdProvider(listId));
+
+    // The theme follows the active shop. Done as a listener rather than by
+    // deriving the seed inside the theme provider, because the theme is global
+    // while the filter belongs to whichever list is open — the screen is the
+    // only place that knows both.
+    ref.listen<HexColor?>(activeShopColorProvider(listId), (previous, next) {
+      ref.read(activeSeedColorProvider.notifier).select(next);
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -48,6 +91,7 @@ class ListDetailScreen extends ConsumerWidget {
           Ok<ShoppingList>(value: final shoppingList) => Column(
             children: [
               _Detail(list: shoppingList, t: t),
+              ShopFilterBar(listId: listId),
               const Divider(height: 1),
               Expanded(child: ItemsSection(list: shoppingList)),
             ],
