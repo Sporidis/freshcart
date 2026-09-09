@@ -23,6 +23,11 @@ list:
   - join:
   - rename:
   - leave:
+shop:
+  - byList:
+  - create:
+  - save:
+  - remove:
 profile:
   - me:
   - displayName:

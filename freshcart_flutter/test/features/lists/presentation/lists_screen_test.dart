@@ -6,22 +6,27 @@ import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
+import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
+import '../../../fakes/fake_shop_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);
 
   late FakeListRepository repository;
   late FakeItemRepository itemRepository;
+  late FakeShopRepository shopRepository;
 
   setUp(() {
     repository = FakeListRepository();
     // The detail screen renders the items section, so navigating there needs an
     // item repository even when the test is about the lists screen.
     itemRepository = FakeItemRepository();
+    // The detail screen also renders the shop filter bar.
+    shopRepository = FakeShopRepository();
   });
 
   Future<ProviderContainer> pump(WidgetTester tester) async {
@@ -29,6 +34,7 @@ void main() {
       overrides: [
         listRepositoryProvider.overrideWithValue(repository),
         itemRepositoryProvider.overrideWithValue(itemRepository),
+        shopRepositoryProvider.overrideWithValue(shopRepository),
       ],
     );
     addTearDown(container.dispose);

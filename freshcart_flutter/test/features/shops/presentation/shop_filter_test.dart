@@ -1,0 +1,165 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
+import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
+import 'package:freshcart_l10n/freshcart_l10n.dart';
+
+import '../../../fakes/fake_item_repository.dart';
+import '../../../fakes/fake_list_repository.dart';
+import '../../../fakes/fake_shop_repository.dart';
+
+void main() {
+  setUpAll(configurePluralResolvers);
+
+  late FakeItemRepository items;
+  late FakeShopRepository shops;
+  final listId = ListId('00000000-0000-4000-8000-000000000001');
+  final colruyt = buildShop(name: 'Colruyt', color: '#4CAF50');
+  final bakery = buildShop(
+    id: '00000000-0000-4000-8000-0000000000c2',
+    name: 'Bakery',
+    color: '#C62828',
+  );
+
+  setUp(() {
+    items = FakeItemRepository();
+    shops = FakeShopRepository();
+  });
+
+  Future<ProviderContainer> pump(WidgetTester tester) async {
+    final list = buildList(members: [buildMember()]);
+    final container = ProviderContainer(
+      overrides: [
+        itemRepositoryProvider.overrideWithValue(items),
+        shopRepositoryProvider.overrideWithValue(shops),
+        currentUserIdProvider.overrideWith((ref) async => Ok(UserId('user-1'))),
+      ],
+    );
+    addTearDown(container.dispose);
+    container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp(
+          home: Scaffold(
+            body: Column(
+              children: [
+                ShopFilterBar(listId: listId),
+                Expanded(child: ItemsSection(list: list)),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    return container;
+  }
+
+  group('ShopFilterBar', () {
+    testWidgets('is hidden when the list has no shops', (tester) async {
+      await pump(tester);
+      expect(find.byType(FilterChip), findsNothing);
+    });
+
+    testWidgets('offers every shop plus an "all shops" chip', (tester) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      await pump(tester);
+
+      expect(find.text('All shops'), findsOneWidget);
+      expect(find.text('Colruyt'), findsOneWidget);
+      expect(find.text('Bakery'), findsOneWidget);
+    });
+  });
+
+  group('filtering', () {
+    testWidgets('selecting a shop narrows the visible items', (tester) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      // Milk is tagged to Colruyt, Cake to the bakery, Bread left untagged.
+      items.byListResult = Ok([
+        buildItem(name: 'Milk').copyWith(shopId: colruyt.id),
+        buildItem(id: '00000000-0000-4000-8000-0000000000b2', name: 'Bread'),
+        buildItem(
+          id: '00000000-0000-4000-8000-0000000000b3',
+          name: 'Cake',
+        ).copyWith(shopId: bakery.id),
+      ]);
+
+      final container = await pump(tester);
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Cake'), findsOneWidget);
+
+      container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Cake'), findsNothing);
+      // An untagged item stays visible under every filter, so a forgotten tag
+      // never hides someone's shopping.
+      expect(find.text('Bread'), findsOneWidget);
+    });
+
+    testWidgets('clearing the filter shows everything again', (tester) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      items.byListResult = Ok([
+        buildItem(name: 'Milk').copyWith(shopId: colruyt.id),
+        buildItem(
+          id: '00000000-0000-4000-8000-0000000000b3',
+          name: 'Cake',
+        ).copyWith(shopId: bakery.id),
+      ]);
+
+      final container = await pump(tester);
+      final filter = container.read(shopFilterProvider(listId).notifier);
+
+      filter.select(colruyt.id);
+      await tester.pumpAndSettle();
+      expect(find.text('Cake'), findsNothing);
+
+      filter.select(null);
+      await tester.pumpAndSettle();
+      expect(find.text('Cake'), findsOneWidget);
+    });
+  });
+
+  group('activeShopColor', () {
+    testWidgets('is null with no filter, and the shop colour with one', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      final container = await pump(tester);
+
+      expect(container.read(activeShopColorProvider(listId)), isNull);
+
+      container.read(shopFilterProvider(listId).notifier).select(bakery.id);
+      await tester.pumpAndSettle();
+
+      expect(
+        container.read(activeShopColorProvider(listId))?.toHex(),
+        '#C62828',
+      );
+    });
+
+    testWidgets('is null for a shop that is no longer in the list', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([colruyt]);
+      final container = await pump(tester);
+
+      // A stale filter — the shop was deleted by someone else.
+      container.read(shopFilterProvider(listId).notifier).select(bakery.id);
+      await tester.pumpAndSettle();
+
+      expect(container.read(activeShopColorProvider(listId)), isNull);
+    });
+  });
+}

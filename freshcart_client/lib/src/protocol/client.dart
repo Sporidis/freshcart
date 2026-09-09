@@ -21,11 +21,12 @@ import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i5;
 import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i6;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i7;
 import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
-    as _i7;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
     as _i8;
-import 'protocol.dart' as _i9;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i9;
+import 'protocol.dart' as _i10;
 
 /// Exposes the anonymous identity provider to clients.
 ///
@@ -400,6 +401,54 @@ class EndpointList extends _i2.EndpointRef {
       );
 }
 
+/// The shops belonging to a list.
+/// {@category Endpoint}
+class EndpointShop extends _i2.EndpointRef {
+  EndpointShop(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'shop';
+
+  /// Every shop on a list the caller belongs to.
+  _i3.Future<List<_i7.Shop>> byList(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i7.Shop>>(
+        'shop',
+        'byList',
+        {'listId': listId},
+      );
+
+  /// Creates a shop on a list the caller belongs to.
+  _i3.Future<_i7.Shop> create(
+    _i2.UuidValue listId,
+    String name,
+    int colorArgb,
+  ) => caller.callServerEndpoint<_i7.Shop>(
+    'shop',
+    'create',
+    {
+      'listId': listId,
+      'name': name,
+      'colorArgb': colorArgb,
+    },
+  );
+
+  /// Writes a shop back.
+  _i3.Future<_i7.Shop> save(_i7.Shop shop) =>
+      caller.callServerEndpoint<_i7.Shop>(
+        'shop',
+        'save',
+        {'shop': shop},
+      );
+
+  /// Deletes a shop, untagging its items rather than deleting them.
+  _i3.Future<void> remove(_i2.UuidValue shopId) =>
+      caller.callServerEndpoint<void>(
+        'shop',
+        'remove',
+        {'shopId': shopId},
+      );
+}
+
 /// The caller's own FreshCart profile.
 /// {@category Endpoint}
 class EndpointProfile extends _i2.EndpointRef {
@@ -413,8 +462,8 @@ class EndpointProfile extends _i2.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i3.Future<_i7.CurrentUser> me() =>
-      caller.callServerEndpoint<_i7.CurrentUser>(
+  _i3.Future<_i8.CurrentUser> me() =>
+      caller.callServerEndpoint<_i8.CurrentUser>(
         'profile',
         'me',
         {},
@@ -428,8 +477,8 @@ class EndpointProfile extends _i2.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i3.Future<_i8.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i8.MemberProfile>(
+  _i3.Future<_i9.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i9.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
@@ -467,7 +516,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i9.Protocol(),
+         _i10.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -481,6 +530,7 @@ class Client extends _i2.ServerpodClientShared {
     jwtRefresh = EndpointJwtRefresh(this);
     item = EndpointItem(this);
     list = EndpointList(this);
+    shop = EndpointShop(this);
     profile = EndpointProfile(this);
     modules = Modules(this);
   }
@@ -495,6 +545,8 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointList list;
 
+  late final EndpointShop shop;
+
   late final EndpointProfile profile;
 
   late final Modules modules;
@@ -506,6 +558,7 @@ class Client extends _i2.ServerpodClientShared {
     'jwtRefresh': jwtRefresh,
     'item': item,
     'list': list,
+    'shop': shop,
     'profile': profile,
   };
 

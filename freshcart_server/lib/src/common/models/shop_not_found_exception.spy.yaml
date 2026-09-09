@@ -1,0 +1,2 @@
+### Thrown when a shop does not exist, or is on a list the caller cannot see.
+exception: ShopNotFoundException

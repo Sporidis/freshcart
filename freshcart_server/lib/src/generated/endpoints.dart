@@ -17,13 +17,15 @@ import '../auth/email_idp_endpoint.dart' as _i3;
 import '../auth/jwt_refresh_endpoint.dart' as _i4;
 import '../items/item_endpoint.dart' as _i5;
 import '../lists/list_endpoint.dart' as _i6;
-import '../users/profile_endpoint.dart' as _i7;
+import '../shops/shop_endpoint.dart' as _i7;
+import '../users/profile_endpoint.dart' as _i8;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
-    as _i8;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i9;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i10;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i11;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i10;
+    as _i12;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -59,7 +61,13 @@ class Endpoints extends _i1.EndpointDispatch {
           'list',
           null,
         ),
-      'profile': _i7.ProfileEndpoint()
+      'shop': _i7.ShopEndpoint()
+        ..initialize(
+          server,
+          'shop',
+          null,
+        ),
+      'profile': _i8.ProfileEndpoint()
         ..initialize(
           server,
           'profile',
@@ -364,7 +372,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'item': _i1.ParameterDescription(
               name: 'item',
-              type: _i1.getType<_i8.ShoppingItem>(),
+              type: _i1.getType<_i9.ShoppingItem>(),
               nullable: false,
             ),
           },
@@ -509,6 +517,96 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['shop'] = _i1.EndpointConnector(
+      name: 'shop',
+      endpoint: endpoints['shop']!,
+      methodConnectors: {
+        'byList': _i1.MethodConnector(
+          name: 'byList',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['shop'] as _i7.ShopEndpoint).byList(
+                session,
+                params['listId'],
+              ),
+        ),
+        'create': _i1.MethodConnector(
+          name: 'create',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'name': _i1.ParameterDescription(
+              name: 'name',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'colorArgb': _i1.ParameterDescription(
+              name: 'colorArgb',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['shop'] as _i7.ShopEndpoint).create(
+                session,
+                params['listId'],
+                params['name'],
+                params['colorArgb'],
+              ),
+        ),
+        'save': _i1.MethodConnector(
+          name: 'save',
+          params: {
+            'shop': _i1.ParameterDescription(
+              name: 'shop',
+              type: _i1.getType<_i10.Shop>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['shop'] as _i7.ShopEndpoint).save(
+                session,
+                params['shop'],
+              ),
+        ),
+        'remove': _i1.MethodConnector(
+          name: 'remove',
+          params: {
+            'shopId': _i1.ParameterDescription(
+              name: 'shopId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['shop'] as _i7.ShopEndpoint).remove(
+                session,
+                params['shopId'],
+              ),
+        ),
+      },
+    );
     connectors['profile'] = _i1.EndpointConnector(
       name: 'profile',
       endpoint: endpoints['profile']!,
@@ -521,7 +619,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['profile'] as _i7.ProfileEndpoint).me(session),
+                  (endpoints['profile'] as _i8.ProfileEndpoint).me(session),
         ),
         'displayName': _i1.MethodConnector(
           name: 'displayName',
@@ -530,7 +628,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['profile'] as _i7.ProfileEndpoint)
+              ) async => (endpoints['profile'] as _i8.ProfileEndpoint)
                   .displayName(session),
         ),
         'setDisplayName': _i1.MethodConnector(
@@ -547,16 +645,16 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['profile'] as _i7.ProfileEndpoint).setDisplayName(
+                  (endpoints['profile'] as _i8.ProfileEndpoint).setDisplayName(
                     session,
                     params['displayName'],
                   ),
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i9.Endpoints()
+    modules['serverpod_auth_idp'] = _i11.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i10.Endpoints()
+    modules['serverpod_auth_core'] = _i12.Endpoints()
       ..initializeEndpoints(server);
   }
 }

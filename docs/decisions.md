@@ -356,3 +356,24 @@ member could otherwise attribute their tick to someone else, and on a shared lis
 by" is the one label that has to be trustworthy. The client still decides *whether* an item is
 checked; the server decides *who* and *when*. Covered by a test that has one user tick an item
 while claiming to be another.
+
+## 32. The shop filter is one piece of state driving both filtering and theming
+
+**Decision:** `shopFilterProvider(listId)` holds the selected `ShopId?`; the visible items and
+the app's seed colour are both derived from it, and `activeShopColorProvider` derives the
+colour rather than storing it. **Why:** the headline behaviour is that picking a shop narrows
+the list *and* re-themes the app. Storing those separately would let them drift — a filter
+showing Colruyt's items under the bakery's colour is exactly the sort of bug that survives
+review because each half looks right on its own. **Trade-off:** the theme is global while the
+filter belongs to whichever list is open, so the detail screen bridges the two with a
+`ref.listen` and clears the colour on the way out. That bridge is deliberately in the screen —
+the only place that knows both facts — rather than inside the theme provider, which stays
+dumb and independently testable.
+
+## 33. The domain decides what a filter matches, not the widget
+
+**Decision:** filtering calls `ShoppingItem.matchesShopFilter`, which treats an *untagged* item
+as matching every filter. **Why:** the alternative — hiding untagged items when a shop is
+selected — silently loses shopping. Someone adds "batteries" without tagging it, filters to
+Colruyt, and the item is simply gone. Because the rule lives on the entity it has a unit test
+of its own and the widget cannot quietly disagree with it.
