@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
 
 @Preview(name: 'Onboarding Screen', size: Size(393, 852))
-Widget welcomeScreenPreview() => const ProviderScope(
+Widget welcomeScreenPreview() => ProviderScope(
   child: MaterialApp(
-    home: OnboardingScreen(),
+    theme: AppTheme.light(AppTheme.brandSeed),
+    home: const OnboardingScreen(),
     debugShowCheckedModeBanner: false,
   ),
 );
@@ -39,9 +43,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   Widget build(BuildContext context) {
     final controller = ref.read(onboardingControllerProvider.notifier);
     final step = ref.watch(onboardingControllerProvider.select((s) => s.step));
-    final canContinue = ref.watch(
-      onboardingControllerProvider.select((s) => s.canContinue),
-    );
 
     // The controller is the source of truth for the step; this just makes
     // the PageView follow it instead of the other way around.
@@ -67,15 +68,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Step ${step.index + 1} of ${OnboardingStep.values.length}',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey,
+              child: Row(
+                children: [
+                  // Step indicator
+                  Row(
+                    children: List.generate(
+                      OnboardingStep.values.length,
+                      (index) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        width: step.index == index ? 24 : 6,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          color: step.index == index
+                              ? Colors.black
+                              : Colors.grey.shade300,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Step ${step.index + 1} of ${OnboardingStep.values.length}',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             Expanded(
@@ -90,29 +113,60 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                 ],
               ),
             ),
-            Padding(
+            const _ContinueButton(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContinueButton extends ConsumerWidget {
+  const _ContinueButton();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final controller = ref.read(onboardingControllerProvider.notifier);
+    final step = ref.watch(onboardingControllerProvider).step;
+    final canContinue = ref.watch(onboardingControllerProvider).canContinue;
+
+    return AnimatedSwitcher(
+      duration: AppMotion.bouncy,
+      switchInCurve: AppMotion.pop,
+      switchOutCurve: AppMotion.exit,
+      transitionBuilder: (child, animation) {
+        return FadeTransition(
+          opacity: animation,
+          child: ScaleTransition(
+            scale: Tween<double>(
+              begin: 0.88,
+              end: 1,
+            ).animate(animation),
+            child: child,
+          ),
+        );
+      },
+      child: canContinue
+          ? Padding(
+              key: const ValueKey('continue-button'),
               padding: const EdgeInsets.all(16),
               child: SizedBox(
                 width: double.infinity,
-                child: FilledButton(
-                  onPressed: canContinue
-                      ? () async {
-                          if (step == OnboardingStep.values.last) {
-                            await controller.finish();
-                          } else {
-                            controller.next();
-                          }
-                        }
-                      : null,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (step == OnboardingStep.values.last) {
+                      await controller.finish();
+                    } else {
+                      controller.next();
+                    }
+                  },
                   child: Text(
                     step == OnboardingStep.values.last ? 'Finish' : 'Continue',
                   ),
                 ),
               ),
-            ),
-          ],
-        ),
-      ),
+            )
+          : const SizedBox.shrink(key: ValueKey('hidden-button')),
     );
   }
 }
@@ -168,6 +222,10 @@ class _DisplayNameStepState extends ConsumerState<_DisplayNameStep> {
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(onboardingControllerProvider.notifier);
+    final displayName = ref.watch(
+      onboardingControllerProvider.select((state) => state.displayName),
+    );
+    final initials = _initialsFor(displayName);
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -175,18 +233,40 @@ class _DisplayNameStepState extends ConsumerState<_DisplayNameStep> {
         children: [
           Text(
             'What should we call you?',
-            style: Theme.of(context).textTheme.headlineSmall,
+            style: Theme.of(context).textTheme.headlineLarge,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'This is how your household will see you on shared lists.',
+          Text(
+            'This is how your household sees you on shared lists.',
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
-          TextField(
-            controller: _controller,
-            onChanged: controller.updateDisplayName,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'e.g. Alex Janssens'),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: AppColors.avatarColorFor(displayName),
+                foregroundColor: Colors.white,
+                child: Text(
+                  initials,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  onChanged: controller.updateDisplayName,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    hintText: 'e.g. Alex Janssens',
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -194,8 +274,15 @@ class _DisplayNameStepState extends ConsumerState<_DisplayNameStep> {
   }
 }
 
-// _CreateListStep and _AddShopStep follow the same shape, reading/writing
-// listName / shopName instead.
+String _initialsFor(String displayName) {
+  final trimmedName = displayName.trim();
+  if (trimmedName.isEmpty) return '?';
+
+  final words = trimmedName.split(RegExp(r'\s+'));
+  if (words.length == 1) return words.first.characters.first.toUpperCase();
+  return '${words.first.characters.first}${words.last.characters.first}'
+      .toUpperCase();
+}
 
 class _AddShopStep extends ConsumerStatefulWidget {
   const _AddShopStep();

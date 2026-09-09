@@ -196,9 +196,13 @@ class AppTheme {
 
     final textTheme = TextTheme(
       displayLarge: AppTextStyles.largeTitle.copyWith(color: ink),
+      displaySmall: AppTextStyles.screenTitle.copyWith(color: ink),
       headlineLarge: AppTextStyles.screenTitle.copyWith(color: ink),
       headlineMedium: AppTextStyles.sheetTitle.copyWith(color: ink),
+      headlineSmall: AppTextStyles.sheetTitle.copyWith(color: ink),
+      titleLarge: AppTextStyles.sheetTitle.copyWith(color: ink),
       titleMedium: AppTextStyles.bodyStrong.copyWith(color: ink),
+      titleSmall: AppTextStyles.secondaryStrong.copyWith(color: ink),
       bodyLarge: AppTextStyles.body.copyWith(color: ink),
       bodyMedium: AppTextStyles.secondary.copyWith(color: secondaryText),
       labelLarge: AppTextStyles.labelStrong.copyWith(color: ink),
