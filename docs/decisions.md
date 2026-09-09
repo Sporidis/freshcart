@@ -436,3 +436,28 @@ notification — not worth waking a phone for. **Note:** `futureCallWithDelay` i
 deprecated in Serverpod 3.4.13 in favour of "generated future call methods", but running
 `serverpod generate` against a project-defined `FutureCall` produces no such dispatcher in this
 version. The deprecated call is the only working API here, and the suppression says so.
+
+## 39. Account linking is implemented on the IdpAdmin primitives, not waited for
+
+**Decision:** `AccountLinkService.linkEmail` calls
+`EmailIdpAdmin.createEmailAuthentication(authUserId:)` against the caller's *existing* id.
+**Why:** Serverpod 3.4's anonymous provider ships without first-class account linking — its own
+changelog says the feature "can not be completely used yet due to the missing support for
+account linking". But `decisions.md` #6 stakes the entire auth design on the claim that
+upgrading preserves all data because `authUserId` never changes, and an unverifiable claim is
+worth little in the document whose purpose is to justify choices. The admin primitive accepts
+an existing `authUserId`, so linking is buildable today, and there is now a test that creates a
+list and an item anonymously, links an email, and asserts both survive under the same id.
+Guarded against the two ways this goes wrong: linking twice, and linking an email that already
+belongs to someone else (which would be account takeover). **Trade-off:** custom code where a
+future Serverpod release will offer a supported path; revisit when it lands.
+
+## 40. Google linking returns a clear failure rather than a stub
+
+**Decision:** `AuthRepositoryImpl.linkGoogle` returns
+`Failure.validation('google', 'not configured')`. **Why:** the server half already exists —
+`GoogleIdpAdmin` accepts an existing `authUserId` exactly as the email path does — but the
+client half needs an OAuth client id and the `google_sign_in` flow to obtain an id token, which
+this build has no credentials for. A stub that looked wired up would be worse than an honest
+failure: it would pass review and fail a user. **Trade-off:** the Google path is unexercised
+until credentials exist; the email path proves the mechanism.

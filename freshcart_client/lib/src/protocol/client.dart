@@ -11,28 +11,62 @@
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import 'dart:async' as _i2;
+import 'package:freshcart_client/src/protocol/auth/models/linked_provider.dart'
+    as _i3;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i1;
-import 'package:serverpod_client/serverpod_client.dart' as _i2;
-import 'dart:async' as _i3;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
-import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i5;
-import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
+import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i6;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
     as _i7;
-import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i8;
-import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
+import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
     as _i9;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i10;
+import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
+    as _i10;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i11;
 import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
-    as _i11;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
     as _i12;
-import 'protocol.dart' as _i13;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i13;
+import 'protocol.dart' as _i14;
+
+/// Upgrading an anonymous account by attaching credentials to it.
+/// {@category Endpoint}
+class EndpointAccount extends _i1.EndpointRef {
+  EndpointAccount(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'account';
+
+  /// Which providers are attached to the caller's account.
+  _i2.Future<List<_i3.LinkedProvider>> linkedProviders() =>
+      caller.callServerEndpoint<List<_i3.LinkedProvider>>(
+        'account',
+        'linkedProviders',
+        {},
+      );
+
+  /// Attaches an email/password credential to the caller's existing account.
+  ///
+  /// The caller keeps the same `authUserId`, so nothing they created moves.
+  _i2.Future<List<_i3.LinkedProvider>> linkEmail(
+    String email,
+    String password,
+  ) => caller.callServerEndpoint<List<_i3.LinkedProvider>>(
+    'account',
+    'linkEmail',
+    {
+      'email': email,
+      'password': password,
+    },
+  );
+}
 
 /// Exposes the anonymous identity provider to clients.
 ///
@@ -44,8 +78,8 @@ import 'protocol.dart' as _i13;
 /// Extending the base endpoint is what publishes it — the Flutter side looks
 /// the endpoint up by type and fails loudly if a server has not exposed it.
 /// {@category Endpoint}
-class EndpointAnonymousIdp extends _i1.EndpointAnonymousIdpBase {
-  EndpointAnonymousIdp(_i2.EndpointCaller caller) : super(caller);
+class EndpointAnonymousIdp extends _i4.EndpointAnonymousIdpBase {
+  EndpointAnonymousIdp(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'anonymousIdp';
@@ -55,8 +89,8 @@ class EndpointAnonymousIdp extends _i1.EndpointAnonymousIdpBase {
   /// Invokes the [AnonymousIdp.beforeAnonymousAccount] callback if configured,
   /// which may prevent account creation if the endpoint is protected.
   @override
-  _i3.Future<_i4.AuthSuccess> login({String? token}) =>
-      caller.callServerEndpoint<_i4.AuthSuccess>(
+  _i2.Future<_i5.AuthSuccess> login({String? token}) =>
+      caller.callServerEndpoint<_i5.AuthSuccess>(
         'anonymousIdp',
         'login',
         {'token': token},
@@ -67,8 +101,8 @@ class EndpointAnonymousIdp extends _i1.EndpointAnonymousIdpBase {
 /// are made available on the server and enable the corresponding sign-in widget
 /// on the client.
 /// {@category Endpoint}
-class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
-  EndpointEmailIdp(_i2.EndpointCaller caller) : super(caller);
+class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
+  EndpointEmailIdp(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'emailIdp';
@@ -83,10 +117,10 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i3.Future<_i4.AuthSuccess> login({
+  _i2.Future<_i5.AuthSuccess> login({
     required String email,
     required String password,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i5.AuthSuccess>(
     'emailIdp',
     'login',
     {
@@ -106,8 +140,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   /// registration. If the email is already registered, the returned ID will not
   /// be valid.
   @override
-  _i3.Future<_i2.UuidValue> startRegistration({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
+  _i2.Future<_i1.UuidValue> startRegistration({required String email}) =>
+      caller.callServerEndpoint<_i1.UuidValue>(
         'emailIdp',
         'startRegistration',
         {'email': email},
@@ -124,8 +158,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   /// - [EmailAccountRequestExceptionReason.invalid] if no request exists
   ///   for the given [accountRequestId] or [verificationCode] is invalid.
   @override
-  _i3.Future<String> verifyRegistrationCode({
-    required _i2.UuidValue accountRequestId,
+  _i2.Future<String> verifyRegistrationCode({
+    required _i1.UuidValue accountRequestId,
     required String verificationCode,
   }) => caller.callServerEndpoint<String>(
     'emailIdp',
@@ -151,10 +185,10 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///
   /// Returns a session for the newly created user.
   @override
-  _i3.Future<_i4.AuthSuccess> finishRegistration({
+  _i2.Future<_i5.AuthSuccess> finishRegistration({
     required String registrationToken,
     required String password,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i5.AuthSuccess>(
     'emailIdp',
     'finishRegistration',
     {
@@ -177,8 +211,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///   made too many attempts trying to request a password reset.
   ///
   @override
-  _i3.Future<_i2.UuidValue> startPasswordReset({required String email}) =>
-      caller.callServerEndpoint<_i2.UuidValue>(
+  _i2.Future<_i1.UuidValue> startPasswordReset({required String email}) =>
+      caller.callServerEndpoint<_i1.UuidValue>(
         'emailIdp',
         'startPasswordReset',
         {'email': email},
@@ -199,8 +233,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   /// should be overridden to return credentials for the next step instead
   /// of the credentials for setting the password.
   @override
-  _i3.Future<String> verifyPasswordResetCode({
-    required _i2.UuidValue passwordResetRequestId,
+  _i2.Future<String> verifyPasswordResetCode({
+    required _i1.UuidValue passwordResetRequestId,
     required String verificationCode,
   }) => caller.callServerEndpoint<String>(
     'emailIdp',
@@ -226,7 +260,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   ///
   /// Throws an [AuthUserBlockedException] if the auth user is blocked.
   @override
-  _i3.Future<void> finishPasswordReset({
+  _i2.Future<void> finishPasswordReset({
     required String finishPasswordResetToken,
     required String newPassword,
   }) => caller.callServerEndpoint<void>(
@@ -239,7 +273,7 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
   );
 
   @override
-  _i3.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
+  _i2.Future<bool> hasAccount() => caller.callServerEndpoint<bool>(
     'emailIdp',
     'hasAccount',
     {},
@@ -249,8 +283,8 @@ class EndpointEmailIdp extends _i1.EndpointEmailIdpBase {
 /// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint
 /// is made available on the server and enables automatic token refresh on the client.
 /// {@category Endpoint}
-class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
-  EndpointJwtRefresh(_i2.EndpointCaller caller) : super(caller);
+class EndpointJwtRefresh extends _i5.EndpointRefreshJwtTokens {
+  EndpointJwtRefresh(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'jwtRefresh';
@@ -274,9 +308,9 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
   /// This endpoint is unauthenticated, meaning the client won't include any
   /// authentication information with the call.
   @override
-  _i3.Future<_i4.AuthSuccess> refreshAccessToken({
+  _i2.Future<_i5.AuthSuccess> refreshAccessToken({
     required String refreshToken,
-  }) => caller.callServerEndpoint<_i4.AuthSuccess>(
+  }) => caller.callServerEndpoint<_i5.AuthSuccess>(
     'jwtRefresh',
     'refreshAccessToken',
     {'refreshToken': refreshToken},
@@ -286,15 +320,15 @@ class EndpointJwtRefresh extends _i4.EndpointRefreshJwtTokens {
 
 /// The items on a list: read, add, save, remove.
 /// {@category Endpoint}
-class EndpointItem extends _i2.EndpointRef {
-  EndpointItem(_i2.EndpointCaller caller) : super(caller);
+class EndpointItem extends _i1.EndpointRef {
+  EndpointItem(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'item';
 
   /// Every item on a list the caller belongs to.
-  _i3.Future<List<_i5.ShoppingItem>> byList(_i2.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i5.ShoppingItem>>(
+  _i2.Future<List<_i6.ShoppingItem>> byList(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i6.ShoppingItem>>(
         'item',
         'byList',
         {'listId': listId},
@@ -306,13 +340,13 @@ class EndpointItem extends _i2.EndpointRef {
   /// drops Dart default values and emits any non-nullable named parameter as
   /// `required`. Nullability is what makes a parameter optional in the
   /// generated client, so the default lives here instead.
-  _i3.Future<_i5.ShoppingItem> add(
-    _i2.UuidValue listId,
+  _i2.Future<_i6.ShoppingItem> add(
+    _i1.UuidValue listId,
     String name, {
     int? quantity,
-    _i2.UuidValue? shopId,
+    _i1.UuidValue? shopId,
     String? noteText,
-  }) => caller.callServerEndpoint<_i5.ShoppingItem>(
+  }) => caller.callServerEndpoint<_i6.ShoppingItem>(
     'item',
     'add',
     {
@@ -326,15 +360,15 @@ class EndpointItem extends _i2.EndpointRef {
 
   /// Writes an item back, rejecting the write on an optimistic-concurrency
   /// clash.
-  _i3.Future<_i5.ShoppingItem> save(_i5.ShoppingItem item) =>
-      caller.callServerEndpoint<_i5.ShoppingItem>(
+  _i2.Future<_i6.ShoppingItem> save(_i6.ShoppingItem item) =>
+      caller.callServerEndpoint<_i6.ShoppingItem>(
         'item',
         'save',
         {'item': item},
       );
 
   /// Deletes an item.
-  _i3.Future<void> remove(_i2.UuidValue itemId) =>
+  _i2.Future<void> remove(_i1.UuidValue itemId) =>
       caller.callServerEndpoint<void>(
         'item',
         'remove',
@@ -349,8 +383,8 @@ class EndpointItem extends _i2.EndpointRef {
   ///
   /// This is the in-app half of the two-layer story: it keeps open clients live
   /// and is unrelated to FCM background push, which covers closed apps.
-  _i3.Stream<_i6.ItemChange> watchList(_i2.UuidValue listId) => caller
-      .callStreamingServerEndpoint<_i3.Stream<_i6.ItemChange>, _i6.ItemChange>(
+  _i2.Stream<_i7.ItemChange> watchList(_i1.UuidValue listId) => caller
+      .callStreamingServerEndpoint<_i2.Stream<_i7.ItemChange>, _i7.ItemChange>(
         'item',
         'watchList',
         {'listId': listId},
@@ -363,49 +397,49 @@ class EndpointItem extends _i2.EndpointRef {
 /// Thin by design — every method resolves the caller and hands straight off to
 /// [ListService], which is where the rules and the transactions live.
 /// {@category Endpoint}
-class EndpointList extends _i2.EndpointRef {
-  EndpointList(_i2.EndpointCaller caller) : super(caller);
+class EndpointList extends _i1.EndpointRef {
+  EndpointList(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'list';
 
   /// Every list the caller belongs to.
-  _i3.Future<List<_i7.ShoppingList>> myLists() =>
-      caller.callServerEndpoint<List<_i7.ShoppingList>>(
+  _i2.Future<List<_i8.ShoppingList>> myLists() =>
+      caller.callServerEndpoint<List<_i8.ShoppingList>>(
         'list',
         'myLists',
         {},
       );
 
   /// One list the caller belongs to.
-  _i3.Future<_i7.ShoppingList> byId(_i2.UuidValue listId) =>
-      caller.callServerEndpoint<_i7.ShoppingList>(
+  _i2.Future<_i8.ShoppingList> byId(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<_i8.ShoppingList>(
         'list',
         'byId',
         {'listId': listId},
       );
 
   /// Creates a list owned by the caller.
-  _i3.Future<_i7.ShoppingList> create(String name) =>
-      caller.callServerEndpoint<_i7.ShoppingList>(
+  _i2.Future<_i8.ShoppingList> create(String name) =>
+      caller.callServerEndpoint<_i8.ShoppingList>(
         'list',
         'create',
         {'name': name},
       );
 
   /// Joins the list matching [joinCode].
-  _i3.Future<_i7.ShoppingList> join(String joinCode) =>
-      caller.callServerEndpoint<_i7.ShoppingList>(
+  _i2.Future<_i8.ShoppingList> join(String joinCode) =>
+      caller.callServerEndpoint<_i8.ShoppingList>(
         'list',
         'join',
         {'joinCode': joinCode},
       );
 
   /// Renames a list the caller owns.
-  _i3.Future<_i7.ShoppingList> rename(
-    _i2.UuidValue listId,
+  _i2.Future<_i8.ShoppingList> rename(
+    _i1.UuidValue listId,
     String name,
-  ) => caller.callServerEndpoint<_i7.ShoppingList>(
+  ) => caller.callServerEndpoint<_i8.ShoppingList>(
     'list',
     'rename',
     {
@@ -415,7 +449,7 @@ class EndpointList extends _i2.EndpointRef {
   );
 
   /// Removes the caller from a list.
-  _i3.Future<void> leave(_i2.UuidValue listId) =>
+  _i2.Future<void> leave(_i1.UuidValue listId) =>
       caller.callServerEndpoint<void>(
         'list',
         'leave',
@@ -425,8 +459,8 @@ class EndpointList extends _i2.EndpointRef {
 
 /// Device registration and per-list notification settings.
 /// {@category Endpoint}
-class EndpointNotification extends _i2.EndpointRef {
-  EndpointNotification(_i2.EndpointCaller caller) : super(caller);
+class EndpointNotification extends _i1.EndpointRef {
+  EndpointNotification(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'notification';
@@ -436,10 +470,10 @@ class EndpointNotification extends _i2.EndpointRef {
   /// Idempotent: re-registering an existing token re-points it at the caller
   /// rather than inserting a duplicate, so a shared device that changes hands
   /// does not keep notifying the previous user.
-  _i3.Future<_i8.DeviceToken> registerDevice(
+  _i2.Future<_i9.DeviceToken> registerDevice(
     String token,
-    _i9.DevicePlatform platform,
-  ) => caller.callServerEndpoint<_i8.DeviceToken>(
+    _i10.DevicePlatform platform,
+  ) => caller.callServerEndpoint<_i9.DeviceToken>(
     'notification',
     'registerDevice',
     {
@@ -449,7 +483,7 @@ class EndpointNotification extends _i2.EndpointRef {
   );
 
   /// Stops pushes to this device. Called on sign-out.
-  _i3.Future<void> unregisterDevice(String token) =>
+  _i2.Future<void> unregisterDevice(String token) =>
       caller.callServerEndpoint<void>(
         'notification',
         'unregisterDevice',
@@ -457,8 +491,8 @@ class EndpointNotification extends _i2.EndpointRef {
       );
 
   /// Mutes or unmutes a list for the caller.
-  _i3.Future<void> setListMuted(
-    _i2.UuidValue listId,
+  _i2.Future<void> setListMuted(
+    _i1.UuidValue listId,
     bool muted,
   ) => caller.callServerEndpoint<void>(
     'notification',
@@ -470,7 +504,7 @@ class EndpointNotification extends _i2.EndpointRef {
   );
 
   /// Whether the caller has muted [listId].
-  _i3.Future<bool> isListMuted(_i2.UuidValue listId) =>
+  _i2.Future<bool> isListMuted(_i1.UuidValue listId) =>
       caller.callServerEndpoint<bool>(
         'notification',
         'isListMuted',
@@ -480,26 +514,26 @@ class EndpointNotification extends _i2.EndpointRef {
 
 /// The shops belonging to a list.
 /// {@category Endpoint}
-class EndpointShop extends _i2.EndpointRef {
-  EndpointShop(_i2.EndpointCaller caller) : super(caller);
+class EndpointShop extends _i1.EndpointRef {
+  EndpointShop(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'shop';
 
   /// Every shop on a list the caller belongs to.
-  _i3.Future<List<_i10.Shop>> byList(_i2.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i10.Shop>>(
+  _i2.Future<List<_i11.Shop>> byList(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i11.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list the caller belongs to.
-  _i3.Future<_i10.Shop> create(
-    _i2.UuidValue listId,
+  _i2.Future<_i11.Shop> create(
+    _i1.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i10.Shop>(
+  ) => caller.callServerEndpoint<_i11.Shop>(
     'shop',
     'create',
     {
@@ -510,15 +544,15 @@ class EndpointShop extends _i2.EndpointRef {
   );
 
   /// Writes a shop back.
-  _i3.Future<_i10.Shop> save(_i10.Shop shop) =>
-      caller.callServerEndpoint<_i10.Shop>(
+  _i2.Future<_i11.Shop> save(_i11.Shop shop) =>
+      caller.callServerEndpoint<_i11.Shop>(
         'shop',
         'save',
         {'shop': shop},
       );
 
   /// Deletes a shop, untagging its items rather than deleting them.
-  _i3.Future<void> remove(_i2.UuidValue shopId) =>
+  _i2.Future<void> remove(_i1.UuidValue shopId) =>
       caller.callServerEndpoint<void>(
         'shop',
         'remove',
@@ -528,8 +562,8 @@ class EndpointShop extends _i2.EndpointRef {
 
 /// The caller's own FreshCart profile.
 /// {@category Endpoint}
-class EndpointProfile extends _i2.EndpointRef {
-  EndpointProfile(_i2.EndpointCaller caller) : super(caller);
+class EndpointProfile extends _i1.EndpointRef {
+  EndpointProfile(_i1.EndpointCaller caller) : super(caller);
 
   @override
   String get name => 'profile';
@@ -539,23 +573,23 @@ class EndpointProfile extends _i2.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i3.Future<_i11.CurrentUser> me() =>
-      caller.callServerEndpoint<_i11.CurrentUser>(
+  _i2.Future<_i12.CurrentUser> me() =>
+      caller.callServerEndpoint<_i12.CurrentUser>(
         'profile',
         'me',
         {},
       );
 
   /// The caller's display name, falling back to a placeholder.
-  _i3.Future<String> displayName() => caller.callServerEndpoint<String>(
+  _i2.Future<String> displayName() => caller.callServerEndpoint<String>(
     'profile',
     'displayName',
     {},
   );
 
   /// Sets the caller's display name.
-  _i3.Future<_i12.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i12.MemberProfile>(
+  _i2.Future<_i13.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i13.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
@@ -564,16 +598,16 @@ class EndpointProfile extends _i2.EndpointRef {
 
 class Modules {
   Modules(Client client) {
-    serverpod_auth_idp = _i1.Caller(client);
-    serverpod_auth_core = _i4.Caller(client);
+    serverpod_auth_idp = _i4.Caller(client);
+    serverpod_auth_core = _i5.Caller(client);
   }
 
-  late final _i1.Caller serverpod_auth_idp;
+  late final _i4.Caller serverpod_auth_idp;
 
-  late final _i4.Caller serverpod_auth_core;
+  late final _i5.Caller serverpod_auth_core;
 }
 
-class Client extends _i2.ServerpodClientShared {
+class Client extends _i1.ServerpodClientShared {
   Client(
     String host, {
     dynamic securityContext,
@@ -584,16 +618,16 @@ class Client extends _i2.ServerpodClientShared {
     Duration? streamingConnectionTimeout,
     Duration? connectionTimeout,
     Function(
-      _i2.MethodCallContext,
+      _i1.MethodCallContext,
       Object,
       StackTrace,
     )?
     onFailedCall,
-    Function(_i2.MethodCallContext)? onSucceededCall,
+    Function(_i1.MethodCallContext)? onSucceededCall,
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i13.Protocol(),
+         _i14.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -602,6 +636,7 @@ class Client extends _i2.ServerpodClientShared {
          disconnectStreamsOnLostInternetConnection:
              disconnectStreamsOnLostInternetConnection,
        ) {
+    account = EndpointAccount(this);
     anonymousIdp = EndpointAnonymousIdp(this);
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
@@ -612,6 +647,8 @@ class Client extends _i2.ServerpodClientShared {
     profile = EndpointProfile(this);
     modules = Modules(this);
   }
+
+  late final EndpointAccount account;
 
   late final EndpointAnonymousIdp anonymousIdp;
 
@@ -632,7 +669,8 @@ class Client extends _i2.ServerpodClientShared {
   late final Modules modules;
 
   @override
-  Map<String, _i2.EndpointRef> get endpointRefLookup => {
+  Map<String, _i1.EndpointRef> get endpointRefLookup => {
+    'account': account,
     'anonymousIdp': anonymousIdp,
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
@@ -644,7 +682,7 @@ class Client extends _i2.ServerpodClientShared {
   };
 
   @override
-  Map<String, _i2.ModuleEndpointCaller> get moduleLookup => {
+  Map<String, _i1.ModuleEndpointCaller> get moduleLookup => {
     'serverpod_auth_idp': modules.serverpod_auth_idp,
     'serverpod_auth_core': modules.serverpod_auth_core,
   };

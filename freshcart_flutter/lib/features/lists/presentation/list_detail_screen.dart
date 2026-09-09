@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
+import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
@@ -90,6 +91,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           ),
           Ok<ShoppingList>(value: final shoppingList) => Column(
             children: [
+              // The stakes are real here: this list is shared, so losing the
+              // session would lose access to it.
+              const UpgradeNudge(),
               _Detail(list: shoppingList, t: t),
               ShopFilterBar(listId: listId),
               const Divider(height: 1),

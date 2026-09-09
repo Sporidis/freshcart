@@ -35,5 +35,13 @@
     "conflict": "Quelqu'un vient de modifier ceci. Réessayez.",
     "unexpected": "Une erreur est survenue.",
     "validation": "Vérifiez ce que vous avez saisi."
+  },
+  "account": {
+    "title": "Sécurisez vos listes",
+    "body": "Votre compte n'existe que sur cet appareil. Liez une adresse e-mail pour ne pas perdre vos listes.",
+    "action": "Lier un e-mail",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "linked": "Votre compte est sécurisé."
   }
 }

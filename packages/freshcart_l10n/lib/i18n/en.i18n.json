@@ -35,5 +35,13 @@
     "conflict": "Someone else just changed this. Try again.",
     "unexpected": "Something went wrong.",
     "validation": "Check what you entered."
+  },
+  "account": {
+    "title": "Secure your lists",
+    "body": "Your account only exists on this device. Link an email so you do not lose your lists.",
+    "action": "Link email",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "linked": "Your account is secured."
   }
 }

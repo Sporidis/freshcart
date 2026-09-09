@@ -2,14 +2,13 @@ import 'dart:io';
 
 import 'package:freshcart_server/src/generated/endpoints.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/notifications/future_calls/flush_notifications_call.dart';
 import 'package:freshcart_server/src/web/routes/app_config_route.dart';
 import 'package:freshcart_server/src/web/routes/root.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
-import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
-import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -19,23 +18,10 @@ void run(List<String> args) async {
   // Initialize authentication services for the server.
   // Token managers will be used to validate and issue authentication keys,
   // and the identity providers will be the authentication options available for users.
+  // Shared with the integration tests, so both run the same providers.
   pod.initializeAuthServices(
-    tokenManagerBuilders: [
-      // Use JWT for authentication keys towards the server.
-      JwtConfigFromPasswords(),
-    ],
-    identityProviderBuilders: [
-      // Anonymous-first: users reach a working list without a signup form, and
-      // keep the same authUserId when they later link a provider. The default
-      // per-IP rate limit is kept — an unauthenticated account-creation
-      // endpoint is exactly the sort of thing that gets abused.
-      const AnonymousIdpConfig(),
-      // Configure the email identity provider for email/password authentication.
-      EmailIdpConfigFromPasswords(
-        sendRegistrationVerificationCode: _sendRegistrationCode,
-        sendPasswordResetVerificationCode: _sendPasswordResetCode,
-      ),
-    ],
+    tokenManagerBuilders: AuthConfiguration.tokenManagerBuilders,
+    identityProviderBuilders: AuthConfiguration.identityProviderBuilders,
   );
 
   // Buffered item changes are summarised into one push per list per window.
@@ -88,28 +74,4 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
-}
-
-void _sendRegistrationCode(
-  Session session, {
-  required String email,
-  required UuidValue accountRequestId,
-  required String verificationCode,
-  required Transaction? transaction,
-}) {
-  // NOTE: Here you call your mail service to send the verification code to
-  // the user. For testing, we will just log the verification code.
-  session.log('[EmailIdp] Registration code ($email): $verificationCode');
-}
-
-void _sendPasswordResetCode(
-  Session session, {
-  required String email,
-  required UuidValue passwordResetRequestId,
-  required String verificationCode,
-  required Transaction? transaction,
-}) {
-  // NOTE: Here you call your mail service to send the verification code to
-  // the user. For testing, we will just log the verification code.
-  session.log('[EmailIdp] Password reset code ($email): $verificationCode');
 }

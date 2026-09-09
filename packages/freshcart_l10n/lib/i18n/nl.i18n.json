@@ -35,5 +35,13 @@
     "conflict": "Iemand anders heeft dit net gewijzigd. Probeer opnieuw.",
     "unexpected": "Er is iets misgegaan.",
     "validation": "Controleer wat je hebt ingevuld."
+  },
+  "account": {
+    "title": "Beveilig je lijsten",
+    "body": "Je account bestaat alleen op dit toestel. Koppel een e-mailadres zodat je je lijsten niet kwijtraakt.",
+    "action": "E-mail koppelen",
+    "emailLabel": "E-mailadres",
+    "passwordLabel": "Wachtwoord",
+    "linked": "Je account is beveiligd."
   }
 }

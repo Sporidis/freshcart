@@ -11,3 +11,9 @@ fields:
 
   ### The name collaborators see, or a placeholder if none is set yet.
   displayName: String
+
+  ### Whether the account has any credential attached.
+  ###
+  ### False means an anonymous session: losing this device loses access to every
+  ### shared list, which is what the upgrade nudge exists to prevent.
+  isAnonymous: bool

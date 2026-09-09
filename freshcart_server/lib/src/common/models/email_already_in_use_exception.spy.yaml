@@ -1,0 +1,5 @@
+### Thrown when linking an email that already belongs to another account.
+###
+### Refused rather than silently attached: attaching it would be account
+### takeover.
+exception: EmailAlreadyInUseException
