@@ -6,6 +6,7 @@ import 'package:freshcart_server/src/web/routes/app_config_route.dart';
 import 'package:freshcart_server/src/web/routes/root.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
 /// The starting point of the Serverpod server.
@@ -22,6 +23,11 @@ void run(List<String> args) async {
       JwtConfigFromPasswords(),
     ],
     identityProviderBuilders: [
+      // Anonymous-first: users reach a working list without a signup form, and
+      // keep the same authUserId when they later link a provider. The default
+      // per-IP rate limit is kept — an unauthenticated account-creation
+      // endpoint is exactly the sort of thing that gets abused.
+      const AnonymousIdpConfig(),
       // Configure the email identity provider for email/password authentication.
       EmailIdpConfigFromPasswords(
         sendRegistrationVerificationCode: _sendRegistrationCode,

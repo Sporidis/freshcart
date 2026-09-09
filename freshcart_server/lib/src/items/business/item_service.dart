@@ -76,13 +76,33 @@ abstract final class ItemService {
 
       // listId, addedBy and createdAt are server-owned: a client cannot move an
       // item to another list or rewrite its provenance by editing a field.
+      //
+      // The check attribution is server-owned too. The client says *whether*
+      // the item is checked; the server decides *who* checked it and *when*,
+      // from the session. Otherwise any member could attribute their tick to
+      // someone else, and the "checked off by" label would be unreliable —
+      // which on a shared list is the one thing it must not be.
+      final now = DateTime.now().toUtc();
+      final becameChecked = incoming.isChecked && !stored.isChecked;
+      final becameUnchecked = !incoming.isChecked && stored.isChecked;
+
       return ShoppingItem.db.updateRow(
         session,
         incoming.copyWith(
           listId: stored.listId,
           addedBy: stored.addedBy,
           createdAt: stored.createdAt,
-          updatedAt: DateTime.now().toUtc(),
+          updatedAt: now,
+          checkedBy: switch ((becameChecked, becameUnchecked)) {
+            (true, _) => userId,
+            (_, true) => null,
+            _ => stored.checkedBy,
+          },
+          checkedAt: switch ((becameChecked, becameUnchecked)) {
+            (true, _) => now,
+            (_, true) => null,
+            _ => stored.checkedAt,
+          },
         ),
         transaction: transaction,
       );

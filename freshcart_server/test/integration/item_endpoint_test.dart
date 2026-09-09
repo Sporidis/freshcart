@@ -152,6 +152,72 @@ void main() {
       expect(await endpoints.item.byList(as(aliceId), list.id!), isEmpty);
     });
 
+    test(
+      'checking records the caller, not whoever the client claims',
+      () async {
+        final list = await aSharedList();
+        final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        // Bob ticks it but claims Alice did. The server must not believe him:
+        // on a shared list, "checked off by" is the one label that has to be
+        // trustworthy.
+        final saved = await endpoints.item.save(
+          as(bobId),
+          item.copyWith(
+            isChecked: true,
+            checkedBy: UuidValue.withValidation(aliceId),
+          ),
+        );
+
+        expect(saved.isChecked, isTrue);
+        expect(saved.checkedBy, UuidValue.withValidation(bobId));
+        expect(saved.checkedAt, isNotNull);
+      },
+    );
+
+    test('unchecking clears the attribution', () async {
+      final list = await aSharedList();
+      final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+      final checked = await endpoints.item.save(
+        as(aliceId),
+        item.copyWith(isChecked: true),
+      );
+
+      final unchecked = await endpoints.item.save(
+        as(bobId),
+        checked.copyWith(isChecked: false),
+      );
+
+      expect(unchecked.isChecked, isFalse);
+      expect(unchecked.checkedBy, isNull);
+      expect(unchecked.checkedAt, isNull);
+    });
+
+    test('editing a checked item leaves its attribution alone', () async {
+      final list = await aSharedList();
+      final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+      final checked = await endpoints.item.save(
+        as(aliceId),
+        item.copyWith(isChecked: true),
+      );
+
+      // Bob renames it without touching the checkbox.
+      final renamed = await endpoints.item.save(
+        as(bobId),
+        checked.copyWith(name: 'Oat milk'),
+      );
+
+      expect(renamed.name, 'Oat milk');
+      expect(renamed.checkedBy, UuidValue.withValidation(aliceId));
+      expect(renamed.checkedAt, checked.checkedAt);
+    });
+
+    test('me() reports the caller derived from the session', () async {
+      final me = await endpoints.profile.me(as(aliceId));
+      expect(me.userId, UuidValue.withValidation(aliceId));
+      expect(me.displayName, isNotEmpty);
+    });
+
     test('remove reports a missing item as not found', () async {
       await expectLater(
         endpoints.item.remove(

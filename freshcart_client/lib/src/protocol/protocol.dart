@@ -23,15 +23,16 @@ import 'lists/models/list_member.dart' as _i9;
 import 'lists/models/member_role.dart' as _i10;
 import 'lists/models/shopping_list.dart' as _i11;
 import 'shops/models/shop.dart' as _i12;
-import 'users/models/member_profile.dart' as _i13;
+import 'users/models/current_user.dart' as _i13;
+import 'users/models/member_profile.dart' as _i14;
 import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
-    as _i14;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i15;
-import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i16;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
     as _i17;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i18;
 export 'common/models/edit_conflict_exception.dart';
 export 'common/models/invalid_join_code_exception.dart';
 export 'common/models/item_not_found_exception.dart';
@@ -43,6 +44,7 @@ export 'lists/models/list_member.dart';
 export 'lists/models/member_role.dart';
 export 'lists/models/shopping_list.dart';
 export 'shops/models/shop.dart';
+export 'users/models/current_user.dart';
 export 'users/models/member_profile.dart';
 export 'client.dart';
 
@@ -113,8 +115,11 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i12.Shop) {
       return _i12.Shop.fromJson(data) as T;
     }
-    if (t == _i13.MemberProfile) {
-      return _i13.MemberProfile.fromJson(data) as T;
+    if (t == _i13.CurrentUser) {
+      return _i13.CurrentUser.fromJson(data) as T;
+    }
+    if (t == _i14.MemberProfile) {
+      return _i14.MemberProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.EditConflictException?>()) {
       return (data != null ? _i2.EditConflictException.fromJson(data) : null)
@@ -154,8 +159,11 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i12.Shop?>()) {
       return (data != null ? _i12.Shop.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.MemberProfile?>()) {
-      return (data != null ? _i13.MemberProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.CurrentUser?>()) {
+      return (data != null ? _i13.CurrentUser.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i14.MemberProfile?>()) {
+      return (data != null ? _i14.MemberProfile.fromJson(data) : null) as T;
     }
     if (t == List<_i9.ListMember>) {
       return (data as List).map((e) => deserialize<_i9.ListMember>(e)).toList()
@@ -192,23 +200,23 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i14.ShoppingItem>) {
+    if (t == List<_i15.ShoppingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i14.ShoppingItem>(e))
+              .map((e) => deserialize<_i15.ShoppingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i15.ShoppingList>) {
+    if (t == List<_i16.ShoppingList>) {
       return (data as List)
-              .map((e) => deserialize<_i15.ShoppingList>(e))
+              .map((e) => deserialize<_i16.ShoppingList>(e))
               .toList()
           as T;
     }
-    try {
-      return _i16.Protocol().deserialize<T>(data, t);
-    } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
       return _i17.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i18.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -226,7 +234,8 @@ class Protocol extends _i1.SerializationManager {
       _i10.MemberRole => 'MemberRole',
       _i11.ShoppingList => 'ShoppingList',
       _i12.Shop => 'Shop',
-      _i13.MemberProfile => 'MemberProfile',
+      _i13.CurrentUser => 'CurrentUser',
+      _i14.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -263,14 +272,16 @@ class Protocol extends _i1.SerializationManager {
         return 'ShoppingList';
       case _i12.Shop():
         return 'Shop';
-      case _i13.MemberProfile():
+      case _i13.CurrentUser():
+        return 'CurrentUser';
+      case _i14.MemberProfile():
         return 'MemberProfile';
     }
-    className = _i16.Protocol().getClassNameForObject(data);
+    className = _i17.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i17.Protocol().getClassNameForObject(data);
+    className = _i18.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -316,16 +327,19 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'Shop') {
       return deserialize<_i12.Shop>(data['data']);
     }
+    if (dataClassName == 'CurrentUser') {
+      return deserialize<_i13.CurrentUser>(data['data']);
+    }
     if (dataClassName == 'MemberProfile') {
-      return deserialize<_i13.MemberProfile>(data['data']);
+      return deserialize<_i14.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i16.Protocol().deserializeByClassName(data);
+      return _i17.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i17.Protocol().deserializeByClassName(data);
+      return _i18.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -340,10 +354,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i16.Protocol().mapRecordToJson(record);
+      return _i17.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i17.Protocol().mapRecordToJson(record);
+      return _i18.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

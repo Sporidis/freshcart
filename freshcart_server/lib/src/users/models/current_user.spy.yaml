@@ -1,0 +1,13 @@
+### Who the caller is, as the server sees them.
+###
+### The client needs its own identity to render an optimistic check ("you
+### ticked this") before the server has answered. It is deliberately derived
+### from the session rather than sent by the client — identity a caller asserts
+### about itself is not identity.
+class: CurrentUser
+fields:
+  ### The caller's stable auth user id.
+  userId: UuidValue
+
+  ### The name collaborators see, or a placeholder if none is set yet.
+  displayName: String

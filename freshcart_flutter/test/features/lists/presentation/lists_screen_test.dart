@@ -4,21 +4,32 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
+import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);
 
   late FakeListRepository repository;
+  late FakeItemRepository itemRepository;
 
-  setUp(() => repository = FakeListRepository());
+  setUp(() {
+    repository = FakeListRepository();
+    // The detail screen renders the items section, so navigating there needs an
+    // item repository even when the test is about the lists screen.
+    itemRepository = FakeItemRepository();
+  });
 
   Future<ProviderContainer> pump(WidgetTester tester) async {
     final container = ProviderContainer(
-      overrides: [listRepositoryProvider.overrideWithValue(repository)],
+      overrides: [
+        listRepositoryProvider.overrideWithValue(repository),
+        itemRepositoryProvider.overrideWithValue(itemRepository),
+      ],
     );
     addTearDown(container.dispose);
     container.read(activeLocaleProvider.notifier).select(AppLocale.en);
@@ -176,9 +187,13 @@ void main() {
       await tester.tap(find.text('Groceries'));
       await tester.pumpAndSettle();
 
-      // The detail screen shows the join code and the members.
-      expect(find.text('Join code'), findsOneWidget);
-      expect(find.text('ABC234'), findsOneWidget);
+      // The detail screen shows the join code and the member count, with the
+      // members themselves behind an expander.
+      expect(find.textContaining('ABC234'), findsOneWidget);
+      expect(find.text('1 member'), findsOneWidget);
+
+      await tester.tap(find.text('1 member'));
+      await tester.pumpAndSettle();
       expect(find.text('Nikolaos'), findsOneWidget);
     });
 
