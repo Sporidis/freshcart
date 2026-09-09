@@ -1,0 +1,7 @@
+# The marketing site is meant to be indexed; the app behind /app is not, since
+# it is all behind a login and has no crawlable content.
+User-agent: *
+Allow: /
+Disallow: /app
+
+Sitemap: https://freshcart.example/sitemap.xml
