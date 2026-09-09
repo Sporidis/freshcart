@@ -461,3 +461,16 @@ client half needs an OAuth client id and the `google_sign_in` flow to obtain an 
 this build has no credentials for. A stub that looked wired up would be worse than an honest
 failure: it would pass review and fail a user. **Trade-off:** the Google path is unexercised
 until credentials exist; the email path proves the mechanism.
+
+## 41. CI asserts the golden rules, it does not just run tests
+
+**Decision:** the `analyze` job greps for forbidden imports in
+`packages/freshcart_domain/lib` and for `freshcart_client` under any feature's `application/`
+or `presentation/`, failing the build on a hit. **Why:** golden rules 1 and 2 are the whole
+point of this architecture, and neither is enforceable by a lint — the analyzer has no idea
+that a `Flutter` import in the domain is a design failure rather than a dependency. A grep is
+crude, but it is exact, it runs in a second, and it turns "we intend to keep the domain pure"
+into something that can actually fail. The alternative, trusting review, is how layered
+architectures rot. **Trade-off:** the checks are textual, so a sufficiently creative violation
+(a re-export chain) would slip past. That is acceptable: the rule exists to catch the ordinary
+mistake, made in a hurry, which is the one that actually happens.
