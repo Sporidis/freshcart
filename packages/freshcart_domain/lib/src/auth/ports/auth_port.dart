@@ -1,0 +1,48 @@
+import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
+import 'package:freshcart_domain/src/core/result.dart';
+
+/// How the domain observes and changes who is signed in.
+///
+/// Deliberately says nothing about Serverpod, Google or email mechanics: adding
+/// a provider later is an implementation swap behind this port, not a rewrite
+/// (`docs/decisions.md` #6).
+abstract interface class AuthPort {
+  /// The current user, or `null` before the first sign-in completes.
+  AuthUser? get currentUser;
+
+  /// Emits on every identity change — sign-in, display-name edit, provider
+  /// link, sign-out.
+  Stream<AuthUser?> authStateChanges();
+
+  /// Creates (or restores) an anonymous identity.
+  ///
+  /// Called on first launch so a user reaches a working list without a signup
+  /// form. The [UserId] it returns is stable for the lifetime of the account,
+  /// including after [linkGoogle] or [linkEmail].
+  Future<Result<AuthUser>> signInAnonymously();
+
+  /// Sets the name collaborators see next to this user's changes.
+  ///
+  /// Prompted early on purpose: an anonymous member showing as "Someone" makes
+  /// a shared list unreadable.
+  Future<Result<AuthUser>> setDisplayName(String displayName);
+
+  /// Attaches a Google provider to the *existing* account.
+  ///
+  /// The user id does not change, so every list and item the anonymous session
+  /// created stays attached — that is the whole point of linking rather than
+  /// signing in afresh.
+  Future<Result<AuthUser>> linkGoogle();
+
+  /// Attaches an email/password provider to the existing account.
+  Future<Result<AuthUser>> linkEmail({
+    required String email,
+    required String password,
+  });
+
+  /// Signs out.
+  ///
+  /// For an anonymous account this is destructive — there is no way back into
+  /// that identity — so callers must confirm before invoking it.
+  Future<Result<void>> signOut();
+}
