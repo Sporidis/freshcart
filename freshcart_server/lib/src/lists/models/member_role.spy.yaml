@@ -1,0 +1,9 @@
+### What a member may do to a shopping list.
+enum: MemberRole
+serialized: byName
+values:
+  ### Created the list. May rename and delete it, and remove other members.
+  - owner
+
+  ### Joined via a join code. May add, edit, check and remove items.
+  - member

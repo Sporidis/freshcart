@@ -1,0 +1,2 @@
+### Thrown when a join code is malformed or matches no list.
+exception: InvalidJoinCodeException

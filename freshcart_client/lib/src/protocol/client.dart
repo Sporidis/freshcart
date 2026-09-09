@@ -18,7 +18,13 @@ import 'dart:async' as _i3;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
 import 'package:freshcart_client/src/protocol/greetings/greeting.dart' as _i5;
-import 'protocol.dart' as _i6;
+import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
+    as _i6;
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+    as _i7;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i8;
+import 'protocol.dart' as _i9;
 
 /// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
 /// are made available on the server and enable the corresponding sign-in widget
@@ -259,6 +265,153 @@ class EndpointGreeting extends _i2.EndpointRef {
       );
 }
 
+/// The items on a list: read, add, save, remove.
+/// {@category Endpoint}
+class EndpointItem extends _i2.EndpointRef {
+  EndpointItem(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'item';
+
+  /// Every item on a list the caller belongs to.
+  _i3.Future<List<_i6.ShoppingItem>> byList(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i6.ShoppingItem>>(
+        'item',
+        'byList',
+        {'listId': listId},
+      );
+
+  /// Adds an item to a list the caller belongs to.
+  ///
+  /// [quantity] is nullable rather than defaulted because Serverpod's generator
+  /// drops Dart default values and emits any non-nullable named parameter as
+  /// `required`. Nullability is what makes a parameter optional in the
+  /// generated client, so the default lives here instead.
+  _i3.Future<_i6.ShoppingItem> add(
+    _i2.UuidValue listId,
+    String name, {
+    int? quantity,
+    _i2.UuidValue? shopId,
+    String? noteText,
+  }) => caller.callServerEndpoint<_i6.ShoppingItem>(
+    'item',
+    'add',
+    {
+      'listId': listId,
+      'name': name,
+      'quantity': quantity,
+      'shopId': shopId,
+      'noteText': noteText,
+    },
+  );
+
+  /// Writes an item back, rejecting the write on an optimistic-concurrency
+  /// clash.
+  _i3.Future<_i6.ShoppingItem> save(_i6.ShoppingItem item) =>
+      caller.callServerEndpoint<_i6.ShoppingItem>(
+        'item',
+        'save',
+        {'item': item},
+      );
+
+  /// Deletes an item.
+  _i3.Future<void> remove(_i2.UuidValue itemId) =>
+      caller.callServerEndpoint<void>(
+        'item',
+        'remove',
+        {'itemId': itemId},
+      );
+}
+
+/// Shopping lists: create, read, join, rename, leave.
+///
+/// Thin by design — every method resolves the caller and hands straight off to
+/// [ListService], which is where the rules and the transactions live.
+/// {@category Endpoint}
+class EndpointList extends _i2.EndpointRef {
+  EndpointList(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'list';
+
+  /// Every list the caller belongs to.
+  _i3.Future<List<_i7.ShoppingList>> myLists() =>
+      caller.callServerEndpoint<List<_i7.ShoppingList>>(
+        'list',
+        'myLists',
+        {},
+      );
+
+  /// One list the caller belongs to.
+  _i3.Future<_i7.ShoppingList> byId(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<_i7.ShoppingList>(
+        'list',
+        'byId',
+        {'listId': listId},
+      );
+
+  /// Creates a list owned by the caller.
+  _i3.Future<_i7.ShoppingList> create(String name) =>
+      caller.callServerEndpoint<_i7.ShoppingList>(
+        'list',
+        'create',
+        {'name': name},
+      );
+
+  /// Joins the list matching [joinCode].
+  _i3.Future<_i7.ShoppingList> join(String joinCode) =>
+      caller.callServerEndpoint<_i7.ShoppingList>(
+        'list',
+        'join',
+        {'joinCode': joinCode},
+      );
+
+  /// Renames a list the caller owns.
+  _i3.Future<_i7.ShoppingList> rename(
+    _i2.UuidValue listId,
+    String name,
+  ) => caller.callServerEndpoint<_i7.ShoppingList>(
+    'list',
+    'rename',
+    {
+      'listId': listId,
+      'name': name,
+    },
+  );
+
+  /// Removes the caller from a list.
+  _i3.Future<void> leave(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<void>(
+        'list',
+        'leave',
+        {'listId': listId},
+      );
+}
+
+/// The caller's own FreshCart profile.
+/// {@category Endpoint}
+class EndpointProfile extends _i2.EndpointRef {
+  EndpointProfile(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'profile';
+
+  /// The caller's display name, falling back to a placeholder.
+  _i3.Future<String> displayName() => caller.callServerEndpoint<String>(
+    'profile',
+    'displayName',
+    {},
+  );
+
+  /// Sets the caller's display name.
+  _i3.Future<_i8.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i8.MemberProfile>(
+        'profile',
+        'setDisplayName',
+        {'displayName': displayName},
+      );
+}
+
 class Modules {
   Modules(Client client) {
     serverpod_auth_idp = _i1.Caller(client);
@@ -290,7 +443,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i6.Protocol(),
+         _i9.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -302,6 +455,9 @@ class Client extends _i2.ServerpodClientShared {
     emailIdp = EndpointEmailIdp(this);
     jwtRefresh = EndpointJwtRefresh(this);
     greeting = EndpointGreeting(this);
+    item = EndpointItem(this);
+    list = EndpointList(this);
+    profile = EndpointProfile(this);
     modules = Modules(this);
   }
 
@@ -311,6 +467,12 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointGreeting greeting;
 
+  late final EndpointItem item;
+
+  late final EndpointList list;
+
+  late final EndpointProfile profile;
+
   late final Modules modules;
 
   @override
@@ -318,6 +480,9 @@ class Client extends _i2.ServerpodClientShared {
     'emailIdp': emailIdp,
     'jwtRefresh': jwtRefresh,
     'greeting': greeting,
+    'item': item,
+    'list': list,
+    'profile': profile,
   };
 
   @override

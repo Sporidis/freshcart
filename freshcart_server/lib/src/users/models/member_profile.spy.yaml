@@ -1,0 +1,28 @@
+### A FreshCart user's public profile, hanging off a Serverpod auth identity.
+###
+### Named `MemberProfile`, not `UserProfile`, because serverpod_auth_core ships
+### a `UserProfile` of its own and both would land in the generated client.
+### Ours stays deliberately tiny — one display name — because the auth module's
+### profile feature carries images and email we do not need.
+###
+### Kept separate from the auth module's `AuthUser` so that display name and any
+### future profile data are ours to evolve, while identity stays the auth
+### module's concern. The relation is what makes the anonymous-to-linked upgrade
+### free: the `authUserId` never changes, so this row follows the account.
+class: MemberProfile
+table: freshcart_member_profile
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The auth identity this profile belongs to.
+  authUser: module:serverpod_auth_core:AuthUser?, relation(onDelete=Cascade)
+
+  ### The name collaborators see next to this user's changes.
+  displayName: String
+
+  createdAt: DateTime, defaultModel=now
+
+indexes:
+  freshcart_member_profile_auth_user_idx:
+    fields: authUserId
+    unique: true

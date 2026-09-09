@@ -15,10 +15,15 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import '../auth/email_idp_endpoint.dart' as _i2;
 import '../auth/jwt_refresh_endpoint.dart' as _i3;
 import '../greetings/greeting_endpoint.dart' as _i4;
+import '../items/item_endpoint.dart' as _i5;
+import '../lists/list_endpoint.dart' as _i6;
+import '../users/profile_endpoint.dart' as _i7;
+import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
+    as _i8;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i5;
+    as _i9;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i6;
+    as _i10;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -40,6 +45,24 @@ class Endpoints extends _i1.EndpointDispatch {
         ..initialize(
           server,
           'greeting',
+          null,
+        ),
+      'item': _i5.ItemEndpoint()
+        ..initialize(
+          server,
+          'item',
+          null,
+        ),
+      'list': _i6.ListEndpoint()
+        ..initialize(
+          server,
+          'list',
+          null,
+        ),
+      'profile': _i7.ProfileEndpoint()
+        ..initialize(
+          server,
+          'profile',
           null,
         ),
     };
@@ -271,9 +294,258 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i5.Endpoints()
+    connectors['item'] = _i1.EndpointConnector(
+      name: 'item',
+      endpoint: endpoints['item']!,
+      methodConnectors: {
+        'byList': _i1.MethodConnector(
+          name: 'byList',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i5.ItemEndpoint).byList(
+                session,
+                params['listId'],
+              ),
+        ),
+        'add': _i1.MethodConnector(
+          name: 'add',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'name': _i1.ParameterDescription(
+              name: 'name',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'quantity': _i1.ParameterDescription(
+              name: 'quantity',
+              type: _i1.getType<int?>(),
+              nullable: true,
+            ),
+            'shopId': _i1.ParameterDescription(
+              name: 'shopId',
+              type: _i1.getType<_i1.UuidValue?>(),
+              nullable: true,
+            ),
+            'noteText': _i1.ParameterDescription(
+              name: 'noteText',
+              type: _i1.getType<String?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i5.ItemEndpoint).add(
+                session,
+                params['listId'],
+                params['name'],
+                quantity: params['quantity'],
+                shopId: params['shopId'],
+                noteText: params['noteText'],
+              ),
+        ),
+        'save': _i1.MethodConnector(
+          name: 'save',
+          params: {
+            'item': _i1.ParameterDescription(
+              name: 'item',
+              type: _i1.getType<_i8.ShoppingItem>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i5.ItemEndpoint).save(
+                session,
+                params['item'],
+              ),
+        ),
+        'remove': _i1.MethodConnector(
+          name: 'remove',
+          params: {
+            'itemId': _i1.ParameterDescription(
+              name: 'itemId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i5.ItemEndpoint).remove(
+                session,
+                params['itemId'],
+              ),
+        ),
+      },
+    );
+    connectors['list'] = _i1.EndpointConnector(
+      name: 'list',
+      endpoint: endpoints['list']!,
+      methodConnectors: {
+        'myLists': _i1.MethodConnector(
+          name: 'myLists',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['list'] as _i6.ListEndpoint).myLists(session),
+        ),
+        'byId': _i1.MethodConnector(
+          name: 'byId',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i6.ListEndpoint).byId(
+                session,
+                params['listId'],
+              ),
+        ),
+        'create': _i1.MethodConnector(
+          name: 'create',
+          params: {
+            'name': _i1.ParameterDescription(
+              name: 'name',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i6.ListEndpoint).create(
+                session,
+                params['name'],
+              ),
+        ),
+        'join': _i1.MethodConnector(
+          name: 'join',
+          params: {
+            'joinCode': _i1.ParameterDescription(
+              name: 'joinCode',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i6.ListEndpoint).join(
+                session,
+                params['joinCode'],
+              ),
+        ),
+        'rename': _i1.MethodConnector(
+          name: 'rename',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'name': _i1.ParameterDescription(
+              name: 'name',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i6.ListEndpoint).rename(
+                session,
+                params['listId'],
+                params['name'],
+              ),
+        ),
+        'leave': _i1.MethodConnector(
+          name: 'leave',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i6.ListEndpoint).leave(
+                session,
+                params['listId'],
+              ),
+        ),
+      },
+    );
+    connectors['profile'] = _i1.EndpointConnector(
+      name: 'profile',
+      endpoint: endpoints['profile']!,
+      methodConnectors: {
+        'displayName': _i1.MethodConnector(
+          name: 'displayName',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i7.ProfileEndpoint)
+                  .displayName(session),
+        ),
+        'setDisplayName': _i1.MethodConnector(
+          name: 'setDisplayName',
+          params: {
+            'displayName': _i1.ParameterDescription(
+              name: 'displayName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i7.ProfileEndpoint).setDisplayName(
+                    session,
+                    params['displayName'],
+                  ),
+        ),
+      },
+    );
+    modules['serverpod_auth_idp'] = _i9.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i6.Endpoints()
+    modules['serverpod_auth_core'] = _i10.Endpoints()
       ..initializeEndpoints(server);
   }
 }

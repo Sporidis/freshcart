@@ -1,0 +1,3 @@
+### Thrown when the caller is authenticated but does not belong to the list they
+### are trying to read or change.
+exception: NotAMemberException

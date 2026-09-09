@@ -11,3 +11,18 @@ jwtRefresh:
   - refreshAccessToken:
 greeting:
   - hello:
+item:
+  - byList:
+  - add:
+  - save:
+  - remove:
+list:
+  - myLists:
+  - byId:
+  - create:
+  - join:
+  - rename:
+  - leave:
+profile:
+  - displayName:
+  - setDisplayName:

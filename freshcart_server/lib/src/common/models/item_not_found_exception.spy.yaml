@@ -1,0 +1,2 @@
+### Thrown when an item does not exist, or is on a list the caller cannot see.
+exception: ItemNotFoundException

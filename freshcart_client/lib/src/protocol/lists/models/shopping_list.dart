@@ -1,0 +1,192 @@
+/* AUTOMATICALLY GENERATED CODE DO NOT MODIFY */
+/*   To generate run: "serverpod generate"    */
+
+// ignore_for_file: implementation_imports
+// ignore_for_file: library_private_types_in_public_api
+// ignore_for_file: non_constant_identifier_names
+// ignore_for_file: public_member_api_docs
+// ignore_for_file: type_literal_in_constant_pattern
+// ignore_for_file: use_super_parameters
+// ignore_for_file: invalid_use_of_internal_member
+
+// ignore_for_file: no_leading_underscores_for_library_prefixes
+
+import 'package:serverpod_client/serverpod_client.dart' as _i1;
+import '../../lists/models/list_member.dart' as _i2;
+import '../../items/models/shopping_item.dart' as _i3;
+import '../../shops/models/shop.dart' as _i4;
+import 'package:freshcart_client/src/protocol/protocol.dart' as _i5;
+
+/// A shopping list shared by one or more people.
+abstract class ShoppingList implements _i1.SerializableModel {
+  ShoppingList._({
+    this.id,
+    required this.name,
+    required this.joinCode,
+    required this.ownerId,
+    DateTime? createdAt,
+    this.members,
+    this.items,
+    this.shops,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  factory ShoppingList({
+    _i1.UuidValue? id,
+    required String name,
+    required String joinCode,
+    required _i1.UuidValue ownerId,
+    DateTime? createdAt,
+    List<_i2.ListMember>? members,
+    List<_i3.ShoppingItem>? items,
+    List<_i4.Shop>? shops,
+  }) = _ShoppingListImpl;
+
+  factory ShoppingList.fromJson(Map<String, dynamic> jsonSerialization) {
+    return ShoppingList(
+      id: jsonSerialization['id'] == null
+          ? null
+          : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
+      name: jsonSerialization['name'] as String,
+      joinCode: jsonSerialization['joinCode'] as String,
+      ownerId: _i1.UuidValueJsonExtension.fromJson(
+        jsonSerialization['ownerId'],
+      ),
+      createdAt: jsonSerialization['createdAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
+      members: jsonSerialization['members'] == null
+          ? null
+          : _i5.Protocol().deserialize<List<_i2.ListMember>>(
+              jsonSerialization['members'],
+            ),
+      items: jsonSerialization['items'] == null
+          ? null
+          : _i5.Protocol().deserialize<List<_i3.ShoppingItem>>(
+              jsonSerialization['items'],
+            ),
+      shops: jsonSerialization['shops'] == null
+          ? null
+          : _i5.Protocol().deserialize<List<_i4.Shop>>(
+              jsonSerialization['shops'],
+            ),
+    );
+  }
+
+  /// The database id, set if the object has been inserted into the
+  /// database or if it has been fetched from the database. Otherwise,
+  /// the id will be null.
+  _i1.UuidValue? id;
+
+  /// Human-readable list name.
+  String name;
+
+  /// The short code someone types to join this list.
+  String joinCode;
+
+  /// The `authUserId` of whoever created the list.
+  ///
+  /// A plain column rather than a relation to `AuthUser` on purpose: deleting
+  /// an account must not cascade-delete a list other people are still using.
+  _i1.UuidValue ownerId;
+
+  DateTime createdAt;
+
+  /// Who belongs to this list.
+  List<_i2.ListMember>? members;
+
+  /// The items on this list.
+  List<_i3.ShoppingItem>? items;
+
+  /// The shops items on this list can be tagged to.
+  List<_i4.Shop>? shops;
+
+  /// Returns a shallow copy of this [ShoppingList]
+  /// with some or all fields replaced by the given arguments.
+  @_i1.useResult
+  ShoppingList copyWith({
+    _i1.UuidValue? id,
+    String? name,
+    String? joinCode,
+    _i1.UuidValue? ownerId,
+    DateTime? createdAt,
+    List<_i2.ListMember>? members,
+    List<_i3.ShoppingItem>? items,
+    List<_i4.Shop>? shops,
+  });
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      '__className__': 'ShoppingList',
+      if (id != null) 'id': id?.toJson(),
+      'name': name,
+      'joinCode': joinCode,
+      'ownerId': ownerId.toJson(),
+      'createdAt': createdAt.toJson(),
+      if (members != null)
+        'members': members?.toJson(valueToJson: (v) => v.toJson()),
+      if (items != null) 'items': items?.toJson(valueToJson: (v) => v.toJson()),
+      if (shops != null) 'shops': shops?.toJson(valueToJson: (v) => v.toJson()),
+    };
+  }
+
+  @override
+  String toString() {
+    return _i1.SerializationManager.encode(this);
+  }
+}
+
+class _Undefined {}
+
+class _ShoppingListImpl extends ShoppingList {
+  _ShoppingListImpl({
+    _i1.UuidValue? id,
+    required String name,
+    required String joinCode,
+    required _i1.UuidValue ownerId,
+    DateTime? createdAt,
+    List<_i2.ListMember>? members,
+    List<_i3.ShoppingItem>? items,
+    List<_i4.Shop>? shops,
+  }) : super._(
+         id: id,
+         name: name,
+         joinCode: joinCode,
+         ownerId: ownerId,
+         createdAt: createdAt,
+         members: members,
+         items: items,
+         shops: shops,
+       );
+
+  /// Returns a shallow copy of this [ShoppingList]
+  /// with some or all fields replaced by the given arguments.
+  @_i1.useResult
+  @override
+  ShoppingList copyWith({
+    Object? id = _Undefined,
+    String? name,
+    String? joinCode,
+    _i1.UuidValue? ownerId,
+    DateTime? createdAt,
+    Object? members = _Undefined,
+    Object? items = _Undefined,
+    Object? shops = _Undefined,
+  }) {
+    return ShoppingList(
+      id: id is _i1.UuidValue? ? id : this.id,
+      name: name ?? this.name,
+      joinCode: joinCode ?? this.joinCode,
+      ownerId: ownerId ?? this.ownerId,
+      createdAt: createdAt ?? this.createdAt,
+      members: members is List<_i2.ListMember>?
+          ? members
+          : this.members?.map((e0) => e0.copyWith()).toList(),
+      items: items is List<_i3.ShoppingItem>?
+          ? items
+          : this.items?.map((e0) => e0.copyWith()).toList(),
+      shops: shops is List<_i4.Shop>?
+          ? shops
+          : this.shops?.map((e0) => e0.copyWith()).toList(),
+    );
+  }
+}

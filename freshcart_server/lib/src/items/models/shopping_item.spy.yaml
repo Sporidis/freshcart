@@ -1,0 +1,50 @@
+### A single line on a shopping list.
+class: ShoppingItem
+table: freshcart_shopping_item
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The list this item belongs to.
+  ###
+  ### Declared as an explicit foreign-key field rather than an object relation:
+  ### it mirrors the domain entity, which holds a `ListId`, not a whole
+  ### `ShoppingList`, and it stops a read of one item dragging a list with it.
+  listId: UuidValue, relation(name=list_items, parent=freshcart_shopping_list, onDelete=Cascade)
+
+  ### What to buy.
+  name: String
+
+  ### How many. Always at least 1; enforced by the domain's AddItem use case.
+  quantity: int, defaultModel=1
+
+  isChecked: bool, defaultModel=false
+
+  ### Optional shop tag. `SetNull` on delete so removing a shop untags its
+  ### items rather than deleting them — losing a shop must never lose the
+  ### shopping.
+  ###
+  ### Explicitly nullable: an object relation (`shop: Shop?`) generated a
+  ### NOT NULL column here, which would have made the ON DELETE SET NULL
+  ### constraint fail the first time anyone removed a shop.
+  shopId: UuidValue?, relation(name=shop_items, parent=freshcart_shop, onDelete=SetNull)
+
+  ### Optional annotation, stored as JSON (see Note).
+  note: Note?
+
+  ### The `authUserId` of whoever added it.
+  addedBy: UuidValue
+
+  ### Who checked it off, and when. Both null while unchecked.
+  checkedBy: UuidValue?
+  checkedAt: DateTime?
+
+  createdAt: DateTime, defaultModel=now
+
+  ### The optimistic-concurrency token. A write carries the value the client
+  ### last saw; if the stored row has moved on, the server rejects the write
+  ### and the client rolls its optimistic edit back.
+  updatedAt: DateTime, defaultModel=now
+
+indexes:
+  freshcart_shopping_item_list_idx:
+    fields: listId

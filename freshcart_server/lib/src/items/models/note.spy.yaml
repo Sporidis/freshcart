@@ -1,0 +1,15 @@
+### A free-text annotation on a shopping item — "the oat one, not soy".
+###
+### Deliberately has no `table`: a note is owned by exactly one item and dies
+### with it, so Serverpod stores it as JSON in the item's row. That matches the
+### domain, where `Note` is a value with no identity of its own, and saves a
+### join on the hottest read in the app.
+class: Note
+fields:
+  ### The note body.
+  text: String
+
+  ### The `authUserId` of whoever last wrote it.
+  authorId: UuidValue
+
+  updatedAt: DateTime

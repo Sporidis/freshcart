@@ -1,0 +1,26 @@
+### A shop that items can be tagged to — "Colruyt", "Delhaize", "the bakery".
+###
+### Scoped to a list, not to a user: everyone collaborating on a list must see
+### the same shop set, otherwise one member's tag would be meaningless to
+### another. See docs/decisions.md #19.
+class: Shop
+table: freshcart_shop
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The list these shops belong to.
+  listId: UuidValue, relation(name=list_shops, parent=freshcart_shopping_list, onDelete=Cascade)
+
+  ### Display name.
+  name: String
+
+  ### The seed colour as a 32-bit ARGB integer. The app turns this into a full
+  ### Material colour scheme, so picking a shop re-themes the whole app.
+  colorArgb: int
+
+  ### Items tagged to this shop.
+  items: List<ShoppingItem>?, relation(name=shop_items)
+
+indexes:
+  freshcart_shop_list_idx:
+    fields: listId

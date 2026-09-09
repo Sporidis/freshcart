@@ -1,0 +1,25 @@
+### One person's membership of a shopping list.
+class: ListMember
+table: freshcart_list_member
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The list this membership belongs to.
+  listId: UuidValue, relation(name=list_members, parent=freshcart_shopping_list, onDelete=Cascade)
+
+  ### The member's `authUserId`.
+  userId: UuidValue
+
+  ### Denormalised from `UserProfile` so rendering a list needs no second
+  ### lookup, and so a name survives even after an account upgrade.
+  displayName: String
+
+  role: MemberRole
+
+  joinedAt: DateTime, defaultModel=now
+
+indexes:
+  ### One membership row per person per list.
+  freshcart_list_member_unique_idx:
+    fields: listId, userId
+    unique: true
