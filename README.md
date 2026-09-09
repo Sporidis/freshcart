@@ -52,6 +52,21 @@ dart test                       # pure Dart tests
 cd freshcart_flutter && flutter test
 ```
 
+## CI
+
+`.github/workflows/ci.yml` runs on every push and pull request:
+
+| Job | What it proves |
+| --- | --- |
+| `analyze` | `dart analyze` and `dart format` clean across the tree, **plus** the two golden rules asserted directly: the domain imports nothing but pure Dart, and `freshcart_client` never appears above `data/`. |
+| `test-dart` | Domain use-case and value-object tests; translation and pluralisation tests. |
+| `test-server` | Endpoint tests against a real Postgres — they exist to verify migrations, foreign keys and transactions, none of which a fake would exercise. |
+| `test-app` | Repository, mapper, controller and widget tests. |
+| `build-web` | The marketing site builds, and its `<title>`, description, Open Graph, canonical and JSON-LD survived the build. |
+
+Every job regenerates `build_runner` and slang output first, because that output
+is deliberately not committed (`docs/decisions.md` #14).
+
 ## Conventions
 
 Golden rules, layering and commit format live in [`CLAUDE.md`](CLAUDE.md). The short

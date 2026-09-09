@@ -1,0 +1,204 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# One in-flight run per branch; a superseded push has nothing to prove.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FLUTTER_VERSION: '3.47.2'
+
+jobs:
+  # Static analysis and formatting across the whole tree, including the Jaspr
+  # site, which is not a workspace member and resolves separately.
+  analyze:
+    name: Analyze & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Resolve workspace
+        run: flutter pub get
+
+      - name: Resolve marketing site
+        working-directory: freshcart_web
+        run: dart pub get
+
+      # build_runner output is not committed (docs/decisions.md #14), so it has
+      # to exist before anything is analysed — most "phantom" analyzer errors
+      # are stale or missing generated code.
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
+
+      - name: Generate translations
+        working-directory: packages/freshcart_l10n
+        run: dart run slang
+
+      - name: Generate app code
+        working-directory: freshcart_flutter
+        run: dart run build_runner build
+
+      - name: Analyze
+        run: dart analyze
+
+      - name: Check formatting
+        run: dart format --set-exit-if-changed .
+
+      # Golden rule 1: the domain must import nothing but pure Dart. Cheaper and
+      # more direct than any lint, so it is asserted here rather than assumed.
+      - name: Domain purity check
+        run: |
+          if grep -rE "package:(flutter|serverpod|firebase|freshcart_client)" \
+               packages/freshcart_domain/lib; then
+            echo "::error::Domain purity violated — see docs/architecture.md"
+            exit 1
+          fi
+          echo "Domain imports only pure Dart."
+
+      # Golden rule 2: Serverpod DTOs stop at the data layer.
+      - name: Layering boundary check
+        run: |
+          leak=$(find freshcart_flutter/lib/features -type d \
+                   \( -name application -o -name presentation \) \
+                   -exec grep -rl "freshcart_client" {} + 2>/dev/null || true)
+          if [ -n "$leak" ]; then
+            echo "::error::freshcart_client leaked above data/: $leak"
+            exit 1
+          fi
+          echo "No Serverpod types above data/."
+
+  test-dart:
+    name: Domain & l10n tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
+      - name: Generate translations
+        working-directory: packages/freshcart_l10n
+        run: dart run slang
+      - name: Test domain
+        working-directory: packages/freshcart_domain
+        run: dart test
+      - name: Test translations
+        working-directory: packages/freshcart_l10n
+        run: dart test
+
+  test-server:
+    name: Server tests
+    runs-on: ubuntu-latest
+    # The endpoint tests run against a real Postgres, not a mock: they exist to
+    # verify migrations, foreign keys and transactions, none of which a fake
+    # would exercise.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: freshcart_test
+          POSTGRES_PASSWORD: ppk6rn6Ew9Kb64WNuwJXKAaB_ncrg5r8
+        ports:
+          - 9090:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:6.2.6
+        ports:
+          - 9091:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
+      - name: Provide server passwords
+        working-directory: freshcart_server
+        run: cp config/passwords.example.yaml config/passwords.yaml
+      - name: Test server
+        working-directory: freshcart_server
+        run: dart test
+
+  test-app:
+    name: App tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
+      - name: Generate translations
+        working-directory: packages/freshcart_l10n
+        run: dart run slang
+      - name: Generate app code
+        working-directory: freshcart_flutter
+        run: dart run build_runner build
+      - name: Test app
+        working-directory: freshcart_flutter
+        run: flutter test
+
+  build-web:
+    name: Marketing site builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+      - name: Generate translations
+        working-directory: packages/freshcart_l10n
+        run: dart run slang
+      - name: Resolve marketing site
+        working-directory: freshcart_web
+        run: dart pub get
+      - name: Activate Jaspr CLI
+        run: dart pub global activate jaspr_cli
+      - name: Build site
+        working-directory: freshcart_web
+        run: dart pub global run jaspr_cli:jaspr build
+      # A landing page that silently stops emitting its metadata is a
+      # regression no test would otherwise catch.
+      - name: Assert SEO metadata survived the build
+        working-directory: freshcart_web
+        run: |
+          for needle in '<title>' 'name="description"' 'property="og:title"' \
+                        'rel="canonical"' 'application/ld+json' '<h1'; do
+            grep -q "$needle" build/jaspr/index.html \
+              || { echo "::error::index.html is missing $needle"; exit 1; }
+          done
+          echo "Landing page metadata intact."
