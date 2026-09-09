@@ -1,6 +1,8 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -16,6 +18,12 @@ abstract final class Routes {
 
   /// The concrete path for [listId].
   static String listDetail(ListId listId) => '/lists/${listId.value}';
+
+  /// The welcome screen.
+  static const String welcome = '/welcome';
+
+  /// The onboarding flow.
+  static const String onboarding = '/onboarding';
 }
 
 /// The app's [GoRouter].
@@ -26,6 +34,14 @@ abstract final class Routes {
 GoRouter appRouter(Ref ref) => GoRouter(
   initialLocation: Routes.lists,
   routes: <RouteBase>[
+    GoRoute(
+      path: Routes.welcome,
+      builder: (context, state) => const WelcomeScreen(),
+    ),
+    GoRoute(
+      path: Routes.onboarding,
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     GoRoute(
       path: Routes.lists,
       builder: (context, state) => const ListsScreen(),
