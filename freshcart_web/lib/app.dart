@@ -1,62 +1,36 @@
+import 'package:freshcart_web/components/footer.dart';
 import 'package:freshcart_web/components/header.dart';
-import 'package:freshcart_web/pages/about.dart';
 import 'package:freshcart_web/pages/home.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
-// The main component of your application.
-//
-// By using multi-page routing, this component will only be built on the server during pre-rendering and
-// **not** executed on the client. Instead only the nested [Home] and [About] components will be mounted on the client.
+/// The marketing site.
+///
+/// Multi-page routing, so this component runs only on the server during
+/// pre-rendering. Nothing here is interactive, which is the point: a
+/// marketing page should be HTML a crawler can read, not an application that
+/// happens to render text (`docs/decisions.md` #11).
 class App extends StatelessComponent {
+  /// Creates the site root.
   const App({super.key});
 
   @override
   Component build(BuildContext context) {
-    // This method is rerun every time the component is rebuilt.
-
-    // Renders a <div class="main"> html element with children.
     return div(classes: 'main', [
-      const Header(),
-      Router(
-        routes: [
-          Route(
-            path: '/',
-            title: 'Home',
-            builder: (context, state) => const Home(),
-          ),
-          Route(
-            path: '/about',
-            title: 'About',
-            builder: (context, state) => const About(),
-          ),
-        ],
-      ),
+      const SiteHeader(),
+      main_([
+        Router(
+          routes: [
+            Route(
+              path: '/',
+              title: 'FreshCart',
+              builder: (context, state) => const Home(),
+            ),
+          ],
+        ),
+      ]),
+      const SiteFooter(),
     ]);
   }
-
-  // Defines the CSS styles for this component.
-  //
-  // By using the @css annotation, these will be rendered automatically to CSS and included in your page.
-  // Must be a variable or getter of type [List<StyleRule>].
-  @css
-  static List<StyleRule> get styles => [
-    css('.main', [
-      // The '&' refers to the parent selector of a nested style rules.
-      css('&').styles(
-        display: .flex,
-        height: 100.vh,
-        flexDirection: .column,
-        flexWrap: .wrap,
-      ),
-      css('section').styles(
-        display: .flex,
-        flexDirection: .column,
-        justifyContent: .center,
-        alignItems: .center,
-        flex: const Flex(grow: 1),
-      ),
-    ]),
-  ];
 }

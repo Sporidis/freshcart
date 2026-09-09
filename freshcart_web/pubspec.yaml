@@ -10,6 +10,14 @@ environment:
   sdk: ^3.13.0
 
 dependencies:
+  # The site shares the app's domain and translations. Build-time dependencies
+  # are not transitive, so this pulls freezed_annotation (pure) rather than the
+  # freezed builder — which is what keeps the analyzer conflict in
+  # docs/decisions.md #13 from reaching this package.
+  freshcart_domain:
+    path: ../packages/freshcart_domain
+  freshcart_l10n:
+    path: ../packages/freshcart_l10n
   jaspr: ^0.23.4
   jaspr_router: ^0.9.0
 
