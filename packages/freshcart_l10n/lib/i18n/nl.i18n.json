@@ -1,0 +1,39 @@
+{
+  "appName": "FreshCart",
+  "lists": {
+    "title": "Mijn lijsten",
+    "empty": "Nog geen lijsten. Maak er een om te beginnen.",
+    "create": "Nieuwe lijst",
+    "join": "Lijst toevoegen met code",
+    "joinCodeLabel": "Deelcode",
+    "memberCount": {
+      "one": "{{n}} lid",
+      "other": "{{n}} leden"
+    }
+  },
+  "items": {
+    "empty": "Deze lijst is leeg.",
+    "add": "Artikel toevoegen",
+    "namePlaceholder": "Wat heb je nodig?",
+    "notePlaceholder": "Notitie (optioneel)",
+    "checkedBy": "Afgevinkt door {{name}}"
+  },
+  "shops": {
+    "all": "Alle winkels",
+    "none": "Geen winkel"
+  },
+  "common": {
+    "cancel": "Annuleren",
+    "save": "Opslaan",
+    "delete": "Verwijderen",
+    "retry": "Opnieuw proberen"
+  },
+  "errors": {
+    "network": "Geen verbinding met de server.",
+    "notFound": "Niet gevonden.",
+    "unauthorized": "Je hebt hier geen toegang toe.",
+    "conflict": "Iemand anders heeft dit net gewijzigd. Probeer opnieuw.",
+    "unexpected": "Er is iets misgegaan.",
+    "validation": "Controleer wat je hebt ingevuld."
+  }
+}

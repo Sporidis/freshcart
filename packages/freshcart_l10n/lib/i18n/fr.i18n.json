@@ -1,0 +1,39 @@
+{
+  "appName": "FreshCart",
+  "lists": {
+    "title": "Mes listes",
+    "empty": "Pas encore de listes. Créez-en une pour commencer.",
+    "create": "Nouvelle liste",
+    "join": "Rejoindre une liste avec un code",
+    "joinCodeLabel": "Code d'invitation",
+    "memberCount": {
+      "one": "{{n}} membre",
+      "other": "{{n}} membres"
+    }
+  },
+  "items": {
+    "empty": "Cette liste est vide.",
+    "add": "Ajouter un article",
+    "namePlaceholder": "De quoi avez-vous besoin ?",
+    "notePlaceholder": "Note (facultatif)",
+    "checkedBy": "Coché par {{name}}"
+  },
+  "shops": {
+    "all": "Tous les magasins",
+    "none": "Aucun magasin"
+  },
+  "common": {
+    "cancel": "Annuler",
+    "save": "Enregistrer",
+    "delete": "Supprimer",
+    "retry": "Réessayer"
+  },
+  "errors": {
+    "network": "Impossible de joindre le serveur.",
+    "notFound": "Introuvable.",
+    "unauthorized": "Vous n'avez pas accès à ceci.",
+    "conflict": "Quelqu'un vient de modifier ceci. Réessayez.",
+    "unexpected": "Une erreur est survenue.",
+    "validation": "Vérifiez ce que vous avez saisi."
+  }
+}
