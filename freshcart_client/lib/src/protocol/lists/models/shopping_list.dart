@@ -15,7 +15,9 @@ import 'package:serverpod_client/serverpod_client.dart' as _i1;
 import '../../lists/models/list_member.dart' as _i2;
 import '../../items/models/shopping_item.dart' as _i3;
 import '../../shops/models/shop.dart' as _i4;
-import 'package:freshcart_client/src/protocol/protocol.dart' as _i5;
+import '../../notifications/models/list_mute.dart' as _i5;
+import '../../notifications/models/pending_item_notification.dart' as _i6;
+import 'package:freshcart_client/src/protocol/protocol.dart' as _i7;
 
 /// A shopping list shared by one or more people.
 abstract class ShoppingList implements _i1.SerializableModel {
@@ -28,6 +30,8 @@ abstract class ShoppingList implements _i1.SerializableModel {
     this.members,
     this.items,
     this.shops,
+    this.mutes,
+    this.pendingNotifications,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ShoppingList({
@@ -39,6 +43,8 @@ abstract class ShoppingList implements _i1.SerializableModel {
     List<_i2.ListMember>? members,
     List<_i3.ShoppingItem>? items,
     List<_i4.Shop>? shops,
+    List<_i5.ListMute>? mutes,
+    List<_i6.PendingItemNotification>? pendingNotifications,
   }) = _ShoppingListImpl;
 
   factory ShoppingList.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -56,18 +62,28 @@ abstract class ShoppingList implements _i1.SerializableModel {
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
       members: jsonSerialization['members'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i2.ListMember>>(
+          : _i7.Protocol().deserialize<List<_i2.ListMember>>(
               jsonSerialization['members'],
             ),
       items: jsonSerialization['items'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i3.ShoppingItem>>(
+          : _i7.Protocol().deserialize<List<_i3.ShoppingItem>>(
               jsonSerialization['items'],
             ),
       shops: jsonSerialization['shops'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i4.Shop>>(
+          : _i7.Protocol().deserialize<List<_i4.Shop>>(
               jsonSerialization['shops'],
+            ),
+      mutes: jsonSerialization['mutes'] == null
+          ? null
+          : _i7.Protocol().deserialize<List<_i5.ListMute>>(
+              jsonSerialization['mutes'],
+            ),
+      pendingNotifications: jsonSerialization['pendingNotifications'] == null
+          ? null
+          : _i7.Protocol().deserialize<List<_i6.PendingItemNotification>>(
+              jsonSerialization['pendingNotifications'],
             ),
     );
   }
@@ -100,6 +116,12 @@ abstract class ShoppingList implements _i1.SerializableModel {
   /// The shops items on this list can be tagged to.
   List<_i4.Shop>? shops;
 
+  /// Per-user mutes for this list.
+  List<_i5.ListMute>? mutes;
+
+  /// Buffered notifications awaiting a flush.
+  List<_i6.PendingItemNotification>? pendingNotifications;
+
   /// Returns a shallow copy of this [ShoppingList]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -112,6 +134,8 @@ abstract class ShoppingList implements _i1.SerializableModel {
     List<_i2.ListMember>? members,
     List<_i3.ShoppingItem>? items,
     List<_i4.Shop>? shops,
+    List<_i5.ListMute>? mutes,
+    List<_i6.PendingItemNotification>? pendingNotifications,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -126,6 +150,11 @@ abstract class ShoppingList implements _i1.SerializableModel {
         'members': members?.toJson(valueToJson: (v) => v.toJson()),
       if (items != null) 'items': items?.toJson(valueToJson: (v) => v.toJson()),
       if (shops != null) 'shops': shops?.toJson(valueToJson: (v) => v.toJson()),
+      if (mutes != null) 'mutes': mutes?.toJson(valueToJson: (v) => v.toJson()),
+      if (pendingNotifications != null)
+        'pendingNotifications': pendingNotifications?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
     };
   }
 
@@ -147,6 +176,8 @@ class _ShoppingListImpl extends ShoppingList {
     List<_i2.ListMember>? members,
     List<_i3.ShoppingItem>? items,
     List<_i4.Shop>? shops,
+    List<_i5.ListMute>? mutes,
+    List<_i6.PendingItemNotification>? pendingNotifications,
   }) : super._(
          id: id,
          name: name,
@@ -156,6 +187,8 @@ class _ShoppingListImpl extends ShoppingList {
          members: members,
          items: items,
          shops: shops,
+         mutes: mutes,
+         pendingNotifications: pendingNotifications,
        );
 
   /// Returns a shallow copy of this [ShoppingList]
@@ -171,6 +204,8 @@ class _ShoppingListImpl extends ShoppingList {
     Object? members = _Undefined,
     Object? items = _Undefined,
     Object? shops = _Undefined,
+    Object? mutes = _Undefined,
+    Object? pendingNotifications = _Undefined,
   }) {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -187,6 +222,13 @@ class _ShoppingListImpl extends ShoppingList {
       shops: shops is List<_i4.Shop>?
           ? shops
           : this.shops?.map((e0) => e0.copyWith()).toList(),
+      mutes: mutes is List<_i5.ListMute>?
+          ? mutes
+          : this.mutes?.map((e0) => e0.copyWith()).toList(),
+      pendingNotifications:
+          pendingNotifications is List<_i6.PendingItemNotification>?
+          ? pendingNotifications
+          : this.pendingNotifications?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }

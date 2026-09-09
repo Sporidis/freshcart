@@ -1,0 +1,10 @@
+### Which platform a registered device runs.
+###
+### Kept because the delivery story differs per platform — notably that EU iOS
+### PWA installs cannot receive web push at all.
+enum: DevicePlatform
+serialized: byName
+values:
+  - android
+  - ios
+  - web

@@ -1,0 +1,4 @@
+### A bare list id, used as the payload of the notification flush future call.
+class: ListReference
+fields:
+  listId: UuidValue

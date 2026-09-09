@@ -30,14 +30,19 @@ import 'items/models/shopping_item.dart' as _i14;
 import 'lists/models/list_member.dart' as _i15;
 import 'lists/models/member_role.dart' as _i16;
 import 'lists/models/shopping_list.dart' as _i17;
-import 'shops/models/shop.dart' as _i18;
-import 'users/models/current_user.dart' as _i19;
-import 'users/models/member_profile.dart' as _i20;
+import 'notifications/models/device_platform.dart' as _i18;
+import 'notifications/models/device_token.dart' as _i19;
+import 'notifications/models/list_mute.dart' as _i20;
+import 'notifications/models/list_reference.dart' as _i21;
+import 'notifications/models/pending_item_notification.dart' as _i22;
+import 'shops/models/shop.dart' as _i23;
+import 'users/models/current_user.dart' as _i24;
+import 'users/models/member_profile.dart' as _i25;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
-    as _i21;
+    as _i26;
 import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
-    as _i22;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i23;
+    as _i27;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i28;
 export 'common/models/edit_conflict_exception.dart';
 export 'common/models/invalid_join_code_exception.dart';
 export 'common/models/item_not_found_exception.dart';
@@ -51,6 +56,11 @@ export 'items/models/shopping_item.dart';
 export 'lists/models/list_member.dart';
 export 'lists/models/member_role.dart';
 export 'lists/models/shopping_list.dart';
+export 'notifications/models/device_platform.dart';
+export 'notifications/models/device_token.dart';
+export 'notifications/models/list_mute.dart';
+export 'notifications/models/list_reference.dart';
+export 'notifications/models/pending_item_notification.dart';
 export 'shops/models/shop.dart';
 export 'users/models/current_user.dart';
 export 'users/models/member_profile.dart';
@@ -63,6 +73,88 @@ class Protocol extends _i1.SerializationManagerServer {
   static final Protocol _instance = Protocol._();
 
   static final List<_i2.TableDefinition> targetTableDefinitions = [
+    _i2.TableDefinition(
+      name: 'freshcart_device_token',
+      dartName: 'DeviceToken',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'ownerId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'token',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'platform',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:DevicePlatform',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_device_token_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_device_token_unique_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'token',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_device_token_owner_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'ownerId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     _i2.TableDefinition(
       name: 'freshcart_list_member',
       dartName: 'ListMember',
@@ -154,6 +246,84 @@ class Protocol extends _i1.SerializationManagerServer {
       managed: true,
     ),
     _i2.TableDefinition(
+      name: 'freshcart_list_mute',
+      dartName: 'ListMute',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'listId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_list_mute_fk_0',
+          columns: ['listId'],
+          referenceTable: 'freshcart_shopping_list',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_list_mute_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_list_mute_unique_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'listId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
       name: 'freshcart_member_profile',
       dartName: 'MemberProfile',
       schema: 'public',
@@ -222,6 +392,98 @@ class Protocol extends _i1.SerializationManagerServer {
           ],
           type: 'btree',
           isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'freshcart_pending_item_notification',
+      dartName: 'PendingItemNotification',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'listId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'actorId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'actorName',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'itemName',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'kind',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:ItemChangeKind',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_pending_item_notification_fk_0',
+          columns: ['listId'],
+          referenceTable: 'freshcart_shopping_list',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_pending_item_notification_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_pending_item_notification_list_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'listId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
           isPrimary: false,
         ),
       ],
@@ -586,14 +848,29 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i17.ShoppingList) {
       return _i17.ShoppingList.fromJson(data) as T;
     }
-    if (t == _i18.Shop) {
-      return _i18.Shop.fromJson(data) as T;
+    if (t == _i18.DevicePlatform) {
+      return _i18.DevicePlatform.fromJson(data) as T;
     }
-    if (t == _i19.CurrentUser) {
-      return _i19.CurrentUser.fromJson(data) as T;
+    if (t == _i19.DeviceToken) {
+      return _i19.DeviceToken.fromJson(data) as T;
     }
-    if (t == _i20.MemberProfile) {
-      return _i20.MemberProfile.fromJson(data) as T;
+    if (t == _i20.ListMute) {
+      return _i20.ListMute.fromJson(data) as T;
+    }
+    if (t == _i21.ListReference) {
+      return _i21.ListReference.fromJson(data) as T;
+    }
+    if (t == _i22.PendingItemNotification) {
+      return _i22.PendingItemNotification.fromJson(data) as T;
+    }
+    if (t == _i23.Shop) {
+      return _i23.Shop.fromJson(data) as T;
+    }
+    if (t == _i24.CurrentUser) {
+      return _i24.CurrentUser.fromJson(data) as T;
+    }
+    if (t == _i25.MemberProfile) {
+      return _i25.MemberProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.EditConflictException?>()) {
       return (data != null ? _i5.EditConflictException.fromJson(data) : null)
@@ -640,14 +917,30 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i1.getType<_i17.ShoppingList?>()) {
       return (data != null ? _i17.ShoppingList.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i18.Shop?>()) {
-      return (data != null ? _i18.Shop.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i18.DevicePlatform?>()) {
+      return (data != null ? _i18.DevicePlatform.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.CurrentUser?>()) {
-      return (data != null ? _i19.CurrentUser.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.DeviceToken?>()) {
+      return (data != null ? _i19.DeviceToken.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i20.MemberProfile?>()) {
-      return (data != null ? _i20.MemberProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i20.ListMute?>()) {
+      return (data != null ? _i20.ListMute.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i21.ListReference?>()) {
+      return (data != null ? _i21.ListReference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i22.PendingItemNotification?>()) {
+      return (data != null ? _i22.PendingItemNotification.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i23.Shop?>()) {
+      return (data != null ? _i23.Shop.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i24.CurrentUser?>()) {
+      return (data != null ? _i24.CurrentUser.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i25.MemberProfile?>()) {
+      return (data != null ? _i25.MemberProfile.fromJson(data) : null) as T;
     }
     if (t == List<_i15.ListMember>) {
       return (data as List).map((e) => deserialize<_i15.ListMember>(e)).toList()
@@ -675,29 +968,55 @@ class Protocol extends _i1.SerializationManagerServer {
               : null)
           as T;
     }
-    if (t == List<_i18.Shop>) {
-      return (data as List).map((e) => deserialize<_i18.Shop>(e)).toList() as T;
+    if (t == List<_i23.Shop>) {
+      return (data as List).map((e) => deserialize<_i23.Shop>(e)).toList() as T;
     }
-    if (t == _i1.getType<List<_i18.Shop>?>()) {
+    if (t == _i1.getType<List<_i23.Shop>?>()) {
       return (data != null
-              ? (data as List).map((e) => deserialize<_i18.Shop>(e)).toList()
+              ? (data as List).map((e) => deserialize<_i23.Shop>(e)).toList()
               : null)
           as T;
     }
-    if (t == List<_i21.ShoppingItem>) {
+    if (t == List<_i20.ListMute>) {
+      return (data as List).map((e) => deserialize<_i20.ListMute>(e)).toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i20.ListMute>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i20.ListMute>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i22.PendingItemNotification>) {
       return (data as List)
-              .map((e) => deserialize<_i21.ShoppingItem>(e))
+              .map((e) => deserialize<_i22.PendingItemNotification>(e))
               .toList()
           as T;
     }
-    if (t == List<_i22.ShoppingList>) {
+    if (t == _i1.getType<List<_i22.PendingItemNotification>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i22.PendingItemNotification>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i26.ShoppingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i22.ShoppingList>(e))
+              .map((e) => deserialize<_i26.ShoppingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i23.Shop>) {
-      return (data as List).map((e) => deserialize<_i23.Shop>(e)).toList() as T;
+    if (t == List<_i27.ShoppingList>) {
+      return (data as List)
+              .map((e) => deserialize<_i27.ShoppingList>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i28.Shop>) {
+      return (data as List).map((e) => deserialize<_i28.Shop>(e)).toList() as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);
@@ -726,9 +1045,14 @@ class Protocol extends _i1.SerializationManagerServer {
       _i15.ListMember => 'ListMember',
       _i16.MemberRole => 'MemberRole',
       _i17.ShoppingList => 'ShoppingList',
-      _i18.Shop => 'Shop',
-      _i19.CurrentUser => 'CurrentUser',
-      _i20.MemberProfile => 'MemberProfile',
+      _i18.DevicePlatform => 'DevicePlatform',
+      _i19.DeviceToken => 'DeviceToken',
+      _i20.ListMute => 'ListMute',
+      _i21.ListReference => 'ListReference',
+      _i22.PendingItemNotification => 'PendingItemNotification',
+      _i23.Shop => 'Shop',
+      _i24.CurrentUser => 'CurrentUser',
+      _i25.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -769,11 +1093,21 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'MemberRole';
       case _i17.ShoppingList():
         return 'ShoppingList';
-      case _i18.Shop():
+      case _i18.DevicePlatform():
+        return 'DevicePlatform';
+      case _i19.DeviceToken():
+        return 'DeviceToken';
+      case _i20.ListMute():
+        return 'ListMute';
+      case _i21.ListReference():
+        return 'ListReference';
+      case _i22.PendingItemNotification():
+        return 'PendingItemNotification';
+      case _i23.Shop():
         return 'Shop';
-      case _i19.CurrentUser():
+      case _i24.CurrentUser():
         return 'CurrentUser';
-      case _i20.MemberProfile():
+      case _i25.MemberProfile():
         return 'MemberProfile';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -836,14 +1170,29 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'ShoppingList') {
       return deserialize<_i17.ShoppingList>(data['data']);
     }
+    if (dataClassName == 'DevicePlatform') {
+      return deserialize<_i18.DevicePlatform>(data['data']);
+    }
+    if (dataClassName == 'DeviceToken') {
+      return deserialize<_i19.DeviceToken>(data['data']);
+    }
+    if (dataClassName == 'ListMute') {
+      return deserialize<_i20.ListMute>(data['data']);
+    }
+    if (dataClassName == 'ListReference') {
+      return deserialize<_i21.ListReference>(data['data']);
+    }
+    if (dataClassName == 'PendingItemNotification') {
+      return deserialize<_i22.PendingItemNotification>(data['data']);
+    }
     if (dataClassName == 'Shop') {
-      return deserialize<_i18.Shop>(data['data']);
+      return deserialize<_i23.Shop>(data['data']);
     }
     if (dataClassName == 'CurrentUser') {
-      return deserialize<_i19.CurrentUser>(data['data']);
+      return deserialize<_i24.CurrentUser>(data['data']);
     }
     if (dataClassName == 'MemberProfile') {
-      return deserialize<_i20.MemberProfile>(data['data']);
+      return deserialize<_i25.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -887,10 +1236,16 @@ class Protocol extends _i1.SerializationManagerServer {
         return _i15.ListMember.t;
       case _i17.ShoppingList:
         return _i17.ShoppingList.t;
-      case _i18.Shop:
-        return _i18.Shop.t;
-      case _i20.MemberProfile:
-        return _i20.MemberProfile.t;
+      case _i19.DeviceToken:
+        return _i19.DeviceToken.t;
+      case _i20.ListMute:
+        return _i20.ListMute.t;
+      case _i22.PendingItemNotification:
+        return _i22.PendingItemNotification.t;
+      case _i23.Shop:
+        return _i23.Shop.t;
+      case _i25.MemberProfile:
+        return _i25.MemberProfile.t;
     }
     return null;
   }

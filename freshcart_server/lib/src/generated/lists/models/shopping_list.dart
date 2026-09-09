@@ -15,7 +15,9 @@ import 'package:serverpod/serverpod.dart' as _i1;
 import '../../lists/models/list_member.dart' as _i2;
 import '../../items/models/shopping_item.dart' as _i3;
 import '../../shops/models/shop.dart' as _i4;
-import 'package:freshcart_server/src/generated/protocol.dart' as _i5;
+import '../../notifications/models/list_mute.dart' as _i5;
+import '../../notifications/models/pending_item_notification.dart' as _i6;
+import 'package:freshcart_server/src/generated/protocol.dart' as _i7;
 
 /// A shopping list shared by one or more people.
 abstract class ShoppingList
@@ -29,6 +31,8 @@ abstract class ShoppingList
     this.members,
     this.items,
     this.shops,
+    this.mutes,
+    this.pendingNotifications,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ShoppingList({
@@ -40,6 +44,8 @@ abstract class ShoppingList
     List<_i2.ListMember>? members,
     List<_i3.ShoppingItem>? items,
     List<_i4.Shop>? shops,
+    List<_i5.ListMute>? mutes,
+    List<_i6.PendingItemNotification>? pendingNotifications,
   }) = _ShoppingListImpl;
 
   factory ShoppingList.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -57,18 +63,28 @@ abstract class ShoppingList
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
       members: jsonSerialization['members'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i2.ListMember>>(
+          : _i7.Protocol().deserialize<List<_i2.ListMember>>(
               jsonSerialization['members'],
             ),
       items: jsonSerialization['items'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i3.ShoppingItem>>(
+          : _i7.Protocol().deserialize<List<_i3.ShoppingItem>>(
               jsonSerialization['items'],
             ),
       shops: jsonSerialization['shops'] == null
           ? null
-          : _i5.Protocol().deserialize<List<_i4.Shop>>(
+          : _i7.Protocol().deserialize<List<_i4.Shop>>(
               jsonSerialization['shops'],
+            ),
+      mutes: jsonSerialization['mutes'] == null
+          ? null
+          : _i7.Protocol().deserialize<List<_i5.ListMute>>(
+              jsonSerialization['mutes'],
+            ),
+      pendingNotifications: jsonSerialization['pendingNotifications'] == null
+          ? null
+          : _i7.Protocol().deserialize<List<_i6.PendingItemNotification>>(
+              jsonSerialization['pendingNotifications'],
             ),
     );
   }
@@ -103,6 +119,12 @@ abstract class ShoppingList
   /// The shops items on this list can be tagged to.
   List<_i4.Shop>? shops;
 
+  /// Per-user mutes for this list.
+  List<_i5.ListMute>? mutes;
+
+  /// Buffered notifications awaiting a flush.
+  List<_i6.PendingItemNotification>? pendingNotifications;
+
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
 
@@ -118,6 +140,8 @@ abstract class ShoppingList
     List<_i2.ListMember>? members,
     List<_i3.ShoppingItem>? items,
     List<_i4.Shop>? shops,
+    List<_i5.ListMute>? mutes,
+    List<_i6.PendingItemNotification>? pendingNotifications,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -132,6 +156,11 @@ abstract class ShoppingList
         'members': members?.toJson(valueToJson: (v) => v.toJson()),
       if (items != null) 'items': items?.toJson(valueToJson: (v) => v.toJson()),
       if (shops != null) 'shops': shops?.toJson(valueToJson: (v) => v.toJson()),
+      if (mutes != null) 'mutes': mutes?.toJson(valueToJson: (v) => v.toJson()),
+      if (pendingNotifications != null)
+        'pendingNotifications': pendingNotifications?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
     };
   }
 
@@ -150,6 +179,12 @@ abstract class ShoppingList
         'items': items?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
       if (shops != null)
         'shops': shops?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (mutes != null)
+        'mutes': mutes?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      if (pendingNotifications != null)
+        'pendingNotifications': pendingNotifications?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -157,11 +192,15 @@ abstract class ShoppingList
     _i2.ListMemberIncludeList? members,
     _i3.ShoppingItemIncludeList? items,
     _i4.ShopIncludeList? shops,
+    _i5.ListMuteIncludeList? mutes,
+    _i6.PendingItemNotificationIncludeList? pendingNotifications,
   }) {
     return ShoppingListInclude._(
       members: members,
       items: items,
       shops: shops,
+      mutes: mutes,
+      pendingNotifications: pendingNotifications,
     );
   }
 
@@ -203,6 +242,8 @@ class _ShoppingListImpl extends ShoppingList {
     List<_i2.ListMember>? members,
     List<_i3.ShoppingItem>? items,
     List<_i4.Shop>? shops,
+    List<_i5.ListMute>? mutes,
+    List<_i6.PendingItemNotification>? pendingNotifications,
   }) : super._(
          id: id,
          name: name,
@@ -212,6 +253,8 @@ class _ShoppingListImpl extends ShoppingList {
          members: members,
          items: items,
          shops: shops,
+         mutes: mutes,
+         pendingNotifications: pendingNotifications,
        );
 
   /// Returns a shallow copy of this [ShoppingList]
@@ -227,6 +270,8 @@ class _ShoppingListImpl extends ShoppingList {
     Object? members = _Undefined,
     Object? items = _Undefined,
     Object? shops = _Undefined,
+    Object? mutes = _Undefined,
+    Object? pendingNotifications = _Undefined,
   }) {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -243,6 +288,13 @@ class _ShoppingListImpl extends ShoppingList {
       shops: shops is List<_i4.Shop>?
           ? shops
           : this.shops?.map((e0) => e0.copyWith()).toList(),
+      mutes: mutes is List<_i5.ListMute>?
+          ? mutes
+          : this.mutes?.map((e0) => e0.copyWith()).toList(),
+      pendingNotifications:
+          pendingNotifications is List<_i6.PendingItemNotification>?
+          ? pendingNotifications
+          : this.pendingNotifications?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }
@@ -329,6 +381,18 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
   /// The shops items on this list can be tagged to.
   _i1.ManyRelation<_i4.ShopTable>? _shops;
 
+  /// Per-user mutes for this list.
+  _i5.ListMuteTable? ___mutes;
+
+  /// Per-user mutes for this list.
+  _i1.ManyRelation<_i5.ListMuteTable>? _mutes;
+
+  /// Buffered notifications awaiting a flush.
+  _i6.PendingItemNotificationTable? ___pendingNotifications;
+
+  /// Buffered notifications awaiting a flush.
+  _i1.ManyRelation<_i6.PendingItemNotificationTable>? _pendingNotifications;
+
   _i2.ListMemberTable get __members {
     if (___members != null) return ___members!;
     ___members = _i1.createRelationTable(
@@ -366,6 +430,32 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
           _i4.ShopTable(tableRelation: foreignTableRelation),
     );
     return ___shops!;
+  }
+
+  _i5.ListMuteTable get __mutes {
+    if (___mutes != null) return ___mutes!;
+    ___mutes = _i1.createRelationTable(
+      relationFieldName: '__mutes',
+      field: ShoppingList.t.id,
+      foreignField: _i5.ListMute.t.listId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.ListMuteTable(tableRelation: foreignTableRelation),
+    );
+    return ___mutes!;
+  }
+
+  _i6.PendingItemNotificationTable get __pendingNotifications {
+    if (___pendingNotifications != null) return ___pendingNotifications!;
+    ___pendingNotifications = _i1.createRelationTable(
+      relationFieldName: '__pendingNotifications',
+      field: ShoppingList.t.id,
+      foreignField: _i6.PendingItemNotification.t.listId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i6.PendingItemNotificationTable(tableRelation: foreignTableRelation),
+    );
+    return ___pendingNotifications!;
   }
 
   _i1.ManyRelation<_i2.ListMemberTable> get members {
@@ -425,6 +515,44 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     return _shops!;
   }
 
+  _i1.ManyRelation<_i5.ListMuteTable> get mutes {
+    if (_mutes != null) return _mutes!;
+    var relationTable = _i1.createRelationTable(
+      relationFieldName: 'mutes',
+      field: ShoppingList.t.id,
+      foreignField: _i5.ListMute.t.listId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i5.ListMuteTable(tableRelation: foreignTableRelation),
+    );
+    _mutes = _i1.ManyRelation<_i5.ListMuteTable>(
+      tableWithRelations: relationTable,
+      table: _i5.ListMuteTable(
+        tableRelation: relationTable.tableRelation!.lastRelation,
+      ),
+    );
+    return _mutes!;
+  }
+
+  _i1.ManyRelation<_i6.PendingItemNotificationTable> get pendingNotifications {
+    if (_pendingNotifications != null) return _pendingNotifications!;
+    var relationTable = _i1.createRelationTable(
+      relationFieldName: 'pendingNotifications',
+      field: ShoppingList.t.id,
+      foreignField: _i6.PendingItemNotification.t.listId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i6.PendingItemNotificationTable(tableRelation: foreignTableRelation),
+    );
+    _pendingNotifications = _i1.ManyRelation<_i6.PendingItemNotificationTable>(
+      tableWithRelations: relationTable,
+      table: _i6.PendingItemNotificationTable(
+        tableRelation: relationTable.tableRelation!.lastRelation,
+      ),
+    );
+    return _pendingNotifications!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -445,6 +573,12 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     if (relationField == 'shops') {
       return __shops;
     }
+    if (relationField == 'mutes') {
+      return __mutes;
+    }
+    if (relationField == 'pendingNotifications') {
+      return __pendingNotifications;
+    }
     return null;
   }
 }
@@ -454,10 +588,14 @@ class ShoppingListInclude extends _i1.IncludeObject {
     _i2.ListMemberIncludeList? members,
     _i3.ShoppingItemIncludeList? items,
     _i4.ShopIncludeList? shops,
+    _i5.ListMuteIncludeList? mutes,
+    _i6.PendingItemNotificationIncludeList? pendingNotifications,
   }) {
     _members = members;
     _items = items;
     _shops = shops;
+    _mutes = mutes;
+    _pendingNotifications = pendingNotifications;
   }
 
   _i2.ListMemberIncludeList? _members;
@@ -466,11 +604,17 @@ class ShoppingListInclude extends _i1.IncludeObject {
 
   _i4.ShopIncludeList? _shops;
 
+  _i5.ListMuteIncludeList? _mutes;
+
+  _i6.PendingItemNotificationIncludeList? _pendingNotifications;
+
   @override
   Map<String, _i1.Include?> get includes => {
     'members': _members,
     'items': _items,
     'shops': _shops,
+    'mutes': _mutes,
+    'pendingNotifications': _pendingNotifications,
   };
 
   @override
@@ -869,6 +1013,56 @@ class ShoppingListAttachRepository {
       transaction: transaction,
     );
   }
+
+  /// Creates a relation between this [ShoppingList] and the given [ListMute]s
+  /// by setting each [ListMute]'s foreign key `listId` to refer to this [ShoppingList].
+  Future<void> mutes(
+    _i1.DatabaseSession session,
+    ShoppingList shoppingList,
+    List<_i5.ListMute> listMute, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listMute.any((e) => e.id == null)) {
+      throw ArgumentError.notNull('listMute.id');
+    }
+    if (shoppingList.id == null) {
+      throw ArgumentError.notNull('shoppingList.id');
+    }
+
+    var $listMute = listMute
+        .map((e) => e.copyWith(listId: shoppingList.id))
+        .toList();
+    await session.db.update<_i5.ListMute>(
+      $listMute,
+      columns: [_i5.ListMute.t.listId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between this [ShoppingList] and the given [PendingItemNotification]s
+  /// by setting each [PendingItemNotification]'s foreign key `listId` to refer to this [ShoppingList].
+  Future<void> pendingNotifications(
+    _i1.DatabaseSession session,
+    ShoppingList shoppingList,
+    List<_i6.PendingItemNotification> pendingItemNotification, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (pendingItemNotification.any((e) => e.id == null)) {
+      throw ArgumentError.notNull('pendingItemNotification.id');
+    }
+    if (shoppingList.id == null) {
+      throw ArgumentError.notNull('shoppingList.id');
+    }
+
+    var $pendingItemNotification = pendingItemNotification
+        .map((e) => e.copyWith(listId: shoppingList.id))
+        .toList();
+    await session.db.update<_i6.PendingItemNotification>(
+      $pendingItemNotification,
+      columns: [_i6.PendingItemNotification.t.listId],
+      transaction: transaction,
+    );
+  }
 }
 
 class ShoppingListAttachRowRepository {
@@ -939,6 +1133,54 @@ class ShoppingListAttachRowRepository {
     await session.db.updateRow<_i4.Shop>(
       $shop,
       columns: [_i4.Shop.t.listId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between this [ShoppingList] and the given [ListMute]
+  /// by setting the [ListMute]'s foreign key `listId` to refer to this [ShoppingList].
+  Future<void> mutes(
+    _i1.DatabaseSession session,
+    ShoppingList shoppingList,
+    _i5.ListMute listMute, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (listMute.id == null) {
+      throw ArgumentError.notNull('listMute.id');
+    }
+    if (shoppingList.id == null) {
+      throw ArgumentError.notNull('shoppingList.id');
+    }
+
+    var $listMute = listMute.copyWith(listId: shoppingList.id);
+    await session.db.updateRow<_i5.ListMute>(
+      $listMute,
+      columns: [_i5.ListMute.t.listId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between this [ShoppingList] and the given [PendingItemNotification]
+  /// by setting the [PendingItemNotification]'s foreign key `listId` to refer to this [ShoppingList].
+  Future<void> pendingNotifications(
+    _i1.DatabaseSession session,
+    ShoppingList shoppingList,
+    _i6.PendingItemNotification pendingItemNotification, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (pendingItemNotification.id == null) {
+      throw ArgumentError.notNull('pendingItemNotification.id');
+    }
+    if (shoppingList.id == null) {
+      throw ArgumentError.notNull('shoppingList.id');
+    }
+
+    var $pendingItemNotification = pendingItemNotification.copyWith(
+      listId: shoppingList.id,
+    );
+    await session.db.updateRow<_i6.PendingItemNotification>(
+      $pendingItemNotification,
+      columns: [_i6.PendingItemNotification.t.listId],
       transaction: transaction,
     );
   }

@@ -25,18 +25,23 @@ import 'items/models/shopping_item.dart' as _i11;
 import 'lists/models/list_member.dart' as _i12;
 import 'lists/models/member_role.dart' as _i13;
 import 'lists/models/shopping_list.dart' as _i14;
-import 'shops/models/shop.dart' as _i15;
-import 'users/models/current_user.dart' as _i16;
-import 'users/models/member_profile.dart' as _i17;
+import 'notifications/models/device_platform.dart' as _i15;
+import 'notifications/models/device_token.dart' as _i16;
+import 'notifications/models/list_mute.dart' as _i17;
+import 'notifications/models/list_reference.dart' as _i18;
+import 'notifications/models/pending_item_notification.dart' as _i19;
+import 'shops/models/shop.dart' as _i20;
+import 'users/models/current_user.dart' as _i21;
+import 'users/models/member_profile.dart' as _i22;
 import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
-    as _i18;
+    as _i23;
 import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
-    as _i19;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i20;
+    as _i24;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i25;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i21;
+    as _i26;
 import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
-    as _i22;
+    as _i27;
 export 'common/models/edit_conflict_exception.dart';
 export 'common/models/invalid_join_code_exception.dart';
 export 'common/models/item_not_found_exception.dart';
@@ -50,6 +55,11 @@ export 'items/models/shopping_item.dart';
 export 'lists/models/list_member.dart';
 export 'lists/models/member_role.dart';
 export 'lists/models/shopping_list.dart';
+export 'notifications/models/device_platform.dart';
+export 'notifications/models/device_token.dart';
+export 'notifications/models/list_mute.dart';
+export 'notifications/models/list_reference.dart';
+export 'notifications/models/pending_item_notification.dart';
 export 'shops/models/shop.dart';
 export 'users/models/current_user.dart';
 export 'users/models/member_profile.dart';
@@ -128,14 +138,29 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i14.ShoppingList) {
       return _i14.ShoppingList.fromJson(data) as T;
     }
-    if (t == _i15.Shop) {
-      return _i15.Shop.fromJson(data) as T;
+    if (t == _i15.DevicePlatform) {
+      return _i15.DevicePlatform.fromJson(data) as T;
     }
-    if (t == _i16.CurrentUser) {
-      return _i16.CurrentUser.fromJson(data) as T;
+    if (t == _i16.DeviceToken) {
+      return _i16.DeviceToken.fromJson(data) as T;
     }
-    if (t == _i17.MemberProfile) {
-      return _i17.MemberProfile.fromJson(data) as T;
+    if (t == _i17.ListMute) {
+      return _i17.ListMute.fromJson(data) as T;
+    }
+    if (t == _i18.ListReference) {
+      return _i18.ListReference.fromJson(data) as T;
+    }
+    if (t == _i19.PendingItemNotification) {
+      return _i19.PendingItemNotification.fromJson(data) as T;
+    }
+    if (t == _i20.Shop) {
+      return _i20.Shop.fromJson(data) as T;
+    }
+    if (t == _i21.CurrentUser) {
+      return _i21.CurrentUser.fromJson(data) as T;
+    }
+    if (t == _i22.MemberProfile) {
+      return _i22.MemberProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.EditConflictException?>()) {
       return (data != null ? _i2.EditConflictException.fromJson(data) : null)
@@ -182,14 +207,30 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i14.ShoppingList?>()) {
       return (data != null ? _i14.ShoppingList.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.Shop?>()) {
-      return (data != null ? _i15.Shop.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.DevicePlatform?>()) {
+      return (data != null ? _i15.DevicePlatform.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.CurrentUser?>()) {
-      return (data != null ? _i16.CurrentUser.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.DeviceToken?>()) {
+      return (data != null ? _i16.DeviceToken.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.MemberProfile?>()) {
-      return (data != null ? _i17.MemberProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.ListMute?>()) {
+      return (data != null ? _i17.ListMute.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i18.ListReference?>()) {
+      return (data != null ? _i18.ListReference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i19.PendingItemNotification?>()) {
+      return (data != null ? _i19.PendingItemNotification.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i20.Shop?>()) {
+      return (data != null ? _i20.Shop.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i21.CurrentUser?>()) {
+      return (data != null ? _i21.CurrentUser.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i22.MemberProfile?>()) {
+      return (data != null ? _i22.MemberProfile.fromJson(data) : null) as T;
     }
     if (t == List<_i12.ListMember>) {
       return (data as List).map((e) => deserialize<_i12.ListMember>(e)).toList()
@@ -217,35 +258,61 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i15.Shop>) {
-      return (data as List).map((e) => deserialize<_i15.Shop>(e)).toList() as T;
-    }
-    if (t == _i1.getType<List<_i15.Shop>?>()) {
-      return (data != null
-              ? (data as List).map((e) => deserialize<_i15.Shop>(e)).toList()
-              : null)
-          as T;
-    }
-    if (t == List<_i18.ShoppingItem>) {
-      return (data as List)
-              .map((e) => deserialize<_i18.ShoppingItem>(e))
-              .toList()
-          as T;
-    }
-    if (t == List<_i19.ShoppingList>) {
-      return (data as List)
-              .map((e) => deserialize<_i19.ShoppingList>(e))
-              .toList()
-          as T;
-    }
     if (t == List<_i20.Shop>) {
       return (data as List).map((e) => deserialize<_i20.Shop>(e)).toList() as T;
     }
+    if (t == _i1.getType<List<_i20.Shop>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<_i20.Shop>(e)).toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i17.ListMute>) {
+      return (data as List).map((e) => deserialize<_i17.ListMute>(e)).toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i17.ListMute>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i17.ListMute>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i19.PendingItemNotification>) {
+      return (data as List)
+              .map((e) => deserialize<_i19.PendingItemNotification>(e))
+              .toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i19.PendingItemNotification>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i19.PendingItemNotification>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i23.ShoppingItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i23.ShoppingItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i24.ShoppingList>) {
+      return (data as List)
+              .map((e) => deserialize<_i24.ShoppingList>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i25.Shop>) {
+      return (data as List).map((e) => deserialize<_i25.Shop>(e)).toList() as T;
+    }
     try {
-      return _i21.Protocol().deserialize<T>(data, t);
+      return _i26.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i22.Protocol().deserialize<T>(data, t);
+      return _i27.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -265,9 +332,14 @@ class Protocol extends _i1.SerializationManager {
       _i12.ListMember => 'ListMember',
       _i13.MemberRole => 'MemberRole',
       _i14.ShoppingList => 'ShoppingList',
-      _i15.Shop => 'Shop',
-      _i16.CurrentUser => 'CurrentUser',
-      _i17.MemberProfile => 'MemberProfile',
+      _i15.DevicePlatform => 'DevicePlatform',
+      _i16.DeviceToken => 'DeviceToken',
+      _i17.ListMute => 'ListMute',
+      _i18.ListReference => 'ListReference',
+      _i19.PendingItemNotification => 'PendingItemNotification',
+      _i20.Shop => 'Shop',
+      _i21.CurrentUser => 'CurrentUser',
+      _i22.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -308,18 +380,28 @@ class Protocol extends _i1.SerializationManager {
         return 'MemberRole';
       case _i14.ShoppingList():
         return 'ShoppingList';
-      case _i15.Shop():
+      case _i15.DevicePlatform():
+        return 'DevicePlatform';
+      case _i16.DeviceToken():
+        return 'DeviceToken';
+      case _i17.ListMute():
+        return 'ListMute';
+      case _i18.ListReference():
+        return 'ListReference';
+      case _i19.PendingItemNotification():
+        return 'PendingItemNotification';
+      case _i20.Shop():
         return 'Shop';
-      case _i16.CurrentUser():
+      case _i21.CurrentUser():
         return 'CurrentUser';
-      case _i17.MemberProfile():
+      case _i22.MemberProfile():
         return 'MemberProfile';
     }
-    className = _i21.Protocol().getClassNameForObject(data);
+    className = _i26.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i22.Protocol().getClassNameForObject(data);
+    className = _i27.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -371,22 +453,37 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'ShoppingList') {
       return deserialize<_i14.ShoppingList>(data['data']);
     }
+    if (dataClassName == 'DevicePlatform') {
+      return deserialize<_i15.DevicePlatform>(data['data']);
+    }
+    if (dataClassName == 'DeviceToken') {
+      return deserialize<_i16.DeviceToken>(data['data']);
+    }
+    if (dataClassName == 'ListMute') {
+      return deserialize<_i17.ListMute>(data['data']);
+    }
+    if (dataClassName == 'ListReference') {
+      return deserialize<_i18.ListReference>(data['data']);
+    }
+    if (dataClassName == 'PendingItemNotification') {
+      return deserialize<_i19.PendingItemNotification>(data['data']);
+    }
     if (dataClassName == 'Shop') {
-      return deserialize<_i15.Shop>(data['data']);
+      return deserialize<_i20.Shop>(data['data']);
     }
     if (dataClassName == 'CurrentUser') {
-      return deserialize<_i16.CurrentUser>(data['data']);
+      return deserialize<_i21.CurrentUser>(data['data']);
     }
     if (dataClassName == 'MemberProfile') {
-      return deserialize<_i17.MemberProfile>(data['data']);
+      return deserialize<_i22.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i21.Protocol().deserializeByClassName(data);
+      return _i26.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i22.Protocol().deserializeByClassName(data);
+      return _i27.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -401,10 +498,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i21.Protocol().mapRecordToJson(record);
+      return _i26.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i22.Protocol().mapRecordToJson(record);
+      return _i27.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

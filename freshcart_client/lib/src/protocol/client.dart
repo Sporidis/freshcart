@@ -23,12 +23,16 @@ import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
     as _i6;
 import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i7;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i8;
-import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
+import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
+    as _i8;
+import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
     as _i9;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i10;
+import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
+    as _i11;
 import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
-    as _i10;
-import 'protocol.dart' as _i11;
+    as _i12;
+import 'protocol.dart' as _i13;
 
 /// Exposes the anonymous identity provider to clients.
 ///
@@ -419,6 +423,61 @@ class EndpointList extends _i2.EndpointRef {
       );
 }
 
+/// Device registration and per-list notification settings.
+/// {@category Endpoint}
+class EndpointNotification extends _i2.EndpointRef {
+  EndpointNotification(_i2.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'notification';
+
+  /// Registers this device to receive pushes for the caller.
+  ///
+  /// Idempotent: re-registering an existing token re-points it at the caller
+  /// rather than inserting a duplicate, so a shared device that changes hands
+  /// does not keep notifying the previous user.
+  _i3.Future<_i8.DeviceToken> registerDevice(
+    String token,
+    _i9.DevicePlatform platform,
+  ) => caller.callServerEndpoint<_i8.DeviceToken>(
+    'notification',
+    'registerDevice',
+    {
+      'token': token,
+      'platform': platform,
+    },
+  );
+
+  /// Stops pushes to this device. Called on sign-out.
+  _i3.Future<void> unregisterDevice(String token) =>
+      caller.callServerEndpoint<void>(
+        'notification',
+        'unregisterDevice',
+        {'token': token},
+      );
+
+  /// Mutes or unmutes a list for the caller.
+  _i3.Future<void> setListMuted(
+    _i2.UuidValue listId,
+    bool muted,
+  ) => caller.callServerEndpoint<void>(
+    'notification',
+    'setListMuted',
+    {
+      'listId': listId,
+      'muted': muted,
+    },
+  );
+
+  /// Whether the caller has muted [listId].
+  _i3.Future<bool> isListMuted(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<bool>(
+        'notification',
+        'isListMuted',
+        {'listId': listId},
+      );
+}
+
 /// The shops belonging to a list.
 /// {@category Endpoint}
 class EndpointShop extends _i2.EndpointRef {
@@ -428,19 +487,19 @@ class EndpointShop extends _i2.EndpointRef {
   String get name => 'shop';
 
   /// Every shop on a list the caller belongs to.
-  _i3.Future<List<_i8.Shop>> byList(_i2.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i8.Shop>>(
+  _i3.Future<List<_i10.Shop>> byList(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i10.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list the caller belongs to.
-  _i3.Future<_i8.Shop> create(
+  _i3.Future<_i10.Shop> create(
     _i2.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i8.Shop>(
+  ) => caller.callServerEndpoint<_i10.Shop>(
     'shop',
     'create',
     {
@@ -451,8 +510,8 @@ class EndpointShop extends _i2.EndpointRef {
   );
 
   /// Writes a shop back.
-  _i3.Future<_i8.Shop> save(_i8.Shop shop) =>
-      caller.callServerEndpoint<_i8.Shop>(
+  _i3.Future<_i10.Shop> save(_i10.Shop shop) =>
+      caller.callServerEndpoint<_i10.Shop>(
         'shop',
         'save',
         {'shop': shop},
@@ -480,8 +539,8 @@ class EndpointProfile extends _i2.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i3.Future<_i9.CurrentUser> me() =>
-      caller.callServerEndpoint<_i9.CurrentUser>(
+  _i3.Future<_i11.CurrentUser> me() =>
+      caller.callServerEndpoint<_i11.CurrentUser>(
         'profile',
         'me',
         {},
@@ -495,8 +554,8 @@ class EndpointProfile extends _i2.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i3.Future<_i10.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i10.MemberProfile>(
+  _i3.Future<_i12.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i12.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
@@ -534,7 +593,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i11.Protocol(),
+         _i13.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,
@@ -548,6 +607,7 @@ class Client extends _i2.ServerpodClientShared {
     jwtRefresh = EndpointJwtRefresh(this);
     item = EndpointItem(this);
     list = EndpointList(this);
+    notification = EndpointNotification(this);
     shop = EndpointShop(this);
     profile = EndpointProfile(this);
     modules = Modules(this);
@@ -563,6 +623,8 @@ class Client extends _i2.ServerpodClientShared {
 
   late final EndpointList list;
 
+  late final EndpointNotification notification;
+
   late final EndpointShop shop;
 
   late final EndpointProfile profile;
@@ -576,6 +638,7 @@ class Client extends _i2.ServerpodClientShared {
     'jwtRefresh': jwtRefresh,
     'item': item,
     'list': list,
+    'notification': notification,
     'shop': shop,
     'profile': profile,
   };

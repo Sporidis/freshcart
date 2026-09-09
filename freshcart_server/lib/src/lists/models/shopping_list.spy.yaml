@@ -27,6 +27,12 @@ fields:
   ### The shops items on this list can be tagged to.
   shops: List<Shop>?, relation(name=list_shops)
 
+  ### Per-user mutes for this list.
+  mutes: List<ListMute>?, relation(name=list_mutes)
+
+  ### Buffered notifications awaiting a flush.
+  pendingNotifications: List<PendingItemNotification>?, relation(name=list_pending_notifications)
+
 indexes:
   freshcart_shopping_list_join_code_idx:
     fields: joinCode
