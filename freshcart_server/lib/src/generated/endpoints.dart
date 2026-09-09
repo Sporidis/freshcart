@@ -14,16 +14,15 @@
 import 'package:serverpod/serverpod.dart' as _i1;
 import '../auth/email_idp_endpoint.dart' as _i2;
 import '../auth/jwt_refresh_endpoint.dart' as _i3;
-import '../greetings/greeting_endpoint.dart' as _i4;
-import '../items/item_endpoint.dart' as _i5;
-import '../lists/list_endpoint.dart' as _i6;
-import '../users/profile_endpoint.dart' as _i7;
+import '../items/item_endpoint.dart' as _i4;
+import '../lists/list_endpoint.dart' as _i5;
+import '../users/profile_endpoint.dart' as _i6;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
-    as _i8;
+    as _i7;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i9;
+    as _i8;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i10;
+    as _i9;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -41,25 +40,19 @@ class Endpoints extends _i1.EndpointDispatch {
           'jwtRefresh',
           null,
         ),
-      'greeting': _i4.GreetingEndpoint()
-        ..initialize(
-          server,
-          'greeting',
-          null,
-        ),
-      'item': _i5.ItemEndpoint()
+      'item': _i4.ItemEndpoint()
         ..initialize(
           server,
           'item',
           null,
         ),
-      'list': _i6.ListEndpoint()
+      'list': _i5.ListEndpoint()
         ..initialize(
           server,
           'list',
           null,
         ),
-      'profile': _i7.ProfileEndpoint()
+      'profile': _i6.ProfileEndpoint()
         ..initialize(
           server,
           'profile',
@@ -270,30 +263,6 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    connectors['greeting'] = _i1.EndpointConnector(
-      name: 'greeting',
-      endpoint: endpoints['greeting']!,
-      methodConnectors: {
-        'hello': _i1.MethodConnector(
-          name: 'hello',
-          params: {
-            'name': _i1.ParameterDescription(
-              name: 'name',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['greeting'] as _i4.GreetingEndpoint).hello(
-                session,
-                params['name'],
-              ),
-        ),
-      },
-    );
     connectors['item'] = _i1.EndpointConnector(
       name: 'item',
       endpoint: endpoints['item']!,
@@ -311,7 +280,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['item'] as _i5.ItemEndpoint).byList(
+              ) async => (endpoints['item'] as _i4.ItemEndpoint).byList(
                 session,
                 params['listId'],
               ),
@@ -349,7 +318,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['item'] as _i5.ItemEndpoint).add(
+              ) async => (endpoints['item'] as _i4.ItemEndpoint).add(
                 session,
                 params['listId'],
                 params['name'],
@@ -363,7 +332,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'item': _i1.ParameterDescription(
               name: 'item',
-              type: _i1.getType<_i8.ShoppingItem>(),
+              type: _i1.getType<_i7.ShoppingItem>(),
               nullable: false,
             ),
           },
@@ -371,7 +340,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['item'] as _i5.ItemEndpoint).save(
+              ) async => (endpoints['item'] as _i4.ItemEndpoint).save(
                 session,
                 params['item'],
               ),
@@ -389,7 +358,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['item'] as _i5.ItemEndpoint).remove(
+              ) async => (endpoints['item'] as _i4.ItemEndpoint).remove(
                 session,
                 params['itemId'],
               ),
@@ -408,7 +377,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['list'] as _i6.ListEndpoint).myLists(session),
+                  (endpoints['list'] as _i5.ListEndpoint).myLists(session),
         ),
         'byId': _i1.MethodConnector(
           name: 'byId',
@@ -423,7 +392,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['list'] as _i6.ListEndpoint).byId(
+              ) async => (endpoints['list'] as _i5.ListEndpoint).byId(
                 session,
                 params['listId'],
               ),
@@ -441,7 +410,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['list'] as _i6.ListEndpoint).create(
+              ) async => (endpoints['list'] as _i5.ListEndpoint).create(
                 session,
                 params['name'],
               ),
@@ -459,7 +428,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['list'] as _i6.ListEndpoint).join(
+              ) async => (endpoints['list'] as _i5.ListEndpoint).join(
                 session,
                 params['joinCode'],
               ),
@@ -482,7 +451,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['list'] as _i6.ListEndpoint).rename(
+              ) async => (endpoints['list'] as _i5.ListEndpoint).rename(
                 session,
                 params['listId'],
                 params['name'],
@@ -501,7 +470,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['list'] as _i6.ListEndpoint).leave(
+              ) async => (endpoints['list'] as _i5.ListEndpoint).leave(
                 session,
                 params['listId'],
               ),
@@ -519,7 +488,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['profile'] as _i7.ProfileEndpoint)
+              ) async => (endpoints['profile'] as _i6.ProfileEndpoint)
                   .displayName(session),
         ),
         'setDisplayName': _i1.MethodConnector(
@@ -536,16 +505,16 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['profile'] as _i7.ProfileEndpoint).setDisplayName(
+                  (endpoints['profile'] as _i6.ProfileEndpoint).setDisplayName(
                     session,
                     params['displayName'],
                   ),
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i9.Endpoints()
+    modules['serverpod_auth_idp'] = _i8.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i10.Endpoints()
+    modules['serverpod_auth_core'] = _i9.Endpoints()
       ..initializeEndpoints(server);
   }
 }

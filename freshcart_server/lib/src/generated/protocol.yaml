@@ -9,8 +9,6 @@ emailIdp:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:
-greeting:
-  - hello:
 item:
   - byList:
   - add:
