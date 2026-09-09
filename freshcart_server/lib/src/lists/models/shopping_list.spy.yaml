@@ -1,0 +1,35 @@
+### A shopping list shared by one or more people.
+class: ShoppingList
+table: freshcart_shopping_list
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### Human-readable list name.
+  name: String
+
+  ### The short code someone types to join this list.
+  joinCode: String
+
+  ### The `authUserId` of whoever created the list.
+  ###
+  ### A plain column rather than a relation to `AuthUser` on purpose: deleting
+  ### an account must not cascade-delete a list other people are still using.
+  ownerId: UuidValue
+
+  createdAt: DateTime, defaultModel=now
+
+  ### Who belongs to this list.
+  members: List<ListMember>?, relation(name=list_members)
+
+  ### The items on this list.
+  items: List<ShoppingItem>?, relation(name=list_items)
+
+  ### The shops items on this list can be tagged to.
+  shops: List<Shop>?, relation(name=list_shops)
+
+indexes:
+  freshcart_shopping_list_join_code_idx:
+    fields: joinCode
+    unique: true
+  freshcart_shopping_list_owner_idx:
+    fields: ownerId

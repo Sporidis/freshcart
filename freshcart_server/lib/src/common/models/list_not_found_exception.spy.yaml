@@ -1,0 +1,5 @@
+### Thrown when a list does not exist, or is not visible to the caller.
+###
+### Deliberately does not distinguish "gone" from "not yours": telling a
+### stranger that a list exists but is not theirs leaks its existence.
+exception: ListNotFoundException

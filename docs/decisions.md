@@ -194,3 +194,61 @@ blank item name, a quantity below one — and none of the existing cases describ
 Folding it into `unexpected` would have lost the field name the UI needs to mark the right
 form field. **Trade-off:** one more case for every exhaustive `switch` to handle, which is
 the point of an exhaustive switch.
+
+## 19. Shops are scoped to a list, not to a user
+
+**Decision:** `Shop` carries a `listId`; every member of a list sees the same shop set.
+**Why:** shops exist so items can be tagged and filtered *collaboratively*. If shops belonged
+to a user, an item Mom tagged "Colruyt" would reference a shop nobody else on the list owns —
+the tag would be meaningless to everyone but her, and the theme-follows-shop behaviour would
+differ per viewer on the same screen. **Rejected:** user-owned shops (avoids re-creating
+"Colruyt" on each list, but breaks the shared meaning of a tag); global shops (no
+multi-tenancy). **Trade-off:** the same shop name is re-entered per list. Acceptable — a
+household typically runs one or two lists — and a "copy shops from another list" action is a
+cheap future addition. This changed the domain's `ShopRepository` to be list-scoped.
+
+## 20. Explicit foreign-key fields instead of object relations
+
+**Decision:** `ShoppingItem`, `ListMember` and `Shop` declare `listId: UuidValue, relation(...)`
+rather than `list: ShoppingList?, relation(...)`. **Why:** two reasons, one of them a bug.
+The bug: an object relation declared as `shop: Shop?` generated a **NOT NULL** `shopId`
+column while still emitting the `ON DELETE SET NULL` constraint I asked for — a combination
+that is fine until the first shop is deleted, at which point Postgres refuses the write. The
+explicit `shopId: UuidValue?` form generates a nullable column and a coherent constraint. The
+design reason: the domain entities hold `ListId`/`ShopId` scalars, not nested objects, so the
+explicit form maps one-to-one onto them and stops a single-item read from dragging a whole
+list across the wire. **Trade-off:** loses the generated object accessor, which this app never
+wanted.
+
+## 21. The server depends on `freshcart_domain`
+
+**Decision:** `freshcart_server` takes a path dependency on the pure domain package, which the
+import matrix in `docs/architecture.md` already permits. **Why:** it is the shared-domain
+payoff made concrete. The join-code alphabet (no `I`, `O`, `0`, `1`) is defined once in
+`JoinCode`; the server generates codes from it and the app parses codes against it, so the two
+cannot drift into a state where the server issues a code the client rejects. The server also
+reuses `JoinCode.parse` to reject a malformed code before it reaches the database.
+**Trade-off:** the domain is now on the server's dependency graph, so it must stay genuinely
+pure — which the Phase 1 purity check already enforces.
+
+## 22. Optimistic concurrency via `updatedAt`, with server-owned fields
+
+**Decision:** `ItemEndpoint.save` takes the whole item; the server compares the incoming
+`updatedAt` against the stored row and throws `EditConflictException` if they differ, then
+overwrites `listId`, `addedBy` and `createdAt` from the stored row. **Why:** two people
+editing one shopping list at once is this app's *normal* case, not an edge case, so a
+last-write-wins update would routinely discard someone's change. Re-imposing the server-owned
+fields means a client cannot move an item to another list or rewrite its provenance by
+tampering with a field — a whole-entity save is convenient, not a licence. **Rejected:**
+field-level mutation endpoints (no single place to check the version, and `null` cannot
+distinguish "unchanged" from "clear this field"); a separate integer version column
+(equivalent, and `updatedAt` was needed for display anyway). **Trade-off:** a conflicting edit
+is rejected rather than merged; the client re-reads and re-applies.
+
+## 23. Serverpod's generator drops Dart default values
+
+**Not a decision — a constraint worth recording.** An endpoint parameter written as
+`int quantity = 1` is generated into the client as `required int quantity`: the default is
+silently dropped, and only *nullability* makes a generated parameter optional. Optional
+endpoint parameters are therefore declared `int? quantity` with the default applied in the
+endpoint body. Worth knowing before designing any endpoint signature.

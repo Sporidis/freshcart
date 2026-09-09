@@ -17,8 +17,36 @@ import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i3;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i4;
-import 'greetings/greeting.dart' as _i5;
+import 'common/models/edit_conflict_exception.dart' as _i5;
+import 'common/models/invalid_join_code_exception.dart' as _i6;
+import 'common/models/item_not_found_exception.dart' as _i7;
+import 'common/models/list_not_found_exception.dart' as _i8;
+import 'common/models/not_a_member_exception.dart' as _i9;
+import 'greetings/greeting.dart' as _i10;
+import 'items/models/note.dart' as _i11;
+import 'items/models/shopping_item.dart' as _i12;
+import 'lists/models/list_member.dart' as _i13;
+import 'lists/models/member_role.dart' as _i14;
+import 'lists/models/shopping_list.dart' as _i15;
+import 'shops/models/shop.dart' as _i16;
+import 'users/models/member_profile.dart' as _i17;
+import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
+    as _i18;
+import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
+    as _i19;
+export 'common/models/edit_conflict_exception.dart';
+export 'common/models/invalid_join_code_exception.dart';
+export 'common/models/item_not_found_exception.dart';
+export 'common/models/list_not_found_exception.dart';
+export 'common/models/not_a_member_exception.dart';
 export 'greetings/greeting.dart';
+export 'items/models/note.dart';
+export 'items/models/shopping_item.dart';
+export 'lists/models/list_member.dart';
+export 'lists/models/member_role.dart';
+export 'lists/models/shopping_list.dart';
+export 'shops/models/shop.dart';
+export 'users/models/member_profile.dart';
 
 class Protocol extends _i1.SerializationManagerServer {
   Protocol._();
@@ -28,6 +56,458 @@ class Protocol extends _i1.SerializationManagerServer {
   static final Protocol _instance = Protocol._();
 
   static final List<_i2.TableDefinition> targetTableDefinitions = [
+    _i2.TableDefinition(
+      name: 'freshcart_list_member',
+      dartName: 'ListMember',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'listId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'userId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'displayName',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'role',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'protocol:MemberRole',
+        ),
+        _i2.ColumnDefinition(
+          name: 'joinedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_list_member_fk_0',
+          columns: ['listId'],
+          referenceTable: 'freshcart_shopping_list',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_list_member_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_list_member_unique_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'listId',
+            ),
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'userId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'freshcart_member_profile',
+      dartName: 'MemberProfile',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'authUserId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'displayName',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_member_profile_fk_0',
+          columns: ['authUserId'],
+          referenceTable: 'serverpod_auth_core_user',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_member_profile_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_member_profile_auth_user_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'authUserId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'freshcart_shop',
+      dartName: 'Shop',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'listId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'name',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'colorArgb',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_shop_fk_0',
+          columns: ['listId'],
+          referenceTable: 'freshcart_shopping_list',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shop_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shop_list_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'listId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'freshcart_shopping_item',
+      dartName: 'ShoppingItem',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'listId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'name',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'quantity',
+          columnType: _i2.ColumnType.bigint,
+          isNullable: false,
+          dartType: 'int',
+        ),
+        _i2.ColumnDefinition(
+          name: 'isChecked',
+          columnType: _i2.ColumnType.boolean,
+          isNullable: false,
+          dartType: 'bool',
+        ),
+        _i2.ColumnDefinition(
+          name: 'shopId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'note',
+          columnType: _i2.ColumnType.json,
+          isNullable: true,
+          dartType: 'protocol:Note?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'addedBy',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'checkedBy',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: true,
+          dartType: 'UuidValue?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'checkedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: true,
+          dartType: 'DateTime?',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+        _i2.ColumnDefinition(
+          name: 'updatedAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_shopping_item_fk_0',
+          columns: ['listId'],
+          referenceTable: 'freshcart_shopping_list',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.cascade,
+          matchType: null,
+        ),
+        _i2.ForeignKeyDefinition(
+          constraintName: 'freshcart_shopping_item_fk_1',
+          columns: ['shopId'],
+          referenceTable: 'freshcart_shop',
+          referenceTableSchema: 'public',
+          referenceColumns: ['id'],
+          onUpdate: _i2.ForeignKeyAction.noAction,
+          onDelete: _i2.ForeignKeyAction.setNull,
+          matchType: null,
+        ),
+      ],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shopping_item_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shopping_item_list_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'listId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
+    _i2.TableDefinition(
+      name: 'freshcart_shopping_list',
+      dartName: 'ShoppingList',
+      schema: 'public',
+      module: 'freshcart',
+      columns: [
+        _i2.ColumnDefinition(
+          name: 'id',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue?',
+          columnDefault: 'gen_random_uuid_v7()',
+        ),
+        _i2.ColumnDefinition(
+          name: 'name',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'joinCode',
+          columnType: _i2.ColumnType.text,
+          isNullable: false,
+          dartType: 'String',
+        ),
+        _i2.ColumnDefinition(
+          name: 'ownerId',
+          columnType: _i2.ColumnType.uuid,
+          isNullable: false,
+          dartType: 'UuidValue',
+        ),
+        _i2.ColumnDefinition(
+          name: 'createdAt',
+          columnType: _i2.ColumnType.timestampWithoutTimeZone,
+          isNullable: false,
+          dartType: 'DateTime',
+        ),
+      ],
+      foreignKeys: [],
+      indexes: [
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shopping_list_pkey',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'id',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: true,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shopping_list_join_code_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'joinCode',
+            ),
+          ],
+          type: 'btree',
+          isUnique: true,
+          isPrimary: false,
+        ),
+        _i2.IndexDefinition(
+          indexName: 'freshcart_shopping_list_owner_idx',
+          tableSpace: null,
+          elements: [
+            _i2.IndexElementDefinition(
+              type: _i2.IndexElementDefinitionType.column,
+              definition: 'ownerId',
+            ),
+          ],
+          type: 'btree',
+          isUnique: false,
+          isPrimary: false,
+        ),
+      ],
+      managed: true,
+    ),
     ..._i3.Protocol.targetTableDefinitions,
     ..._i4.Protocol.targetTableDefinitions,
     ..._i2.Protocol.targetTableDefinitions,
@@ -60,11 +540,135 @@ class Protocol extends _i1.SerializationManagerServer {
       }
     }
 
-    if (t == _i5.Greeting) {
-      return _i5.Greeting.fromJson(data) as T;
+    if (t == _i5.EditConflictException) {
+      return _i5.EditConflictException.fromJson(data) as T;
     }
-    if (t == _i1.getType<_i5.Greeting?>()) {
-      return (data != null ? _i5.Greeting.fromJson(data) : null) as T;
+    if (t == _i6.InvalidJoinCodeException) {
+      return _i6.InvalidJoinCodeException.fromJson(data) as T;
+    }
+    if (t == _i7.ItemNotFoundException) {
+      return _i7.ItemNotFoundException.fromJson(data) as T;
+    }
+    if (t == _i8.ListNotFoundException) {
+      return _i8.ListNotFoundException.fromJson(data) as T;
+    }
+    if (t == _i9.NotAMemberException) {
+      return _i9.NotAMemberException.fromJson(data) as T;
+    }
+    if (t == _i10.Greeting) {
+      return _i10.Greeting.fromJson(data) as T;
+    }
+    if (t == _i11.Note) {
+      return _i11.Note.fromJson(data) as T;
+    }
+    if (t == _i12.ShoppingItem) {
+      return _i12.ShoppingItem.fromJson(data) as T;
+    }
+    if (t == _i13.ListMember) {
+      return _i13.ListMember.fromJson(data) as T;
+    }
+    if (t == _i14.MemberRole) {
+      return _i14.MemberRole.fromJson(data) as T;
+    }
+    if (t == _i15.ShoppingList) {
+      return _i15.ShoppingList.fromJson(data) as T;
+    }
+    if (t == _i16.Shop) {
+      return _i16.Shop.fromJson(data) as T;
+    }
+    if (t == _i17.MemberProfile) {
+      return _i17.MemberProfile.fromJson(data) as T;
+    }
+    if (t == _i1.getType<_i5.EditConflictException?>()) {
+      return (data != null ? _i5.EditConflictException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i6.InvalidJoinCodeException?>()) {
+      return (data != null ? _i6.InvalidJoinCodeException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i7.ItemNotFoundException?>()) {
+      return (data != null ? _i7.ItemNotFoundException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i8.ListNotFoundException?>()) {
+      return (data != null ? _i8.ListNotFoundException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i9.NotAMemberException?>()) {
+      return (data != null ? _i9.NotAMemberException.fromJson(data) : null)
+          as T;
+    }
+    if (t == _i1.getType<_i10.Greeting?>()) {
+      return (data != null ? _i10.Greeting.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i11.Note?>()) {
+      return (data != null ? _i11.Note.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i12.ShoppingItem?>()) {
+      return (data != null ? _i12.ShoppingItem.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i13.ListMember?>()) {
+      return (data != null ? _i13.ListMember.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i14.MemberRole?>()) {
+      return (data != null ? _i14.MemberRole.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i15.ShoppingList?>()) {
+      return (data != null ? _i15.ShoppingList.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i16.Shop?>()) {
+      return (data != null ? _i16.Shop.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i17.MemberProfile?>()) {
+      return (data != null ? _i17.MemberProfile.fromJson(data) : null) as T;
+    }
+    if (t == List<_i13.ListMember>) {
+      return (data as List).map((e) => deserialize<_i13.ListMember>(e)).toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i13.ListMember>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i13.ListMember>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i12.ShoppingItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i12.ShoppingItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == _i1.getType<List<_i12.ShoppingItem>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i12.ShoppingItem>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i16.Shop>) {
+      return (data as List).map((e) => deserialize<_i16.Shop>(e)).toList() as T;
+    }
+    if (t == _i1.getType<List<_i16.Shop>?>()) {
+      return (data != null
+              ? (data as List).map((e) => deserialize<_i16.Shop>(e)).toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i18.ShoppingItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i18.ShoppingItem>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i19.ShoppingList>) {
+      return (data as List)
+              .map((e) => deserialize<_i19.ShoppingList>(e))
+              .toList()
+          as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);
@@ -80,7 +684,19 @@ class Protocol extends _i1.SerializationManagerServer {
 
   static String? getClassNameForType(Type type) {
     return switch (type) {
-      _i5.Greeting => 'Greeting',
+      _i5.EditConflictException => 'EditConflictException',
+      _i6.InvalidJoinCodeException => 'InvalidJoinCodeException',
+      _i7.ItemNotFoundException => 'ItemNotFoundException',
+      _i8.ListNotFoundException => 'ListNotFoundException',
+      _i9.NotAMemberException => 'NotAMemberException',
+      _i10.Greeting => 'Greeting',
+      _i11.Note => 'Note',
+      _i12.ShoppingItem => 'ShoppingItem',
+      _i13.ListMember => 'ListMember',
+      _i14.MemberRole => 'MemberRole',
+      _i15.ShoppingList => 'ShoppingList',
+      _i16.Shop => 'Shop',
+      _i17.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -95,8 +711,32 @@ class Protocol extends _i1.SerializationManagerServer {
     }
 
     switch (data) {
-      case _i5.Greeting():
+      case _i5.EditConflictException():
+        return 'EditConflictException';
+      case _i6.InvalidJoinCodeException():
+        return 'InvalidJoinCodeException';
+      case _i7.ItemNotFoundException():
+        return 'ItemNotFoundException';
+      case _i8.ListNotFoundException():
+        return 'ListNotFoundException';
+      case _i9.NotAMemberException():
+        return 'NotAMemberException';
+      case _i10.Greeting():
         return 'Greeting';
+      case _i11.Note():
+        return 'Note';
+      case _i12.ShoppingItem():
+        return 'ShoppingItem';
+      case _i13.ListMember():
+        return 'ListMember';
+      case _i14.MemberRole():
+        return 'MemberRole';
+      case _i15.ShoppingList():
+        return 'ShoppingList';
+      case _i16.Shop():
+        return 'Shop';
+      case _i17.MemberProfile():
+        return 'MemberProfile';
     }
     className = _i2.Protocol().getClassNameForObject(data);
     if (className != null) {
@@ -119,8 +759,44 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName is! String) {
       return super.deserializeByClassName(data);
     }
+    if (dataClassName == 'EditConflictException') {
+      return deserialize<_i5.EditConflictException>(data['data']);
+    }
+    if (dataClassName == 'InvalidJoinCodeException') {
+      return deserialize<_i6.InvalidJoinCodeException>(data['data']);
+    }
+    if (dataClassName == 'ItemNotFoundException') {
+      return deserialize<_i7.ItemNotFoundException>(data['data']);
+    }
+    if (dataClassName == 'ListNotFoundException') {
+      return deserialize<_i8.ListNotFoundException>(data['data']);
+    }
+    if (dataClassName == 'NotAMemberException') {
+      return deserialize<_i9.NotAMemberException>(data['data']);
+    }
     if (dataClassName == 'Greeting') {
-      return deserialize<_i5.Greeting>(data['data']);
+      return deserialize<_i10.Greeting>(data['data']);
+    }
+    if (dataClassName == 'Note') {
+      return deserialize<_i11.Note>(data['data']);
+    }
+    if (dataClassName == 'ShoppingItem') {
+      return deserialize<_i12.ShoppingItem>(data['data']);
+    }
+    if (dataClassName == 'ListMember') {
+      return deserialize<_i13.ListMember>(data['data']);
+    }
+    if (dataClassName == 'MemberRole') {
+      return deserialize<_i14.MemberRole>(data['data']);
+    }
+    if (dataClassName == 'ShoppingList') {
+      return deserialize<_i15.ShoppingList>(data['data']);
+    }
+    if (dataClassName == 'Shop') {
+      return deserialize<_i16.Shop>(data['data']);
+    }
+    if (dataClassName == 'MemberProfile') {
+      return deserialize<_i17.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -156,6 +832,18 @@ class Protocol extends _i1.SerializationManagerServer {
       if (table != null) {
         return table;
       }
+    }
+    switch (t) {
+      case _i12.ShoppingItem:
+        return _i12.ShoppingItem.t;
+      case _i13.ListMember:
+        return _i13.ListMember.t;
+      case _i15.ShoppingList:
+        return _i15.ShoppingList.t;
+      case _i16.Shop:
+        return _i16.Shop.t;
+      case _i17.MemberProfile:
+        return _i17.MemberProfile.t;
     }
     return null;
   }

@@ -1,0 +1,5 @@
+### Thrown when a write loses an optimistic-concurrency race: the caller sent
+### the `updatedAt` it last saw, and the stored row has moved on since.
+###
+### The client rolls its optimistic edit back and re-reads.
+exception: EditConflictException

@@ -9,6 +9,12 @@ environment:
 resolution: workspace
 
 dependencies:
+  # The server may depend on the pure domain (see the import matrix in
+  # docs/architecture.md). This is the payoff of a shared domain package:
+  # the join-code alphabet and its validation have exactly one definition,
+  # used by both the server that generates codes and the app that parses them.
+  freshcart_domain:
+    path: ../packages/freshcart_domain
   serverpod: 3.4.13
   serverpod_auth_idp_server: 3.4.13
 
