@@ -1,0 +1,16 @@
+### A user's choice to silence one list.
+###
+### Presence of a row means muted; there is no boolean. Absence is the default
+### and costs no storage for the overwhelmingly common case.
+class: ListMute
+table: freshcart_list_mute
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  listId: UuidValue, relation(name=list_mutes, parent=freshcart_shopping_list, onDelete=Cascade)
+  userId: UuidValue
+  createdAt: DateTime, defaultModel=now
+
+indexes:
+  freshcart_list_mute_unique_idx:
+    fields: listId, userId
+    unique: true

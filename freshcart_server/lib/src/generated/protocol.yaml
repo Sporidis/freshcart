@@ -24,6 +24,11 @@ list:
   - join:
   - rename:
   - leave:
+notification:
+  - registerDevice:
+  - unregisterDevice:
+  - setListMuted:
+  - isListMuted:
 shop:
   - byList:
   - create:

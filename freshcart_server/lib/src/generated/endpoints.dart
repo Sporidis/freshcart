@@ -17,15 +17,18 @@ import '../auth/email_idp_endpoint.dart' as _i3;
 import '../auth/jwt_refresh_endpoint.dart' as _i4;
 import '../items/item_endpoint.dart' as _i5;
 import '../lists/list_endpoint.dart' as _i6;
-import '../shops/shop_endpoint.dart' as _i7;
-import '../users/profile_endpoint.dart' as _i8;
+import '../notifications/notification_endpoint.dart' as _i7;
+import '../shops/shop_endpoint.dart' as _i8;
+import '../users/profile_endpoint.dart' as _i9;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
-    as _i9;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i10;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i10;
+import 'package:freshcart_server/src/generated/notifications/models/device_platform.dart'
     as _i11;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i12;
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+    as _i13;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
-    as _i12;
+    as _i14;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -61,13 +64,19 @@ class Endpoints extends _i1.EndpointDispatch {
           'list',
           null,
         ),
-      'shop': _i7.ShopEndpoint()
+      'notification': _i7.NotificationEndpoint()
+        ..initialize(
+          server,
+          'notification',
+          null,
+        ),
+      'shop': _i8.ShopEndpoint()
         ..initialize(
           server,
           'shop',
           null,
         ),
-      'profile': _i8.ProfileEndpoint()
+      'profile': _i9.ProfileEndpoint()
         ..initialize(
           server,
           'profile',
@@ -372,7 +381,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'item': _i1.ParameterDescription(
               name: 'item',
-              type: _i1.getType<_i9.ShoppingItem>(),
+              type: _i1.getType<_i10.ShoppingItem>(),
               nullable: false,
             ),
           },
@@ -538,6 +547,100 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['notification'] = _i1.EndpointConnector(
+      name: 'notification',
+      endpoint: endpoints['notification']!,
+      methodConnectors: {
+        'registerDevice': _i1.MethodConnector(
+          name: 'registerDevice',
+          params: {
+            'token': _i1.ParameterDescription(
+              name: 'token',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'platform': _i1.ParameterDescription(
+              name: 'platform',
+              type: _i1.getType<_i11.DevicePlatform>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i7.NotificationEndpoint)
+                  .registerDevice(
+                    session,
+                    params['token'],
+                    params['platform'],
+                  ),
+        ),
+        'unregisterDevice': _i1.MethodConnector(
+          name: 'unregisterDevice',
+          params: {
+            'token': _i1.ParameterDescription(
+              name: 'token',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i7.NotificationEndpoint)
+                  .unregisterDevice(
+                    session,
+                    params['token'],
+                  ),
+        ),
+        'setListMuted': _i1.MethodConnector(
+          name: 'setListMuted',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'muted': _i1.ParameterDescription(
+              name: 'muted',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i7.NotificationEndpoint)
+                  .setListMuted(
+                    session,
+                    params['listId'],
+                    params['muted'],
+                  ),
+        ),
+        'isListMuted': _i1.MethodConnector(
+          name: 'isListMuted',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i7.NotificationEndpoint)
+                  .isListMuted(
+                    session,
+                    params['listId'],
+                  ),
+        ),
+      },
+    );
     connectors['shop'] = _i1.EndpointConnector(
       name: 'shop',
       endpoint: endpoints['shop']!,
@@ -555,7 +658,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i7.ShopEndpoint).byList(
+              ) async => (endpoints['shop'] as _i8.ShopEndpoint).byList(
                 session,
                 params['listId'],
               ),
@@ -583,7 +686,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i7.ShopEndpoint).create(
+              ) async => (endpoints['shop'] as _i8.ShopEndpoint).create(
                 session,
                 params['listId'],
                 params['name'],
@@ -595,7 +698,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'shop': _i1.ParameterDescription(
               name: 'shop',
-              type: _i1.getType<_i10.Shop>(),
+              type: _i1.getType<_i12.Shop>(),
               nullable: false,
             ),
           },
@@ -603,7 +706,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i7.ShopEndpoint).save(
+              ) async => (endpoints['shop'] as _i8.ShopEndpoint).save(
                 session,
                 params['shop'],
               ),
@@ -621,7 +724,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i7.ShopEndpoint).remove(
+              ) async => (endpoints['shop'] as _i8.ShopEndpoint).remove(
                 session,
                 params['shopId'],
               ),
@@ -640,7 +743,7 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['profile'] as _i8.ProfileEndpoint).me(session),
+                  (endpoints['profile'] as _i9.ProfileEndpoint).me(session),
         ),
         'displayName': _i1.MethodConnector(
           name: 'displayName',
@@ -649,7 +752,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['profile'] as _i8.ProfileEndpoint)
+              ) async => (endpoints['profile'] as _i9.ProfileEndpoint)
                   .displayName(session),
         ),
         'setDisplayName': _i1.MethodConnector(
@@ -666,16 +769,16 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['profile'] as _i8.ProfileEndpoint).setDisplayName(
+                  (endpoints['profile'] as _i9.ProfileEndpoint).setDisplayName(
                     session,
                     params['displayName'],
                   ),
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i11.Endpoints()
+    modules['serverpod_auth_idp'] = _i13.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i12.Endpoints()
+    modules['serverpod_auth_core'] = _i14.Endpoints()
       ..initializeEndpoints(server);
   }
 }

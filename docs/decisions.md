@@ -410,3 +410,29 @@ a third party renames another.
 `UnimplementedError` rather than returning an empty stream, so the omission is loud rather
 than silent. Nothing in the app calls it. It needs a second channel and endpoint of the same
 shape as the item one.
+
+## 37. Push delivery sits behind a `PushSender` on the server and a `PushTokenSource` in the app
+
+**Decision:** the server's `NotificationService` decides *who* to notify and *what to say*,
+then hands a `PushMessage` to a `PushSender`; the only implementation today is
+`LoggingPushSender`. In the app, the one thing Firebase would be responsible for — producing a
+token string — is isolated behind `PushTokenSource`, whose only implementation today is
+`UnconfiguredPushTokenSource`. **Why:** it keeps the interesting, rule-bearing parts testable
+with no Firebase project, no credentials and no network: actor exclusion, mute handling, burst
+aggregation and token registration all have real tests. What is genuinely blocked on
+credentials is one HTTP call and one `getToken()`. **Trade-off:** end-to-end delivery is
+unverified until a Firebase project exists — stated plainly rather than implied by a green
+test suite.
+
+## 38. Notifications are buffered and summarised, not sent per change
+
+**Decision:** every item change writes a `PendingItemNotification` and schedules a flush keyed
+on the list; the flush summarises the batch into one push. **Why:** adding five things to a
+list in a row is one action from the user's point of view, and five buzzes from the phone's.
+The key is on the list, so a change arriving inside the window joins the existing batch rather
+than scheduling a competing flush. The batch is deleted *before* sending, so a delivery failure
+cannot leave a batch that replays the same notification forever. Removals alone produce no
+notification — not worth waking a phone for. **Note:** `futureCallWithDelay` is marked
+deprecated in Serverpod 3.4.13 in favour of "generated future call methods", but running
+`serverpod generate` against a project-defined `FutureCall` produces no such dispatcher in this
+version. The deprecated call is the only working API here, and the suppression says so.

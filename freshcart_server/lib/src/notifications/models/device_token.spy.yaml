@@ -1,0 +1,24 @@
+### An FCM registration token for one device belonging to one user.
+class: DeviceToken
+table: freshcart_device_token
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The owning user's `authUserId`.
+  ownerId: UuidValue
+
+  ### The FCM registration token.
+  token: String
+
+  platform: DevicePlatform
+
+  createdAt: DateTime, defaultModel=now
+
+indexes:
+  ### One row per token. Re-registering the same device updates rather than
+  ### duplicating, so a user does not receive the same push several times.
+  freshcart_device_token_unique_idx:
+    fields: token
+    unique: true
+  freshcart_device_token_owner_idx:
+    fields: ownerId

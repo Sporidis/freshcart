@@ -1,5 +1,7 @@
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/notifications/business/notification_service.dart';
+import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Business operations on the items of a list.
@@ -10,16 +12,27 @@ abstract final class ItemService {
   /// traffic on every other list on the server.
   static String channelFor(UuidValue listId) => 'list-items-$listId';
 
-  /// Broadcasts a change to everyone watching [listId].
+  /// Broadcasts a change to everyone watching [listId], and buffers it for a
+  /// background push.
   ///
-  /// Fire-and-forget by design: a dropped notification must never fail the
-  /// write that caused it. Subscribers re-read on reconnect.
+  /// Two layers, on purpose: the stream reaches clients that have the app
+  /// **open**, the buffered push reaches those that do not. Fire-and-forget by
+  /// design — a dropped notification must never fail the write that caused it.
   static Future<void> _announce(
     Session session,
     UuidValue listId,
-    ItemChange change,
-  ) async {
+    ItemChange change, {
+    required String itemName,
+  }) async {
     await session.messages.postMessage(channelFor(listId), change);
+    await NotificationService.enqueue(
+      session,
+      listId: listId,
+      actorId: change.actorId,
+      actorName: await ProfileService.displayNameFor(session, change.actorId),
+      itemName: itemName,
+      kind: change.kind,
+    );
   }
 
   /// Every item on [listId], oldest first, for a caller who belongs to it.
@@ -73,6 +86,7 @@ abstract final class ItemService {
         item: inserted,
         actorId: userId,
       ),
+      itemName: inserted.name,
     );
     return inserted;
   }
@@ -144,6 +158,7 @@ abstract final class ItemService {
           item: saved,
           actorId: userId,
         ),
+        itemName: saved.name,
       );
       return saved;
     });
@@ -167,6 +182,7 @@ abstract final class ItemService {
         itemId: stored.id!,
         actorId: userId,
       ),
+      itemName: stored.name,
     );
   }
 }
