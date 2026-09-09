@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
-import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/notifications/future_calls/flush_notifications_call.dart';
 import 'package:freshcart_server/src/web/routes/app_config_route.dart';
