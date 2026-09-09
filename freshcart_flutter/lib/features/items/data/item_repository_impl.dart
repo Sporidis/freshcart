@@ -1,6 +1,7 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/features/items/data/item_realtime_source.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
 
 /// The Serverpod-backed [ItemRepository].
@@ -43,10 +44,8 @@ class ItemRepositoryImpl implements ItemRepository {
       _guard(() => _client.item.remove(_uuid(id.value)));
 
   @override
-  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
-    // See ListRepositoryImpl.watch — phase 8.
-    throw UnimplementedError('Real-time item watching lands in phase 8');
-  }
+  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
+      ItemRealtimeSource(_client).watchByList(listId);
 
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);

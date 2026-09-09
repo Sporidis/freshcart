@@ -89,11 +89,24 @@ void main() {
       expect(client.calls.single.args['itemId'], itemUuid);
     });
 
-    test('watchByList is not implemented before phase 8', () {
-      expect(
-        () => repository.watchByList(ListId(listUuid.uuid)),
-        throwsUnimplementedError,
-      );
+    test('watchByList seeds with the current items', () async {
+      client.handler = (_, method, _) =>
+          method == 'byList' ? [buildItemDto()] : const Stream<Never>.empty();
+
+      final first = await repository.watchByList(ListId(listUuid.uuid)).first;
+
+      expect(first.valueOrNull, hasLength(1));
     });
+
+    test(
+      'watchByList reports a failed seed instead of closing empty',
+      () async {
+        client.handler = (_, _, _) => throw dto.NotAMemberException();
+
+        final first = await repository.watchByList(ListId(listUuid.uuid)).first;
+
+        expect(first.failureOrNull, const Failure.unauthorized());
+      },
+    );
   });
 }

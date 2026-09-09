@@ -1,0 +1,9 @@
+### What happened to an item.
+enum: ItemChangeKind
+serialized: byName
+values:
+  ### The item was created or updated. The event carries its current state.
+  - upserted
+
+  ### The item was deleted. Only its id is carried.
+  - removed

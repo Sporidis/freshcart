@@ -15,6 +15,7 @@ void main() {
   final me = UserId('user-me');
 
   setUp(() => repository = FakeItemRepository());
+  tearDown(() => repository.dispose());
 
   ProviderContainer makeContainer() {
     final container = ProviderContainer(
@@ -24,6 +25,14 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
+    // Hold a listener so the auto-dispose provider stays alive between reads,
+    // as an open screen would. Without it each read rebuilds and the live
+    // subscription is torn down in between.
+    final subscription = container.listen(
+      itemsControllerProvider(listId),
+      (_, _) {},
+    );
+    addTearDown(subscription.close);
     return container;
   }
 
@@ -31,6 +40,15 @@ void main() {
     final result = await c.read(itemsControllerProvider(listId).future);
     return (result as Ok<List<ShoppingItem>>).value;
   }
+
+  /// Reads whatever is on screen right now.
+  ///
+  /// `provider.future` completes once, with the first snapshot, so live updates
+  /// have to be observed through the current state instead.
+  List<ShoppingItem> currentItems(ProviderContainer c) =>
+      (c.read(itemsControllerProvider(listId)).requireValue
+              as Ok<List<ShoppingItem>>)
+          .value;
 
   group('toggle', () {
     test('applies the change locally before the server answers', () async {
@@ -208,6 +226,82 @@ void main() {
 
       expect(failure, const Failure.conflict());
       expect((await itemsOf(container)).single.name, 'Milk');
+    });
+  });
+
+  group('live updates', () {
+    test('another client\'s change arrives without a refresh', () async {
+      final mine = buildItem(name: 'Milk');
+      repository.byListResult = Ok([mine]);
+
+      final container = makeContainer();
+      expect(await itemsOf(container), hasLength(1));
+
+      // Someone else adds bread; the server pushes the merged snapshot.
+      repository.live.add(
+        Ok([
+          mine,
+          buildItem(id: '00000000-0000-4000-8000-0000000000b2', name: 'Bread'),
+        ]),
+      );
+      await pumpEventQueue();
+
+      expect(currentItems(container).map((i) => i.name), ['Milk', 'Bread']);
+    });
+
+    test('a live event does not clobber an in-flight optimistic edit', () async {
+      final milk = buildItem(name: 'Milk');
+      final bread = buildItem(
+        id: '00000000-0000-4000-8000-0000000000b2',
+        name: 'Bread',
+      );
+      repository.byListResult = Ok([milk, bread]);
+      final pause = Completer<void>();
+      repository.savePause = pause.future;
+
+      final container = makeContainer();
+      await itemsOf(container);
+      await container.read(currentUserIdProvider.future);
+      final notifier = container.read(itemsControllerProvider(listId).notifier);
+
+      // Tick Milk; the write is still in flight.
+      final pending = notifier.toggle(milk);
+
+      // Meanwhile someone else renames Bread. The snapshot they trigger still
+      // carries the server's *unticked* copy of Milk.
+      repository.live.add(Ok([milk, bread.copyWith(name: 'Sourdough')]));
+      await pumpEventQueue();
+
+      final during = currentItems(container);
+      expect(
+        during.firstWhere((i) => i.id == milk.id).isChecked,
+        isTrue,
+        reason:
+            'the in-flight optimistic tick must survive a third party\'s edit',
+      );
+      expect(
+        during.firstWhere((i) => i.id == bread.id).name,
+        'Sourdough',
+        reason: 'their change still lands',
+      );
+
+      pause.complete();
+      expect(await pending, isNull);
+    });
+
+    test('a dropped connection surfaces without emptying the list', () async {
+      repository.byListResult = Ok([buildItem(name: 'Milk')]);
+
+      final container = makeContainer();
+      expect(await itemsOf(container), hasLength(1));
+
+      repository.live.add(const Err(Failure.network('dropped')));
+      await pumpEventQueue();
+
+      final state = container
+          .read(itemsControllerProvider(listId))
+          .requireValue;
+      expect(state.failureOrNull, isA<NetworkFailure>());
     });
   });
 }
