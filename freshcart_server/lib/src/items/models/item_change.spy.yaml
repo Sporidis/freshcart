@@ -1,0 +1,19 @@
+### A single change to a list's items, broadcast to everyone watching it.
+###
+### A delta rather than the whole list: a list can hold hundreds of items and a
+### change usually touches one, so re-sending everything on every keystroke
+### would waste the connection this feature exists to make feel instant.
+### Subscribers keep the merged list themselves.
+class: ItemChange
+fields:
+  kind: ItemChangeKind
+
+  ### The item's id. Present for every kind, including removals.
+  itemId: UuidValue
+
+  ### The item's current state. Null for a removal.
+  item: ShoppingItem?
+
+  ### Who made the change. Clients use this to avoid re-announcing their own
+  ### edits, and the notification layer uses it to never notify the actor.
+  actorId: UuidValue

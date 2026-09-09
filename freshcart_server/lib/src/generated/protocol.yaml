@@ -16,6 +16,7 @@ item:
   - add:
   - save:
   - remove:
+  - watchList:
 list:
   - myLists:
   - byId:

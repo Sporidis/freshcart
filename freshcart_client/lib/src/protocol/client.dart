@@ -19,14 +19,16 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i4;
 import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i5;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
     as _i6;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i7;
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+    as _i7;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i8;
 import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
-    as _i8;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
     as _i9;
-import 'protocol.dart' as _i10;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i10;
+import 'protocol.dart' as _i11;
 
 /// Exposes the anonymous identity provider to clients.
 ///
@@ -334,6 +336,22 @@ class EndpointItem extends _i2.EndpointRef {
         'remove',
         {'itemId': itemId},
       );
+
+  /// Live changes to a list's items.
+  ///
+  /// Emits a delta per change rather than the whole list — subscribers keep the
+  /// merged state themselves. Membership is checked once, when the stream
+  /// opens; the stream closes if the session ends.
+  ///
+  /// This is the in-app half of the two-layer story: it keeps open clients live
+  /// and is unrelated to FCM background push, which covers closed apps.
+  _i3.Stream<_i6.ItemChange> watchList(_i2.UuidValue listId) => caller
+      .callStreamingServerEndpoint<_i3.Stream<_i6.ItemChange>, _i6.ItemChange>(
+        'item',
+        'watchList',
+        {'listId': listId},
+        {},
+      );
 }
 
 /// Shopping lists: create, read, join, rename, leave.
@@ -348,42 +366,42 @@ class EndpointList extends _i2.EndpointRef {
   String get name => 'list';
 
   /// Every list the caller belongs to.
-  _i3.Future<List<_i6.ShoppingList>> myLists() =>
-      caller.callServerEndpoint<List<_i6.ShoppingList>>(
+  _i3.Future<List<_i7.ShoppingList>> myLists() =>
+      caller.callServerEndpoint<List<_i7.ShoppingList>>(
         'list',
         'myLists',
         {},
       );
 
   /// One list the caller belongs to.
-  _i3.Future<_i6.ShoppingList> byId(_i2.UuidValue listId) =>
-      caller.callServerEndpoint<_i6.ShoppingList>(
+  _i3.Future<_i7.ShoppingList> byId(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<_i7.ShoppingList>(
         'list',
         'byId',
         {'listId': listId},
       );
 
   /// Creates a list owned by the caller.
-  _i3.Future<_i6.ShoppingList> create(String name) =>
-      caller.callServerEndpoint<_i6.ShoppingList>(
+  _i3.Future<_i7.ShoppingList> create(String name) =>
+      caller.callServerEndpoint<_i7.ShoppingList>(
         'list',
         'create',
         {'name': name},
       );
 
   /// Joins the list matching [joinCode].
-  _i3.Future<_i6.ShoppingList> join(String joinCode) =>
-      caller.callServerEndpoint<_i6.ShoppingList>(
+  _i3.Future<_i7.ShoppingList> join(String joinCode) =>
+      caller.callServerEndpoint<_i7.ShoppingList>(
         'list',
         'join',
         {'joinCode': joinCode},
       );
 
   /// Renames a list the caller owns.
-  _i3.Future<_i6.ShoppingList> rename(
+  _i3.Future<_i7.ShoppingList> rename(
     _i2.UuidValue listId,
     String name,
-  ) => caller.callServerEndpoint<_i6.ShoppingList>(
+  ) => caller.callServerEndpoint<_i7.ShoppingList>(
     'list',
     'rename',
     {
@@ -410,19 +428,19 @@ class EndpointShop extends _i2.EndpointRef {
   String get name => 'shop';
 
   /// Every shop on a list the caller belongs to.
-  _i3.Future<List<_i7.Shop>> byList(_i2.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i7.Shop>>(
+  _i3.Future<List<_i8.Shop>> byList(_i2.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i8.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list the caller belongs to.
-  _i3.Future<_i7.Shop> create(
+  _i3.Future<_i8.Shop> create(
     _i2.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i7.Shop>(
+  ) => caller.callServerEndpoint<_i8.Shop>(
     'shop',
     'create',
     {
@@ -433,8 +451,8 @@ class EndpointShop extends _i2.EndpointRef {
   );
 
   /// Writes a shop back.
-  _i3.Future<_i7.Shop> save(_i7.Shop shop) =>
-      caller.callServerEndpoint<_i7.Shop>(
+  _i3.Future<_i8.Shop> save(_i8.Shop shop) =>
+      caller.callServerEndpoint<_i8.Shop>(
         'shop',
         'save',
         {'shop': shop},
@@ -462,8 +480,8 @@ class EndpointProfile extends _i2.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i3.Future<_i8.CurrentUser> me() =>
-      caller.callServerEndpoint<_i8.CurrentUser>(
+  _i3.Future<_i9.CurrentUser> me() =>
+      caller.callServerEndpoint<_i9.CurrentUser>(
         'profile',
         'me',
         {},
@@ -477,8 +495,8 @@ class EndpointProfile extends _i2.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i3.Future<_i9.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i9.MemberProfile>(
+  _i3.Future<_i10.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i10.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
@@ -516,7 +534,7 @@ class Client extends _i2.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i10.Protocol(),
+         _i11.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

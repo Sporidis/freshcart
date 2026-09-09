@@ -23,25 +23,29 @@ import 'common/models/item_not_found_exception.dart' as _i7;
 import 'common/models/list_not_found_exception.dart' as _i8;
 import 'common/models/not_a_member_exception.dart' as _i9;
 import 'common/models/shop_not_found_exception.dart' as _i10;
-import 'items/models/note.dart' as _i11;
-import 'items/models/shopping_item.dart' as _i12;
-import 'lists/models/list_member.dart' as _i13;
-import 'lists/models/member_role.dart' as _i14;
-import 'lists/models/shopping_list.dart' as _i15;
-import 'shops/models/shop.dart' as _i16;
-import 'users/models/current_user.dart' as _i17;
-import 'users/models/member_profile.dart' as _i18;
+import 'items/models/item_change.dart' as _i11;
+import 'items/models/item_change_kind.dart' as _i12;
+import 'items/models/note.dart' as _i13;
+import 'items/models/shopping_item.dart' as _i14;
+import 'lists/models/list_member.dart' as _i15;
+import 'lists/models/member_role.dart' as _i16;
+import 'lists/models/shopping_list.dart' as _i17;
+import 'shops/models/shop.dart' as _i18;
+import 'users/models/current_user.dart' as _i19;
+import 'users/models/member_profile.dart' as _i20;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
-    as _i19;
+    as _i21;
 import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
-    as _i20;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i21;
+    as _i22;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i23;
 export 'common/models/edit_conflict_exception.dart';
 export 'common/models/invalid_join_code_exception.dart';
 export 'common/models/item_not_found_exception.dart';
 export 'common/models/list_not_found_exception.dart';
 export 'common/models/not_a_member_exception.dart';
 export 'common/models/shop_not_found_exception.dart';
+export 'items/models/item_change.dart';
+export 'items/models/item_change_kind.dart';
 export 'items/models/note.dart';
 export 'items/models/shopping_item.dart';
 export 'lists/models/list_member.dart';
@@ -561,29 +565,35 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == _i10.ShopNotFoundException) {
       return _i10.ShopNotFoundException.fromJson(data) as T;
     }
-    if (t == _i11.Note) {
-      return _i11.Note.fromJson(data) as T;
+    if (t == _i11.ItemChange) {
+      return _i11.ItemChange.fromJson(data) as T;
     }
-    if (t == _i12.ShoppingItem) {
-      return _i12.ShoppingItem.fromJson(data) as T;
+    if (t == _i12.ItemChangeKind) {
+      return _i12.ItemChangeKind.fromJson(data) as T;
     }
-    if (t == _i13.ListMember) {
-      return _i13.ListMember.fromJson(data) as T;
+    if (t == _i13.Note) {
+      return _i13.Note.fromJson(data) as T;
     }
-    if (t == _i14.MemberRole) {
-      return _i14.MemberRole.fromJson(data) as T;
+    if (t == _i14.ShoppingItem) {
+      return _i14.ShoppingItem.fromJson(data) as T;
     }
-    if (t == _i15.ShoppingList) {
-      return _i15.ShoppingList.fromJson(data) as T;
+    if (t == _i15.ListMember) {
+      return _i15.ListMember.fromJson(data) as T;
     }
-    if (t == _i16.Shop) {
-      return _i16.Shop.fromJson(data) as T;
+    if (t == _i16.MemberRole) {
+      return _i16.MemberRole.fromJson(data) as T;
     }
-    if (t == _i17.CurrentUser) {
-      return _i17.CurrentUser.fromJson(data) as T;
+    if (t == _i17.ShoppingList) {
+      return _i17.ShoppingList.fromJson(data) as T;
     }
-    if (t == _i18.MemberProfile) {
-      return _i18.MemberProfile.fromJson(data) as T;
+    if (t == _i18.Shop) {
+      return _i18.Shop.fromJson(data) as T;
+    }
+    if (t == _i19.CurrentUser) {
+      return _i19.CurrentUser.fromJson(data) as T;
+    }
+    if (t == _i20.MemberProfile) {
+      return _i20.MemberProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i5.EditConflictException?>()) {
       return (data != null ? _i5.EditConflictException.fromJson(data) : null)
@@ -609,79 +619,85 @@ class Protocol extends _i1.SerializationManagerServer {
       return (data != null ? _i10.ShopNotFoundException.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i11.Note?>()) {
-      return (data != null ? _i11.Note.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i11.ItemChange?>()) {
+      return (data != null ? _i11.ItemChange.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i12.ShoppingItem?>()) {
-      return (data != null ? _i12.ShoppingItem.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i12.ItemChangeKind?>()) {
+      return (data != null ? _i12.ItemChangeKind.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.ListMember?>()) {
-      return (data != null ? _i13.ListMember.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.Note?>()) {
+      return (data != null ? _i13.Note.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.MemberRole?>()) {
-      return (data != null ? _i14.MemberRole.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.ShoppingItem?>()) {
+      return (data != null ? _i14.ShoppingItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.ShoppingList?>()) {
-      return (data != null ? _i15.ShoppingList.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.ListMember?>()) {
+      return (data != null ? _i15.ListMember.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.Shop?>()) {
-      return (data != null ? _i16.Shop.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.MemberRole?>()) {
+      return (data != null ? _i16.MemberRole.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.CurrentUser?>()) {
-      return (data != null ? _i17.CurrentUser.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.ShoppingList?>()) {
+      return (data != null ? _i17.ShoppingList.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i18.MemberProfile?>()) {
-      return (data != null ? _i18.MemberProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i18.Shop?>()) {
+      return (data != null ? _i18.Shop.fromJson(data) : null) as T;
     }
-    if (t == List<_i13.ListMember>) {
-      return (data as List).map((e) => deserialize<_i13.ListMember>(e)).toList()
+    if (t == _i1.getType<_i19.CurrentUser?>()) {
+      return (data != null ? _i19.CurrentUser.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i20.MemberProfile?>()) {
+      return (data != null ? _i20.MemberProfile.fromJson(data) : null) as T;
+    }
+    if (t == List<_i15.ListMember>) {
+      return (data as List).map((e) => deserialize<_i15.ListMember>(e)).toList()
           as T;
     }
-    if (t == _i1.getType<List<_i13.ListMember>?>()) {
+    if (t == _i1.getType<List<_i15.ListMember>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i13.ListMember>(e))
+                    .map((e) => deserialize<_i15.ListMember>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i12.ShoppingItem>) {
+    if (t == List<_i14.ShoppingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i12.ShoppingItem>(e))
+              .map((e) => deserialize<_i14.ShoppingItem>(e))
               .toList()
           as T;
     }
-    if (t == _i1.getType<List<_i12.ShoppingItem>?>()) {
+    if (t == _i1.getType<List<_i14.ShoppingItem>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i12.ShoppingItem>(e))
+                    .map((e) => deserialize<_i14.ShoppingItem>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i16.Shop>) {
-      return (data as List).map((e) => deserialize<_i16.Shop>(e)).toList() as T;
+    if (t == List<_i18.Shop>) {
+      return (data as List).map((e) => deserialize<_i18.Shop>(e)).toList() as T;
     }
-    if (t == _i1.getType<List<_i16.Shop>?>()) {
+    if (t == _i1.getType<List<_i18.Shop>?>()) {
       return (data != null
-              ? (data as List).map((e) => deserialize<_i16.Shop>(e)).toList()
+              ? (data as List).map((e) => deserialize<_i18.Shop>(e)).toList()
               : null)
           as T;
     }
-    if (t == List<_i19.ShoppingItem>) {
+    if (t == List<_i21.ShoppingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i19.ShoppingItem>(e))
+              .map((e) => deserialize<_i21.ShoppingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i20.ShoppingList>) {
+    if (t == List<_i22.ShoppingList>) {
       return (data as List)
-              .map((e) => deserialize<_i20.ShoppingList>(e))
+              .map((e) => deserialize<_i22.ShoppingList>(e))
               .toList()
           as T;
     }
-    if (t == List<_i21.Shop>) {
-      return (data as List).map((e) => deserialize<_i21.Shop>(e)).toList() as T;
+    if (t == List<_i23.Shop>) {
+      return (data as List).map((e) => deserialize<_i23.Shop>(e)).toList() as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);
@@ -703,14 +719,16 @@ class Protocol extends _i1.SerializationManagerServer {
       _i8.ListNotFoundException => 'ListNotFoundException',
       _i9.NotAMemberException => 'NotAMemberException',
       _i10.ShopNotFoundException => 'ShopNotFoundException',
-      _i11.Note => 'Note',
-      _i12.ShoppingItem => 'ShoppingItem',
-      _i13.ListMember => 'ListMember',
-      _i14.MemberRole => 'MemberRole',
-      _i15.ShoppingList => 'ShoppingList',
-      _i16.Shop => 'Shop',
-      _i17.CurrentUser => 'CurrentUser',
-      _i18.MemberProfile => 'MemberProfile',
+      _i11.ItemChange => 'ItemChange',
+      _i12.ItemChangeKind => 'ItemChangeKind',
+      _i13.Note => 'Note',
+      _i14.ShoppingItem => 'ShoppingItem',
+      _i15.ListMember => 'ListMember',
+      _i16.MemberRole => 'MemberRole',
+      _i17.ShoppingList => 'ShoppingList',
+      _i18.Shop => 'Shop',
+      _i19.CurrentUser => 'CurrentUser',
+      _i20.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -737,21 +755,25 @@ class Protocol extends _i1.SerializationManagerServer {
         return 'NotAMemberException';
       case _i10.ShopNotFoundException():
         return 'ShopNotFoundException';
-      case _i11.Note():
+      case _i11.ItemChange():
+        return 'ItemChange';
+      case _i12.ItemChangeKind():
+        return 'ItemChangeKind';
+      case _i13.Note():
         return 'Note';
-      case _i12.ShoppingItem():
+      case _i14.ShoppingItem():
         return 'ShoppingItem';
-      case _i13.ListMember():
+      case _i15.ListMember():
         return 'ListMember';
-      case _i14.MemberRole():
+      case _i16.MemberRole():
         return 'MemberRole';
-      case _i15.ShoppingList():
+      case _i17.ShoppingList():
         return 'ShoppingList';
-      case _i16.Shop():
+      case _i18.Shop():
         return 'Shop';
-      case _i17.CurrentUser():
+      case _i19.CurrentUser():
         return 'CurrentUser';
-      case _i18.MemberProfile():
+      case _i20.MemberProfile():
         return 'MemberProfile';
     }
     className = _i2.Protocol().getClassNameForObject(data);
@@ -793,29 +815,35 @@ class Protocol extends _i1.SerializationManagerServer {
     if (dataClassName == 'ShopNotFoundException') {
       return deserialize<_i10.ShopNotFoundException>(data['data']);
     }
+    if (dataClassName == 'ItemChange') {
+      return deserialize<_i11.ItemChange>(data['data']);
+    }
+    if (dataClassName == 'ItemChangeKind') {
+      return deserialize<_i12.ItemChangeKind>(data['data']);
+    }
     if (dataClassName == 'Note') {
-      return deserialize<_i11.Note>(data['data']);
+      return deserialize<_i13.Note>(data['data']);
     }
     if (dataClassName == 'ShoppingItem') {
-      return deserialize<_i12.ShoppingItem>(data['data']);
+      return deserialize<_i14.ShoppingItem>(data['data']);
     }
     if (dataClassName == 'ListMember') {
-      return deserialize<_i13.ListMember>(data['data']);
+      return deserialize<_i15.ListMember>(data['data']);
     }
     if (dataClassName == 'MemberRole') {
-      return deserialize<_i14.MemberRole>(data['data']);
+      return deserialize<_i16.MemberRole>(data['data']);
     }
     if (dataClassName == 'ShoppingList') {
-      return deserialize<_i15.ShoppingList>(data['data']);
+      return deserialize<_i17.ShoppingList>(data['data']);
     }
     if (dataClassName == 'Shop') {
-      return deserialize<_i16.Shop>(data['data']);
+      return deserialize<_i18.Shop>(data['data']);
     }
     if (dataClassName == 'CurrentUser') {
-      return deserialize<_i17.CurrentUser>(data['data']);
+      return deserialize<_i19.CurrentUser>(data['data']);
     }
     if (dataClassName == 'MemberProfile') {
-      return deserialize<_i18.MemberProfile>(data['data']);
+      return deserialize<_i20.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod.')) {
       data['className'] = dataClassName.substring(10);
@@ -853,16 +881,16 @@ class Protocol extends _i1.SerializationManagerServer {
       }
     }
     switch (t) {
-      case _i12.ShoppingItem:
-        return _i12.ShoppingItem.t;
-      case _i13.ListMember:
-        return _i13.ListMember.t;
-      case _i15.ShoppingList:
-        return _i15.ShoppingList.t;
-      case _i16.Shop:
-        return _i16.Shop.t;
-      case _i18.MemberProfile:
-        return _i18.MemberProfile.t;
+      case _i14.ShoppingItem:
+        return _i14.ShoppingItem.t;
+      case _i15.ListMember:
+        return _i15.ListMember.t;
+      case _i17.ShoppingList:
+        return _i17.ShoppingList.t;
+      case _i18.Shop:
+        return _i18.Shop.t;
+      case _i20.MemberProfile:
+        return _i20.MemberProfile.t;
     }
     return null;
   }

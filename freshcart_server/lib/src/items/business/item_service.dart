@@ -4,6 +4,24 @@ import 'package:serverpod/serverpod.dart';
 
 /// Business operations on the items of a list.
 abstract final class ItemService {
+  /// The message channel carrying changes for one list.
+  ///
+  /// Per list, not global: a client watching one list should not be woken by
+  /// traffic on every other list on the server.
+  static String channelFor(UuidValue listId) => 'list-items-$listId';
+
+  /// Broadcasts a change to everyone watching [listId].
+  ///
+  /// Fire-and-forget by design: a dropped notification must never fail the
+  /// write that caused it. Subscribers re-read on reconnect.
+  static Future<void> _announce(
+    Session session,
+    UuidValue listId,
+    ItemChange change,
+  ) async {
+    await session.messages.postMessage(channelFor(listId), change);
+  }
+
   /// Every item on [listId], oldest first, for a caller who belongs to it.
   static Future<List<ShoppingItem>> byList(
     Session session,
@@ -30,7 +48,7 @@ abstract final class ItemService {
   }) async {
     await ListService.requireMembership(session, listId, userId);
     final now = DateTime.now().toUtc();
-    return ShoppingItem.db.insertRow(
+    final inserted = await ShoppingItem.db.insertRow(
       session,
       ShoppingItem(
         listId: listId,
@@ -46,6 +64,17 @@ abstract final class ItemService {
         updatedAt: now,
       ),
     );
+    await _announce(
+      session,
+      listId,
+      ItemChange(
+        kind: ItemChangeKind.upserted,
+        itemId: inserted.id!,
+        item: inserted,
+        actorId: userId,
+      ),
+    );
+    return inserted;
   }
 
   /// Writes [incoming] back, refusing the write if someone else got there
@@ -86,7 +115,7 @@ abstract final class ItemService {
       final becameChecked = incoming.isChecked && !stored.isChecked;
       final becameUnchecked = !incoming.isChecked && stored.isChecked;
 
-      return ShoppingItem.db.updateRow(
+      final saved = await ShoppingItem.db.updateRow(
         session,
         incoming.copyWith(
           listId: stored.listId,
@@ -106,6 +135,17 @@ abstract final class ItemService {
         ),
         transaction: transaction,
       );
+      await _announce(
+        session,
+        stored.listId,
+        ItemChange(
+          kind: ItemChangeKind.upserted,
+          itemId: saved.id!,
+          item: saved,
+          actorId: userId,
+        ),
+      );
+      return saved;
     });
   }
 
@@ -119,5 +159,14 @@ abstract final class ItemService {
     if (stored == null) throw ItemNotFoundException();
     await ListService.requireMembership(session, stored.listId, userId);
     await ShoppingItem.db.deleteRow(session, stored);
+    await _announce(
+      session,
+      stored.listId,
+      ItemChange(
+        kind: ItemChangeKind.removed,
+        itemId: stored.id!,
+        actorId: userId,
+      ),
+    );
   }
 }

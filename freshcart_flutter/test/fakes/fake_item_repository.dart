@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 
 /// An in-memory [ItemRepository] for controller and widget tests.
@@ -50,9 +52,30 @@ class FakeItemRepository implements ItemRepository {
     return removeResult;
   }
 
+  /// Feeds [watchByList]. Tests push snapshots through this to simulate
+  /// another client changing the list.
+  final StreamController<Result<List<ShoppingItem>>> live =
+      StreamController<Result<List<ShoppingItem>>>.broadcast();
+
   @override
-  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
-      throw UnimplementedError();
+  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
+    // Seeded exactly as the real source is: one immediate snapshot, then live
+    // updates. Stream.multi rather than an async* generator so the live
+    // listener attaches synchronously on subscribe — otherwise a test that
+    // pushes an event right after the seed would race the generator.
+    return Stream<Result<List<ShoppingItem>>>.multi((controller) {
+      controller.add(byListResult);
+      final subscription = live.stream.listen(
+        controller.add,
+        onError: controller.addError,
+        onDone: controller.close,
+      );
+      controller.onCancel = subscription.cancel;
+    });
+  }
+
+  /// Closes the live stream. Call from a test teardown.
+  Future<void> dispose() => live.close();
 }
 
 /// Builds a domain [ShoppingItem] for tests.

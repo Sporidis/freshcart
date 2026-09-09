@@ -1,6 +1,7 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/items/business/item_service.dart';
+import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// The items on a list: read, add, save, remove.
@@ -46,4 +47,19 @@ class ItemEndpoint extends Endpoint {
   /// Deletes an item.
   Future<void> remove(Session session, UuidValue itemId) =>
       ItemService.remove(session, itemId, session.requireUserId);
+
+  /// Live changes to a list's items.
+  ///
+  /// Emits a delta per change rather than the whole list — subscribers keep the
+  /// merged state themselves. Membership is checked once, when the stream
+  /// opens; the stream closes if the session ends.
+  ///
+  /// This is the in-app half of the two-layer story: it keeps open clients live
+  /// and is unrelated to FCM background push, which covers closed apps.
+  Stream<ItemChange> watchList(Session session, UuidValue listId) async* {
+    await ListService.requireMembership(session, listId, session.requireUserId);
+    yield* session.messages.createStream<ItemChange>(
+      ItemService.channelFor(listId),
+    );
+  }
 }

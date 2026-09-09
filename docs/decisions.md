@@ -377,3 +377,36 @@ as matching every filter. **Why:** the alternative — hiding untagged items whe
 selected — silently loses shopping. Someone adds "batteries" without tagging it, filters to
 Colruyt, and the item is simply gone. Because the rule lives on the entity it has a unit test
 of its own and the widget cannot quietly disagree with it.
+
+## 34. The wire carries deltas; the client keeps the merged list
+
+**Decision:** `ItemEndpoint.watchList` streams one `ItemChange` per edit, and
+`ItemRealtimeSource` maintains the merged list on the client. **Why:** a list can hold
+hundreds of items while a change usually touches one, so re-sending the whole list on every
+keystroke would waste the very connection this feature exists to make feel instant. Putting
+the merge in `data/` keeps it above the transport and below anything that knows what a widget
+is, and `applyChange` is a pure static function with unit tests — the part with rules in it is
+pinned without needing a socket. **Trade-off:** the client can drift if it misses an event, so
+the stream re-seeds with a full read on every (re)subscribe.
+
+## 35. In-flight optimistic edits are overlaid on incoming live snapshots
+
+**Decision:** `ItemsController` keeps a `_pending` map of optimistic values for writes that
+have not been answered, and re-applies it to every snapshot arriving from the stream.
+**Why:** this is where the two mechanisms collide. While one user's write is in flight, an
+unrelated edit by *someone else* triggers a snapshot that still carries the server's older
+copy of the row being edited — so the tick would visibly undo itself and then reappear a
+moment later. Without the overlay, the more collaborative the list, the more the app flickers,
+which is exactly backwards. **Rejected:** ignoring snapshots while any write is pending (drops
+other people's changes) and reconciling purely on `updatedAt` (the server's older row is not
+"newer" by any timestamp the client can compare). Covered by a test that ticks one item while
+a third party renames another.
+
+## 36. Known gap: `ListRepository.watch` is still unimplemented
+
+**Not a decision — an honest gap.** Phase 8's goal is that two open clients see each other's
+*item* edits live, which is the collaboration that matters in a shop. List-level changes
+(a rename, a new member joining) do not stream yet; `ListRepository.watch` throws
+`UnimplementedError` rather than returning an empty stream, so the omission is loud rather
+than silent. Nothing in the app calls it. It needs a second channel and endpoint of the same
+shape as the item one.
