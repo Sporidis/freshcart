@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -95,11 +97,61 @@ void main() {
   });
 
   group('ListRepositoryImpl real-time', () {
-    test('watch is not implemented before phase 8', () {
-      expect(
-        () => repository.watch(ListId(listUuid.uuid)),
-        throwsUnimplementedError,
-      );
+    test('watch seeds with the current list', () async {
+      // Only the seed is exercised here — .first cancels the subscription as
+      // soon as it arrives, before the source ever reaches the streaming
+      // watchList call, so no streamHandler is needed for this one.
+      client.handler = (_, _, _) => buildListDto();
+
+      final first = await repository.watch(ListId(listUuid.uuid)).first;
+
+      expect(first.valueOrNull?.name, 'Groceries');
     });
+
+    test('watch follows renames and membership changes live', () async {
+      // Streaming methods are a distinct transport path in a real Serverpod
+      // client (a WebSocket, not an HTTP call), so FakeClient answers them
+      // through streamHandler rather than handler.
+      final updates = StreamController<dto.ShoppingList>();
+      client.handler = (_, _, _) => buildListDto();
+      client.streamHandler = (_, _, _) => updates.stream;
+
+      final events = <Result<ShoppingList>>[];
+      final subscription = repository
+          .watch(ListId(listUuid.uuid))
+          .listen(events.add);
+
+      // Teardown order matters here and is easy to get backwards: cancelling
+      // the *outer* subscription while it is suspended awaiting the *inner*
+      // (`updates`) stream does not unwind that inner await, so an awaited
+      // `subscription.cancel()` would deadlock forever waiting for a cancel
+      // that can only complete once `updates` itself is done. Closing the
+      // source first lets the generator finish naturally; cancelling the
+      // already-finished subscription after that is then a no-op. (In the
+      // real app this never bites: Riverpod's `ref.onDispose` never awaits its
+      // callback, so `ref.onDispose(subscription.cancel)` fires-and-forgets
+      // the very same call that would deadlock here if awaited.)
+      addTearDown(subscription.cancel);
+      addTearDown(updates.close);
+
+      await Future<void>.delayed(Duration.zero);
+
+      updates.add(buildListDto(name: 'Weekend shop'));
+      await Future<void>.delayed(Duration.zero);
+
+      expect(events.last.valueOrNull?.name, 'Weekend shop');
+      expect(client.streamCalls.single.method, 'watchList');
+    });
+
+    test(
+      'watch reports a failed seed instead of closing empty',
+      () async {
+        client.handler = (_, _, _) => throw dto.NotAMemberException();
+
+        final first = await repository.watch(ListId(listUuid.uuid)).first;
+
+        expect(first.failureOrNull, const Failure.unauthorized());
+      },
+    );
   });
 }

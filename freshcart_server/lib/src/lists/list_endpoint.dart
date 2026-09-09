@@ -52,4 +52,17 @@ class ListEndpoint extends Endpoint {
   /// Removes the caller from a list.
   Future<void> leave(Session session, UuidValue listId) =>
       ListService.leave(session, listId, session.requireUserId);
+
+  /// Live changes to a list itself — its name and its membership.
+  ///
+  /// Sends the whole [ShoppingList], not a delta: unlike items, a list is a
+  /// single row, so there is nothing to merge. This is the in-app half of the
+  /// two-layer story, same as [ItemEndpoint.watchList] — it keeps open clients
+  /// live and is unrelated to FCM background push.
+  Stream<ShoppingList> watchList(Session session, UuidValue listId) async* {
+    await ListService.requireMembership(session, listId, session.requireUserId);
+    yield* session.messages.createStream<ShoppingList>(
+      ListService.channelFor(listId),
+    );
+  }
 }

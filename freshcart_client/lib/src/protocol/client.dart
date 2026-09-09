@@ -455,6 +455,23 @@ class EndpointList extends _i1.EndpointRef {
         'leave',
         {'listId': listId},
       );
+
+  /// Live changes to a list itself — its name and its membership.
+  ///
+  /// Sends the whole [ShoppingList], not a delta: unlike items, a list is a
+  /// single row, so there is nothing to merge. This is the in-app half of the
+  /// two-layer story, same as [ItemEndpoint.watchList] — it keeps open clients
+  /// live and is unrelated to FCM background push.
+  _i2.Stream<_i8.ShoppingList> watchList(_i1.UuidValue listId) =>
+      caller.callStreamingServerEndpoint<
+        _i2.Stream<_i8.ShoppingList>,
+        _i8.ShoppingList
+      >(
+        'list',
+        'watchList',
+        {'listId': listId},
+        {},
+      );
 }
 
 /// Device registration and per-list notification settings.

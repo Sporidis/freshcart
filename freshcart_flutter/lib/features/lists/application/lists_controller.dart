@@ -34,7 +34,16 @@ class ListsController extends _$ListsController {
   Future<void> refresh() async => ref.invalidateSelf();
 }
 
-/// One list by id, for the detail screen and the router's membership guard.
+/// Live view of one list, for the detail screen and the router's membership
+/// guard.
+///
+/// Backed by [ListRepository.watch] rather than a one-shot [ListRepository.byId]
+/// call, so a rename or a collaborator joining while this screen is open
+/// updates without a manual refresh (closes the gap `docs/decisions.md` #36
+/// named). No optimistic overlay is needed here the way [ItemsController] needs
+/// one: this screen has no local mutations of its own yet — rename and leave
+/// exist on the port but nothing in the UI calls them. Add the same overlay
+/// pattern if that changes.
 @riverpod
-Future<Result<ShoppingList>> listById(Ref ref, ListId listId) =>
-    ref.watch(listRepositoryProvider).byId(listId);
+Stream<Result<ShoppingList>> listById(Ref ref, ListId listId) =>
+    ref.watch(listRepositoryProvider).watch(listId);

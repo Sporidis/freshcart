@@ -27,6 +27,7 @@ list:
   - join:
   - rename:
   - leave:
+  - watchList:
 notification:
   - registerDevice:
   - unregisterDevice:

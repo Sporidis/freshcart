@@ -1023,6 +1023,38 @@ class _ListEndpoint {
       }
     });
   }
+
+  _i3.Stream<_i8.ShoppingList> watchList(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i2.UuidValue listId,
+  ) {
+    var _localTestStreamManager = _i1.TestStreamManager<_i8.ShoppingList>();
+    _i1.callStreamFunctionAndHandleExceptions(
+      () async {
+        var _localUniqueSession =
+            (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+              endpoint: 'list',
+              method: 'watchList',
+            );
+        var _localCallContext = await _endpointDispatch
+            .getMethodStreamCallContext(
+              createSessionCallback: (_) => _localUniqueSession,
+              endpointPath: 'list',
+              methodName: 'watchList',
+              arguments: {'listId': listId},
+              requestedInputStreams: [],
+              serializationManager: _serializationManager,
+            );
+        await _localTestStreamManager.callStreamMethod(
+          _localCallContext,
+          _localUniqueSession,
+          {},
+        );
+      },
+      _localTestStreamManager.outputStreamController,
+    );
+    return _localTestStreamManager.outputStreamController.stream;
+  }
 }
 
 class _NotificationEndpoint {
