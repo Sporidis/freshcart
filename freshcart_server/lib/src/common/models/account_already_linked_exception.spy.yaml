@@ -1,0 +1,2 @@
+### Thrown when linking a provider that is already attached to this account.
+exception: AccountAlreadyLinkedException

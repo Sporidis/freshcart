@@ -1,0 +1,12 @@
+### An identity provider attached to an account.
+enum: LinkedProvider
+serialized: byName
+values:
+  ### The account was created anonymously and has no recoverable credential.
+  - anonymous
+
+  ### Email and password.
+  - email
+
+  ### Google sign-in.
+  - google

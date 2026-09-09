@@ -1,3 +1,6 @@
+account:
+  - linkedProviders:
+  - linkEmail:
 anonymousIdp:
   - login:
 emailIdp:

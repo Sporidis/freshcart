@@ -35,5 +35,13 @@
     "conflict": "May ibang nagbago nito kanina lang. Subukan muli.",
     "unexpected": "May nangyaring mali.",
     "validation": "Pakisuri ang iyong inilagay."
+  },
+  "account": {
+    "title": "Protektahan ang iyong mga listahan",
+    "body": "Nasa device na ito lang ang iyong account. Mag-link ng email para hindi mawala ang iyong mga listahan.",
+    "action": "I-link ang email",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "linked": "Protektado na ang iyong account."
   }
 }

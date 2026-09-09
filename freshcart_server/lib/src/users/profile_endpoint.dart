@@ -1,3 +1,4 @@
+import 'package:freshcart_server/src/auth/business/account_link_service.dart';
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/users/business/profile_service.dart';
@@ -18,6 +19,7 @@ class ProfileEndpoint extends Endpoint {
     return CurrentUser(
       userId: userId,
       displayName: await ProfileService.displayNameFor(session, userId),
+      isAnonymous: !await AccountLinkService.isRecoverable(session, userId),
     );
   }
 

@@ -23,17 +23,22 @@ abstract class CurrentUser implements _i1.SerializableModel {
   CurrentUser._({
     required this.userId,
     required this.displayName,
+    required this.isAnonymous,
   });
 
   factory CurrentUser({
     required _i1.UuidValue userId,
     required String displayName,
+    required bool isAnonymous,
   }) = _CurrentUserImpl;
 
   factory CurrentUser.fromJson(Map<String, dynamic> jsonSerialization) {
     return CurrentUser(
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       displayName: jsonSerialization['displayName'] as String,
+      isAnonymous: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['isAnonymous'],
+      ),
     );
   }
 
@@ -43,12 +48,19 @@ abstract class CurrentUser implements _i1.SerializableModel {
   /// The name collaborators see, or a placeholder if none is set yet.
   String displayName;
 
+  /// Whether the account has any credential attached.
+  ///
+  /// False means an anonymous session: losing this device loses access to every
+  /// shared list, which is what the upgrade nudge exists to prevent.
+  bool isAnonymous;
+
   /// Returns a shallow copy of this [CurrentUser]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   CurrentUser copyWith({
     _i1.UuidValue? userId,
     String? displayName,
+    bool? isAnonymous,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -56,6 +68,7 @@ abstract class CurrentUser implements _i1.SerializableModel {
       '__className__': 'CurrentUser',
       'userId': userId.toJson(),
       'displayName': displayName,
+      'isAnonymous': isAnonymous,
     };
   }
 
@@ -69,9 +82,11 @@ class _CurrentUserImpl extends CurrentUser {
   _CurrentUserImpl({
     required _i1.UuidValue userId,
     required String displayName,
+    required bool isAnonymous,
   }) : super._(
          userId: userId,
          displayName: displayName,
+         isAnonymous: isAnonymous,
        );
 
   /// Returns a shallow copy of this [CurrentUser]
@@ -81,10 +96,12 @@ class _CurrentUserImpl extends CurrentUser {
   CurrentUser copyWith({
     _i1.UuidValue? userId,
     String? displayName,
+    bool? isAnonymous,
   }) {
     return CurrentUser(
       userId: userId ?? this.userId,
       displayName: displayName ?? this.displayName,
+      isAnonymous: isAnonymous ?? this.isAnonymous,
     );
   }
 }
