@@ -39,7 +39,7 @@ void main() {
     test('rejects a name longer than the maximum', () async {
       final result = await addItem(
         listId: testList,
-        name: 'x' * (AddItem.maxNameLength + 1),
+        name: 'x' * (ShoppingItem.maxNameLength + 1),
       );
 
       expect(result.failureOrNull, isA<ValidationFailure>());
@@ -49,7 +49,7 @@ void main() {
     test('accepts a name exactly at the maximum', () async {
       final result = await addItem(
         listId: testList,
-        name: 'x' * AddItem.maxNameLength,
+        name: 'x' * ShoppingItem.maxNameLength,
       );
 
       expect(result.isOk, isTrue);

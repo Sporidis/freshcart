@@ -1,4 +1,3 @@
-import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/items/entities/shopping_item.dart';
 import 'package:freshcart_domain/src/items/ports/item_repository.dart';
@@ -12,16 +11,12 @@ class AddItem {
 
   final ItemRepository _items;
 
-  /// The longest an item name may be.
-  ///
-  /// A list is read at arm's length in a shop; a name past this is a note.
-  static const int maxNameLength = 80;
-
   /// Validates the input and appends the item to [listId].
   ///
-  /// Rejects a blank name and a quantity below one *before* touching the
-  /// network — the check belongs to the domain, not to a form widget, so the
-  /// rule holds no matter which screen calls it.
+  /// The rules themselves live on [ShoppingItem] so that editing an item
+  /// enforces exactly the same ones — see [ShoppingItem.validateName]. They
+  /// run *before* touching the network: the check belongs to the domain, not
+  /// to a form widget, so it holds no matter which screen calls it.
   Future<Result<ShoppingItem>> call({
     required ListId listId,
     required String name,
@@ -29,28 +24,24 @@ class AddItem {
     ShopId? shopId,
     String? noteText,
   }) async {
-    final trimmedName = name.trim();
-    if (trimmedName.isEmpty) {
-      return const Err(Failure.validation('name', 'Give the item a name'));
-    }
-    if (trimmedName.length > maxNameLength) {
-      return const Err(
-        Failure.validation('name', 'That name is too long for a list'),
-      );
-    }
-    if (quantity < 1) {
-      return const Err(Failure.validation('quantity', 'Add at least one'));
-    }
+    final validated = ShoppingItem.validateName(name).flatMap(
+      (validName) => ShoppingItem.validateQuantity(
+        quantity,
+      ).map((validQuantity) => (name: validName, quantity: validQuantity)),
+    );
 
     final trimmedNote = noteText?.trim();
-    return _items.add(
-      listId: listId,
-      name: trimmedName,
-      quantity: quantity,
-      shopId: shopId,
-      noteText: (trimmedNote == null || trimmedNote.isEmpty)
-          ? null
-          : trimmedNote,
-    );
+    return switch (validated) {
+      Err(:final failure) => Err(failure),
+      Ok(:final value) => await _items.add(
+        listId: listId,
+        name: value.name,
+        quantity: value.quantity,
+        shopId: shopId,
+        noteText: (trimmedNote == null || trimmedNote.isEmpty)
+            ? null
+            : trimmedNote,
+      ),
+    };
   }
 }

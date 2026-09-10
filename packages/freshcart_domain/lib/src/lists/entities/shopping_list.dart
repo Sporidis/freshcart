@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
+import 'package:freshcart_domain/src/core/failure.dart';
+import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/lists/entities/list_member.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
@@ -23,6 +25,26 @@ abstract class ShoppingList with _$ShoppingList {
   }) = _ShoppingList;
 
   const ShoppingList._();
+
+  /// The longest a list name may be.
+  static const int maxNameLength = 60;
+
+  /// Validates a proposed list name, returning it trimmed.
+  ///
+  /// On the entity rather than in `CreateList` because creating and renaming
+  /// are two doors into the same field: a name that is illegal to create must
+  /// stay illegal to rename to. Static because the rule has to hold before the
+  /// list exists.
+  static Result<String> validateName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      return const Err(Failure.validation('name', 'Give the list a name'));
+    }
+    if (trimmed.length > maxNameLength) {
+      return const Err(Failure.validation('name', 'That name is too long'));
+    }
+    return Ok(trimmed);
+  }
 
   /// Whether [userId] currently belongs to this list.
   ///

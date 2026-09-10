@@ -34,3 +34,32 @@ ShoppingItem buildItem({
   checkedBy: checkedBy,
   checkedAt: checkedAt,
 );
+
+/// Builds a [ShoppingList] with sensible defaults, overriding only what a test
+/// actually cares about.
+ShoppingList buildList({
+  String id = 'list-1',
+  String name = 'Weekly Groceries',
+  String joinCode = 'ABC234',
+  List<ListMember> members = const <ListMember>[],
+}) => ShoppingList(
+  id: ListId(id),
+  name: name,
+  joinCode: JoinCode.parse(joinCode).valueOrNull!,
+  ownerId: testUser,
+  createdAt: testNow,
+  members: members,
+);
+
+/// Builds a [Shop] with sensible defaults, overriding only what a test
+/// actually cares about.
+Shop buildShop({
+  String id = 'shop-1',
+  String name = 'Albert Heijn',
+  int colorArgb = 0xFF2456A6,
+}) => Shop(
+  id: ShopId(id),
+  listId: testList,
+  name: name,
+  color: HexColor.fromArgb(colorArgb),
+);

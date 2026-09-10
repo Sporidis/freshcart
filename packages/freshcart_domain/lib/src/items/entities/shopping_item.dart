@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
+import 'package:freshcart_domain/src/core/failure.dart';
+import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/items/entities/note.dart';
 import 'package:freshcart_domain/src/items/value_objects/item_id.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
@@ -35,6 +37,45 @@ abstract class ShoppingItem with _$ShoppingItem {
 
   const ShoppingItem._();
 
+  /// The longest an item name may be.
+  ///
+  /// A list is read at arm's length in a shop; a name past this is a note.
+  static const int maxNameLength = 80;
+
+  /// Validates a proposed item name, returning it trimmed.
+  ///
+  /// Lives on the entity, not on a use case, for the same reason
+  /// [toggleChecked] does: it is an invariant of an item rather than of one
+  /// operation on it. `AddItem` and `EditItem` are two doors into the same
+  /// field, and a name that is illegal to create must stay illegal to rename
+  /// to — one rule, enforced identically at both.
+  ///
+  /// Static because the check has to hold *before* an item exists: on the add
+  /// path the server has not minted the entity yet.
+  static Result<String> validateName(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      return const Err(Failure.validation('name', 'Give the item a name'));
+    }
+    if (trimmed.length > maxNameLength) {
+      return const Err(
+        Failure.validation('name', 'That name is too long for a list'),
+      );
+    }
+    return Ok(trimmed);
+  }
+
+  /// Validates a proposed quantity.
+  ///
+  /// Only a lower bound: there is no sensible ceiling on how many of something
+  /// a household might buy, and inventing one would reject a legitimate list.
+  static Result<int> validateQuantity(int quantity) {
+    if (quantity < 1) {
+      return const Err(Failure.validation('quantity', 'Add at least one'));
+    }
+    return Ok(quantity);
+  }
+
   /// Whether this item is tagged to a specific shop.
   bool get hasShop => shopId != null;
 
@@ -58,4 +99,40 @@ abstract class ShoppingItem with _$ShoppingItem {
       isChecked
       ? copyWith(isChecked: false, checkedBy: null, checkedAt: null)
       : copyWith(isChecked: true, checkedBy: by, checkedAt: at);
+
+  /// Returns this item with a user's edit applied.
+  ///
+  /// Public, and on the entity, for the same reason [toggleChecked] is: the
+  /// controller applies it optimistically the moment the user hits Save while
+  /// `EditItem` applies it on the way to the server, and the two must not be
+  /// allowed to drift. One transformation, computed one way.
+  ///
+  /// Expects [name] and [quantity] to have passed [validateName] and
+  /// [validateQuantity] already — this is the shape change, not the guard.
+  ///
+  /// A blank or absent [noteText] clears the note. The note's author is
+  /// whoever last wrote it, falling back to whoever added the item; [at]
+  /// stamps it, and stays local until the server echoes the stored row back.
+  ShoppingItem withEdit({
+    required String name,
+    required int quantity,
+    required DateTime at,
+    ShopId? shopId,
+    String? noteText,
+  }) {
+    final trimmedNote = noteText?.trim();
+    final hasNote = trimmedNote != null && trimmedNote.isNotEmpty;
+    return copyWith(
+      name: name,
+      quantity: quantity,
+      shopId: shopId,
+      note: hasNote
+          ? Note(
+              text: trimmedNote,
+              authorId: note?.authorId ?? addedBy,
+              updatedAt: at,
+            )
+          : null,
+    );
+  }
 }
