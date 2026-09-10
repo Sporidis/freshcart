@@ -38,6 +38,7 @@
     "all": "Alle winkels",
     "none": "Geen winkel",
     "manage": "Winkels beheren",
+    "add": "Winkel toevoegen",
     "edit": "Winkel bewerken",
     "nameLabel": "Winkelnaam",
     "colorLabel": "Tabkleur",

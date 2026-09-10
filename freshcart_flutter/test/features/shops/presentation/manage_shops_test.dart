@@ -49,6 +49,91 @@ void main() {
     return container;
   }
 
+  group('adding a shop', () {
+    testWidgets('the empty state offers to add one', (tester) async {
+      shops.byListResult = const Ok([]);
+      await pump(tester);
+
+      expect(find.text('No shop'), findsOneWidget);
+      // The empty state's own action, not a FAB — same rule as ListsScreen.
+      expect(find.byType(FloatingActionButton), findsNothing);
+
+      await tester.tap(find.text('Add shop'));
+      await tester.pumpAndSettle();
+
+      final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+      expect(sheet.shop, isNull, reason: 'create mode, not editing anything');
+      expect(find.text('Add shop'), findsWidgets);
+    });
+
+    testWidgets('the FAB opens the same sheet once shops exist', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      await pump(tester);
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+      expect(sheet.shop, isNull);
+      // The existing shop is still a sibling, for the clash warning.
+      expect(sheet.siblings, hasLength(1));
+    });
+
+    testWidgets('saving commits through create and refreshes the list', (
+      tester,
+    ) async {
+      shops.byListResult = const Ok([]);
+      shops.createResult = Ok(shop('s1', 'Aldi', orange));
+      await pump(tester);
+
+      await tester.tap(find.text('Add shop'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Aldi');
+      final callsBefore = shops.byListCallCount;
+      // Two "Add shop" texts once the sheet is open: the header and the
+      // button, so target the button specifically.
+      await tester.tap(
+        find.descendant(
+          of: find.byType(EditShopSheet),
+          matching: find.widgetWithText(ElevatedButton, 'Add shop'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(shops.createCalls.single.name, 'Aldi');
+      expect(shops.createCalls.single.listId, listId);
+      expect(find.byType(EditShopSheet), findsNothing);
+      expect(
+        shops.byListCallCount,
+        greaterThan(callsBefore),
+        reason: 'a successful create must refresh the collection',
+      );
+    });
+
+    testWidgets('a rejected name keeps the sheet open', (tester) async {
+      shops.byListResult = const Ok([]);
+      shops.createResult = const Err(
+        Failure.validation('name', 'Give the shop a name'),
+      );
+      await pump(tester);
+
+      await tester.tap(find.text('Add shop'));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.descendant(
+          of: find.byType(EditShopSheet),
+          matching: find.widgetWithText(ElevatedButton, 'Add shop'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byType(EditShopSheet), findsOneWidget);
+      expect(find.text('Give the shop a name'), findsOneWidget);
+    });
+  });
+
   testWidgets('lists the shops on the list', (tester) async {
     shops.byListResult = Ok([
       shop('s1', 'Albert Heijn', blue),
