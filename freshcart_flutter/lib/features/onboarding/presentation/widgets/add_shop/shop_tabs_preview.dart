@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
+import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 class ShopTabsPreview extends StatelessWidget {
-  const ShopTabsPreview({required this.shops, super.key});
+  const ShopTabsPreview({required this.shops, required this.t, super.key});
 
   final List<OnboardingShopDraft> shops;
+
+  /// Translations for the active locale.
+  final Translations t;
 
   @override
   Widget build(BuildContext context) {
@@ -15,7 +20,7 @@ class ShopTabsPreview extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'YOUR TABS WILL LOOK LIKE THIS',
+          t.onboarding.tabsPreviewLabel.toUpperCase(),
           style: theme.textTheme.labelSmall,
         ),
         const SizedBox(height: AppSpacing.gap),
@@ -28,7 +33,7 @@ class ShopTabsPreview extends StatelessWidget {
             child: Row(
               children: [
                 TabPill(
-                  label: 'All',
+                  label: t.onboarding.allTab,
                   selected: true,
                   color: theme.colorScheme.onSurface,
                 ),
@@ -93,9 +98,19 @@ class TabPill extends StatelessWidget {
           ],
           Text(
             label,
-            style: selected
-                ? theme.chipTheme.secondaryLabelStyle
-                : theme.chipTheme.labelStyle,
+            // Not a real Chip, so ChipThemeData does not apply here — the
+            // selected pill's own fill colour decides its text colour
+            // directly, the same contrast rule AppTheme uses for a shop's
+            // `onPrimary` (docs/decisions.md, the theming-fidelity entry).
+            style: theme.textTheme.labelMedium?.copyWith(
+              color: selected
+                  ? (ThemeData.estimateBrightnessForColor(color) ==
+                            Brightness.dark
+                        ? Colors.white
+                        : AppColors.ink)
+                  : theme.colorScheme.onSurface,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            ),
           ),
         ],
       ),

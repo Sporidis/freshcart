@@ -1,10 +1,11 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/splash_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen.dart';
 import 'package:freshcart_flutter/features/shops/presentation/manage_shops_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -38,11 +39,19 @@ abstract final class Routes {
   /// Account-level settings, not scoped to any one list.
   static const String settings = '/settings';
 
+  /// The splash screen — the app's actual initial route. Shown for exactly
+  /// as long as sign-in takes; it redirects itself onward once it knows.
+  static const String splash = '/splash';
+
   /// The welcome screen.
   static const String welcome = '/welcome';
 
   /// The onboarding flow.
   static const String onboarding = '/onboarding';
+
+  /// Joining an existing list from an invite code, for someone who has not
+  /// been through onboarding yet — Welcome's second exit.
+  static const String join = '/join';
 }
 
 /// The app's [GoRouter].
@@ -51,13 +60,17 @@ abstract final class Routes {
 /// throw the user back to the start.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) => GoRouter(
-  // A newly-created identity has never made a list, so it starts at Welcome.
-  // A restored one goes straight to Lists — which already has its own empty
-  // state for "no lists left", a distinct case from "never onboarded".
-  initialLocation: ref.watch(isNewIdentityProvider)
-      ? Routes.welcome
-      : Routes.lists,
+  // Always Splash — it is the one place that knows whether to send a new
+  // identity to Welcome or a restored one straight to Lists (whose own empty
+  // state already covers "no lists left", a distinct case from "never
+  // onboarded"), and it needs to be an actual route, not a pre-`runApp`
+  // gate, for its mark to `Hero` into Welcome's instead of just cutting.
+  initialLocation: Routes.splash,
   routes: <RouteBase>[
+    GoRoute(
+      path: Routes.splash,
+      builder: (context, state) => const SplashScreen(),
+    ),
     GoRoute(
       path: Routes.welcome,
       builder: (context, state) => const WelcomeScreen(),
@@ -65,6 +78,10 @@ GoRouter appRouter(Ref ref) => GoRouter(
     GoRoute(
       path: Routes.onboarding,
       builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: Routes.join,
+      builder: (context, state) => const JoinFlowScreen(),
     ),
     GoRoute(
       path: Routes.settings,

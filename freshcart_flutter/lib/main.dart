@@ -7,9 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_client/freshcart_client.dart';
 import 'package:freshcart_flutter/app.dart';
-import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
-import 'package:freshcart_flutter/features/auth/data/anonymous_session_bootstrap.dart';
+import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_flutter/features/notifications/data/firebase_messaging_token_source.dart';
 import 'package:freshcart_flutter/features/notifications/data/push_repository_provider.dart';
 import 'package:freshcart_flutter/features/notifications/data/push_token_source.dart';
@@ -35,17 +34,14 @@ Future<void> main() async {
 
   // Resolved in order: --dart-define=SERVER_URL, then assets/config.json, then
   // http://localhost:8080/. On a physical device the default will not reach
-  // your machine — pass your LAN address with --dart-define.
+  // your machine — pass your LAN address with --dart-define. Not awaiting the
+  // sign-in below alongside it: this is a local config read, effectively
+  // instant, and not what the splash screen exists to cover.
   final serverUrl = await getServerUrl();
 
   final client = Client(serverUrl)
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = FlutterAuthSessionManager();
-
-  // Awaited on purpose: the session must exist before the first frame. Every
-  // endpoint requires login, so without this the first list fetch would come
-  // back unauthorized.
-  final session = await AnonymousSessionBootstrap.ensureSignedIn(client);
 
   // web keeps the honest "unsupported" source (decisions.md #8); native
   // platforms get the real Firebase-backed one now that a project exists.
@@ -55,23 +51,38 @@ Future<void> main() async {
           Platform.isIOS ? DevicePlatform.ios : DevicePlatform.android,
         );
 
-  // An explicit container, not a plain ProviderScope, because registration
-  // below needs to read a provider before the first frame exists.
+  // An explicit container, not a plain ProviderScope, because the work below
+  // needs to read providers before the first frame exists.
   final container = ProviderContainer(
     // The one place the client is constructed. Everything else reaches it
     // through the provider, so a test can substitute a fake without the app
     // knowing (docs/architecture.md, and the FakeClient in test/fakes).
     overrides: [
       serverpodClientProvider.overrideWithValue(client),
-      isNewIdentityProvider.overrideWithValue(session.isNewIdentity),
       pushTokenSourceProvider.overrideWithValue(tokenSource),
     ],
   );
 
-  // Fire-and-forget: PushRepositoryImpl guards every call into a Result, and
-  // a failed registration must never delay or block the first frame — the
-  // app is fully usable without push, it just would not receive it.
-  unawaited(container.read(pushRepositoryProvider).registerDevice());
+  // Not awaited: `main()` used to block the first frame on this exact call,
+  // with the OS launch image covering the wait. Now `runApp` fires straight
+  // away and `SplashScreen` — the app's own first route, watching
+  // `authBootstrapProvider` — covers it instead, for exactly as long as it
+  // takes. Reading `.future` here rather than leaving the provider to be
+  // discovered by Splash's first `build()` just starts the network round
+  // trip one frame earlier.
+  unawaited(
+    container.read(authBootstrapProvider.future).then((session) {
+      // Device registration needs a signed-in session, so it waits for this
+      // rather than firing at the same moment as the sign-in call. Still
+      // fire-and-forget from here on — PushRepositoryImpl guards every call
+      // into a Result, and a failed registration must never surface as a
+      // crash; the app is fully usable without push, it just would not
+      // receive it.
+      if (session.authenticated) {
+        unawaited(container.read(pushRepositoryProvider).registerDevice());
+      }
+    }),
+  );
 
   runApp(
     UncontrolledProviderScope(

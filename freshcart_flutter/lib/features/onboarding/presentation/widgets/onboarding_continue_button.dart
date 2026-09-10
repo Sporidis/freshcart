@@ -5,13 +5,11 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
-import 'package:go_router/go_router.dart';
 
 class OnboardingContinueButton extends ConsumerWidget {
   const OnboardingContinueButton({super.key});
@@ -23,6 +21,7 @@ class OnboardingContinueButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final controller = ref.read(onboardingControllerProvider.notifier);
     final state = ref.watch(onboardingControllerProvider);
+    final t = ref.watch(translationsProvider);
     final isShopStep = state.step == OnboardingStep.addShop;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
@@ -66,31 +65,29 @@ class OnboardingContinueButton extends ConsumerWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       onPressed: () async {
-                        if (state.step != OnboardingStep.values.last) {
-                          controller.next();
+                        // Shops -> Invite is the one transition that does
+                        // real work (creates the list and its shops) — every
+                        // other step is a plain, synchronous advance. Once
+                        // that has already succeeded once (state.createdList
+                        // is set), Back-then-Continue must not repeat it: a
+                        // second submit would create a second list.
+                        if (state.step == OnboardingStep.addShop) {
+                          if (state.createdList != null) {
+                            controller.next();
+                            return;
+                          }
+                          final result = await controller.submit();
+                          if (!context.mounted) return;
+                          if (result case Err(:final failure)) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(failure.toMessage(t))),
+                            );
+                          }
                           return;
                         }
-                        final result = await controller.finish();
-                        if (!context.mounted) return;
-                        if (result case Err(:final failure)) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                failure.toMessage(
-                                  ref.read(translationsProvider),
-                                ),
-                              ),
-                            ),
-                          );
-                          return;
-                        }
-                        context.go(Routes.lists);
+                        controller.next();
                       },
-                      child: Text(
-                        state.step == OnboardingStep.values.last
-                            ? 'Finish'
-                            : 'Continue',
-                      ),
+                      child: Text(t.onboarding.continueCta),
                     ),
                   ),
                 )

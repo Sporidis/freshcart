@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 
@@ -25,28 +26,36 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(onboardingControllerProvider.notifier);
+    final t = ref.watch(translationsProvider);
+    final suggestions = [
+      t.onboarding.suggestionHousehold,
+      t.onboarding.suggestionBigShop,
+      t.onboarding.suggestionBbq,
+    ];
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Name your first list',
+            t.onboarding.listTitle,
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
-          const Text('You can add more later — a BBQ, a trip, a big shop.'),
+          Text(t.onboarding.listSubtitle),
           const SizedBox(height: 24),
           TextField(
             controller: _controller,
             onChanged: controller.updateListName,
-            decoration: const InputDecoration(hintText: 'e.g. Grocery List'),
+            decoration: InputDecoration(
+              hintText: t.onboarding.listPlaceholder,
+            ),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 8,
-            children: ['Household', 'Big shop', 'BBQ']
+            children: suggestions
                 .map(
                   (suggestion) => ActionChip(
                     label: Text(suggestion),
