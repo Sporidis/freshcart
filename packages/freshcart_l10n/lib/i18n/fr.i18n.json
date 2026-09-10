@@ -63,7 +63,8 @@
     "save": "Enregistrer",
     "delete": "Supprimer",
     "retry": "Réessayer",
-    "undo": "Annuler"
+    "undo": "Annuler",
+    "dismiss": "Ignorer"
   },
   "errors": {
     "network": "Impossible de joindre le serveur.",
@@ -110,5 +111,8 @@
     "noResultsTitle": "Aucun produit ne correspond à ‘{{query}}’",
     "addAction": "Ajouter \"{{query}}\" à cette liste",
     "noResultsBody": "Vérifiez l’orthographe, ou ajoutez-le comme nouveau produit."
+  },
+  "settings": {
+    "title": "Paramètres"
   }
 }

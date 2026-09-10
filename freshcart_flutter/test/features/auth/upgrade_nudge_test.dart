@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../fakes/fake_auth_repository.dart';
 
@@ -14,7 +15,12 @@ void main() {
 
   late FakeAuthRepository auth;
 
-  setUp(() => auth = FakeAuthRepository());
+  setUp(() {
+    auth = FakeAuthRepository();
+    // upgradeNudgeDismissedProvider reads SharedPreferences on build; an
+    // empty mock store is what "never dismissed" looks like.
+    SharedPreferences.setMockInitialValues({});
+  });
   tearDown(() => auth.dispose());
 
   Future<ProviderContainer> pump(WidgetTester tester) async {
@@ -91,6 +97,32 @@ void main() {
 
     expect(find.byType(AlertDialog), findsOneWidget);
     expect(find.text('That email is already in use'), findsOneWidget);
+  });
+
+  testWidgets('the close button dismisses the nudge for good', (
+    tester,
+  ) async {
+    await pump(tester);
+    expect(find.text('Secure your lists'), findsOneWidget);
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Secure your lists'), findsNothing);
+  });
+
+  testWidgets('a dismissal is written to disk, not just in-memory state', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+
+    // What a relaunch would actually read back, rather than re-rendering a
+    // second widget tree mid-test to prove it -- disposing the first tree's
+    // own async work partway through a test is its own source of flakiness.
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('upgrade_nudge_dismissed'), isTrue);
   });
 
   testWidgets('Google linking reports that it is not configured', (

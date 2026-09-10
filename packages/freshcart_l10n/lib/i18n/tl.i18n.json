@@ -63,7 +63,8 @@
     "save": "I-save",
     "delete": "Burahin",
     "retry": "Subukan muli",
-    "undo": "I-undo"
+    "undo": "I-undo",
+    "dismiss": "I-dismiss"
   },
   "errors": {
     "network": "Hindi maabot ang server.",
@@ -110,5 +111,8 @@
     "noResultsTitle": "Walang tugmang produkto para sa ‘{{query}}’",
     "addAction": "Idagdag ang \"{{query}}\" sa listahang ito",
     "noResultsBody": "Tingnan ang spelling, o idagdag ito bilang bagong produkto."
+  },
+  "settings": {
+    "title": "Mga Setting"
   }
 }
