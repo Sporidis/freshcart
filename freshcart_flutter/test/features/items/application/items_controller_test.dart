@@ -263,6 +263,45 @@ void main() {
     });
   });
 
+  group('reorder', () {
+    test('applies the new position optimistically before the server answers', () async {
+      final item = buildItem(name: 'Milk', updatedAt: DateTime.utc(2026, 1, 1));
+      final before = buildItem(id: 'b');
+      final after = buildItem(id: 'a');
+      repository.byListResult = Ok([item]);
+      final pause = Completer<void>();
+      repository.savePause = pause.future;
+
+      final container = makeContainer();
+      await itemsOf(container);
+      final notifier = container.read(itemsControllerProvider(listId).notifier);
+
+      final pending = notifier.reorder(item, before: before, after: after);
+
+      final optimistic = currentItems(container).single;
+      expect(optimistic.sortOrder, ShoppingItem.sortOrderBetween(before, after));
+
+      pause.complete();
+      expect(await pending, isNull);
+    });
+
+    test('rolls the position back on conflict', () async {
+      final item = buildItem(name: 'Milk', sortOrder: 5);
+      repository.byListResult = Ok([item]);
+      repository.saveResult = const Err(Failure.conflict());
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .reorder(item, before: buildItem(id: 'b'), after: null);
+
+      expect(failure, const Failure.conflict());
+      expect((await itemsOf(container)).single.sortOrder, 5);
+    });
+  });
+
   group('swipeDelete', () {
     test('hides the row immediately, before the undo window ends', () async {
       final item = buildItem();

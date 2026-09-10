@@ -29,6 +29,13 @@ abstract class ShoppingItem with _$ShoppingItem {
     required DateTime updatedAt,
     @Default(1) int quantity,
     @Default(false) bool isChecked,
+    // A plain default rather than required: almost every call site that
+    // builds a ShoppingItem (every test fixture, every mapper round-trip)
+    // has no opinion about ordering, and forcing one everywhere sortOrder's
+    // real value comes from exactly two places -- ItemService.add, which
+    // appends past the current end, and a drag, which computes a midpoint
+    // (sortOrderBetween) -- would just be noise at every other call site.
+    @Default(0) double sortOrder,
     ShopId? shopId,
     Note? note,
     UserId? checkedBy,
@@ -74,6 +81,34 @@ abstract class ShoppingItem with _$ShoppingItem {
       return const Err(Failure.validation('quantity', 'Add at least one'));
     }
     return Ok(quantity);
+  }
+
+  /// How far apart freshly-appended items are spaced in [sortOrder].
+  ///
+  /// A gap, not consecutive integers, is what makes [sortOrderBetween] work:
+  /// slotting an item between two neighbours only ever needs their average,
+  /// never a rewrite of every other row's position. 1024 leaves ten
+  /// halvings' worth of room (roughly a thousand manual reorders into the
+  /// same gap) before two neighbours' values are close enough that double
+  /// precision stops telling them apart -- rebalancing the rest of the list
+  /// at that point is a real scenario this does not handle, but a large gap
+  /// is what buys the room to not need to.
+  static const double sortOrderGap = 1024;
+
+  /// A [sortOrder] placing an item strictly between [before] and [after] --
+  /// either may be null for an end of the list -- for a manual drag-reorder.
+  ///
+  /// Static, and pure arithmetic, for the same reason [toggleChecked] is a
+  /// method rather than free-floating logic: the optimistic local move and
+  /// the write that follows it must compute the identical value, or the
+  /// screen would visibly jump once the server's answer landed.
+  static double sortOrderBetween(ShoppingItem? before, ShoppingItem? after) {
+    final b = before?.sortOrder;
+    final a = after?.sortOrder;
+    if (b == null && a == null) return 0;
+    if (b == null) return a! - sortOrderGap;
+    if (a == null) return b + sortOrderGap;
+    return (a + b) / 2;
   }
 
   /// Whether this item is tagged to a specific shop.

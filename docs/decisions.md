@@ -658,3 +658,40 @@ anywhere in the app yet — not even the single-item editor exposes it — so "M
 addition here, it is the app's *first* shop-picker, and building one just to unblock this one
 toolbar button is its own piece of work with its own design questions (a sheet? inline chips?
 does it reuse for the single-item case too?), not a corner to cut silently inside this feature.
+
+## 54. Drag-to-reorder: fractional sortOrder, a dedicated handle, and three named animation gaps
+
+**Decision:** Manual ordering is one `sortOrder` double per item (`ShoppingItem.sortOrderGap`
+= 1024 apart on append), not consecutive integers. Dropping a row between two neighbours writes
+`ShoppingItem.sortOrderBetween(before, after)` — their midpoint — so a reorder is always exactly
+one row's write, never a rewrite of everyone between the old and new position. The same pure
+function runs on the client (optimistic) and is what the server ends up storing, via the
+existing `save` endpoint — reordering needed no endpoint of its own, since "write this whole
+item back" already covers a changed `sortOrder` the same way it covers a changed name. `byList`
+now orders by `(sortOrder, createdAt)`, the tiebreak matters for every item that predates this
+column, since backfilling them all to the same default is `defaultPersist`, not `defaultModel`
+— the distinction that let the migration `ALTER TABLE ADD COLUMN` in place instead of the
+drop-and-recreate Serverpod's migration tool refuses to do silently (`serverpod create-migration`
+caught this and named the reason, rather than requiring it be discovered the hard way).
+
+**The gesture conflict, and how it's resolved:** `ReorderableListView`'s default mobile
+behaviour starts a drag on a bare long-press anywhere on the row — which is already long-press's
+job here (§10: enter multi-select). Rather than let two features fight over one gesture, or one
+silently break the other, dragging goes through `buildDefaultDragHandles: false` plus a
+dedicated `Icons.drag_handle` wrapped in `ReorderableDragStartListener`, next to the edit icon.
+This is a real departure from the mockup, which shows no permanent handle (only a grip glyph
+appearing on the row *already* mid-drag) — but the design's own vocabulary already uses an
+explicit handle for the *other* reorder feature (reordering shops, §13), so this borrows an
+established pattern rather than inventing one. Scoped to a single shop tab and to open rows only
+— the same two exclusions §10 states for reordering and multi-select respectively — and disabled
+entirely while a selection is active, so the two gestures never have to be told apart on the
+same touch.
+
+**Trade-off, three related gaps named rather than faked:** `ReorderableListView`'s pickup/drop
+transition is internally a fixed 250 ms, not the spec's 200 ms; the "other rows part" animation
+and the drop's settle are the widget's own built-in easing, not `AppMotion.spring`; and there is
+no public per-crossing callback, so `selectionClick()` fires on pickup and `lightImpact()` on
+drop (both directly supported) but not once per index crossed while dragging. All three come
+from the same root cause — `ReorderableListView` owns those specific timings internally and
+does not expose them — and matching them exactly would mean rebuilding the widget from
+`Draggable`/`DragTarget` primitives to save what is, in practice, a very small visual gap.

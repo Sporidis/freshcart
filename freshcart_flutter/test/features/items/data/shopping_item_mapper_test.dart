@@ -67,6 +67,7 @@ void main() {
     test('round-trips through the wire type unchanged', () {
       final original = buildItemDto(
         quantity: 3,
+        sortOrder: 42,
         shopId: shopUuid,
         note: dto.Note(text: 'oat', authorId: userUuid, updatedAt: testNow),
       ).toDomain();
@@ -79,6 +80,14 @@ void main() {
       // a conflicting write and optimistic UI would silently lose edits.
       final domain = buildItemDto().toDomain();
       expect(domain.toDto().updatedAt, testNow);
+    });
+
+    test('carries sortOrder across', () {
+      // If the mapper dropped this, every save -- a rename, a note, a tick --
+      // would silently reset the row's position back to the mapper's default,
+      // whatever the drag it had actually landed at.
+      final domain = buildItemDto(sortOrder: 42).toDomain();
+      expect(domain.toDto().sortOrder, 42);
     });
 
     test('leaves an untagged, unchecked item null on the wire', () {

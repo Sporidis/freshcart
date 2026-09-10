@@ -75,6 +75,36 @@ void main() {
       );
     });
 
+    test('byList orders by sortOrder, not creation order', () async {
+      final list = await aSharedList();
+      final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+      final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+      await endpoints.item.add(as(aliceId), list.id!, 'Eggs');
+
+      // Drag Bread above Milk -- a plain save carrying a lower sortOrder,
+      // the same write path every other edit takes.
+      await endpoints.item.save(
+        as(aliceId),
+        bread.copyWith(sortOrder: milk.sortOrder - 1),
+      );
+
+      final items = await endpoints.item.byList(as(aliceId), list.id!);
+      expect(items.map((i) => i.name), ['Bread', 'Milk', 'Eggs']);
+    });
+
+    test('add appends past the current end, spaced for future reorders', () async {
+      final list = await aSharedList();
+      final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+      final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+
+      expect(bread.sortOrder, greaterThan(milk.sortOrder));
+      expect(
+        bread.sortOrder - milk.sortOrder,
+        greaterThan(1),
+        reason: 'a real gap, not consecutive integers -- see sortOrderGap',
+      );
+    });
+
     test('save persists an edit and moves updatedAt forward', () async {
       final list = await aSharedList();
       final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');

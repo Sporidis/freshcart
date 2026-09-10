@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
@@ -95,6 +98,7 @@ class ItemsSection extends ConsumerWidget {
               Ok<List<ShoppingItem>>(value: final all) => _ItemList(
                 rows: visibleIn(all, shopFilter),
                 list: list,
+                shopFilter: shopFilter,
                 t: t,
                 controller: controller,
                 report: report,
@@ -129,6 +133,7 @@ class _ItemList extends ConsumerWidget {
   const _ItemList({
     required this.rows,
     required this.list,
+    required this.shopFilter,
     required this.t,
     required this.controller,
     required this.report,
@@ -137,6 +142,11 @@ class _ItemList extends ConsumerWidget {
 
   final List<ShoppingItem> rows;
   final ShoppingList list;
+
+  /// The active shop tab, or null for "All". Drag-to-reorder is scoped to
+  /// one shop tab (§10: "cross-shop reordering is meaningless -- moving
+  /// between shops is a swipe action instead"), so it is only offered here.
+  final ShopId? shopFilter;
   final Translations t;
   final ItemsController controller;
   final void Function(Failure?, {VoidCallback? onRetry}) report;
@@ -150,6 +160,9 @@ class _ItemList extends ConsumerWidget {
     final selectionController = ref.read(
       selectionControllerProvider(list.id).notifier,
     );
+    // Dragging and multi-select both want the row's gesture, so they take
+    // turns: a selection in progress owns it instead.
+    final canReorder = shopFilter != null && selection.isEmpty;
 
     // A row counts as "still shopping" while it is being held, so a just-ticked
     // item keeps its place for 600 ms instead of jumping the moment it is
@@ -163,16 +176,17 @@ class _ItemList extends ConsumerWidget {
         if (item.isChecked && !holding.contains(item.id)) item,
     ];
 
-    // [index] is only passed for rows that can actually be multi-selected
-    // (the open ones) -- a done row always renders out of selection mode,
-    // the same scoping [ReorderableListView] uses for drag (§10): checked
-    // items are a settled category with their own bulk action already
-    // ("Clear checked"), not a second one competing with it.
+    // [index] is only passed for rows that can actually be multi-selected or
+    // dragged (the open ones) -- a done row always renders out of both
+    // modes: checked items are a settled category with their own bulk
+    // action already ("Clear checked") and sit locked below the divider,
+    // never draggable (§10).
     Widget tileFor(ShoppingItem item, {int? index}) => ItemTile(
       key: ValueKey(item.id.value),
       item: item,
       t: t,
       index: index ?? 0,
+      canReorder: index != null && canReorder,
       selectionMode: index != null && selection.isNotEmpty,
       selected: selection.contains(item.id),
       onToggleSelection: () => selectionController.toggle(item.id),
@@ -213,11 +227,71 @@ class _ItemList extends ConsumerWidget {
       },
     );
 
+    // onReorderItem's newIndex is already adjusted for the dragged item's
+    // own removal from oldIndex, so it names the slot to insert at directly
+    // -- no "subtract one if newIndex > oldIndex" bookkeeping.
+    void handleReorder(int oldIndex, int newIndex) {
+      final item = open[oldIndex];
+      final remaining = [...open]..removeAt(oldIndex);
+      final before = newIndex > 0 ? remaining[newIndex - 1] : null;
+      final after = newIndex < remaining.length ? remaining[newIndex] : null;
+      unawaited(
+        controller.reorder(item, before: before, after: after).then(report),
+      );
+    }
+
+    Widget openSection() {
+      if (!canReorder) {
+        // Still indexed: selection mode needs it for the reveal's stagger
+        // and to tell these rows apart from the Done section's, even when
+        // dragging itself is off (the "All" tab, or mid-selection already).
+        return Column(
+          children: [
+            for (final (index, item) in open.indexed)
+              tileFor(item, index: index),
+          ],
+        );
+      }
+      return ReorderableListView(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        // The default drag-anywhere-on-mobile-after-a-long-press behaviour
+        // would collide with long-press already meaning "enter multi-select"
+        // (§10, its own gesture) -- a dedicated handle sidesteps the clash
+        // instead of overloading one gesture with two meanings.
+        buildDefaultDragHandles: false,
+        onReorderStart: (_) => unawaited(HapticFeedback.selectionClick()),
+        onReorderEnd: (_) => unawaited(HapticFeedback.lightImpact()),
+        onReorderItem: handleReorder,
+        // Elevation 8, scale 1.03, opacity 95% (§10). `animation` is driven
+        // by ReorderableListView's own pickup/drop transition, so this
+        // tracks its actual timing rather than a separately-guessed one.
+        proxyDecorator: (child, index, animation) => AnimatedBuilder(
+          animation: animation,
+          builder: (context, child) => Transform.scale(
+            scale: 1 + 0.03 * animation.value,
+            child: Material(
+              elevation: 8 * animation.value,
+              color: Colors.transparent,
+              child: Opacity(
+                opacity: 1 - 0.05 * animation.value,
+                child: child,
+              ),
+            ),
+          ),
+          child: child,
+        ),
+        children: [
+          for (final (index, item) in open.indexed) tileFor(item, index: index),
+        ],
+      );
+    }
+
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
         children: [
-          for (final (index, item) in open.indexed) tileFor(item, index: index),
+          openSection(),
           if (done.isNotEmpty) ...[
             DoneDivider(
               label: t.items.doneCount(n: done.length),

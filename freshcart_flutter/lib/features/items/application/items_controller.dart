@@ -188,6 +188,32 @@ class ItemsController extends _$ItemsController {
     );
   }
 
+  /// Moves [item] to sit between [before] and [after] (§10: drag to
+  /// reorder), applying the new position immediately.
+  ///
+  /// [before] and [after] are the *new* neighbours -- wherever the row was
+  /// dropped -- not whoever it sat next to before the drag started.
+  Future<Failure?> reorder(
+    ShoppingItem item, {
+    required ShoppingItem? before,
+    required ShoppingItem? after,
+  }) {
+    // The same pure arithmetic the use case will apply, so the local guess
+    // and the eventual truth land on one value.
+    final optimistic = item.copyWith(
+      sortOrder: ShoppingItem.sortOrderBetween(before, after),
+    );
+
+    return _optimistically(
+      optimistic,
+      () => ref.read(reorderItemUseCaseProvider)(
+        item,
+        before: before,
+        after: after,
+      ),
+    );
+  }
+
   /// Adds an item, showing it only once the server has accepted it.
   ///
   /// Deliberately *not* optimistic: the server mints the id, `createdAt` and

@@ -24,6 +24,7 @@ abstract class ShoppingItem
     required this.name,
     int? quantity,
     bool? isChecked,
+    double? sortOrder,
     this.shopId,
     this.note,
     required this.addedBy,
@@ -33,6 +34,7 @@ abstract class ShoppingItem
     DateTime? updatedAt,
   }) : quantity = quantity ?? 1,
        isChecked = isChecked ?? false,
+       sortOrder = sortOrder ?? 0.0,
        createdAt = createdAt ?? DateTime.now(),
        updatedAt = updatedAt ?? DateTime.now();
 
@@ -42,6 +44,7 @@ abstract class ShoppingItem
     required String name,
     int? quantity,
     bool? isChecked,
+    double? sortOrder,
     _i1.UuidValue? shopId,
     _i2.Note? note,
     required _i1.UuidValue addedBy,
@@ -62,6 +65,7 @@ abstract class ShoppingItem
       isChecked: jsonSerialization['isChecked'] == null
           ? null
           : _i1.BoolJsonExtension.fromJson(jsonSerialization['isChecked']),
+      sortOrder: (jsonSerialization['sortOrder'] as num?)?.toDouble(),
       shopId: jsonSerialization['shopId'] == null
           ? null
           : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['shopId']),
@@ -108,6 +112,19 @@ abstract class ShoppingItem
 
   bool isChecked;
 
+  /// Manual ordering within a shop tab (drag-to-reorder). Fresh items append
+  /// past the current end; a drag slots one item between its new neighbours
+  /// by averaging their sortOrder, so a reorder only ever writes the one row
+  /// that moved. See ShoppingItem.sortOrderBetween in the domain package,
+  /// which is the single place that averaging is computed.
+  ///
+  /// defaultPersist, not defaultModel: a *database*-level default is what
+  /// lets this column be added to an existing table in place. defaultModel
+  /// alone left Postgres with no value to backfill existing rows with, and
+  /// `serverpod create-migration` refused, warning it would have to drop and
+  /// recreate the whole table instead.
+  double sortOrder;
+
   /// Optional shop tag. `SetNull` on delete so removing a shop untags its
   /// items rather than deleting them — losing a shop must never lose the
   /// shopping.
@@ -147,6 +164,7 @@ abstract class ShoppingItem
     String? name,
     int? quantity,
     bool? isChecked,
+    double? sortOrder,
     _i1.UuidValue? shopId,
     _i2.Note? note,
     _i1.UuidValue? addedBy,
@@ -164,6 +182,7 @@ abstract class ShoppingItem
       'name': name,
       'quantity': quantity,
       'isChecked': isChecked,
+      'sortOrder': sortOrder,
       if (shopId != null) 'shopId': shopId?.toJson(),
       if (note != null) 'note': note?.toJson(),
       'addedBy': addedBy.toJson(),
@@ -183,6 +202,7 @@ abstract class ShoppingItem
       'name': name,
       'quantity': quantity,
       'isChecked': isChecked,
+      'sortOrder': sortOrder,
       if (shopId != null) 'shopId': shopId?.toJson(),
       if (note != null) 'note': note?.toJsonForProtocol(),
       'addedBy': addedBy.toJson(),
@@ -232,6 +252,7 @@ class _ShoppingItemImpl extends ShoppingItem {
     required String name,
     int? quantity,
     bool? isChecked,
+    double? sortOrder,
     _i1.UuidValue? shopId,
     _i2.Note? note,
     required _i1.UuidValue addedBy,
@@ -245,6 +266,7 @@ class _ShoppingItemImpl extends ShoppingItem {
          name: name,
          quantity: quantity,
          isChecked: isChecked,
+         sortOrder: sortOrder,
          shopId: shopId,
          note: note,
          addedBy: addedBy,
@@ -264,6 +286,7 @@ class _ShoppingItemImpl extends ShoppingItem {
     String? name,
     int? quantity,
     bool? isChecked,
+    double? sortOrder,
     Object? shopId = _Undefined,
     Object? note = _Undefined,
     _i1.UuidValue? addedBy,
@@ -278,6 +301,7 @@ class _ShoppingItemImpl extends ShoppingItem {
       name: name ?? this.name,
       quantity: quantity ?? this.quantity,
       isChecked: isChecked ?? this.isChecked,
+      sortOrder: sortOrder ?? this.sortOrder,
       shopId: shopId is _i1.UuidValue? ? shopId : this.shopId,
       note: note is _i2.Note? ? note : this.note?.copyWith(),
       addedBy: addedBy ?? this.addedBy,
@@ -310,6 +334,11 @@ class ShoppingItemUpdateTable extends _i1.UpdateTable<ShoppingItemTable> {
 
   _i1.ColumnValue<bool, bool> isChecked(bool value) => _i1.ColumnValue(
     table.isChecked,
+    value,
+  );
+
+  _i1.ColumnValue<double, double> sortOrder(double value) => _i1.ColumnValue(
+    table.sortOrder,
     value,
   );
 
@@ -376,6 +405,11 @@ class ShoppingItemTable extends _i1.Table<_i1.UuidValue?> {
       'isChecked',
       this,
     );
+    sortOrder = _i1.ColumnDouble(
+      'sortOrder',
+      this,
+      hasDefault: true,
+    );
     shopId = _i1.ColumnUuid(
       'shopId',
       this,
@@ -423,6 +457,19 @@ class ShoppingItemTable extends _i1.Table<_i1.UuidValue?> {
 
   late final _i1.ColumnBool isChecked;
 
+  /// Manual ordering within a shop tab (drag-to-reorder). Fresh items append
+  /// past the current end; a drag slots one item between its new neighbours
+  /// by averaging their sortOrder, so a reorder only ever writes the one row
+  /// that moved. See ShoppingItem.sortOrderBetween in the domain package,
+  /// which is the single place that averaging is computed.
+  ///
+  /// defaultPersist, not defaultModel: a *database*-level default is what
+  /// lets this column be added to an existing table in place. defaultModel
+  /// alone left Postgres with no value to backfill existing rows with, and
+  /// `serverpod create-migration` refused, warning it would have to drop and
+  /// recreate the whole table instead.
+  late final _i1.ColumnDouble sortOrder;
+
   /// Optional shop tag. `SetNull` on delete so removing a shop untags its
   /// items rather than deleting them — losing a shop must never lose the
   /// shopping.
@@ -457,6 +504,7 @@ class ShoppingItemTable extends _i1.Table<_i1.UuidValue?> {
     name,
     quantity,
     isChecked,
+    sortOrder,
     shopId,
     note,
     addedBy,

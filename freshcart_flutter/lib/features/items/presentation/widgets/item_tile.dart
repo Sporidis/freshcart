@@ -31,6 +31,7 @@ class ItemTile extends StatefulWidget {
     required this.onToggleSelection,
     required this.onLongPress,
     required this.index,
+    required this.canReorder,
     required this.t,
     super.key,
   });
@@ -66,10 +67,17 @@ class ItemTile extends StatefulWidget {
   /// to the selection.
   final VoidCallback onLongPress;
 
-  /// This row's position in the list, for the selection reveal's stagger
-  /// (§10: 25 ms per row). Rows that cannot be multi-selected (the Done
-  /// section) pass 0, since they never actually reveal.
+  /// This row's position within the open, reorderable rows -- for the
+  /// selection reveal's stagger (§10: 25 ms per row) and, doubling up, for
+  /// [ReorderableDragStartListener] when [canReorder] is true. Rows that
+  /// cannot be multi-selected or dragged (the Done section) pass 0.
   final int index;
+
+  /// Whether this row can be dragged to reorder -- true only on the open
+  /// rows of a single shop tab (§10: "cross-shop reordering is meaningless"),
+  /// and never while [selectionMode] is active, since a drag and a
+  /// selection tap would otherwise compete for the same gesture.
+  final bool canReorder;
 
   /// Translations for the active locale.
   final Translations t;
@@ -367,10 +375,26 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               ],
             ),
             subtitle: subtitle == null ? null : Text(subtitle),
-            trailing: IconButton(
-              onPressed: widget.onEdit,
-              icon: const Icon(Icons.edit_outlined),
-              tooltip: widget.t.common.save,
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: widget.onEdit,
+                  icon: const Icon(Icons.edit_outlined),
+                  tooltip: widget.t.common.save,
+                ),
+                if (widget.canReorder)
+                  ReorderableDragStartListener(
+                    index: widget.index,
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 4, right: 4),
+                      child: Icon(
+                        Icons.drag_handle,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
@@ -526,6 +550,7 @@ Widget itemTilePreview() {
           onToggleSelection: () {},
           onLongPress: () {},
           index: 0,
+          canReorder: false,
           t: t,
         ),
         ItemTile(
@@ -547,6 +572,7 @@ Widget itemTilePreview() {
           onToggleSelection: () {},
           onLongPress: () {},
           index: 0,
+          canReorder: false,
           t: t,
         ),
         ItemTile(
@@ -560,6 +586,7 @@ Widget itemTilePreview() {
           onToggleSelection: () {},
           onLongPress: () {},
           index: 0,
+          canReorder: false,
           t: t,
         ),
       ],

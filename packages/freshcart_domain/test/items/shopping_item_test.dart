@@ -34,6 +34,34 @@ void main() {
     });
   });
 
+  group('ShoppingItem.sortOrderBetween', () {
+    test('is 0 for the first item on an empty list', () {
+      expect(ShoppingItem.sortOrderBetween(null, null), 0);
+    });
+
+    test('sits below the sole item when dropped at the top', () {
+      final only = buildItem(sortOrder: 10);
+      expect(
+        ShoppingItem.sortOrderBetween(null, only),
+        10 - ShoppingItem.sortOrderGap,
+      );
+    });
+
+    test('sits above the sole item when dropped at the bottom', () {
+      final only = buildItem(sortOrder: 10);
+      expect(
+        ShoppingItem.sortOrderBetween(only, null),
+        10 + ShoppingItem.sortOrderGap,
+      );
+    });
+
+    test('is the midpoint when dropped between two items', () {
+      final above = buildItem(sortOrder: 10);
+      final below = buildItem(sortOrder: 20);
+      expect(ShoppingItem.sortOrderBetween(above, below), 15);
+    });
+  });
+
   group('ShoppingItem.hasNote', () {
     test('is false for no note and for a blank one', () {
       expect(buildItem().hasNote, isFalse);
