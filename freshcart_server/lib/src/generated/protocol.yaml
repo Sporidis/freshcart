@@ -27,6 +27,7 @@ list:
   - join:
   - rename:
   - leave:
+  - delete:
   - watchList:
 notification:
   - registerDevice:
@@ -37,6 +38,7 @@ shop:
   - byList:
   - create:
   - save:
+  - itemCount:
   - remove:
 profile:
   - me:

@@ -33,3 +33,17 @@ extension ShopX on Shop {
     colorArgb: color.argb,
   );
 }
+
+/// Maps the domain's disposition onto the wire enum.
+///
+/// Two enums with the same three names, deliberately: the generated one is a
+/// DTO and must not become the domain's vocabulary (golden rule 2). The
+/// exhaustive switch means adding a case to either forces this to be updated.
+extension ShopItemDispositionX on ShopItemDisposition {
+  /// This disposition, as the server names it.
+  dto.ShopItemDisposition toDto() => switch (this) {
+    ShopItemDisposition.untag => dto.ShopItemDisposition.untag,
+    ShopItemDisposition.moveToShop => dto.ShopItemDisposition.moveToShop,
+    ShopItemDisposition.deleteItems => dto.ShopItemDisposition.deleteItems,
+  };
+}

@@ -44,6 +44,10 @@ class ListRepositoryImpl implements ListRepository {
       _guard(() => _client.list.leave(_uuid(id.value)));
 
   @override
+  Future<Result<void>> delete(ListId id) =>
+      _guard(() => _client.list.delete(_uuid(id.value)));
+
+  @override
   Stream<Result<ShoppingList>> watch(ListId id) =>
       ListRealtimeSource(_client).watch(id);
 

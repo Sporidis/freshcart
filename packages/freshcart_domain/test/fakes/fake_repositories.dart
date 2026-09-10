@@ -110,6 +110,9 @@ class FakeListRepository implements ListRepository {
   Future<Result<void>> leave(ListId id) => throw UnimplementedError();
 
   @override
+  Future<Result<void>> delete(ListId id) => throw UnimplementedError();
+
+  @override
   Future<Result<List<ShoppingList>>> myLists() => throw UnimplementedError();
 
   @override
@@ -158,7 +161,14 @@ class FakeShopRepository implements ShopRepository {
       throw UnimplementedError();
 
   @override
-  Future<Result<void>> remove(ShopId id) => throw UnimplementedError();
+  Future<Result<int>> itemCount(ShopId id) => throw UnimplementedError();
+
+  @override
+  Future<Result<void>> remove(
+    ShopId id, {
+    ShopItemDisposition disposition = ShopItemDisposition.untag,
+    ShopId? moveTo,
+  }) => throw UnimplementedError();
 }
 
 /// An [AuthPort] that records its calls and answers with whatever a test

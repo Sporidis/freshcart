@@ -100,7 +100,12 @@ void main() {
           shopId: shop.id,
         );
 
-        await endpoints.shop.remove(as(aliceId), shop.id!);
+        await endpoints.shop.remove(
+          as(aliceId),
+          shop.id!,
+          ShopItemDisposition.untag,
+          null,
+        );
 
         final items = await endpoints.item.byList(as(aliceId), list.id!);
         expect(
@@ -112,11 +117,123 @@ void main() {
       },
     );
 
+    test('moving products keeps them, on the new shop', () async {
+      final list = await endpoints.list.create(as(aliceId), 'Weekly');
+      final colruyt = await endpoints.shop.create(
+        as(aliceId),
+        list.id!,
+        'Colruyt',
+        colruytGreen,
+      );
+      final ah = await endpoints.shop.create(
+        as(aliceId),
+        list.id!,
+        'Albert Heijn',
+        colruytGreen,
+      );
+      await endpoints.item.add(
+        as(aliceId),
+        list.id!,
+        'Milk',
+        shopId: colruyt.id,
+      );
+
+      await endpoints.shop.remove(
+        as(aliceId),
+        colruyt.id!,
+        ShopItemDisposition.moveToShop,
+        ah.id,
+      );
+
+      final items = await endpoints.item.byList(as(aliceId), list.id!);
+      expect(items.single.shopId, ah.id);
+      expect(await endpoints.shop.byList(as(aliceId), list.id!), hasLength(1));
+    });
+
+    test('deleting products too removes them with the shop', () async {
+      final list = await endpoints.list.create(as(aliceId), 'Weekly');
+      final shop = await endpoints.shop.create(
+        as(aliceId),
+        list.id!,
+        'Colruyt',
+        colruytGreen,
+      );
+      await endpoints.item.add(
+        as(aliceId),
+        list.id!,
+        'Milk',
+        shopId: shop.id,
+      );
+      await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+
+      await endpoints.shop.remove(
+        as(aliceId),
+        shop.id!,
+        ShopItemDisposition.deleteItems,
+        null,
+      );
+
+      final items = await endpoints.item.byList(as(aliceId), list.id!);
+      expect(
+        items.single.name,
+        'Bread',
+        reason: 'only the shop\'s own products go with it',
+      );
+    });
+
+    test('a destination on another list is refused', () async {
+      final mine = await endpoints.list.create(as(aliceId), 'Mine');
+      final other = await endpoints.list.create(as(aliceId), 'Other');
+      final shop = await endpoints.shop.create(
+        as(aliceId),
+        mine.id!,
+        'Colruyt',
+        colruytGreen,
+      );
+      final elsewhere = await endpoints.shop.create(
+        as(aliceId),
+        other.id!,
+        'Delhaize',
+        colruytGreen,
+      );
+
+      await expectLater(
+        endpoints.shop.remove(
+          as(aliceId),
+          shop.id!,
+          ShopItemDisposition.moveToShop,
+          elsewhere.id,
+        ),
+        throwsA(isA<ShopNotFoundException>()),
+        reason: 'moving products off their own list is not a valid choice',
+      );
+    });
+
+    test('itemCount reports how many products a shop holds', () async {
+      final list = await endpoints.list.create(as(aliceId), 'Weekly');
+      final shop = await endpoints.shop.create(
+        as(aliceId),
+        list.id!,
+        'Colruyt',
+        colruytGreen,
+      );
+      await endpoints.item.add(
+        as(aliceId),
+        list.id!,
+        'Milk',
+        shopId: shop.id,
+      );
+
+      expect(await endpoints.shop.itemCount(as(aliceId), shop.id!), 1);
+    });
+
     test('removing a missing shop reports not found', () async {
       await expectLater(
         endpoints.shop.remove(
           as(aliceId),
           UuidValue.withValidation(const Uuid().v4()),
+          ShopItemDisposition.untag,
+          null,
         ),
         throwsA(isA<ShopNotFoundException>()),
       );

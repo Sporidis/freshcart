@@ -14,6 +14,13 @@ class FakeShopRepository implements ShopRepository {
   /// Ids passed to [remove], in order.
   final List<ShopId> removedIds = [];
 
+  /// What [itemCount] will report.
+  int itemCountResult = 0;
+
+  /// How each [remove] was asked to dispose of the shop's items.
+  final List<({ShopId id, ShopItemDisposition disposition, ShopId? moveTo})>
+  removeCalls = [];
+
   /// Every shop passed to [save], in order. Lets a test assert that a preview
   /// wrote nothing.
   final List<Shop> savedShops = [];
@@ -35,7 +42,15 @@ class FakeShopRepository implements ShopRepository {
   }
 
   @override
-  Future<Result<void>> remove(ShopId id) async {
+  Future<Result<int>> itemCount(ShopId id) async => Ok(itemCountResult);
+
+  @override
+  Future<Result<void>> remove(
+    ShopId id, {
+    ShopItemDisposition disposition = ShopItemDisposition.untag,
+    ShopId? moveTo,
+  }) async {
+    removeCalls.add((id: id, disposition: disposition, moveTo: moveTo));
     removedIds.add(id);
     return removeResult;
   }

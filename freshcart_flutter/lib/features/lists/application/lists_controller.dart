@@ -52,6 +52,13 @@ class ListsController extends _$ListsController {
     return result;
   }
 
+  /// Deletes a list for everyone on it. Owner only, enforced server-side.
+  Future<Result<void>> delete(ListId id) async {
+    final result = await ref.read(listRepositoryProvider).delete(id);
+    if (result.isOk) ref.invalidateSelf();
+    return result;
+  }
+
   /// Re-reads the lists, for pull-to-refresh and after leaving a list.
   Future<void> refresh() async => ref.invalidateSelf();
 }

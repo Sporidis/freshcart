@@ -185,6 +185,32 @@ abstract final class ListService {
     await _announce(session, listId);
   }
 
+  /// Deletes [listId], for everyone.
+  ///
+  /// Owner only. Leaving is the member's verb — it takes you out of a list
+  /// that carries on without you — while this ends it for the household, so
+  /// the two are deliberately different operations rather than one with a
+  /// flag.
+  ///
+  /// Members, items, shops, mutes and pending notifications all go with it,
+  /// through the ON DELETE CASCADE already on their foreign keys. Doing it in
+  /// the database rather than in five deletes here means a crash halfway
+  /// cannot leave a list that is half gone.
+  static Future<void> delete(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+  ) async {
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list == null) throw ListNotFoundException();
+    if (list.ownerId != userId) throw NotAMemberException();
+
+    // Announced before the row goes: afterwards there is no list to describe,
+    // and open clients need to be told rather than left on a dead screen.
+    await _announce(session, listId);
+    await ShoppingList.db.deleteRow(session, list);
+  }
+
   /// Throws [NotAMemberException] unless [userId] belongs to [listId].
   ///
   /// Every read and write path funnels through this, so authorisation is one

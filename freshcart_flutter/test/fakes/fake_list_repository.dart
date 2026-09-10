@@ -33,6 +33,9 @@ class FakeListRepository implements ListRepository {
   /// Every id [leave] was called with, in order.
   final List<ListId> leaveCalls = [];
 
+  /// Every id [delete] was called with, in order.
+  final List<ListId> deleteCalls = [];
+
   /// Codes passed to [joinByCode], in order.
   final List<JoinCode> joinCalls = [];
 
@@ -70,6 +73,12 @@ class FakeListRepository implements ListRepository {
   @override
   Future<Result<void>> leave(ListId id) async {
     leaveCalls.add(id);
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<void>> delete(ListId id) async {
+    deleteCalls.add(id);
     return const Ok(null);
   }
 

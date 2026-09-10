@@ -29,6 +29,14 @@ abstract interface class ListRepository {
   /// Removes the signed-in user from list [id].
   Future<Result<void>> leave(ListId id);
 
+  /// Deletes list [id] for everyone on it.
+  ///
+  /// Distinct from [leave] on purpose. Leaving takes you out of a list that
+  /// carries on without you; this ends it for the whole household, and only
+  /// its owner may do it. Collapsing the two into one call with a flag is how
+  /// somebody destroys a shared list meaning to walk away from it.
+  Future<Result<void>> delete(ListId id);
+
   /// Live view of list [id], re-emitting whenever anyone changes it.
   ///
   /// Backed by a Serverpod stream (Phase 8). Emits `Err` for a transport drop

@@ -126,4 +126,95 @@ void main() {
       isNotNull,
     );
   });
+
+  group('deleting a shop', () {
+    testWidgets('a shop holding products offers real alternatives', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([
+        shop('s1', 'Colruyt', orange),
+        shop('s2', 'Albert Heijn', blue),
+      ]);
+      shops.itemCountResult = 6;
+
+      await pump(tester);
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pumpAndSettle();
+
+      // The count leads, because it is the question.
+      expect(
+        find.text('Colruyt has 6 products. Choose what happens to them.'),
+        findsOneWidget,
+      );
+      // Three real options, not OK/Cancel.
+      expect(find.text('Move them to Albert Heijn'), findsOneWidget);
+      expect(find.text('Leave them without a shop'), findsOneWidget);
+      expect(find.text('Delete products too'), findsOneWidget);
+      // Nothing has happened yet.
+      expect(shops.removeCalls, isEmpty);
+    });
+
+    testWidgets('choosing a destination moves the products', (tester) async {
+      shops.byListResult = Ok([
+        shop('s1', 'Colruyt', orange),
+        shop('s2', 'Albert Heijn', blue),
+      ]);
+      shops.itemCountResult = 6;
+
+      await pump(tester);
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move them to Albert Heijn'));
+      await tester.pumpAndSettle();
+
+      final call = shops.removeCalls.single;
+      expect(call.disposition, ShopItemDisposition.moveToShop);
+      expect(call.moveTo, ShopId('s2'));
+    });
+
+    testWidgets('deleting the products too is asked for explicitly', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      shops.itemCountResult = 6;
+
+      await pump(tester);
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete products too'));
+      await tester.pumpAndSettle();
+
+      expect(
+        shops.removeCalls.single.disposition,
+        ShopItemDisposition.deleteItems,
+      );
+    });
+
+    testWidgets('an empty shop is not asked about its products', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      shops.itemCountResult = 0;
+
+      await pump(tester);
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pumpAndSettle();
+
+      expect(find.text('This shop has no products.'), findsOneWidget);
+      expect(find.text('Delete products too'), findsNothing);
+    });
+
+    testWidgets('dismissing the sheet deletes nothing', (tester) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      shops.itemCountResult = 6;
+
+      await pump(tester);
+      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(shops.removeCalls, isEmpty);
+    });
+  });
 }

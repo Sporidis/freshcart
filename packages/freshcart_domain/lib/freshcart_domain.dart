@@ -40,6 +40,7 @@ export 'src/lists/value_objects/list_id.dart';
 export 'src/notifications/ports/push_port.dart';
 // Shops
 export 'src/shops/entities/shop.dart';
+export 'src/shops/entities/shop_item_disposition.dart';
 export 'src/shops/ports/shop_repository.dart';
 export 'src/shops/use_cases/create_shop.dart';
 export 'src/shops/use_cases/edit_shop.dart';
