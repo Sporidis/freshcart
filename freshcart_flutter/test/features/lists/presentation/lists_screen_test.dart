@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -189,6 +190,67 @@ void main() {
 
       expect(repository.joinCalls.single.value, 'ZZZ999');
       expect(find.text('Not found.'), findsOneWidget);
+    });
+  });
+
+  group('renaming in place', () {
+    testWidgets('tapping the title opens a field and saves on submit', (
+      tester,
+    ) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+
+      await pump(tester);
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+
+      // The header title itself became the field -- no sheet, no dialog.
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+      final titleField = find.descendant(
+        of: find.byType(EditableListTitle),
+        matching: find.byType(TextField),
+      );
+      expect(titleField, findsOneWidget);
+
+      await tester.enterText(titleField, 'Weekly Groceries');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(repository.renameCalls.single.name, 'Weekly Groceries');
+    });
+
+    testWidgets('a rejected name keeps the field open to be corrected', (
+      tester,
+    ) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+      repository.renameResult = const Err(
+        Failure.validation('name', 'That name is too long'),
+      );
+
+      await pump(tester);
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+      final titleField = find.descendant(
+        of: find.byType(EditableListTitle),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(titleField, 'Something');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      // Still editable, still holding what they typed.
+      expect(titleField, findsOneWidget);
+      expect(
+        tester.widget<TextField>(titleField).controller?.text,
+        'Something',
+      );
     });
   });
 

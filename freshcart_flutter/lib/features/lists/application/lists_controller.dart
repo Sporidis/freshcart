@@ -30,6 +30,28 @@ class ListsController extends _$ListsController {
     return result;
   }
 
+  /// Renames a list and refreshes the collection on success.
+  ///
+  /// Like [create], the [Result] comes back rather than becoming state: the
+  /// title is being edited in place, so a rejected name belongs beside that
+  /// field, not on top of the screen.
+  Future<Result<ShoppingList>> rename(ListId id, String name) async {
+    final result = await ref.read(renameListUseCaseProvider)(id, name);
+    if (result.isOk) ref.invalidateSelf();
+    return result;
+  }
+
+  /// Leaves a list, and refreshes so it drops out of the collection.
+  ///
+  /// Leaving is not deleting: the list carries on for everyone else. Only the
+  /// owner can delete it for the household, and that operation does not exist
+  /// on the server yet.
+  Future<Result<void>> leave(ListId id) async {
+    final result = await ref.read(listRepositoryProvider).leave(id);
+    if (result.isOk) ref.invalidateSelf();
+    return result;
+  }
+
   /// Re-reads the lists, for pull-to-refresh and after leaving a list.
   Future<void> refresh() async => ref.invalidateSelf();
 }

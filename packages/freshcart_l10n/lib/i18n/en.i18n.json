@@ -11,7 +11,11 @@
       "other": "{{n}} members"
     },
     "emptyTitle": "No lists yet",
-    "emptyBody": "Start one for your household, or join a list someone shared with you."
+    "emptyBody": "Start one for your household, or join a list someone shared with you.",
+    "rename": "Rename",
+    "leave": "Leave list",
+    "leaveConfirmTitle": "Leave this list?",
+    "leaveConfirmBody": "You will not see {{name}} any more. Everyone else keeps it."
   },
   "items": {
     "empty": "This list is empty.",
@@ -28,7 +32,13 @@
   },
   "shops": {
     "all": "All shops",
-    "none": "No shop"
+    "none": "No shop",
+    "manage": "Manage shops",
+    "edit": "Edit shop",
+    "nameLabel": "Shop name",
+    "colorLabel": "Tab colour",
+    "saveChanges": "Save changes",
+    "closeTo": "Close to {{name}}"
   },
   "common": {
     "cancel": "Cancel",

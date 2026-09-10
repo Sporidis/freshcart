@@ -11,7 +11,11 @@
       "other": "{{n}} na miyembro"
     },
     "emptyTitle": "Wala pang listahan",
-    "emptyBody": "Magsimula ng isa para sa inyong bahay, o sumali sa listahang ibinahagi sa iyo."
+    "emptyBody": "Magsimula ng isa para sa inyong bahay, o sumali sa listahang ibinahagi sa iyo.",
+    "rename": "Palitan ang pangalan",
+    "leave": "Umalis sa listahan",
+    "leaveConfirmTitle": "Aalis sa listahang ito?",
+    "leaveConfirmBody": "Hindi mo na makikita ang {{name}}. Mananatili ito sa iba."
   },
   "items": {
     "empty": "Walang laman ang listahang ito.",
@@ -28,7 +32,13 @@
   },
   "shops": {
     "all": "Lahat ng tindahan",
-    "none": "Walang tindahan"
+    "none": "Walang tindahan",
+    "manage": "Pamahalaan ang mga tindahan",
+    "edit": "I-edit ang tindahan",
+    "nameLabel": "Pangalan ng tindahan",
+    "colorLabel": "Kulay ng tab",
+    "saveChanges": "I-save ang mga pagbabago",
+    "closeTo": "Malapit sa {{name}}"
   },
   "common": {
     "cancel": "Kanselahin",

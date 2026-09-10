@@ -42,4 +42,69 @@ void main() {
       expect(() => HexColor.fromArgb(0x1FFFFFFFF), throwsArgumentError);
     });
   });
+
+  _perceptualDistance();
+}
+
+void _perceptualDistance() {
+  group('HexColor.perceptualDistanceTo', () {
+    test('is zero against itself', () {
+      final blue = HexColor.fromArgb(0xFF2456A6);
+      expect(blue.perceptualDistanceTo(blue), 0);
+    });
+
+    test('is symmetric', () {
+      final a = HexColor.fromArgb(0xFF2456A6);
+      final b = HexColor.fromArgb(0xFFE8791A);
+      expect(
+        a.perceptualDistanceTo(b),
+        closeTo(b.perceptualDistanceTo(a), 1e-9),
+      );
+    });
+
+    test('ignores alpha, which says nothing about how a colour looks', () {
+      final opaque = HexColor.fromArgb(0xFF2456A6);
+      final ghost = HexColor.fromArgb(0x102456A6);
+      expect(opaque.perceptualDistanceTo(ghost), 0);
+    });
+
+    test('black against white is the far end of the range', () {
+      final distance = HexColor.fromArgb(0xFF000000)
+          .perceptualDistanceTo(HexColor.fromArgb(0xFFFFFFFF));
+      expect(distance, greaterThan(700));
+    });
+
+    group('isCloseTo', () {
+      test('the design palette is not self-confusable', () {
+        // Every swatch offered in the picker must be distinguishable from
+        // every other, or the warning would fire on a fresh, valid choice.
+        final palette = [
+          HexColor.fromArgb(0xFF2456A6), // blue
+          HexColor.fromArgb(0xFFE8791A), // orange
+          HexColor.fromArgb(0xFFC0392B), // red
+          HexColor.fromArgb(0xFF2E9E5B), // green
+          HexColor.fromArgb(0xFF8E5CD9), // purple
+          HexColor.fromArgb(0xFFD9A62E), // yellow
+        ];
+        for (final a in palette) {
+          for (final b in palette) {
+            if (a == b) continue;
+            expect(
+              a.isCloseTo(b),
+              isFalse,
+              reason: '${a.toHex()} vs ${b.toHex()}',
+            );
+          }
+        }
+      });
+
+      test('catches two blues a shopper would mix up mid-aisle', () {
+        expect(
+          HexColor.fromArgb(0xFF2456A6)
+              .isCloseTo(HexColor.fromArgb(0xFF2A5AAA)),
+          isTrue,
+        );
+      });
+    });
+  });
 }
