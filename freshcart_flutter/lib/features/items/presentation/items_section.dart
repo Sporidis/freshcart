@@ -167,10 +167,7 @@ class _ItemList extends ConsumerWidget {
           onRetry: () async => report(await controller.toggle(item)),
         );
       },
-      onDelete: () async => report(
-        await controller.remove(item),
-        onRetry: () async => report(await controller.remove(item)),
-      ),
+      onSwipeDelete: () => controller.swipeDelete(item),
       onEdit: () async {
         final edit = await showDialog<ItemEdit>(
           context: context,

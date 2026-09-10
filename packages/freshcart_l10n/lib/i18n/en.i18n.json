@@ -34,7 +34,8 @@
     "emptyShopBody": "Items you add here will show on this tab.",
     "emptyShopAction": "Add a product",
     "doneCount": "Done · {{n}}",
-    "clearChecked": "Clear checked"
+    "clearChecked": "Clear checked",
+    "itemRemoved": "{{name}} removed"
   },
   "shops": {
     "all": "All shops",
@@ -60,7 +61,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
-    "retry": "Try again"
+    "retry": "Try again",
+    "undo": "Undo"
   },
   "errors": {
     "network": "Could not reach the server.",

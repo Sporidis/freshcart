@@ -34,7 +34,8 @@
     "emptyShopBody": "Les articles ajoutés ici apparaîtront sur cet onglet.",
     "emptyShopAction": "Ajouter un produit",
     "doneCount": "Terminé · {{n}}",
-    "clearChecked": "Effacer cochés"
+    "clearChecked": "Effacer cochés",
+    "itemRemoved": "{{name}} supprimé"
   },
   "shops": {
     "all": "Tous les magasins",
@@ -60,7 +61,8 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "delete": "Supprimer",
-    "retry": "Réessayer"
+    "retry": "Réessayer",
+    "undo": "Annuler"
   },
   "errors": {
     "network": "Impossible de joindre le serveur.",

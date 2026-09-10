@@ -5,6 +5,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
@@ -178,6 +179,56 @@ void main() {
     await pump(tester);
 
     expect(find.text('Clear checked'), findsNothing);
+  });
+
+  testWidgets(
+    'swiping a row away removes it once the undo window passes',
+    (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+      ]);
+      await pump(tester);
+
+      await tester.drag(
+        find.widgetWithText(Dismissible, 'Milk'),
+        const Offset(-500, 0),
+      );
+      await tester.pumpAndSettle();
+
+      // Hidden the instant the swipe commits -- the server has not been
+      // told yet.
+      expect(find.text('Milk'), findsNothing);
+      expect(find.text('Bread'), findsOneWidget);
+      expect(items.removedIds, isEmpty);
+
+      await tester.pump(ItemsController.swipeUndoWindow);
+      await tester.pumpAndSettle();
+
+      expect(items.removedIds.single, ItemId('a'));
+    },
+  );
+
+  testWidgets('the undo snackbar action restores a swiped-away row', (
+    tester,
+  ) async {
+    items.byListResult = Ok([buildItem(name: 'Milk')]);
+    await pump(tester);
+
+    await tester.drag(find.byType(Dismissible), const Offset(-500, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('Milk'), findsNothing);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Milk'), findsOneWidget);
+
+    // Undone means the server is never told, even once the window that
+    // would otherwise have committed the delete has passed.
+    await tester.pump(ItemsController.swipeUndoWindow);
+    await tester.pumpAndSettle();
+    expect(items.removedIds, isEmpty);
   });
 
   testWidgets('a conflict unticks the row and says why', (tester) async {

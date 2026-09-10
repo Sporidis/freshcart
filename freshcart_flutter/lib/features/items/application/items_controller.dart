@@ -28,6 +28,16 @@ class ItemsController extends _$ItemsController {
   /// Optimistic values for writes that have not been answered yet.
   final Map<ItemId, ShoppingItem> _pending = {};
 
+  /// Rows hidden by [swipeDelete] but not yet committed to the server.
+  ///
+  /// Keyed by the original item so [swipeDelete]'s undo can put back the exact
+  /// row that was swiped, not a reconstruction of it.
+  final Map<ItemId, ShoppingItem> _pendingRemoval = {};
+
+  /// How long a swiped-away row can still be undone. Matches the Motion spec's
+  /// swipe-to-delete undo snackbar (§10).
+  static const swipeUndoWindow = Duration(seconds: 4);
+
   @override
   Future<Result<List<ShoppingItem>>> build(ListId listId) {
     final first = Completer<Result<List<ShoppingItem>>>();
@@ -56,12 +66,14 @@ class ItemsController extends _$ItemsController {
     return first.future;
   }
 
-  /// Re-applies in-flight optimistic values over an incoming snapshot.
+  /// Re-applies in-flight optimistic values over an incoming snapshot, and
+  /// drops anything still hidden behind a pending [swipeDelete].
   Result<List<ShoppingItem>> _overlay(Result<List<ShoppingItem>> event) {
-    if (_pending.isEmpty) return event;
+    if (_pending.isEmpty && _pendingRemoval.isEmpty) return event;
     return event.map(
       (items) => [
-        for (final item in items) _pending[item.id] ?? item,
+        for (final item in items)
+          if (!_pendingRemoval.containsKey(item.id)) _pending[item.id] ?? item,
       ],
     );
   }
@@ -230,6 +242,52 @@ class ItemsController extends _$ItemsController {
         _show(before);
         return failure;
     }
+  }
+
+  /// Hides [item] immediately and, unless undone, deletes it once
+  /// [swipeUndoWindow] has passed. Returns the undo action.
+  ///
+  /// Deliberately not `Future<Failure?>` like [remove]: the delete itself is
+  /// deferred, so there is nothing to await yet and nothing to report — a
+  /// failure surfacing four seconds after the swipe, once the user has moved
+  /// on to the next row, would only read as a confusing, out-of-context bug.
+  /// What the caller needs back synchronously is the undo action, to wire
+  /// into the snackbar the swipe gesture shows.
+  ///
+  /// The repository is read into [repo] now, not inside the timer. If the
+  /// user navigates away before the timer fires, this controller is disposed
+  /// and `ref` stops working — but a plain captured Dart reference keeps
+  /// going, so the delete still lands. That is deliberate: swiping a row away
+  /// is a real decision, and having it silently survive just because the
+  /// screen was left too soon would be its own kind of surprising.
+  void Function() swipeDelete(ShoppingItem item) {
+    final before = _current;
+    if (before != null) {
+      _pendingRemoval[item.id] = item;
+      _show([
+        for (final existing in before)
+          if (existing.id != item.id) existing,
+      ]);
+    }
+
+    final repo = ref.read(itemRepositoryProvider);
+    final timer = Timer(swipeUndoWindow, () {
+      _pendingRemoval.remove(item.id);
+      unawaited(repo.remove(item.id));
+    });
+
+    var settled = false;
+    return () {
+      if (settled) return;
+      settled = true;
+      timer.cancel();
+      if (_pendingRemoval.remove(item.id) == null) return;
+      if (!ref.mounted) return;
+      final current = _current;
+      if (current != null && !current.any((i) => i.id == item.id)) {
+        _show([...current, item]);
+      }
+    };
   }
 
   /// Removes every checked item, taking them off screen immediately and

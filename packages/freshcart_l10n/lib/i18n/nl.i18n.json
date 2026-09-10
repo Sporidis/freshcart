@@ -34,7 +34,8 @@
     "emptyShopBody": "Wat je hier toevoegt, verschijnt op dit tabblad.",
     "emptyShopAction": "Product toevoegen",
     "doneCount": "Klaar · {{n}}",
-    "clearChecked": "Afgevinkte wissen"
+    "clearChecked": "Afgevinkte wissen",
+    "itemRemoved": "{{name}} verwijderd"
   },
   "shops": {
     "all": "Alle winkels",
@@ -60,7 +61,8 @@
     "cancel": "Annuleren",
     "save": "Opslaan",
     "delete": "Verwijderen",
-    "retry": "Opnieuw proberen"
+    "retry": "Opnieuw proberen",
+    "undo": "Ongedaan maken"
   },
   "errors": {
     "network": "Geen verbinding met de server.",

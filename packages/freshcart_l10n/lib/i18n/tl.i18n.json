@@ -34,7 +34,8 @@
     "emptyShopBody": "Lalabas sa tab na ito ang mga idinagdag mo rito.",
     "emptyShopAction": "Magdagdag ng produkto",
     "doneCount": "Tapos · {{n}}",
-    "clearChecked": "Alisin ang naka-check"
+    "clearChecked": "Alisin ang naka-check",
+    "itemRemoved": "Naalis ang {{name}}"
   },
   "shops": {
     "all": "Lahat ng tindahan",
@@ -60,7 +61,8 @@
     "cancel": "Kanselahin",
     "save": "I-save",
     "delete": "Burahin",
-    "retry": "Subukan muli"
+    "retry": "Subukan muli",
+    "undo": "I-undo"
   },
   "errors": {
     "network": "Hindi maabot ang server.",
