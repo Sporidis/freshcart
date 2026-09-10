@@ -26,6 +26,7 @@ analyzer:
     - "**/*.gr.dart"
     - "**/generated/**"
     - "freshcart_client/lib/src/protocol/**"   # Serverpod-generated
+    - "docs/multi-shop-shopping-list-app/**"   # Claude Design handoff bundle — reference only, not app code
 
 linter:
   rules:
