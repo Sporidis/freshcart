@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/ui/error_screen.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
@@ -10,6 +14,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/creat
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/display_name_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Renders every `@Preview` in the app.
@@ -36,6 +41,16 @@ void main() {
     'shop option': shopOptionPreview,
     'add-a-shop sheet': addShopSheetPreview,
     'item row': itemTilePreview,
+    'empty · new list': emptyNewListPreview,
+    'empty · shop tab': emptyShopTabPreview,
+    'empty · no lists': emptyNoListsPreview,
+    'error · deleted': errorScreenDeletedPreview,
+    'error · no access': errorScreenNoAccessPreview,
+    'error · unexpected': errorScreenUnexpectedPreview,
+    'done divider': doneDividerPreview,
+    'editable title': editableListTitlePreview,
+    'edit shop sheet': editShopSheetPreview,
+    'edit shop · clash': editShopSheetClashPreview,
   };
 
   for (final MapEntry(key: name, value: build) in previews.entries) {
