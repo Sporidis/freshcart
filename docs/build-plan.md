@@ -23,7 +23,7 @@ Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ block
 | Phase | State | Note |
 | ----- | ----- | ---- |
 | 0 Workspace scaffold | ✅ | |
-| 1 Domain core | ✅ | 89 tests |
+| 1 Domain core | ✅ | 96 tests |
 | 2 Server models + endpoints | ✅ | 73 tests |
 | 3 App data layer | ✅ | |
 | 4 App shell | ✅ | |
@@ -31,12 +31,12 @@ Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ block
 | 6 Items | ✅ | |
 | 7 Shops + dynamic theming | ✅ | |
 | 8 Real-time sync | ✅ | `ListRepository.watch` gap closed; see decisions #34–36 |
-| 9 Notifications | 🟡 | Ports, server aggregation and buffering done. **FCM adapter blocked** on a Firebase project — `firebase_core` cannot be added before `firebase_options.dart` exists without reddening CI. |
+| 9 Notifications | 🟡 | Ports, server aggregation/buffering, and the FCM adapter are all in and wired to a real Firebase project (`firebase_options.dart` exists, the client registers a real token). **Not yet verified**: delivery to a physical device — nothing here can confirm that from a dev machine. |
 | 10 Auth upgrade path | 🟡 | Email linking done and tested. **Google blocked** on an OAuth client id — returns an honest failure, see decisions #40. |
-| 11 Jaspr marketing site | 🟡 | Pages and components exist; SEO meta and Lighthouse pass not yet verified. No tests. |
-| 12 Test coverage + CI | 🟡 | CI runs analyze, format and all four suites, and asserts the golden rules by grep (decisions #41). Coverage gaps remain in `freshcart_web`. |
+| 11 Jaspr marketing site | 🟡 | Pages and components exist; SEO meta and Lighthouse pass not yet verified. No tests, and CI has no job for this package. |
+| 12 Test coverage + CI | 🟡 | CI runs analyze, format and all four suites, and asserts the golden rules by grep (decisions #41). Coverage gaps remain in `freshcart_web` — no `test-web` job exists yet. |
 
-**Suites:** 158 app · 89 domain · 73 server · 8 l10n.
+**Suites:** 229 app · 96 domain · 73 server · 8 l10n.
 
 ## Design flows
 
@@ -45,13 +45,13 @@ These are built *on top of* the phases above, not instead of them.
 
 | Flow | State | Note |
 | ---- | ----- | ---- |
-| 00 Onboarding | ✅ | Welcome + 3-step setup |
+| 00 Onboarding | ✅ | Splash → Welcome (two exits) → 4-step wizard (name, list, shops, invite) → lists, plus a separate join-by-code flow off Welcome's second exit. Decisions #60. |
 | 01 Empty states | ✅ | |
-| 02 Done section | ✅ | 600 ms hold, decisions #47 |
-| 03 Gestures | ⛔ | Swipe-delete/undo and multi-select are buildable now; **drag-to-reorder needs a sort field** on `ShoppingItem` — model, migration and endpoint. |
+| 02 Done section | ✅ | 600 ms hold (decisions #47) plus the completion celebration card once the whole list is checked (decisions #61) |
+| 03 Gestures | ✅ | Swipe-delete/undo, multi-select, and drag-to-reorder (fractional `sortOrder`) all built. Deliberately not built: the contextual bar's "Move" action — decisions #52–54. |
 | 04 Editing lists & shops | ✅ | Live colour preview, decisions #45 and #48 |
 | 05 Household & sharing | ✅ | Deliberately omitted: last-active captions (no timestamp), QR toggle, code expiry. See the commit. |
-| 06 Search & suggestions | ⛔ | Search is buildable client-side; **"Recently bought" needs purchase-history tracking** that does not exist. |
+| 06 Search & suggestions | 🟡 | Search is built, local-only, its own header mode — decisions #55. **"Recently bought" still needs purchase-history tracking** that does not exist. |
 | 07 Offline & sync | ⛔ | Needs a connectivity port in the domain and cached reads. Overlaps the offline-first scope fork below. |
 | 08 Errors | ✅ | Three tiers, decisions #42 |
 

@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
@@ -457,6 +458,52 @@ void main() {
   });
 
   testWidgets(
+    'the details sheet pre-selects whichever shop tab is active, '
+    'but it can still be changed',
+    (tester) async {
+      final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+      final bakery = buildShop(
+        id: '00000000-0000-4000-8000-0000000000c2',
+        name: 'Bakery',
+        color: '#C62828',
+      );
+      shops.byListResult = Ok([colruyt, bakery]);
+      items.addResult = Ok(buildItem(name: 'Bread'));
+      final container = await pump(tester);
+
+      container
+          .read(shopFilterProvider(ListId('00000000-0000-4000-8000-000000000001')).notifier)
+          .select(colruyt.id);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      // Colruyt's chip starts selected -- the active tab when the sheet
+      // was opened -- without needing to tap it.
+      expect(
+        tester
+            .widget<ChoiceChip>(find.widgetWithText(ChoiceChip, 'Colruyt'))
+            .selected,
+        isTrue,
+      );
+
+      // Still just a starting point: switching to Bakery before saving
+      // tags the item to Bakery, not the tab it was opened from.
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Add item'));
+      await tester.pumpAndSettle();
+
+      expect(items.addCalls.single.shopId, bakery.id);
+    },
+  );
+
+  testWidgets(
     'typing rotates the button to a plus that opens the details sheet',
     (tester) async {
       await pump(tester);
@@ -542,4 +589,117 @@ void main() {
       expect(barField.controller?.text, 'Bread');
     },
   );
+
+  group('completion celebration', () {
+    testWidgets('shows once every item on the list is checked', (
+      tester,
+    ) async {
+      items.byListResult = Ok([
+        buildItem(name: 'Milk', isChecked: true),
+        buildItem(
+          id: '00000000-0000-4000-8000-0000000000bb',
+          name: 'Bread',
+          isChecked: true,
+        ),
+      ]);
+
+      await pump(tester);
+
+      expect(find.text('All done — 2 items'), findsOneWidget);
+      expect(find.text('Keep list'), findsOneWidget);
+    });
+
+    testWidgets('does not show while anything is still open', (
+      tester,
+    ) async {
+      items.byListResult = Ok([
+        buildItem(name: 'Milk', isChecked: true),
+        buildItem(
+          id: '00000000-0000-4000-8000-0000000000bb',
+          name: 'Bread',
+        ),
+      ]);
+
+      await pump(tester);
+
+      expect(find.text('Keep list'), findsNothing);
+    });
+
+    testWidgets('Keep list dismisses it without touching any items', (
+      tester,
+    ) async {
+      items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+      await pump(tester);
+
+      await tester.tap(find.text('Keep list'));
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(find.text('Keep list'), findsNothing);
+      expect(items.clearCheckedCallCount, 0);
+    });
+
+    testWidgets(
+      'Clear checked calls through to the same action as the Done '
+      'divider button',
+      (tester) async {
+        items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+        items.clearCheckedResult = const Ok(1);
+        await pump(tester);
+
+        // "Clear checked" appears twice once the list is fully done -- once
+        // on the Done divider, once on the celebration card itself.
+        await tester.tap(
+          find.descendant(
+            of: find.byType(CompletionCelebrationCard),
+            matching: find.text('Clear checked'),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(items.clearCheckedCallCount, 1);
+      },
+    );
+
+    testWidgets(
+      'a dismissal does not carry over once the list is no longer '
+      'fully checked, so it can show again the next time it is',
+      (tester) async {
+        items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+        await pump(tester);
+
+        await tester.tap(find.text('Keep list'));
+        await tester.pump(const Duration(milliseconds: 500));
+        expect(find.text('Keep list'), findsNothing);
+
+        // Someone adds a fresh, unchecked item -- the list is no longer
+        // fully done, so the dismissal should stop applying.
+        items.live.add(
+          Ok([
+            buildItem(name: 'Milk', isChecked: true),
+            buildItem(
+              id: '00000000-0000-4000-8000-0000000000bb',
+              name: 'Bread',
+            ),
+          ]),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Keep list'), findsNothing); // still one item open.
+
+        // Checking it off completes the list again -- the celebration
+        // should show once more, not stay silenced by the earlier dismissal.
+        items.live.add(
+          Ok([
+            buildItem(name: 'Milk', isChecked: true),
+            buildItem(
+              id: '00000000-0000-4000-8000-0000000000bb',
+              name: 'Bread',
+              isChecked: true,
+            ),
+          ]),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Keep list'), findsOneWidget);
+      },
+    );
+  });
 }

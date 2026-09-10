@@ -36,7 +36,13 @@
     "doneCount": "Tapos · {{n}}",
     "clearChecked": "Alisin ang naka-check",
     "itemRemoved": "Naalis ang {{name}}",
-    "selectedCount": "{{n}} napili"
+    "selectedCount": "{{n}} napili",
+    "celebrateCount": {
+      "one": "Tapos na — {{n}} item",
+      "other": "Tapos na — {{n}} na item"
+    },
+    "celebrateBody": "Naka-check na lahat sa {{list}}.",
+    "keepList": "Panatilihin ang listahan"
   },
   "shops": {
     "all": "Lahat ng tindahan",

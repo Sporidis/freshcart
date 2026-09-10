@@ -36,7 +36,13 @@
     "doneCount": "Done · {{n}}",
     "clearChecked": "Clear checked",
     "itemRemoved": "{{name}} removed",
-    "selectedCount": "{{n}} selected"
+    "selectedCount": "{{n}} selected",
+    "celebrateCount": {
+      "one": "All done — {{n}} item",
+      "other": "All done — {{n}} items"
+    },
+    "celebrateBody": "Everything on {{list}} is checked off.",
+    "keepList": "Keep list"
   },
   "shops": {
     "all": "All shops",

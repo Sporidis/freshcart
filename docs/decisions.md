@@ -883,3 +883,48 @@ test, and it immediately caught a real bug the previous, testless state had been
 once there are enough shops or the keyboard shrinks the viewport. Fixed by splitting it the way the
 design's own markup already does: the shop list scrolls in its own `Expanded`, and the tabs preview
 stays pinned below as a fixed footer, never inside the scrollable area.
+
+## 61. The join-code input is now the real segmented boxes; the add sheet inherits the active shop tab; the completion celebration is built
+
+**Decision:** Three independent fixes/additions landed together — user-reported bugs plus the one
+piece of decision #60 that was deliberately left as a working placeholder.
+
+**`JoinCodeInput`'s five boxes are real now, not the interim single field.** The insight that made
+this simple rather than five hand-rolled `FocusNode`s: the design's whole interaction — type and the
+"cursor" hops forward, backspace on an empty box steps back and clears it, pasting a full code fills
+every box — is already exactly what happens to a plain string in one ordinary text field on delete or
+paste. There is no real per-box focus to hand off, only the *look* of five boxes. So one real
+`TextField`, fully transparent and sized over the whole row, does the actual editing (keeping the
+platform keyboard, paste and SMS-autofill suggestions working for free); five read-only boxes drawn
+underneath just reflect its text and highlight whichever box is next. Tested directly — typing,
+backspacing, pasting a full code, and the 5-character cap — rather than only through the join flow's
+own end-to-end test, since the boxes' own correctness (right character in the right box) is a
+different claim than "the flow works."
+
+**`AddItemSheet` now pre-selects whichever shop tab is active when it opens.** `ItemsSection` already
+watched `shopFilterProvider(list.id)` for filtering; threading that same value into the sheet as
+`initialShopId` was the whole fix. Guarded against a stale filter (the shop was deleted by someone
+else between opening the tab and opening the sheet) by falling back to "no shop" unless the id is
+actually still one of the list's shops — the same defensive check `activeShopColorProvider` already
+makes for the same reason. Still just a starting point, not a lock: the existing shop chips let it
+be changed before saving.
+
+**The completion celebration (`CompletionCelebrationCard`) is built.** `AppRadii.celebration` and
+`AppMotion.celebrate`/`AppMotion.spring` had existed since early in the project, unused — this is
+what they were for. Shown when every item on the *whole list* is checked (not just the active shop
+tab, matching the design's own `allDone` check), it offers "Keep list" (dismiss) and "Clear checked"
+(the same `ItemsController.clearChecked` the Done divider's own button already calls — not a second
+implementation of "clear everything checked"). The dismissal is provider state
+(`CelebrationDismissed`, family-keyed by list id), not widget state, for the same reason as the
+"recently checked" hold (#47): a rebuild must not forget it. It resets itself the moment the list
+stops being fully checked — an item added, unchecked, or cleared — so the *next* time the list is
+completed, the card shows again rather than staying silenced by one long-ago tap; verified with a
+test that dismisses, re-opens the list via a live update, completes it a second time, and checks the
+card is back. The spring entrance (`AnimationController.animateWith(SpringSimulation(...))`,
+`AppMotion.spring`) is deferred a frame via `addPostFrameCallback` so `AppMotion.reduced` has a built
+`context` to read `MediaQuery` from; reduced motion collapses it to a static appearance, per the
+motion spec's own explicit fallback note for this exact card. **Noted, not fixed:** once the list is
+fully checked, "Clear checked" is now genuinely offered in two places (the Done divider and this
+card) — both call the same use case, so there is nothing to get out of sync, and duplicating a
+one-tap action across two natural places a person's eye might land felt better than hiding one of
+them for the sake of there being exactly one button.

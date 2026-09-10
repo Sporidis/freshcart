@@ -36,7 +36,13 @@
     "doneCount": "Klaar · {{n}}",
     "clearChecked": "Afgevinkte wissen",
     "itemRemoved": "{{name}} verwijderd",
-    "selectedCount": "Geselecteerd · {{n}}"
+    "selectedCount": "Geselecteerd · {{n}}",
+    "celebrateCount": {
+      "one": "Helemaal klaar — {{n}} item",
+      "other": "Helemaal klaar — {{n}} items"
+    },
+    "celebrateBody": "Alles op {{list}} is afgevinkt.",
+    "keepList": "Lijst bewaren"
   },
   "shops": {
     "all": "Alle winkels",
