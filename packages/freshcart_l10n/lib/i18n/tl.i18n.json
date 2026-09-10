@@ -33,7 +33,8 @@
     "emptyShopTitle": "Wala para sa {{shop}}",
     "emptyShopBody": "Lalabas sa tab na ito ang mga idinagdag mo rito.",
     "emptyShopAction": "Magdagdag ng produkto",
-    "doneCount": "Tapos · {{n}}"
+    "doneCount": "Tapos · {{n}}",
+    "clearChecked": "Alisin ang naka-check"
   },
   "shops": {
     "all": "Lahat ng tindahan",

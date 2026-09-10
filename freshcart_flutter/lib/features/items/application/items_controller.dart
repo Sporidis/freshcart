@@ -232,6 +232,45 @@ class ItemsController extends _$ItemsController {
     }
   }
 
+  /// Removes every checked item, taking them off screen immediately and
+  /// putting them all back if the server refuses.
+  ///
+  /// One optimistic guess for the whole batch rather than [remove] looped
+  /// per item: the server does it as one transaction (all or nothing), so
+  /// the local view should promise the same thing rather than showing rows
+  /// disappearing one at a time toward a result that might still roll back.
+  Future<Failure?> clearChecked() async {
+    final before = _current;
+    if (before == null) return const Failure.unexpected('No items loaded');
+
+    final checked = [
+      for (final item in before)
+        if (item.isChecked) item,
+    ];
+    if (checked.isEmpty) return null;
+
+    for (final item in checked) {
+      _pending[item.id] = item;
+    }
+    _show([
+      for (final item in before)
+        if (!item.isChecked) item,
+    ]);
+
+    final result = await ref.read(itemRepositoryProvider).clearChecked(listId);
+    for (final item in checked) {
+      _pending.remove(item.id);
+    }
+
+    switch (result) {
+      case Ok<int>():
+        return null;
+      case Err<int>(:final failure):
+        _show(before);
+        return failure;
+    }
+  }
+
   /// Re-reads the items from the server.
   Future<void> refresh() async => ref.invalidateSelf();
 }

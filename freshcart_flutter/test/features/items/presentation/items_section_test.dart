@@ -126,6 +126,60 @@ void main() {
     expect(find.text('Milk'), findsNothing);
   });
 
+  testWidgets('Clear checked removes the checked rows, leaves the rest', (
+    tester,
+  ) async {
+    items.byListResult = Ok([
+      buildItem(id: 'a', name: 'Milk', isChecked: true),
+      buildItem(id: 'b', name: 'Bread', isChecked: true),
+      buildItem(id: 'c', name: 'Eggs'),
+    ]);
+    await pump(tester);
+
+    await tester.tap(find.text('Clear checked'));
+    await tester.pumpAndSettle();
+
+    expect(items.clearCheckedCallCount, 1);
+    expect(find.text('Milk'), findsNothing);
+    expect(find.text('Bread'), findsNothing);
+    expect(find.text('Eggs'), findsOneWidget);
+  });
+
+  testWidgets('a rejected clear puts the checked rows back', (tester) async {
+    items.byListResult = Ok([
+      buildItem(id: 'a', name: 'Milk', isChecked: true),
+      buildItem(id: 'b', name: 'Eggs'),
+    ]);
+    items.clearCheckedResult = const Err(Failure.network('offline'));
+    await pump(tester);
+
+    await tester.tap(find.text('Clear checked'));
+    await tester.pumpAndSettle();
+
+    // The optimistic removal rolled back, and the row is still checked, not
+    // reinserted unchecked.
+    expect(find.text('Milk'), findsOneWidget);
+    final milkTile = find.ancestor(
+      of: find.text('Milk'),
+      matching: find.byType(CheckboxListTile),
+    );
+    expect(
+      tester
+          .widget<Checkbox>(
+            find.descendant(of: milkTile, matching: find.byType(Checkbox)),
+          )
+          .value,
+      isTrue,
+    );
+  });
+
+  testWidgets('nothing checked means no clear action to tap', (tester) async {
+    items.byListResult = Ok([buildItem(name: 'Milk')]);
+    await pump(tester);
+
+    expect(find.text('Clear checked'), findsNothing);
+  });
+
   testWidgets('a conflict unticks the row and says why', (tester) async {
     items.byListResult = Ok([buildItem(name: 'Milk')]);
     items.saveResult = const Err(Failure.conflict());

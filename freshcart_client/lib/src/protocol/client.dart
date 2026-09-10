@@ -377,6 +377,14 @@ class EndpointItem extends _i1.EndpointRef {
         {'itemId': itemId},
       );
 
+  /// Deletes every checked item on the list, returning how many were removed.
+  _i2.Future<int> clearChecked(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<int>(
+        'item',
+        'clearChecked',
+        {'listId': listId},
+      );
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the

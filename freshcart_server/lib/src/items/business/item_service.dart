@@ -185,4 +185,38 @@ abstract final class ItemService {
       itemName: stored.name,
     );
   }
+
+  /// Deletes every checked item on [listId] in one operation, returning how
+  /// many were removed.
+  ///
+  /// One transaction, not a loop of [remove] calls: a client tapping "Clear
+  /// checked" means all of them or a clear failure, never half a trolley
+  /// silently left behind because the third delete happened to fail.
+  static Future<int> clearChecked(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+  ) async {
+    await ListService.requireMembership(session, listId, userId);
+    return session.db.transaction((transaction) async {
+      final removed = await ShoppingItem.db.deleteWhere(
+        session,
+        where: (t) => t.listId.equals(listId) & t.isChecked.equals(true),
+        transaction: transaction,
+      );
+      for (final item in removed) {
+        await _announce(
+          session,
+          listId,
+          ItemChange(
+            kind: ItemChangeKind.removed,
+            itemId: item.id!,
+            actorId: userId,
+          ),
+          itemName: item.name,
+        );
+      }
+      return removed.length;
+    });
+  }
 }

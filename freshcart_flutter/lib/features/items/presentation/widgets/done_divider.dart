@@ -14,6 +14,8 @@ class DoneDivider extends StatelessWidget {
     required this.label,
     required this.collapsed,
     required this.onToggle,
+    this.clearLabel,
+    this.onClear,
     super.key,
   });
 
@@ -26,36 +28,71 @@ class DoneDivider extends StatelessWidget {
   /// Called when the divider is tapped.
   final VoidCallback onToggle;
 
+  /// "Clear checked", pre-translated. Null hides the action entirely — a
+  /// divider with nothing checked to clear has no button to be pressed by
+  /// accident.
+  final String? clearLabel;
+
+  /// Deletes every checked item. A separate tap target from [onToggle]'s, so
+  /// clearing the trolley and folding it away stay two different gestures on
+  /// one row rather than one gesture doing two things.
+  final VoidCallback? onClear;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurface.withValues(alpha: 0.42);
 
-    return Semantics(
-      button: true,
-      expanded: !collapsed,
-      child: InkWell(
-        onTap: onToggle,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(4, 14, 4, 9),
-          child: Row(
-            children: [
-              AnimatedRotation(
-                turns: collapsed ? -0.25 : 0,
-                duration: AppMotion.durationFor(context, AppMotion.standard),
-                curve: AppMotion.enter,
-                child: Icon(Icons.expand_more, size: 16, color: muted),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  label.toUpperCase(),
-                  style: AppTextStyles.eyebrow.copyWith(color: muted),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 14, 4, 9),
+      child: Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              button: true,
+              expanded: !collapsed,
+              child: InkWell(
+                onTap: onToggle,
+                child: Row(
+                  children: [
+                    AnimatedRotation(
+                      turns: collapsed ? -0.25 : 0,
+                      duration: AppMotion.durationFor(
+                        context,
+                        AppMotion.standard,
+                      ),
+                      curve: AppMotion.enter,
+                      child: Icon(Icons.expand_more, size: 16, color: muted),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        label.toUpperCase(),
+                        style: AppTextStyles.eyebrow.copyWith(color: muted),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
-        ),
+          if (clearLabel != null && onClear != null)
+            InkWell(
+              onTap: onClear,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 4,
+                ),
+                child: Text(
+                  clearLabel!,
+                  style: AppTextStyles.captionStrong.copyWith(
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -70,7 +107,13 @@ Widget doneDividerPreview() => previewPiece(
   Column(
     mainAxisSize: MainAxisSize.min,
     children: [
-      DoneDivider(label: 'Done · 3', collapsed: false, onToggle: () {}),
+      DoneDivider(
+        label: 'Done · 3',
+        collapsed: false,
+        onToggle: () {},
+        clearLabel: 'Clear checked',
+        onClear: () {},
+      ),
       const SizedBox(height: 24),
       DoneDivider(label: 'Done · 3', collapsed: true, onToggle: () {}),
     ],

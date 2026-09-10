@@ -17,11 +17,17 @@ class FakeItemRepository implements ItemRepository {
   /// What [remove] returns.
   Result<void> removeResult = const Ok<void>(null);
 
+  /// What [clearChecked] returns.
+  Result<int> clearCheckedResult = const Ok(0);
+
   /// Items passed to [save], in order.
   final List<ShoppingItem> savedItems = [];
 
   /// Ids passed to [remove], in order.
   final List<ItemId> removedIds = [];
+
+  /// How many times [clearChecked] was called.
+  int clearCheckedCallCount = 0;
 
   /// Completes before [save] answers, to observe the optimistic state.
   Future<void>? savePause;
@@ -50,6 +56,12 @@ class FakeItemRepository implements ItemRepository {
   Future<Result<void>> remove(ItemId id) async {
     removedIds.add(id);
     return removeResult;
+  }
+
+  @override
+  Future<Result<int>> clearChecked(ListId listId) async {
+    clearCheckedCallCount++;
+    return clearCheckedResult;
   }
 
   /// Feeds [watchByList]. Tests push snapshots through this to simulate
