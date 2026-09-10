@@ -42,7 +42,15 @@
     "unauthorized": "Wala kang access dito.",
     "conflict": "May ibang nagbago nito kanina lang. Subukan muli.",
     "unexpected": "May nangyaring mali.",
-    "validation": "Pakisuri ang iyong inilagay."
+    "validation": "Pakisuri ang iyong inilagay.",
+    "couldNotSave": "Hindi na-save ang “{{name}}”",
+    "listDeletedTitle": "Binura ang listahang ito",
+    "listDeletedBody": "May nagtanggal ng listahang ito para sa lahat sa bahay.",
+    "noAccessTitle": "Wala ka nang access",
+    "noAccessBody": "Hindi ka na miyembro ng listahang ito.",
+    "unexpectedTitle": "May nangyaring mali",
+    "unexpectedBody": "Subukan ulit. Kung paulit-ulit, isara at buksan muli ang app.",
+    "backToLists": "Bumalik sa mga listahan mo"
   },
   "account": {
     "title": "Protektahan ang iyong mga listahan",

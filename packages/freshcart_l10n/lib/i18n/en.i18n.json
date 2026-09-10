@@ -42,7 +42,15 @@
     "unauthorized": "You do not have access to this.",
     "conflict": "Someone else just changed this. Try again.",
     "unexpected": "Something went wrong.",
-    "validation": "Check what you entered."
+    "validation": "Check what you entered.",
+    "couldNotSave": "Couldn’t save “{{name}}”",
+    "listDeletedTitle": "This list was deleted",
+    "listDeletedBody": "Someone removed this list for everyone in the household.",
+    "noAccessTitle": "You no longer have access",
+    "noAccessBody": "You are not a member of this list any more.",
+    "unexpectedTitle": "Something went wrong",
+    "unexpectedBody": "Try again. If it keeps happening, close and reopen the app.",
+    "backToLists": "Back to your lists"
   },
   "account": {
     "title": "Secure your lists",

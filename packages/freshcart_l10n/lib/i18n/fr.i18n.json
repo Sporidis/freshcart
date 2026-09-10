@@ -42,7 +42,15 @@
     "unauthorized": "Vous n'avez pas accès à ceci.",
     "conflict": "Quelqu'un vient de modifier ceci. Réessayez.",
     "unexpected": "Une erreur est survenue.",
-    "validation": "Vérifiez ce que vous avez saisi."
+    "validation": "Vérifiez ce que vous avez saisi.",
+    "couldNotSave": "Impossible d’enregistrer « {{name}} »",
+    "listDeletedTitle": "Cette liste a été supprimée",
+    "listDeletedBody": "Quelqu’un a supprimé cette liste pour tout le foyer.",
+    "noAccessTitle": "Vous n’avez plus accès",
+    "noAccessBody": "Vous ne faites plus partie de cette liste.",
+    "unexpectedTitle": "Une erreur est survenue",
+    "unexpectedBody": "Réessayez. Si cela persiste, fermez puis rouvrez l’application.",
+    "backToLists": "Retour à vos listes"
   },
   "account": {
     "title": "Sécurisez vos listes",

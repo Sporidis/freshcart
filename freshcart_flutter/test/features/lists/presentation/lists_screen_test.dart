@@ -221,7 +221,31 @@ void main() {
       await tester.tap(find.text('Groceries'));
       await tester.pumpAndSettle();
 
-      expect(find.text('You do not have access to this.'), findsOneWidget);
+      // The screen tier, not a message in the body: without the list there is
+      // no screen left to render, so it is replaced outright.
+      expect(find.text('You no longer have access'), findsOneWidget);
+      // One action, no dead end.
+      expect(find.text('Back to your lists'), findsOneWidget);
+    });
+
+    testWidgets('a deleted list says so, and offers the way out', (
+      tester,
+    ) async {
+      final list = buildList(name: 'Groceries');
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = const Err(Failure.notFound());
+
+      await pump(tester);
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('This list was deleted'), findsOneWidget);
+
+      await tester.tap(find.text('Back to your lists'));
+      await tester.pumpAndSettle();
+
+      // Back on the lists screen, not stranded.
+      expect(find.text('My lists'), findsOneWidget);
     });
 
     testWidgets(
