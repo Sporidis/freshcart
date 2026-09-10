@@ -4,6 +4,7 @@ import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen.dart';
+import 'package:freshcart_flutter/features/shops/presentation/manage_shops_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -19,6 +20,12 @@ abstract final class Routes {
 
   /// The concrete path for [listId].
   static String listDetail(ListId listId) => '/lists/${listId.value}';
+
+  /// The path pattern for one list's shop management screen.
+  static const String manageShopsPattern = 'shops';
+
+  /// The concrete path for [listId]'s shops.
+  static String manageShops(ListId listId) => '/lists/${listId.value}/shops';
 
   /// The welcome screen.
   static const String welcome = '/welcome';
@@ -54,6 +61,16 @@ GoRouter appRouter(Ref ref) => GoRouter(
       routes: <RouteBase>[
         GoRoute(
           path: ':listId',
+          routes: <RouteBase>[
+            GoRoute(
+              path: Routes.manageShopsPattern,
+              builder: (context, state) {
+                final raw = state.pathParameters['listId'];
+                if (raw == null || raw.isEmpty) return const ListsScreen();
+                return ManageShopsScreen(listId: ListId(raw));
+              },
+            ),
+          ],
           builder: (context, state) {
             // A malformed id in a pasted or stale link is a routing concern,
             // not a domain one, so it is caught here and redirected rather

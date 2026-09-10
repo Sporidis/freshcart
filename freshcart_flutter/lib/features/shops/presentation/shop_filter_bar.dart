@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 
 /// A row of chips for filtering a list by shop.
@@ -70,7 +71,11 @@ class ShopFilterBar extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: FilterChip(
                 avatar: CircleAvatar(
-                  backgroundColor: Color(shop.color.argb),
+                  // Through the preview: this is the pill the design means
+                  // when it says a swatch retints live behind the sheet.
+                  backgroundColor: Color(
+                    ref.watch(effectiveShopColorProvider(shop)).argb,
+                  ),
                   radius: 8,
                 ),
                 label: Text(labelFor(shop.name, shop.id)),
