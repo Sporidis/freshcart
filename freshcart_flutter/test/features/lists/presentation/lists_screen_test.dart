@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
+import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
@@ -35,6 +36,9 @@ void main() {
         listRepositoryProvider.overrideWithValue(repository),
         itemRepositoryProvider.overrideWithValue(itemRepository),
         shopRepositoryProvider.overrideWithValue(shopRepository),
+        // These tests are about ListsScreen itself, not the onboarding gate —
+        // a restored (non-new) identity so the router starts on /lists.
+        isNewIdentityProvider.overrideWithValue(false),
       ],
     );
     addTearDown(container.dispose);

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_client/freshcart_client.dart';
 import 'package:freshcart_flutter/app.dart';
+import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/anonymous_session_bootstrap.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -27,14 +28,17 @@ Future<void> main() async {
   // Awaited on purpose: the session must exist before the first frame. Every
   // endpoint requires login, so without this the first list fetch would come
   // back unauthorized.
-  await AnonymousSessionBootstrap.ensureSignedIn(client);
+  final session = await AnonymousSessionBootstrap.ensureSignedIn(client);
 
   runApp(
     ProviderScope(
       // The one place the client is constructed. Everything else reaches it
       // through the provider, so a test can substitute a fake without the app
       // knowing (docs/architecture.md, and the FakeClient in test/fakes).
-      overrides: [serverpodClientProvider.overrideWithValue(client)],
+      overrides: [
+        serverpodClientProvider.overrideWithValue(client),
+        isNewIdentityProvider.overrideWithValue(session.isNewIdentity),
+      ],
       child: const FreshCartApp(),
     ),
   );

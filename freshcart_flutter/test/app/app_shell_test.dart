@@ -4,10 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
+import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../fakes/fake_client.dart';
@@ -25,7 +26,12 @@ void main() {
     // type, so an untyped empty list would fail the cast and look like an error.
     final client = FakeClient()..handler = (_, _, _) => <dto.ShoppingList>[];
     final container = ProviderContainer(
-      overrides: [serverpodClientProvider.overrideWithValue(client)],
+      overrides: [
+        serverpodClientProvider.overrideWithValue(client),
+        // These tests are about the shell already showing the lists screen,
+        // not the onboarding gate — a restored (non-new) identity.
+        isNewIdentityProvider.overrideWithValue(false),
+      ],
     );
     addTearDown(container.dispose);
     if (locale != null) {
@@ -88,10 +94,11 @@ void main() {
       final theme = Theme.of(
         tester.element(find.byType(Scaffold)),
       );
-      expect(
-        theme.colorScheme.primary,
-        ColorScheme.fromSeed(seedColor: AppTheme.brandSeed).primary,
-      );
+      // The neutral/brand theme is ink-on-paper, not a Material-generated
+      // scheme: primary buttons must not change colour when no shop is
+      // active. Only AppTheme.forShop's non-brand seeds get the generated
+      // ColorScheme.fromSeed treatment (see AppTheme's class doc).
+      expect(theme.colorScheme.primary, AppColors.ink);
     });
 
     testWidgets('selecting a shop colour re-themes the app', (tester) async {
@@ -126,7 +133,7 @@ void main() {
 
       expect(
         Theme.of(tester.element(find.byType(Scaffold))).colorScheme.primary,
-        ColorScheme.fromSeed(seedColor: AppTheme.brandSeed).primary,
+        AppColors.ink,
       );
     });
   });

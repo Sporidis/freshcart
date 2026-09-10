@@ -11,13 +11,23 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 abstract final class AnonymousSessionBootstrap {
   /// Restores a stored session, or creates an anonymous one.
   ///
-  /// Returns whether the app ended up authenticated. A `false` here is not
-  /// fatal — the UI still renders and every call will report
-  /// `Failure.unauthorized`, which is a far better failure mode than a crash on
-  /// a cold start with no network.
-  static Future<bool> ensureSignedIn(dto.Client client) async {
+  /// `authenticated` is false only if both restoring and creating a session
+  /// failed (typically offline on a first launch) — the UI still renders and
+  /// every call will report `Failure.unauthorized`, which is a far better
+  /// failure mode than a crash on a cold start with no network.
+  ///
+  /// `isNewIdentity` is true only when this call *created* the account rather
+  /// than restoring one already on the device. `main()` cannot ask "has this
+  /// person seen onboarding?" any other way without inventing a second,
+  /// persisted flag that could drift from reality — this branch is the one
+  /// place that already knows the answer.
+  static Future<({bool authenticated, bool isNewIdentity})> ensureSignedIn(
+    dto.Client client,
+  ) async {
     await client.auth.initialize();
-    if (client.auth.isAuthenticated) return true;
+    if (client.auth.isAuthenticated) {
+      return (authenticated: true, isNewIdentity: false);
+    }
 
     try {
       // No token is passed: app attestation would be configured server-side via
@@ -25,11 +35,12 @@ abstract final class AnonymousSessionBootstrap {
       // per-IP rate limit on AnonymousIdpConfig is the abuse guard instead.
       final session = await client.anonymousIdp.login();
       await client.auth.updateSignedInUser(session);
-      return client.auth.isAuthenticated;
+      final authenticated = client.auth.isAuthenticated;
+      return (authenticated: authenticated, isNewIdentity: authenticated);
     } on Exception catch (_) {
       // Offline on first launch is the common case here. Swallowing it lets the
       // app boot and show its own error state rather than dying at startup.
-      return false;
+      return (authenticated: false, isNewIdentity: false);
     }
   }
 }

@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
@@ -32,7 +33,12 @@ abstract final class Routes {
 /// throw the user back to the start.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) => GoRouter(
-  initialLocation: Routes.lists,
+  // A newly-created identity has never made a list, so it starts at Welcome.
+  // A restored one goes straight to Lists — which already has its own empty
+  // state for "no lists left", a distinct case from "never onboarded".
+  initialLocation: ref.watch(isNewIdentityProvider)
+      ? Routes.welcome
+      : Routes.lists,
   routes: <RouteBase>[
     GoRoute(
       path: Routes.welcome,
