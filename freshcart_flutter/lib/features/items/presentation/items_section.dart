@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_field.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_editor_dialog.dart';
@@ -45,6 +46,9 @@ class ItemsSection extends ConsumerWidget {
     final items = ref.watch(itemsControllerProvider(list.id));
     final controller = ref.read(itemsControllerProvider(list.id).notifier);
     final shopFilter = ref.watch(shopFilterProvider(list.id));
+    final selectionMode = ref.watch(
+      selectionControllerProvider(list.id).select((s) => s.isNotEmpty),
+    );
 
     /// Shows the message behind a rolled-back optimistic update.
     ///
@@ -99,13 +103,22 @@ class ItemsSection extends ConsumerWidget {
             },
           },
         ),
-        AddItemField(
-          t: t,
-          onSubmit: (name) async {
-            final failure = await controller.add(name: name);
-            report(failure);
-            return failure == null;
-          },
+        // Slides out during multi-select (§10): adding one item makes no
+        // sense mid-selection, and its own place at the bottom of the
+        // screen is exactly where "Delete"/"Move" would otherwise crowd it.
+        AnimatedSize(
+          duration: AppMotion.durationFor(context, AppMotion.standard),
+          curve: AppMotion.enter,
+          child: selectionMode
+              ? const SizedBox(width: double.infinity)
+              : AddItemField(
+                  t: t,
+                  onSubmit: (name) async {
+                    final failure = await controller.add(name: name);
+                    report(failure);
+                    return failure == null;
+                  },
+                ),
         ),
       ],
     );
@@ -133,6 +146,10 @@ class _ItemList extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final holding = ref.watch(recentlyCheckedProvider(list.id));
     final collapsed = ref.watch(doneSectionCollapsedProvider(list.id));
+    final selection = ref.watch(selectionControllerProvider(list.id));
+    final selectionController = ref.read(
+      selectionControllerProvider(list.id).notifier,
+    );
 
     // A row counts as "still shopping" while it is being held, so a just-ticked
     // item keeps its place for 600 ms instead of jumping the moment it is
@@ -146,10 +163,20 @@ class _ItemList extends ConsumerWidget {
         if (item.isChecked && !holding.contains(item.id)) item,
     ];
 
-    Widget tileFor(ShoppingItem item) => ItemTile(
+    // [index] is only passed for rows that can actually be multi-selected
+    // (the open ones) -- a done row always renders out of selection mode,
+    // the same scoping [ReorderableListView] uses for drag (§10): checked
+    // items are a settled category with their own bulk action already
+    // ("Clear checked"), not a second one competing with it.
+    Widget tileFor(ShoppingItem item, {int? index}) => ItemTile(
       key: ValueKey(item.id.value),
       item: item,
       t: t,
+      index: index ?? 0,
+      selectionMode: index != null && selection.isNotEmpty,
+      selected: selection.contains(item.id),
+      onToggleSelection: () => selectionController.toggle(item.id),
+      onLongPress: () => selectionController.toggle(item.id),
       checkedByName: item.checkedBy == null
           ? null
           : list.memberFor(item.checkedBy!)?.displayName,
@@ -190,7 +217,7 @@ class _ItemList extends ConsumerWidget {
       onRefresh: onRefresh,
       child: ListView(
         children: [
-          ...open.map(tileFor),
+          for (final (index, item) in open.indexed) tileFor(item, index: index),
           if (done.isNotEmpty) ...[
             DoneDivider(
               label: t.items.doneCount(n: done.length),

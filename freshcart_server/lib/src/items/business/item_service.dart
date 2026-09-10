@@ -219,4 +219,43 @@ abstract final class ItemService {
       return removed.length;
     });
   }
+
+  /// Deletes exactly the items in [itemIds] that belong to [listId], in one
+  /// operation, returning how many were removed.
+  ///
+  /// One transaction, not a loop of [remove] calls, for the same reason as
+  /// [clearChecked]: a multi-select "Delete" is one promise ("these, all of
+  /// them"), and a loop can fail partway through and leave the selection half
+  /// gone with nothing clean to report. Scoped to [listId] so a stale or
+  /// tampered id from another list can only fail to match, never delete
+  /// something the caller does not have through this list.
+  static Future<int> removeMany(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+    List<UuidValue> itemIds,
+  ) async {
+    await ListService.requireMembership(session, listId, userId);
+    if (itemIds.isEmpty) return 0;
+    return session.db.transaction((transaction) async {
+      final removed = await ShoppingItem.db.deleteWhere(
+        session,
+        where: (t) => t.listId.equals(listId) & t.id.inSet(itemIds.toSet()),
+        transaction: transaction,
+      );
+      for (final item in removed) {
+        await _announce(
+          session,
+          listId,
+          ItemChange(
+            kind: ItemChangeKind.removed,
+            itemId: item.id!,
+            actorId: userId,
+          ),
+          itemName: item.name,
+        );
+      }
+      return removed.length;
+    });
+  }
 }

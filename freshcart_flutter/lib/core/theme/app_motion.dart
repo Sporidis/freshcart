@@ -43,4 +43,10 @@ class AppMotion {
   /// Stagger delay for list children entering together (cap at 6 items).
   static Duration stagger(int index) =>
       Duration(milliseconds: (index.clamp(0, 5)) * 35);
+
+  /// Stagger delay for rows revealing their multi-select circle down the
+  /// list (§10) — its own, faster cadence than [stagger], which is for
+  /// content entering rather than a mode-switch reveal.
+  static Duration selectionStagger(int index) =>
+      Duration(milliseconds: (index.clamp(0, 10)) * 25);
 }

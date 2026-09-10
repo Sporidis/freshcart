@@ -182,6 +182,66 @@ void main() {
       expect(await endpoints.item.byList(as(aliceId), list.id!), hasLength(1));
     });
 
+    test(
+      'removeMany deletes exactly the selected items and leaves the rest',
+      () async {
+        final list = await aSharedList();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+        final eggs = await endpoints.item.add(as(aliceId), list.id!, 'Eggs');
+
+        final removed = await endpoints.item.removeMany(as(aliceId), list.id!, [
+          milk.id!,
+          bread.id!,
+        ]);
+
+        expect(removed, 2);
+        final remaining = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(remaining.map((i) => i.id), [eggs.id]);
+      },
+    );
+
+    test('removeMany refuses a non-member', () async {
+      final list = await aSharedList();
+      final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+      await expectLater(
+        endpoints.item.removeMany(as(strangerId), list.id!, [milk.id!]),
+        throwsA(isA<NotAMemberException>()),
+      );
+    });
+
+    test('removeMany ignores an id from another list', () async {
+      final list = await aSharedList();
+      final other = await endpoints.list.create(as(aliceId), 'Other');
+      final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+      final elsewhere = await endpoints.item.add(
+        as(aliceId),
+        other.id!,
+        'Sneaky',
+      );
+
+      final removed = await endpoints.item.removeMany(as(aliceId), list.id!, [
+        milk.id!,
+        elsewhere.id!,
+      ]);
+
+      expect(removed, 1, reason: 'only the item that actually belongs here');
+      expect(
+        await endpoints.item.byList(as(aliceId), other.id!),
+        hasLength(1),
+        reason: 'the other list is untouched',
+      );
+    });
+
+    test('removeMany is a no-op on an empty selection', () async {
+      final list = await aSharedList();
+      await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+      expect(await endpoints.item.removeMany(as(aliceId), list.id!, []), 0);
+      expect(await endpoints.item.byList(as(aliceId), list.id!), hasLength(1));
+    });
+
     test('remove deletes the item, and refuses a non-member', () async {
       final list = await aSharedList();
       final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');

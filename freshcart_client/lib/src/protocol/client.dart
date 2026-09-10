@@ -385,6 +385,20 @@ class EndpointItem extends _i1.EndpointRef {
         {'listId': listId},
       );
 
+  /// Deletes a multi-selected set of items from the list in one operation,
+  /// returning how many were removed.
+  _i2.Future<int> removeMany(
+    _i1.UuidValue listId,
+    List<_i1.UuidValue> itemIds,
+  ) => caller.callServerEndpoint<int>(
+    'item',
+    'removeMany',
+    {
+      'listId': listId,
+      'itemIds': itemIds,
+    },
+  );
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the

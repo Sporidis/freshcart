@@ -48,6 +48,14 @@ class ItemRepositoryImpl implements ItemRepository {
       _guard(() => _client.item.clearChecked(_uuid(listId.value)));
 
   @override
+  Future<Result<int>> removeMany(ListId listId, List<ItemId> ids) => _guard(
+    () => _client.item.removeMany(
+      _uuid(listId.value),
+      [for (final id in ids) _uuid(id.value)],
+    ),
+  );
+
+  @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
       ItemRealtimeSource(_client).watchByList(listId);
 

@@ -66,6 +66,10 @@ class FakeItemRepository implements ItemRepository {
   Future<Result<int>> clearChecked(ListId listId) => throw UnimplementedError();
 
   @override
+  Future<Result<int>> removeMany(ListId listId, List<ItemId> ids) =>
+      throw UnimplementedError();
+
+  @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
       throw UnimplementedError();
 }
