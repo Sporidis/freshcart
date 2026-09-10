@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/features/items/application/done_section_contro
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -326,12 +327,55 @@ void main() {
     );
   });
 
+  testWidgets('the quick-add button rolls a field out, then back in', (
+    tester,
+  ) async {
+    await pump(tester);
+
+    expect(find.byType(TextField), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsOneWidget);
+
+    // Empty: the same glyph has rotated into an "x" -- tapping it again
+    // cancels, rolling the field back in.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    expect(find.byType(TextField), findsNothing);
+  });
+
+  testWidgets(
+    'the same + glyph rotates into an x, then back into a + once typed',
+    (tester) async {
+      await pump(tester);
+
+      double turnsOf() =>
+          tester.widget<AnimatedRotation>(find.byType(AnimatedRotation)).turns;
+
+      // Collapsed: a plain +.
+      expect(turnsOf(), 0);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      // Expanded, empty: rotated 1/8 turn into an x.
+      expect(turnsOf(), 0.125);
+
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.pumpAndSettle();
+      // Text typed: rotated back to a +, now meaning "open the details sheet".
+      expect(turnsOf(), 0);
+    },
+  );
+
   testWidgets('adding an item clears the field for the next one', (
     tester,
   ) async {
     items.addResult = Ok(buildItem(name: 'Bread'));
     await pump(tester);
 
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Bread');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
@@ -342,12 +386,17 @@ void main() {
       isEmpty,
       reason: 'adding several things in a row is the common case',
     );
+    // Still rolled out and focused, not collapsed back to a bare button --
+    // that is what makes adding several things in a row actually fast.
+    expect(find.byType(TextField), findsOneWidget);
   });
 
   testWidgets('a rejected add keeps the text for a retry', (tester) async {
     items.addResult = const Err(Failure.network('offline'));
     await pump(tester);
 
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Bread');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
@@ -357,5 +406,51 @@ void main() {
       'Bread',
     );
     expect(find.text('Could not reach the server.'), findsOneWidget);
+  });
+
+  testWidgets(
+    'typing rotates the button to a plus that opens the details sheet',
+    (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.pump();
+
+      // The name typed in the bar carries straight over.
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      final sheetField = find.descendant(
+        of: find.byType(AddItemSheet),
+        matching: find.byType(TextField),
+      );
+      expect(sheetField, findsOneWidget);
+      expect(tester.widget<TextField>(sheetField).controller?.text, 'Bread');
+    },
+  );
+
+  testWidgets('the details sheet adds with the chosen quantity and shop', (
+    tester,
+  ) async {
+    items.addResult = Ok(buildItem(name: 'Bread'));
+    await pump(tester);
+
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Bread');
+    await tester.pump();
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pumpAndSettle();
+
+    // Bump the quantity to 2, then save from the sheet.
+    await tester.tap(find.byIcon(Icons.add_circle_outline));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Add item'));
+    await tester.pumpAndSettle();
+
+    expect(items.addCalls.single.quantity, 2);
+    expect(items.addCalls.single.name, 'Bread');
   });
 }

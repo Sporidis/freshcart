@@ -26,7 +26,10 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.settings.title)),
+      appBar: AppBar(
+        title: Text(t.settings.title),
+        leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
