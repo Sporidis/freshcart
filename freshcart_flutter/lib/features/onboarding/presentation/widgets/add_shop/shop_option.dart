@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 
@@ -115,3 +117,29 @@ class ShopOptionEntrance extends StatelessWidget {
     );
   }
 }
+
+@Preview(
+  group: 'Onboarding',
+  name: 'Shop option · both states',
+  size: Size(393, 200),
+)
+Widget shopOptionPreview() => previewPiece(
+  Column(
+    mainAxisSize: MainAxisSize.min,
+    spacing: 12,
+    children: [
+      ShopOption(
+        name: 'Albert Heijn',
+        color: const Color(0xFF2456A6),
+        selected: true,
+        onTap: () {},
+      ),
+      ShopOption(
+        name: 'Delhaize',
+        color: const Color(0xFFC0392B),
+        selected: false,
+        onTap: () {},
+      ),
+    ],
+  ),
+);

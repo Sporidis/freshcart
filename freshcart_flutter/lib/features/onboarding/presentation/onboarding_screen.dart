@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop_step.dart';
@@ -10,14 +10,8 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/displ
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
 
-@Preview(name: 'Onboarding Screen', size: Size(393, 852))
-Widget welcomeScreenPreview() => ProviderScope(
-  child: MaterialApp(
-    theme: AppTheme.light(AppTheme.brandSeed),
-    home: const OnboardingScreen(),
-    debugShowCheckedModeBanner: false,
-  ),
-);
+@Preview(group: 'Onboarding', name: 'Wizard shell', size: previewPhone)
+Widget onboardingScreenPreview() => previewApp(const OnboardingScreen());
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   final bool isInvited;
