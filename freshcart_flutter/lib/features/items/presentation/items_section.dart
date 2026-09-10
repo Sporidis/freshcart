@@ -15,10 +15,11 @@ import 'package:freshcart_flutter/features/items/application/done_section_contro
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_field.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_editor_dialog.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search_results.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -131,12 +132,38 @@ class ItemsSection extends ConsumerWidget {
           curve: AppMotion.enter,
           child: selectionMode || search.active
               ? const SizedBox(width: double.infinity)
-              : AddItemField(
+              : QuickAddBar(
                   t: t,
-                  onSubmit: (name) async {
+                  onQuickAdd: (name) async {
                     final failure = await controller.add(name: name);
                     report(failure);
                     return failure == null;
+                  },
+                  onOpenDetails: (name) async {
+                    final shops = switch (ref.read(
+                      shopsControllerProvider(list.id),
+                    )) {
+                      AsyncValue<Result<List<Shop>>>(
+                        value: Ok<List<Shop>>(:final value),
+                      ) =>
+                        value,
+                      _ => const <Shop>[],
+                    };
+                    final details = await showModalBottomSheet<AddItemDetails>(
+                      context: context,
+                      isScrollControlled: true,
+                      showDragHandle: true,
+                      builder: (_) =>
+                          AddItemSheet(initialName: name, shops: shops, t: t),
+                    );
+                    if (details == null) return;
+                    report(
+                      await controller.add(
+                        name: details.name,
+                        quantity: details.quantity,
+                        shopId: details.shopId,
+                      ),
+                    );
                   },
                 ),
         ),

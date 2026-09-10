@@ -99,9 +99,9 @@ class ListsDrawer extends ConsumerWidget {
                   _DrawerAction(
                     icon: Icons.settings_outlined,
                     label: t.settings.title,
-                    onTap: () {
+                    onTap: () async {
                       Navigator.of(context).pop();
-                      context.go(Routes.settings);
+                      await context.push(Routes.settings);
                     },
                   ),
                 ],
@@ -154,7 +154,9 @@ class _ListRow extends StatelessWidget {
           backgroundColor: isCurrent
               ? AppColors.ink
               : theme.colorScheme.outlineVariant,
-          foregroundColor: isCurrent ? Colors.white : theme.colorScheme.onSurface,
+          foregroundColor: isCurrent
+              ? Colors.white
+              : theme.colorScheme.onSurface,
           child: Text(initial, style: AppTextStyles.bodyStrong),
         ),
         title: Text(

@@ -23,6 +23,18 @@ class FakeItemRepository implements ItemRepository {
   /// What [removeMany] returns.
   Result<int>? removeManyResult;
 
+  /// Every argument list [add] was called with, in order.
+  final List<
+    ({
+      ListId listId,
+      String name,
+      int quantity,
+      ShopId? shopId,
+      String? noteText,
+    })
+  >
+  addCalls = [];
+
   /// Items passed to [save], in order.
   final List<ShoppingItem> savedItems = [];
 
@@ -49,7 +61,16 @@ class FakeItemRepository implements ItemRepository {
     int quantity = 1,
     ShopId? shopId,
     String? noteText,
-  }) async => addResult ?? const Err(Failure.unexpected('add not configured'));
+  }) async {
+    addCalls.add((
+      listId: listId,
+      name: name,
+      quantity: quantity,
+      shopId: shopId,
+      noteText: noteText,
+    ));
+    return addResult ?? const Err(Failure.unexpected('add not configured'));
+  }
 
   @override
   Future<Result<ShoppingItem>> save(ShoppingItem item) async {
