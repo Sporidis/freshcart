@@ -2,6 +2,7 @@
   "appName": "FreshCart",
   "lists": {
     "title": "My lists",
+    "allLists": "All lists",
     "empty": "No lists yet. Create one to get started.",
     "create": "New list",
     "join": "Join a list with a code",

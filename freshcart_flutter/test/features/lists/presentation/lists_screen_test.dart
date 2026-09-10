@@ -318,18 +318,54 @@ void main() {
       repository.myListsResult = Ok([list]);
       repository.byIdResult = Ok(list);
 
+      await pump(tester, currentUserId: 'user-1');
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Groceries'), findsOneWidget);
+
+      // Household — join code and members — lives one tap away, behind the
+      // app bar's own avatar, not inline on this screen.
+      await tester.tap(find.byType(CircleAvatar));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('ABC23'), findsOneWidget);
+      expect(find.text('Nikolaos'), findsOneWidget);
+    });
+
+    testWidgets('the hamburger opens a switcher to the other lists', (
+      tester,
+    ) async {
+      final groceries = buildList(name: 'Groceries', members: [buildMember()]);
+      final hardware = buildList(
+        id: '00000000-0000-4000-8000-000000000002',
+        name: 'Hardware',
+        members: [
+          buildMember(),
+          buildMember(userId: 'user-2'),
+        ],
+      );
+      repository.myListsResult = Ok([groceries, hardware]);
+      repository.byIdResult = Ok(groceries);
+
       await pump(tester);
       await tester.tap(find.text('Groceries'));
       await tester.pumpAndSettle();
 
-      // The detail screen shows the join code and the member count, with the
-      // members themselves behind an expander.
-      expect(find.textContaining('ABC23'), findsOneWidget);
-      expect(find.text('1 member'), findsOneWidget);
-
-      await tester.tap(find.text('1 member'));
+      await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
-      expect(find.text('Nikolaos'), findsOneWidget);
+
+      // Both lists, the open one distinguishable from the other.
+      expect(find.text('Groceries'), findsWidgets);
+      expect(find.text('Hardware'), findsOneWidget);
+      expect(find.text('2 members'), findsOneWidget);
+
+      repository.byIdResult = Ok(hardware);
+      await tester.tap(find.text('Hardware'));
+      await tester.pumpAndSettle();
+
+      // The drawer closed itself and the app bar now shows the other list.
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.widgetWithText(AppBar, 'Hardware'), findsOneWidget);
     });
 
     testWidgets('a list the user cannot see reports no access', (tester) async {
@@ -369,20 +405,23 @@ void main() {
     });
 
     testWidgets(
-      'a collaborator joining while the screen is open updates it live',
+      'a collaborator joining while Household is open updates it live',
       (tester) async {
         final list = buildList(name: 'Groceries', members: [buildMember()]);
         repository.myListsResult = Ok([list]);
         repository.byIdResult = Ok(list);
         addTearDown(repository.dispose);
 
-        await pump(tester);
+        await pump(tester, currentUserId: 'user-1');
         await tester.tap(find.text('Groceries'));
         await tester.pumpAndSettle();
-        expect(find.text('1 member'), findsOneWidget);
+        await tester.tap(find.byType(CircleAvatar));
+        await tester.pumpAndSettle();
+        expect(find.text('Mom'), findsNothing);
 
         // Someone else joins the list on another device — no user action here,
-        // just the server pushing the updated state down the live stream.
+        // just the server pushing the updated state down the live stream that
+        // listByIdProvider shares with the screen underneath Household.
         repository.live.add(
           Ok(
             buildList(
@@ -396,7 +435,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        expect(find.text('2 members'), findsOneWidget);
+        expect(find.text('Mom'), findsOneWidget);
       },
     );
   });
