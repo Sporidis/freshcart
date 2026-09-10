@@ -58,10 +58,15 @@ void main() {
       tester,
     ) async {
       await pump(tester);
+      expect(find.text('No lists yet'), findsOneWidget);
       expect(
-        find.text('No lists yet. Create one to get started.'),
+        find.text(
+          'Start one for your household, or join a list someone shared with you.',
+        ),
         findsOneWidget,
       );
+      // The empty state carries both exits, so the FAB would be a duplicate.
+      expect(find.byType(FloatingActionButton), findsNothing);
     });
 
     testWidgets('lists the user\'s lists with a member count', (tester) async {

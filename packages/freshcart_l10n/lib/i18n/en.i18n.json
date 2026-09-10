@@ -9,14 +9,22 @@
     "memberCount": {
       "one": "{{n}} member",
       "other": "{{n}} members"
-    }
+    },
+    "emptyTitle": "No lists yet",
+    "emptyBody": "Start one for your household, or join a list someone shared with you."
   },
   "items": {
     "empty": "This list is empty.",
     "add": "Add item",
     "namePlaceholder": "What do you need?",
     "notePlaceholder": "Note (optional)",
-    "checkedBy": "Checked off by {{name}}"
+    "checkedBy": "Checked off by {{name}}",
+    "emptyTitle": "Nothing on the list yet",
+    "emptyBody": "Add your first product below.",
+    "emptyShopTitle": "Nothing for {{shop}}",
+    "emptyShopBody": "Items you add here will show on this tab.",
+    "emptyShopAction": "Add a product",
+    "doneCount": "Done · {{n}}"
   },
   "shops": {
     "all": "All shops",

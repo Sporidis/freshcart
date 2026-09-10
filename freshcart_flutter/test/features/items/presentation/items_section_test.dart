@@ -4,8 +4,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../fakes/fake_item_repository.dart';
@@ -65,7 +67,8 @@ void main() {
 
   testWidgets('shows the empty state', (tester) async {
     await pump(tester);
-    expect(find.text('This list is empty.'), findsOneWidget);
+    expect(find.text('Nothing on the list yet'), findsOneWidget);
+    expect(find.text('Add your first product below.'), findsOneWidget);
   });
 
   testWidgets('ticking a box updates the row immediately', (tester) async {
@@ -78,6 +81,49 @@ void main() {
     await tester.pump();
 
     expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+
+    // Let the 600 ms hold expire so no timer outlives the test.
+    await tester.pump(RecentlyChecked.holdDuration);
+    await tester.pumpAndSettle();
+  });
+
+  // The design's rule: a ticked row keeps its place briefly, because
+  // reordering under the finger reads as a mis-tap.
+  testWidgets('a ticked row waits before dropping under Done', (tester) async {
+    items.byListResult = Ok([
+      buildItem(id: 'a', name: 'Milk'),
+      buildItem(id: 'b', name: 'Bread'),
+    ]);
+    await pump(tester);
+
+    await tester.tap(find.byType(Checkbox).first);
+    await tester.pump();
+
+    // Still holding its place: no divider yet.
+    expect(find.byType(DoneDivider), findsNothing);
+
+    await tester.pump(RecentlyChecked.holdDuration);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DoneDivider), findsOneWidget);
+    expect(find.text('DONE · 1'), findsOneWidget);
+  });
+
+  testWidgets('the Done section folds away when tapped', (tester) async {
+    items.byListResult = Ok([
+      buildItem(id: 'a', name: 'Milk', isChecked: true),
+      buildItem(id: 'b', name: 'Bread'),
+    ]);
+    await pump(tester);
+
+    expect(find.text('Milk'), findsOneWidget);
+
+    await tester.tap(find.byType(DoneDivider));
+    await tester.pumpAndSettle();
+
+    // Folded, not deleted -- the divider still reports what is in there.
+    expect(find.text('DONE · 1'), findsOneWidget);
+    expect(find.text('Milk'), findsNothing);
   });
 
   testWidgets('a conflict unticks the row and says why', (tester) async {
@@ -86,6 +132,7 @@ void main() {
     await pump(tester);
 
     await tester.tap(find.byType(Checkbox));
+    await tester.pump(RecentlyChecked.holdDuration);
     await tester.pumpAndSettle();
 
     // Rolled back...

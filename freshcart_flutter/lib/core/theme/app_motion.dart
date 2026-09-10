@@ -23,6 +23,23 @@ class AppMotion {
     damping: 14,
   );
 
+  /// Whether the viewer has asked the platform for reduced motion.
+  ///
+  /// The motion spec's rule: every non-essential animation checks this, and
+  /// when it is on, durations collapse to [micro] and [pop]'s overshoot falls
+  /// back to a plain ease. Overshoot and long travel are exactly what motion
+  /// sensitivity reacts to, so honouring it is not a nicety.
+  static bool reduced(BuildContext context) =>
+      MediaQuery.maybeDisableAnimationsOf(context) ?? false;
+
+  /// [duration], collapsed to [micro] when the viewer wants reduced motion.
+  static Duration durationFor(BuildContext context, Duration duration) =>
+      reduced(context) ? micro : duration;
+
+  /// [curve], with [pop]'s overshoot dropped when motion is reduced.
+  static Curve curveFor(BuildContext context, Curve curve) =>
+      reduced(context) && curve == pop ? press : curve;
+
   /// Stagger delay for list children entering together (cap at 6 items).
   static Duration stagger(int index) =>
       Duration(milliseconds: (index.clamp(0, 5)) * 35);
