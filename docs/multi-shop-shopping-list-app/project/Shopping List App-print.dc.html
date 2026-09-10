@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<style>
+body{margin:0;background:#eeece6;font-family:system-ui,sans-serif}
+* { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+* { animation-delay: -99s !important; animation-duration: .001s !important;
+    animation-iteration-count: 1 !important; animation-fill-mode: both !important;
+    animation-play-state: running !important; transition-duration: 0s !important; }
+.gal-row{display:flex;flex-wrap:wrap;gap:32px}
+.ph-scr{width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden}
+.ph-lbl{font:600 11px system-ui,sans-serif;color:rgba(0,0,0,.45);text-align:center;margin-top:8px}
+doc-page:not(:defined){visibility:hidden}
+</style>
+</helmet>
+<x-import component-from-global-scope="doc-page" from="./doc-page.js" size="letter" orientation="portrait" margin="0.5in" hint-size="850,1100">
+<h1 style="font:700 22px system-ui;color:#1a1a1a;margin:0 0 4px">Basket — shopping list app</h1>
+<p style="font:400 13px system-ui;color:rgba(0,0,0,.5);margin:0 0 28px">Clean &amp; minimal direction — icons, onboarding, settings, light &amp; dark mode</p>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><h2 style="font:700 16px system-ui;color:#1a1a1a;margin:0 0 16px">App icon options</h2>
+<div class="gal-row" style="align-items:flex-start">
+
+<div style="display:flex;flex-direction:column;align-items:center;gap:10px">
+  <div style="width:120px;height:120px;border-radius:26px;background:#1A1A18;display:flex;align-items:center;justify-content:center;position:relative;box-shadow:0 4px 14px rgba(0,0,0,.15)">
+    <svg width="58" height="58" viewBox="0 0 58 58" fill="none">
+      <path d="M12 22h34l-4 26a4 4 0 0 1-4 3.4H20a4 4 0 0 1-4-3.4L12 22Z" stroke="#fff" stroke-width="3" stroke-linejoin="round"></path>
+      <path d="M19 22c0-7 4.5-12 10-12s10 5 10 12" stroke="#fff" stroke-width="3" stroke-linecap="round"></path>
+      <line x1="16" y1="30" x2="42" y2="30" stroke="#fff" stroke-width="2.5"></line>
+      <line x1="17.3" y1="38" x2="40.7" y2="38" stroke="#fff" stroke-width="2.5"></line>
+    </svg>
+    <div style="position:absolute;bottom:12px;right:12px;width:12px;height:12px;border-radius:50%;background:#E8791A;border:2.5px solid #1A1A18"></div>
+  </div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><h2 style="font:700 16px system-ui;color:#1a1a1a;margin:0 0 16px">Onboarding — first launch</h2><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-left:32px;padding-right:32px;box-sizing:border-box">
+  <div style="width:84px;height:84px;border-radius:20px;background:#1A1A18;display:flex;align-items:center;justify-content:center;margin-bottom:22px">
+    <svg width="42" height="42" viewBox="0 0 58 58" fill="none">
+      <path d="M12 22h34l-4 26a4 4 0 0 1-4 3.4H20a4 4 0 0 1-4-3.4L12 22Z" stroke="#fff" stroke-width="3" stroke-linejoin="round"></path>
+      <path d="M19 22c0-7 4.5-12 10-12s10 5 10 12" stroke="#fff" stroke-width="3" stroke-linecap="round"></path>
+      <line x1="16" y1="30" x2="42" y2="30" stroke="#fff" stroke-width="2.5"></line>
+      <line x1="17.3" y1="38" x2="40.7" y2="38" stroke="#fff" stroke-width="2.5"></line>
+    </svg>
+  </div>
+  <div style="font-size:28px;font-weight:700;color:#1A1A18;text-align:center;margin-bottom:8px;letter-spacing:-.3px">Welcome to Basket</div>
+  <div style="font-size:15px;color:rgba(26,26,24,.55);text-align:center;line-height:1.5;margin-bottom:36px">Shared shopping lists, sorted by the shops you actually visit.</div>
+  <div style="width:100%;background:#1A1A18;color:#fff;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:600;margin-bottom:12px">Get started</div>
+  <div style="font-size:14px;color:rgba(26,26,24,.5);font-weight:600">I have an invite code</div>
+</div>
+</x-import>
+<div class="ph-lbl">Welcome</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif;padding-left:24px;padding-right:24px;box-sizing:border-box">
+  <div style="font-size:13px;color:rgba(26,26,24,.4);font-weight:600;margin-bottom:8px">Step 1 of 3</div>
+  <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-bottom:6px;letter-spacing:-.3px">Name your first list</div>
+  <div style="font-size:15px;color:rgba(26,26,24,.55);margin-bottom:26px">You can create more lists later, like a BBQ or trip.</div>
+  <div style="border:1.5px solid #1A1A18;border-radius:12px;padding:14px;font-size:16px;color:#1A1A18;font-weight:600;margin-bottom:32px">Weekly Groceries</div>
+  <div style="position:absolute;left:24px;right:24px;bottom:40px;background:#1A1A18;color:#fff;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:600">Continue</div>
+</div>
+</x-import>
+<div class="ph-lbl">Name your list</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif;padding-left:24px;padding-right:24px;box-sizing:border-box">
+  <div style="font-size:13px;color:rgba(26,26,24,.4);font-weight:600;margin-bottom:8px">Step 2 of 3</div>
+  <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-bottom:6px;letter-spacing:-.3px">Add your shops</div>
+  <div style="font-size:15px;color:rgba(26,26,24,.55);margin-bottom:22px">Pick the stores you shop at — each gets its own tab and color.</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:13px 14px">
+      <span style="width:14px;height:14px;border-radius:50%;background:#2456A6;flex:none"></span>
+      <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">Albert Heijn</span>
+      <div style="width:22px;height:22px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:13px 14px">
+      <span style="width:14px;height:14px;border-radius:50%;background:#E8791A;flex:none"></span>
+      <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">Colruyt</span>
+      <div style="width:22px;height:22px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:13px 14px">
+      <span style="width:14px;height:14px;border-radius:50%;background:#C0392B;flex:none"></span>
+      <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">Delhaize</span>
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2)"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1px dashed rgba(0,0,0,.25);border-radius:14px;padding:13px 14px;color:rgba(26,26,24,.4);font-size:15px;font-weight:600">+ Add a shop not listed</div>
+  </div>
+  <div style="position:absolute;left:24px;right:24px;bottom:40px;background:#1A1A18;color:#fff;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:600">Continue</div>
+</div>
+</x-import>
+<div class="ph-lbl">Pick shops</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif;padding-left:24px;padding-right:24px;box-sizing:border-box">
+  <div style="font-size:13px;color:rgba(26,26,24,.4);font-weight:600;margin-bottom:8px">Step 3 of 3</div>
+  <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-bottom:6px;letter-spacing:-.3px">Invite your household</div>
+  <div style="font-size:15px;color:rgba(26,26,24,.55);margin-bottom:26px">Lists update live for everyone you invite. You can always do this later.</div>
+  <div style="display:flex;align-items:center;gap:8px;background:#F5F5F2;border-radius:12px;padding:12px 14px;margin-bottom:14px">
+    <div style="flex:1;font-size:14px;color:rgba(26,26,24,.6);font-family:ui-monospace,monospace">basket.app/join/8f3k2</div>
+    <div style="font-size:13px;font-weight:600;color:#1A1A18">Copy</div>
+  </div>
+  <div style="text-align:center;font-size:14px;color:rgba(26,26,24,.4);margin-bottom:32px">or share via Messages, WhatsApp…</div>
+  <div style="position:absolute;left:24px;right:24px;bottom:40px;display:flex;flex-direction:column;gap:12px">
+    <div style="background:#1A1A18;color:#fff;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:600">Done</div>
+    <div style="text-align:center;font-size:14px;color:rgba(26,26,24,.45);font-weight:600">Skip for now</div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Invite household</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><h2 style="font:700 16px system-ui;color:#1a1a1a;margin:0 0 16px">Settings</h2><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0">
+    <div style="font-size:26px;font-weight:700;color:#1A1A18">Settings</div>
+  </div>
+  <div style="padding:20px 20px 0;display:flex;align-items:center;gap:14px">
+    <div style="width:52px;height:52px;border-radius:50%;background:#1A1A18;color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center">A</div>
+    <div>
+      <div style="font-size:17px;font-weight:700;color:#1A1A18">Alex Janssens</div>
+      <div style="font-size:14px;color:rgba(26,26,24,.5)">alex@example.com</div>
+    </div>
+  </div>
+
+  <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Lists</div>
+  <div style="padding:0 20px;display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07)">
+      <span style="font-size:16px;color:#1A1A18">Manage lists</span>
+      <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0">
+      <span style="font-size:16px;color:#1A1A18">Manage shops &amp; colors</span>
+      <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </div>
+  </div>
+
+  <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Preferences</div>
+  <div style="padding:0 20px;display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07)">
+      <span style="font-size:16px;color:#1A1A18">Appearance</span>
+      <span style="font-size:15px;color:rgba(26,26,24,.45)">System</span>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07)">
+      <span style="font-size:16px;color:#1A1A18">Notifications</span>
+      <div style="width:42px;height:24px;border-radius:100px;background:#1A1A18;position:relative"><div style="width:18px;height:18px;border-radius:50%;background:#fff;position:absolute;top:3px;right:3px"></div></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0">
+      <span style="font-size:16px;color:#1A1A18">Currency</span>
+      <span style="font-size:15px;color:rgba(26,26,24,.45)">EUR (€)</span>
+    </div>
+  </div>
+
+  <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Account</div>
+  <div style="padding:0 20px;display:flex;flex-direction:column">
+    <div style="padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07);font-size:16px;color:#1A1A18">Invite &amp; sharing</div>
+    <div style="padding:13px 0;font-size:16px;color:#C0392B">Sign out</div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Settings</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+    <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <div style="font-size:20px;font-weight:700;color:#1A1A18">Manage shops</div>
+  </div>
+  <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:13px 14px">
+      <svg width="16" height="10" viewBox="0 0 16 10"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+      <span style="width:14px;height:14px;border-radius:50%;background:#2456A6;flex:none"></span>
+      <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">Albert Heijn</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:13px 14px">
+      <svg width="16" height="10" viewBox="0 0 16 10"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+      <span style="width:14px;height:14px;border-radius:50%;background:#E8791A;flex:none"></span>
+      <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">Colruyt</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:13px 14px">
+      <svg width="16" height="10" viewBox="0 0 16 10"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+      <span style="width:14px;height:14px;border-radius:50%;background:#C0392B;flex:none"></span>
+      <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">Delhaize</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;border:1px dashed rgba(0,0,0,.22);border-radius:14px;padding:13px 14px;color:rgba(26,26,24,.4);font-size:15px;font-weight:600">+ Add a shop</div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Manage shops</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><h2 style="font:700 16px system-ui;color:#1a1a1a;margin:0 0 16px">Light mode</h2><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:600;color:rgba(26,26,24,.5);letter-spacing:.2px">Basket</div>
+      <div style="display:flex;margin-right:-6px">
+        <div style="width:26px;height:26px;border-radius:50%;background:#1A1A18;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #FAFAF8;font-weight:600">A</div>
+        <div style="width:26px;height:26px;margin-left:-8px;border-radius:50%;background:#2456A6;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #FAFAF8;font-weight:600">M</div>
+      </div>
+    </div>
+    <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-top:6px;letter-spacing:-.3px">Weekly Groceries</div>
+  </div>
+  <div style="display:flex;gap:8px;padding:16px 20px 12px;overflow-x:auto">
+    <div style="flex:none;background:#1A1A18;color:#fff;padding:8px 16px;border-radius:100px;font-size:14px;font-weight:600">All</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(0,0,0,.14);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6;display:inline-block"></span>Albert Heijn</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(0,0,0,.14);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#E8791A;display:inline-block"></span>Colruyt</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(0,0,0,.14);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B;display:inline-block"></span>Delhaize</div>
+    <div style="flex:none;border:1px dashed rgba(0,0,0,.25);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.4)">+</div>
+  </div>
+  <div style="padding:4px 20px;display:flex;flex-direction:column;gap:1px">
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);flex:none"></div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#2456A6;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:#1A1A18">Bananas</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.4)">x6</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);flex:none"></div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#E8791A;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:#1A1A18">Pasta</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.4)">x2</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);flex:none"></div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#C0392B;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:#1A1A18">Ground beef</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.4)">x1</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px">
+      <div style="width:22px;height:22px;border-radius:50%;background:#1A1A18;flex:none;display:flex;align-items:center;justify-content:center">
+        <svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#2456A6;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:rgba(26,26,24,.4);text-decoration:line-through">Milk</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.3)">x2</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:26px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.08)">
+    <span style="width:9px;height:9px;border-radius:50%;background:#2456A6;flex:none"></span>
+    <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
+    <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none">
+      <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">List · All shops, quick-add open</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  
+  <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.4);z-index:5" ></div>
+  <div style="position:absolute;left:0;top:60px;bottom:0;width:272px;background:#fff;box-shadow:4px 0 24px rgba(0,0,0,.12);z-index:6;padding:22px 18px;box-sizing:border-box">
+    <div style="font-size:13px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Your lists</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border-radius:12px;background:#F1F0EB">
+        <span style="font-size:15px;font-weight:700;color:#1A1A18">Weekly Groceries</span>
+        <svg width="14" height="10" viewBox="0 0 14 10"><path d="M1 4l4 4 8-7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7)">BBQ Party</div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7)">Camping Trip</div>
+      <div style="padding:11px 12px;font-size:15px;color:#2456A6;font-weight:600">+ New list</div>
+    </div>
+    <div style="height:1px;background:rgba(0,0,0,.08);margin-bottom:16px"></div>
+    <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7)">Manage shops</div>
+    <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7)">Invite people</div>
+    <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7)">Settings</div>
+  </div>
+  
+  <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+    <div  style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
+      <svg width="18" height="14" viewBox="0 0 18 14"><line x1="0" y1="1" x2="18" y2="1" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line><line x1="0" y1="7" x2="18" y2="7" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line><line x1="0" y1="13" x2="18" y2="13" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line></svg>
+    </div>
+    <div>
+      <div style="font-size:15px;font-weight:600;color:rgba(26,26,24,.5)">Basket</div>
+      <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-top:2px;letter-spacing:-.3px">Weekly Groceries</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;padding:16px 20px 12px;overflow-x:auto">
+    <div style="flex:none;border:1px solid rgba(0,0,0,.14);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.7)">All</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(0,0,0,.14);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6;display:inline-block"></span>Albert Heijn</div>
+    <div style="flex:none;background:#E8791A;color:#fff;padding:8px 16px;border-radius:100px;font-size:14px;font-weight:600">Colruyt</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(0,0,0,.14);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B;display:inline-block"></span>Delhaize</div>
+  </div>
+  <div style="padding:4px 20px;display:flex;flex-direction:column;gap:1px">
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);flex:none"></div>
+      <div style="flex:1;font-size:16px;color:#1A1A18">Pasta</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.4)">x2</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);flex:none"></div>
+      <div style="flex:1;font-size:16px;color:#1A1A18">Chocolate spread</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.4)">x1</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);flex:none"></div>
+      <div style="flex:1;font-size:16px;color:#1A1A18">Butter</div>
+      <div style="font-size:13px;color:rgba(26,26,24,.4)">x1</div>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">List · Colruyt tab active, side nav open</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+    <div style="width:100%;height:150px;border-radius:14px;background-image:repeating-linear-gradient(45deg,#eee,#eee 10px,#f6f6f4 10px,#f6f6f4 20px);display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+      <span style="font:12px ui-monospace,monospace;color:rgba(0,0,0,.4)">product photo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="background:#E8791A;color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:100px">Colruyt</span>
+    </div>
+    <div style="font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px">Chocolate spread</div>
+    <div style="font-size:15px;color:rgba(26,26,24,.5);margin-bottom:18px">≈ €3.49</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(0,0,0,.08)">
+      <span style="font-size:15px;color:#1A1A18">Quantity</span>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:16px">–</div>
+        <span style="font-size:16px;font-weight:600;width:14px;text-align:center">1</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:#1A1A18;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px">+</div>
+      </div>
+    </div>
+    <div style="padding:12px 0;border-top:1px solid rgba(0,0,0,.08)">
+      <div style="font-size:13px;color:rgba(26,26,24,.5);margin-bottom:6px">Notes</div>
+      <div style="font-size:15px;color:#1A1A18">Get the crunchy one</div>
+    </div>
+    <div style="padding:12px 0;border-top:1px solid rgba(0,0,0,.08);display:flex;justify-content:space-between">
+      <span style="font-size:13px;color:rgba(26,26,24,.5)">Bought 4 times</span>
+      <span style="font-size:13px;color:rgba(26,26,24,.5)">last: Jul 10</span>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Product detail sheet</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0">
+    <div style="font-size:26px;font-weight:700;color:#1A1A18">Your Lists</div>
+  </div>
+  <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+    <div style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:16px;font-weight:600;color:#1A1A18">Weekly Groceries</span>
+        <div style="display:flex"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6;margin-left:-2px"></span><span style="width:8px;height:8px;border-radius:50%;background:#E8791A;margin-left:2px"></span><span style="width:8px;height:8px;border-radius:50%;background:#C0392B;margin-left:2px"></span></div>
+      </div>
+      <div style="font-size:13px;color:rgba(26,26,24,.5);margin-top:4px">12 items · 5 members</div>
+    </div>
+    <div style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:16px;font-weight:600;color:#1A1A18">BBQ Party</span>
+        <div style="display:flex"><span style="width:8px;height:8px;border-radius:50%;background:#E8791A"></span><span style="width:8px;height:8px;border-radius:50%;background:#C0392B;margin-left:2px"></span></div>
+      </div>
+      <div style="font-size:13px;color:rgba(26,26,24,.5);margin-top:4px">8 items · 3 members</div>
+    </div>
+    <div style="border:1px dashed rgba(0,0,0,.2);border-radius:14px;padding:14px 16px;text-align:center;font-size:15px;color:rgba(26,26,24,.5)">+ New list</div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.12);padding:16px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+    <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-bottom:12px">Invite to Weekly Groceries</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="width:34px;height:34px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:600">A</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:#2456A6;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:600">M</div>
+      <div style="width:34px;height:34px;border-radius:50%;border:1.5px dashed rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(0,0,0,.3)">+</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;background:#F5F5F2;border-radius:12px;padding:10px 12px">
+      <div style="flex:1;font-size:14px;color:rgba(26,26,24,.6);font-family:ui-monospace,monospace">basket.app/join/8f3k2</div>
+      <div style="font-size:13px;font-weight:600;color:#1A1A18">Copy</div>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Lists overview · invite sheet</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+    <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:18px">Add a shop</div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;color:rgba(26,26,24,.5);margin-bottom:6px">Shop name</div>
+      <div style="border:1px solid rgba(0,0,0,.14);border-radius:12px;padding:12px 14px;font-size:16px;color:#1A1A18">Lidl</div>
+    </div>
+    <div style="margin-bottom:22px">
+      <div style="font-size:13px;color:rgba(26,26,24,.5);margin-bottom:10px">Tab color</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="width:34px;height:34px;border-radius:50%;background:#2456A6;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:50%;background:#fff"></div></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#E8791A"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#C0392B"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#2E9E5B;border:2.5px solid #1A1A18"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#8E5CD9"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#D9A62E"></div>
+        <div style="width:34px;height:34px;border-radius:50%;border:1.5px dashed rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(0,0,0,.35)">+</div>
+      </div>
+    </div>
+    <div style="background:#1A1A18;color:#fff;text-align:center;padding:14px;border-radius:14px;font-size:16px;font-weight:600">Create shop tab</div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Add shop popup</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+<div class="ph-scr" style="background:#FAFAF8;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+    <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:6px">Join a list</div>
+    <div style="font-size:14px;color:rgba(26,26,24,.5);margin-bottom:18px">Enter the code someone shared with you, or scan their invite link.</div>
+    <div style="border:1px solid rgba(0,0,0,.14);border-radius:12px;padding:14px;text-align:center;font-size:20px;letter-spacing:4px;color:#1A1A18;font-weight:600;margin-bottom:16px">8F3K2</div>
+    <div style="background:#1A1A18;color:#fff;text-align:center;padding:14px;border-radius:14px;font-size:16px;font-weight:600;margin-bottom:12px">Join list</div>
+    <div style="text-align:center;font-size:14px;color:rgba(26,26,24,.5);display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" fill="#1A1A18"></rect><rect x="14" y="3" width="7" height="7" fill="#1A1A18"></rect><rect x="3" y="14" width="7" height="7" fill="#1A1A18"></rect></svg>
+      Scan QR code instead
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Join list popup</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><h2 style="font:700 16px system-ui;color:#1a1a1a;margin:0 0 16px">Dark mode</h2><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" dark="{{ true }}" hint-size="390,844">
+<div class="ph-scr" style="background:#151513;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0">
+    <div style="display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,.5);letter-spacing:.2px">Basket</div>
+      <div style="display:flex;margin-right:-6px">
+        <div style="width:26px;height:26px;border-radius:50%;background:#fff;color:#151513;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #151513;font-weight:700">A</div>
+        <div style="width:26px;height:26px;margin-left:-8px;border-radius:50%;background:#4A82E0;color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;border:2px solid #151513;font-weight:600">M</div>
+      </div>
+    </div>
+    <div style="font-size:26px;font-weight:700;color:#fff;margin-top:6px;letter-spacing:-.3px">Weekly Groceries</div>
+  </div>
+  <div style="display:flex;gap:8px;padding:16px 20px 12px;overflow-x:auto">
+    <div style="flex:none;background:#fff;color:#151513;padding:8px 16px;border-radius:100px;font-size:14px;font-weight:600">All</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.75)"><span style="width:8px;height:8px;border-radius:50%;background:#4A82E0;display:inline-block"></span>Albert Heijn</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.75)"><span style="width:8px;height:8px;border-radius:50%;background:#F0954A;display:inline-block"></span>Colruyt</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.75)"><span style="width:8px;height:8px;border-radius:50%;background:#E05B4D;display:inline-block"></span>Delhaize</div>
+    <div style="flex:none;border:1px dashed rgba(255,255,255,.25);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.4)">+</div>
+  </div>
+  <div style="padding:4px 20px;display:flex;flex-direction:column;gap:1px">
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);flex:none"></div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#4A82E0;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:#fff">Bananas</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">x6</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);flex:none"></div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#F0954A;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:#fff">Pasta</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">x2</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);flex:none"></div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#E05B4D;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:#fff">Ground beef</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">x1</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px">
+      <div style="width:22px;height:22px;border-radius:50%;background:#fff;flex:none;display:flex;align-items:center;justify-content:center">
+        <svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#151513" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <span style="width:7px;height:7px;border-radius:50%;background:#4A82E0;flex:none"></span>
+      <div style="flex:1;font-size:16px;color:rgba(255,255,255,.35);text-decoration:line-through">Milk</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.25)">x2</div>
+    </div>
+  </div>
+  <div style="position:absolute;left:20px;right:20px;bottom:26px;display:flex;align-items:center;gap:10px;background:#212120;border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px 12px">
+    <span style="width:9px;height:9px;border-radius:50%;background:#4A82E0;flex:none"></span>
+    <div style="flex:1;font-size:15px;color:rgba(255,255,255,.35)">Add a product…</div>
+    <div style="width:32px;height:32px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;flex:none">
+      <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#151513" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">List · All shops, quick-add open</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" dark="{{ true }}" hint-size="390,844">
+<div class="ph-scr" style="background:#151513;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0">
+    <div style="font-size:15px;font-weight:600;color:rgba(255,255,255,.5)">Basket</div>
+    <div style="font-size:26px;font-weight:700;color:#fff;margin-top:6px;letter-spacing:-.3px">Weekly Groceries</div>
+  </div>
+  <div style="display:flex;gap:8px;padding:16px 20px 12px;overflow-x:auto">
+    <div style="flex:none;border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.75)">All</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.75)"><span style="width:8px;height:8px;border-radius:50%;background:#4A82E0;display:inline-block"></span>Albert Heijn</div>
+    <div style="flex:none;background:#F0954A;color:#151513;padding:8px 16px;border-radius:100px;font-size:14px;font-weight:700">Colruyt</div>
+    <div style="flex:none;display:flex;align-items:center;gap:6px;border:1px solid rgba(255,255,255,.16);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(255,255,255,.75)"><span style="width:8px;height:8px;border-radius:50%;background:#E05B4D;display:inline-block"></span>Delhaize</div>
+  </div>
+  <div style="padding:4px 20px;display:flex;flex-direction:column;gap:1px">
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);flex:none"></div>
+      <div style="flex:1;font-size:16px;color:#fff">Pasta</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">x2</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(255,255,255,.08)">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);flex:none"></div>
+      <div style="flex:1;font-size:16px;color:#fff">Chocolate spread</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">x1</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:13px 4px">
+      <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(255,255,255,.25);flex:none"></div>
+      <div style="flex:1;font-size:16px;color:#fff">Butter</div>
+      <div style="font-size:13px;color:rgba(255,255,255,.4)">x1</div>
+    </div>
+  </div>
+  <div style="position:absolute;right:20px;bottom:26px;width:52px;height:52px;border-radius:50%;background:#F0954A;display:flex;align-items:center;justify-content:center">
+    <svg width="18" height="18" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#151513" stroke-width="2" stroke-linecap="round"></path></svg>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">List · Colruyt tab active</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" dark="{{ true }}" hint-size="390,844">
+<div class="ph-scr" style="background:#151513;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="position:absolute;inset:0;top:60px;background:rgba(0,0,0,.55)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#1e1e1c;border-radius:24px 24px 0 0;padding:12px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 16px"></div>
+    <div style="width:100%;height:150px;border-radius:14px;background-image:repeating-linear-gradient(45deg,#2a2a28,#2a2a28 10px,#1e1e1c 10px,#1e1e1c 20px);display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+      <span style="font:12px ui-monospace,monospace;color:rgba(255,255,255,.4)">product photo</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <span style="background:#F0954A;color:#151513;font-size:12px;font-weight:700;padding:4px 10px;border-radius:100px">Colruyt</span>
+    </div>
+    <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:4px">Chocolate spread</div>
+    <div style="font-size:15px;color:rgba(255,255,255,.5);margin-bottom:18px">≈ €3.49</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(255,255,255,.08)">
+      <span style="font-size:15px;color:#fff">Quantity</span>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff">–</div>
+        <span style="font-size:16px;font-weight:600;width:14px;text-align:center;color:#fff">1</span>
+        <div style="width:30px;height:30px;border-radius:50%;background:#fff;color:#151513;display:flex;align-items:center;justify-content:center;font-size:16px">+</div>
+      </div>
+    </div>
+    <div style="padding:12px 0;border-top:1px solid rgba(255,255,255,.08)">
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:6px">Notes</div>
+      <div style="font-size:15px;color:#fff">Get the crunchy one</div>
+    </div>
+    <div style="padding:12px 0;border-top:1px solid rgba(255,255,255,.08);display:flex;justify-content:space-between">
+      <span style="font-size:13px;color:rgba(255,255,255,.5)">Bought 4 times</span>
+      <span style="font-size:13px;color:rgba(255,255,255,.5)">last: Jul 10</span>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Product detail sheet</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" dark="{{ true }}" hint-size="390,844">
+<div class="ph-scr" style="background:#151513;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="padding:6px 20px 0">
+    <div style="font-size:26px;font-weight:700;color:#fff">Your Lists</div>
+  </div>
+  <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+    <div style="border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:16px;font-weight:600;color:#fff">Weekly Groceries</span>
+        <div style="display:flex"><span style="width:8px;height:8px;border-radius:50%;background:#4A82E0;margin-left:-2px"></span><span style="width:8px;height:8px;border-radius:50%;background:#F0954A;margin-left:2px"></span><span style="width:8px;height:8px;border-radius:50%;background:#E05B4D;margin-left:2px"></span></div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px">12 items · 5 members</div>
+    </div>
+    <div style="border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:14px 16px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:16px;font-weight:600;color:#fff">BBQ Party</span>
+        <div style="display:flex"><span style="width:8px;height:8px;border-radius:50%;background:#F0954A"></span><span style="width:8px;height:8px;border-radius:50%;background:#E05B4D;margin-left:2px"></span></div>
+      </div>
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-top:4px">8 items · 3 members</div>
+    </div>
+    <div style="border:1px dashed rgba(255,255,255,.25);border-radius:14px;padding:14px 16px;text-align:center;font-size:15px;color:rgba(255,255,255,.55)">+ New list</div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#1e1e1c;border-radius:24px 24px 0 0;padding:16px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 16px"></div>
+    <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:12px">Invite to Weekly Groceries</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <div style="width:34px;height:34px;border-radius:50%;background:#fff;color:#151513;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700">A</div>
+      <div style="width:34px;height:34px;border-radius:50%;background:#4A82E0;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:600">M</div>
+      <div style="width:34px;height:34px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.4)">+</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px;background:#151513;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 12px">
+      <div style="flex:1;font-size:14px;color:rgba(255,255,255,.6);font-family:ui-monospace,monospace">basket.app/join/8f3k2</div>
+      <div style="font-size:13px;font-weight:600;color:#fff">Copy</div>
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Lists overview · invite sheet</div>
+</div></div></div>
+<div style="break-inside:avoid;break-after:page;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" dark="{{ true }}" hint-size="390,844">
+<div class="ph-scr" style="background:#151513;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="position:absolute;inset:0;top:60px;background:rgba(0,0,0,.55)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#1e1e1c;border-radius:24px 24px 0 0;padding:12px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 16px"></div>
+    <div style="font-size:19px;font-weight:700;color:#fff;margin-bottom:18px">Add a shop</div>
+    <div style="margin-bottom:16px">
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:6px">Shop name</div>
+      <div style="border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:12px 14px;font-size:16px;color:#fff">Lidl</div>
+    </div>
+    <div style="margin-bottom:22px">
+      <div style="font-size:13px;color:rgba(255,255,255,.5);margin-bottom:10px">Tab color</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap">
+        <div style="width:34px;height:34px;border-radius:50%;background:#4A82E0;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:50%;background:#fff"></div></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#F0954A"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#E05B4D"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#3FB57A;border:2.5px solid #fff"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#A87BE8"></div>
+        <div style="width:34px;height:34px;border-radius:50%;background:#E8BE4A"></div>
+        <div style="width:34px;height:34px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.3);display:flex;align-items:center;justify-content:center;font-size:16px;color:rgba(255,255,255,.4)">+</div>
+      </div>
+    </div>
+    <div style="background:#fff;color:#151513;text-align:center;padding:14px;border-radius:14px;font-size:16px;font-weight:700">Create shop tab</div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Add shop popup</div>
+</div></div></div>
+<div style="break-inside:avoid;padding-bottom:24px"><div style="display:flex;flex-direction:column;align-items:center"><div>
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" dark="{{ true }}" hint-size="390,844">
+<div class="ph-scr" style="background:#151513;padding-top:60px;font-family:-apple-system,Helvetica,Arial,sans-serif">
+  <div style="position:absolute;inset:0;top:60px;background:rgba(0,0,0,.55)"></div>
+  <div style="position:absolute;left:0;right:0;bottom:0;background:#1e1e1c;border-radius:24px 24px 0 0;padding:12px 20px 30px">
+    <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 16px"></div>
+    <div style="font-size:19px;font-weight:700;color:#fff;margin-bottom:6px">Join a list</div>
+    <div style="font-size:14px;color:rgba(255,255,255,.5);margin-bottom:18px">Enter the code someone shared with you, or scan their invite link.</div>
+    <div style="border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:14px;text-align:center;font-size:20px;letter-spacing:4px;color:#fff;font-weight:600;margin-bottom:16px">8F3K2</div>
+    <div style="background:#fff;color:#151513;text-align:center;padding:14px;border-radius:14px;font-size:16px;font-weight:700;margin-bottom:12px">Join list</div>
+    <div style="text-align:center;font-size:14px;color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;gap:8px">
+      <svg width="16" height="16" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" fill="#fff"></rect><rect x="14" y="3" width="7" height="7" fill="#fff"></rect><rect x="3" y="14" width="7" height="7" fill="#fff"></rect></svg>
+      Scan QR code instead
+    </div>
+  </div>
+</div>
+</x-import>
+<div class="ph-lbl">Join list popup</div>
+</div></div></div>
+</x-import>
+</x-dc>
+</body>
+</html>

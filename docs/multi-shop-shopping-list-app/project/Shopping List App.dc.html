@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<style>
+body{margin:0;background:#EEECE6;font-family:-apple-system,Helvetica,Arial,sans-serif}
+a{color:#2456A6;text-decoration:none}
+a:hover{color:#1A3E77}
+.bkt-scr{width:390px;height:844px;box-sizing:border-box;position:relative;overflow:hidden;background:#FAFAF8}
+.bkt-row{display:flex;align-items:center;gap:12px}
+.bkt-input{border:1.5px solid rgba(0,0,0,.15);border-radius:12px;padding:14px;font-size:16px;color:#1A1A18;font-family:inherit;outline:none;box-sizing:border-box;width:100%}
+.bkt-input::placeholder{color:rgba(26,26,24,.35)}
+.bkt-btn{background:#1A1A18;color:#fff;text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:600;cursor:pointer;user-select:none}
+.bkt-btn:active{opacity:.85}
+</style>
+</helmet>
+<div style="display:flex;flex-direction:column;align-items:center;gap:12px;padding:40px 20px">
+  <div style="font:600 13px system-ui,sans-serif;color:rgba(0,0,0,.4);display:flex;align-items:center;gap:14px">
+    <span>Basket — interactive prototype. Click through the flow.</span>
+    <span onClick="{{ resetAll }}" style="color:#2456A6;font-weight:700;cursor:pointer">Reset</span>
+  </div>
+  <div>
+  <x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" width="390" height="844" hint-size="390,844">
+  <div class="bkt-scr">
+
+    <sc-if value="{{ isWelcome }}" hint-placeholder-val="{{ true }}">
+    <div style="height:100%;box-sizing:border-box;display:flex;flex-direction:column">
+      <div style="flex:1;position:relative;overflow:hidden;background:#F2F0EA">
+        <div style="position:absolute;left:34px;right:-46px;top:118px;background:#fff;border-radius:18px;box-shadow:0 16px 40px rgba(0,0,0,.13);padding:16px 18px;transform:rotate(-4deg)">
+          <div style="font:600 12px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.35);margin-bottom:10px">Weekly Groceries</div>
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.06)"><div style="width:19px;height:19px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="10" height="8" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><span style="width:7px;height:7px;border-radius:50%;background:#2456A6;flex:none"></span><span style="font-size:15px;color:rgba(26,26,24,.4);text-decoration:line-through">Milk</span></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.06)"><div style="width:19px;height:19px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);box-sizing:border-box;flex:none"></div><span style="width:7px;height:7px;border-radius:50%;background:#E8791A;flex:none"></span><span style="font-size:15px;color:#1A1A18">Pasta</span></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 0;border-bottom:1px solid rgba(0,0,0,.06)"><div style="width:19px;height:19px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);box-sizing:border-box;flex:none"></div><span style="width:7px;height:7px;border-radius:50%;background:#2E9E5B;flex:none"></span><span style="font-size:15px;color:#1A1A18">Tomatoes</span></div>
+          <div style="display:flex;align-items:center;gap:11px;padding:9px 0"><div style="width:19px;height:19px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);box-sizing:border-box;flex:none"></div><span style="width:7px;height:7px;border-radius:50%;background:#2456A6;flex:none"></span><span style="font-size:15px;color:#1A1A18">Coffee beans</span></div>
+        </div>
+        <div style="position:absolute;left:56px;top:74px;display:flex;align-items:center;gap:7px;background:#fff;border-radius:100px;padding:6px 12px 6px 6px;box-shadow:0 8px 20px rgba(0,0,0,.12)">
+          <div style="width:22px;height:22px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 10px system-ui;display:flex;align-items:center;justify-content:center">S</div>
+          <span style="font-size:12.5px;font-weight:600;color:#1A1A18">Sam added Pasta</span>
+        </div>
+        <div style="position:absolute;left:0;right:0;bottom:0;height:130px;background:linear-gradient(to bottom,rgba(242,240,234,0),#F2F0EA)"></div>
+      </div>
+      <div style="flex:none;padding:26px 28px 40px;background:#F2F0EA">
+        <div style="font-size:30px;font-weight:700;color:#1A1A18;letter-spacing:-.6px;line-height:1.12;margin-bottom:9px">One list.<br />Everyone's trolley.</div>
+        <div style="font-size:15px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:22px">Sorted by the shops you actually visit, updating live for the whole household.</div>
+        <div class="bkt-btn" onClick="{{ goCreatePath }}">Get started</div>
+        <div style="text-align:center;font-size:14.5px;font-weight:600;color:rgba(26,26,24,.5);margin-top:16px;cursor:pointer" onClick="{{ goJoinPath }}">I have an invite code</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isUsername }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;padding-left:24px;padding-right:24px;position:relative">
+      <div onClick="{{ backToWelcome }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer;margin-bottom:6px">
+        <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:18px">
+        <div style="width:22px;height:4px;border-radius:2px;background:#1A1A18"></div>
+        <div style="width:6px;height:4px;border-radius:2px;background:rgba(26,26,24,.18)"></div>
+        <div style="width:6px;height:4px;border-radius:2px;background:rgba(26,26,24,.18)"></div>
+        <div style="font-size:12.5px;color:rgba(26,26,24,.42);font-weight:600;margin-left:4px">Step 1 of 3</div>
+      </div>
+      <div style="font-size:27px;font-weight:700;color:#1A1A18;margin-bottom:7px;letter-spacing:-.4px">What should we call you?</div>
+      <div style="font-size:15px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:28px">This is how your household sees you on shared lists.</div>
+      <div style="display:flex;align-items:center;gap:14px">
+        <div style="width:52px;height:52px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;background:{{ avatarBg }};color:{{ avatarColor }};border:{{ avatarBorder }};box-sizing:border-box">{{ avatarInitial }}</div>
+        <input class="bkt-input" style="border-color:{{ usernameBorderColor }};flex:1" placeholder="Your name" value="{{ username }}" onChange="{{ setUsername }}" />
+      </div>
+      <sc-if value="{{ showUsernameError }}" hint-placeholder-val="{{ false }}">
+        <div style="color:#C0392B;font-size:13px;font-weight:600;margin-top:9px;margin-left:66px">Please enter your name to continue.</div>
+      </sc-if>
+      <div class="bkt-btn" style="position:absolute;left:24px;right:24px;bottom:40px" onClick="{{ continueUsername }}">Continue</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isNameList }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;padding-left:24px;padding-right:24px;position:relative">
+      <div onClick="{{ backFromNameList }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer;margin-bottom:6px">
+        <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:18px">
+        <div style="width:6px;height:4px;border-radius:2px;background:rgba(26,26,24,.18)"></div>
+        <div style="width:22px;height:4px;border-radius:2px;background:#1A1A18"></div>
+        <div style="width:6px;height:4px;border-radius:2px;background:rgba(26,26,24,.18)"></div>
+        <div style="font-size:12.5px;color:rgba(26,26,24,.42);font-weight:600;margin-left:4px">{{ nameListStepLabel }}</div>
+      </div>
+      <div style="font-size:27px;font-weight:700;color:#1A1A18;margin-bottom:7px;letter-spacing:-.4px">{{ nameListTitle }}</div>
+      <div style="font-size:15px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:24px">You can add more later — a BBQ, a trip, a big shop.</div>
+      <input class="bkt-input" placeholder="Weekly Groceries" value="{{ listNameInput }}" onChange="{{ setListNameInput }}" />
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px">
+        <sc-for list="{{ listNameSuggestions }}" as="sug" hint-placeholder-count="3">
+          <div onClick="{{ sug.pick }}" style="border:1px solid rgba(0,0,0,.13);border-radius:100px;padding:7px 13px;font-size:14px;color:#1A1A18;cursor:pointer">{{ sug.label }}</div>
+        </sc-for>
+      </div>
+      <div class="bkt-btn" style="position:absolute;left:24px;right:24px;bottom:40px" onClick="{{ continueNameList }}">Continue</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isPickShops }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;padding-left:24px;padding-right:24px;position:relative">
+      <div onClick="{{ backToNameListFromPick }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer;margin-bottom:6px">
+        <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="display:flex;align-items:center;gap:9px;margin-bottom:18px">
+        <div style="width:6px;height:4px;border-radius:2px;background:rgba(26,26,24,.18)"></div>
+        <div style="width:6px;height:4px;border-radius:2px;background:rgba(26,26,24,.18)"></div>
+        <div style="width:22px;height:4px;border-radius:2px;background:#1A1A18"></div>
+        <div style="font-size:12.5px;color:rgba(26,26,24,.42);font-weight:600;margin-left:4px">Step 3 of 3</div>
+      </div>
+      <div style="font-size:27px;font-weight:700;color:#1A1A18;margin-bottom:7px;letter-spacing:-.4px">Where do you shop?</div>
+      <div style="font-size:15px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:22px">Each shop gets its own tab and colour. Pick a colour you'll recognise in the aisle.</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+        <sc-for list="{{ shops }}" as="shop" hint-placeholder-count="3">
+          <div class="bkt-row" style="border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:13px 14px;cursor:pointer" onClick="{{ shop.toggle }}">
+            <span style="width:14px;height:14px;border-radius:50%;background:{{ shop.color }};flex:none"></span>
+            <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">{{ shop.name }}</span>
+            <sc-if value="{{ shop.selected }}" hint-placeholder-val="{{ false }}">
+              <div style="width:22px;height:22px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            </sc-if>
+            <sc-if value="{{ shop.notSelected }}" hint-placeholder-val="{{ true }}">
+              <div style="width:22px;height:22px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2)"></div>
+            </sc-if>
+          </div>
+        </sc-for>
+        <div style="border:1px dashed rgba(0,0,0,.25);border-radius:14px;padding:13px 14px;color:rgba(26,26,24,.4);font-size:15px;font-weight:600;cursor:pointer" onClick="{{ openAddShopFromPick }}">+ Add a shop not listed</div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;border-top:1px solid rgba(0,0,0,.08);background:#F5F3ED;padding:13px 24px 30px">
+        <div style="font:600 10.5px ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase;color:rgba(26,26,24,.38);margin-bottom:9px">Your tabs will look like this</div>
+        <div style="display:flex;gap:8px;padding-bottom:14px;overflow-x:auto">
+          <div style="flex:none;padding:8px 14px;border-radius:100px;font-size:14px;background:#1A1A18;color:#fff;font-weight:600">All</div>
+          <sc-for list="{{ previewTabs }}" as="tab" hint-placeholder-count="2">
+            <div style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:{{ tab.color }}"></span>{{ tab.name }}</div>
+          </sc-for>
+        </div>
+        <div class="bkt-btn" onClick="{{ continuePickShops }}">Continue</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isInvite }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;padding-left:24px;padding-right:24px;position:relative">
+      <div onClick="{{ backToPickShopsFromInvite }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer;margin-bottom:6px">
+        <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="font-size:27px;font-weight:700;color:#1A1A18;margin-bottom:7px;letter-spacing:-.4px">Shopping with someone?</div>
+      <div style="font-size:15px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:26px">Invite them and the list updates live for both of you. You can do this any time.</div>
+      <div style="border:1px solid rgba(0,0,0,.1);border-radius:18px;padding:22px;text-align:center;background:#fff">
+        <div style="width:112px;height:112px;margin:0 auto 16px;background:repeating-conic-gradient(#1A1A18 0 25%,#fff 0 50%) 0 0/16px 16px;border-radius:8px"></div>
+        <div style="font-size:13px;color:rgba(26,26,24,.45);margin-bottom:6px">Or share the code</div>
+        <div style="font:600 20px ui-monospace,monospace;letter-spacing:4px;color:#1A1A18">8F3K2</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <div class="bkt-btn" style="flex:1;padding:13px;font-size:15px;background:transparent;color:#1A1A18;border:1px solid rgba(0,0,0,.15)">Copy link</div>
+        <div class="bkt-btn" style="flex:1;padding:13px;font-size:15px;background:transparent;color:#1A1A18;border:1px solid rgba(0,0,0,.15)">Share</div>
+      </div>
+      <div style="position:absolute;left:24px;right:24px;bottom:40px;display:flex;flex-direction:column;gap:14px">
+        <div class="bkt-btn" onClick="{{ finishOnboarding }}">Start my list</div>
+        <div style="text-align:center;font-size:14.5px;font-weight:600;color:rgba(26,26,24,.45);cursor:pointer" onClick="{{ finishOnboarding }}">I'll do this later</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isJoinCode }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;padding-left:24px;padding-right:24px;position:relative">
+      <div onClick="{{ backToUsernameFromJoin }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer;margin-bottom:6px">
+        <svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="font-size:27px;font-weight:700;color:#1A1A18;margin-bottom:7px;letter-spacing:-.4px">Join a list</div>
+      <div style="font-size:15px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:26px">Enter the 5-character code from your invite.</div>
+      <div style="display:flex;gap:9px">
+        <sc-for list="{{ joinBoxes }}" as="box" hint-placeholder-count="5">
+          <div style="flex:1;aspect-ratio:1;border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 24px ui-monospace,monospace;color:#1A1A18;border:{{ box.border }}">{{ box.char }}</div>
+        </sc-for>
+      </div>
+      <input class="bkt-input" style="text-align:center;font-size:20px;letter-spacing:4px;font-weight:600;margin-top:14px" placeholder="Type the code" value="{{ joinCode }}" onChange="{{ setJoinCode }}" />
+      <sc-if value="{{ showJoinError }}" hint-placeholder-val="{{ false }}">
+        <div style="color:#C0392B;font-size:13px;font-weight:600;margin-top:9px;text-align:center">That code doesn't match any list.</div>
+      </sc-if>
+      <div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:22px;cursor:pointer">
+        <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="2.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><rect x="11.5" y="2.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><rect x="2.5" y="11.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><path d="M11.5 11.5h6v6" stroke="#2456A6" stroke-width="1.6" stroke-linecap="round"></path></svg>
+        <span style="font-size:14.5px;font-weight:600;color:#2456A6">Scan QR instead</span>
+      </div>
+      <div class="bkt-btn" style="position:absolute;left:24px;right:24px;bottom:40px" onClick="{{ submitJoinCode }}">Join list</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isJoined }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding-left:46px;padding-right:46px;text-align:center;gap:7px">
+      <div style="width:56px;height:56px;border-radius:50%;background:#2E9E5B;display:flex;align-items:center;justify-content:center;margin-bottom:8px">
+        <svg width="26" height="20" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="font-size:21px;font-weight:700;color:#1A1A18;letter-spacing:-.3px">You're in</div>
+      <div style="font-size:14px;color:rgba(26,26,24,.5);line-height:1.5">Joined <strong style="font-weight:600;color:#1A1A18">Weekly Groceries</strong> with Alex and Sam.</div>
+      <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;justify-content:center">
+        <sc-for list="{{ previewTabs }}" as="tab" hint-placeholder-count="2">
+          <div style="display:flex;align-items:center;gap:6px;padding:7px 13px;border-radius:100px;font-size:13.5px;border:1px solid rgba(0,0,0,.12);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:{{ tab.color }}"></span>{{ tab.name }}</div>
+        </sc-for>
+      </div>
+      <div class="bkt-btn" style="margin-top:26px;padding-left:26px;padding-right:26px" onClick="{{ finishOnboarding }}">Open the list</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isMain }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;display:flex;flex-direction:column">
+
+      <sc-if value="{{ searchClosed }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px;flex:none">
+        <div onClick="{{ openNav }}" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
+          <svg width="18" height="14" viewBox="0 0 18 14"><line x1="0" y1="1" x2="18" y2="1" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line><line x1="0" y1="7" x2="18" y2="7" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line><line x1="0" y1="13" x2="18" y2="13" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line></svg>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:15px;font-weight:600;color:rgba(26,26,24,.5)">Basket</div>
+          <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-top:2px;letter-spacing:-.3px">{{ activeListName }}</div>
+        </div>
+        <div onClick="{{ openSearch }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
+          <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#1A1A18" stroke-width="1.7"></circle><line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="#1A1A18" stroke-width="1.7" stroke-linecap="round"></line></svg>
+        </div>
+        <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">{{ userInitial }}</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ searchOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:9px;flex:none">
+        <div style="flex:1;display:flex;align-items:center;gap:9px;border:1.5px solid #1A1A18;border-radius:12px;padding:9px 12px">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="rgba(26,26,24,.4)" stroke-width="1.6"></circle><line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="rgba(26,26,24,.4)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+          <input class="bkt-input" style="border:none;padding:0;font-size:15px" placeholder="Search products" value="{{ searchText }}" onChange="{{ setSearchText }}" />
+        </div>
+        <div onClick="{{ closeSearch }}" style="font-size:15px;color:rgba(26,26,24,.55);font-weight:600;cursor:pointer;flex:none">Cancel</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ offline }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top:14px;padding:7px 20px;background:rgba(26,26,24,.06);font-size:13px;color:rgba(26,26,24,.6);display:flex;align-items:center;gap:8px;flex:none">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 5.5a11 11 0 0 1 14 0M3.5 8.5a7.5 7.5 0 0 1 9 0M6 11.5a3.5 3.5 0 0 1 4 0" stroke="rgba(26,26,24,.4)" stroke-width="1.4" stroke-linecap="round"></path><line x1="2" y1="14" x2="14" y2="2" stroke="rgba(26,26,24,.5)" stroke-width="1.4" stroke-linecap="round"></line></svg>
+        <span>Offline — changes will sync</span>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ searchClosed }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;gap:8px;padding:16px 20px 12px;overflow-x:auto;flex:none">
+        <div onClick="{{ selectAllTab }}" style="flex:none;padding:8px 16px;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;background:{{ allTabBg }};color:{{ allTabColor }};border:{{ allTabBorder }}">{{ allTabLabel }}</div>
+        <sc-for list="{{ tabShops }}" as="shop" hint-placeholder-count="3">
+          <div onClick="{{ shop.select }}" style="flex:none;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;cursor:pointer;background:{{ shop.tabBg }};color:{{ shop.tabColor }};border:{{ shop.tabBorder }};font-weight:{{ shop.tabWeight }}">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ shop.dotColor }};display:inline-block"></span>{{ shop.tabLabel }}
+          </div>
+        </sc-for>
+        <div onClick="{{ openAddShopFromMain }}" style="flex:none;border:1px dashed rgba(0,0,0,.25);padding:8px 14px;border-radius:100px;font-size:14px;color:rgba(26,26,24,.4);cursor:pointer">+</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 46px;text-align:center;gap:7px">
+        <div style="width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:5px;border:1.5px solid {{ emptyTint }}">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 9h14l-1.6 10.4A2 2 0 0 1 15.4 21H8.6a2 2 0 0 1-2-1.6L5 9Z" stroke="{{ emptyTint }}" stroke-width="1.5" stroke-linejoin="round"></path><path d="M8.5 9a3.5 3.5 0 0 1 7 0" stroke="{{ emptyTint }}" stroke-width="1.5"></path></svg>
+        </div>
+        <div style="font-size:16px;font-weight:600;color:#1A1A18">{{ emptyTitle }}</div>
+        <div style="font-size:14px;color:rgba(26,26,24,.5);line-height:1.5">{{ emptyBody }}</div>
+        <div onClick="{{ emptyAction }}" style="margin-top:12px;padding:10px 18px;border-radius:100px;font-size:14px;font-weight:600;cursor:pointer;background:{{ emptyBtnBg }};color:#fff">{{ emptyBtnLabel }}</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:4px 20px;flex:1;overflow-y:auto">
+        <sc-for list="{{ openItems }}" as="item" hint-placeholder-count="4">
+          <div style="position:relative;overflow:hidden;margin:0 -4px">
+            <div style="position:absolute;inset:0;background:#C0392B;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;border-radius:10px">
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div onPointerDown="{{ item.dragStart }}" onPointerMove="{{ item.dragMove }}" onPointerUp="{{ item.dragEnd }}" onPointerCancel="{{ item.dragEnd }}" onClick="{{ item.open }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;background:#FAFAF8;touch-action:pan-y;transform:translateX({{ item.swipeX }}px)">
+              <div onClick="{{ item.toggleChecked }}" style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{ item.checkBg }};border:{{ item.checkBorder }}"></div>
+              <span style="width:7px;height:7px;border-radius:50%;background:{{ item.shopColor }};flex:none"></span>
+              <div style="flex:1;font-size:16px;color:#1A1A18">{{ item.name }}</div>
+              <div style="font-size:13px;color:rgba(26,26,24,.4)">x{{ item.qty }}</div>
+            </div>
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ hasDone }}" hint-placeholder-val="{{ false }}">
+        <div onClick="{{ toggleDone }}" style="display:flex;align-items:center;gap:8px;padding:14px 4px 9px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <svg width="10" height="7" viewBox="0 0 10 7" style="transform:rotate({{ doneChevron }}deg)"><path d="M1 1l4 4 4-4" stroke="rgba(26,26,24,.42)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <div style="flex:1;font:600 12px ui-monospace,monospace;letter-spacing:.7px;text-transform:uppercase;color:rgba(26,26,24,.42)">{{ doneLabel }}</div>
+          <div onClick="{{ clearChecked }}" style="font-size:12.5px;font-weight:600;color:#2456A6">Clear checked</div>
+        </div>
+        </sc-if>
+
+        <sc-for list="{{ doneItems }}" as="item" hint-placeholder-count="0">
+          <div onClick="{{ item.open }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;opacity:.45">
+            <div onClick="{{ item.toggleChecked }}" style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:#1A1A18">
+              <svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <span style="width:7px;height:7px;border-radius:50%;background:{{ item.shopColor }};flex:none"></span>
+            <div style="flex:1;font-size:16px;color:rgba(26,26,24,.4);text-decoration:line-through">{{ item.name }}</div>
+            <div style="font-size:13px;color:rgba(26,26,24,.4)">x{{ item.qty }}</div>
+          </div>
+        </sc-for>
+        <div style="height:96px"></div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ snackOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:16px;right:16px;bottom:96px;background:#1A1A18;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;box-sizing:border-box;z-index:9">
+        <div style="flex:1;font-size:14px;color:#fff">{{ snackText }}</div>
+        <div onClick="{{ undoSnack }}" style="font-size:14px;font-weight:700;color:#F0A868;cursor:pointer">Undo</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ allDone }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:16px;right:16px;bottom:22px;background:#fff;border-radius:20px;box-shadow:0 12px 34px rgba(0,0,0,.16);padding:20px;box-sizing:border-box;text-align:center;z-index:6">
+        <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:4px">{{ celebrateTitle }}</div>
+        <div style="font-size:14px;color:rgba(26,26,24,.5);margin-bottom:16px">Everything on {{ activeListName }} is checked off.</div>
+        <div style="display:flex;gap:9px">
+          <div onClick="{{ dismissCelebrate }}" style="flex:1;padding:12px;border-radius:14px;font-size:15px;font-weight:600;text-align:center;cursor:pointer;border:1px solid rgba(0,0,0,.15);color:#1A1A18">Keep list</div>
+          <div onClick="{{ clearChecked }}" class="bkt-btn" style="flex:1;padding:12px;font-size:15px">Clear checked</div>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ showFab }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ openQuickAdd }}" style="position:absolute;left:20px;right:20px;bottom:26px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.08);cursor:pointer;box-sizing:border-box">
+        <span style="width:9px;height:9px;border-radius:50%;background:{{ activeTabColor }};flex:none"></span>
+        <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg>
+        </div>
+      </div>
+      </sc-if>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;overflow-y:auto">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToMain }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="font-size:26px;font-weight:700;color:#1A1A18">Settings</div>
+      </div>
+      <div style="padding:20px 20px 0;display:flex;align-items:center;gap:14px">
+        <div style="width:52px;height:52px;border-radius:50%;background:#1A1A18;color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ userInitial }}</div>
+        <div>
+          <div style="font-size:17px;font-weight:700;color:#1A1A18">{{ displayUsername }}</div>
+          <div style="font-size:14px;color:rgba(26,26,24,.5)">{{ userEmailGuess }}</div>
+        </div>
+      </div>
+      <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Lists</div>
+      <div style="padding:0 20px;display:flex;flex-direction:column">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer" onClick="{{ goManageLists }}">
+          <span style="font-size:16px;color:#1A1A18">Manage lists</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;cursor:pointer" onClick="{{ goManageShops }}">
+          <span style="font-size:16px;color:#1A1A18">Manage shops &amp; colors</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+      </div>
+      <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Account</div>
+      <div style="padding:0 20px 40px;display:flex;flex-direction:column">
+        <div style="padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07);font-size:16px;color:#1A1A18;cursor:pointer" onClick="{{ goManageLists }}">Invite &amp; sharing</div>
+        <div style="padding:13px 0;font-size:16px;color:#C0392B;cursor:pointer" onClick="{{ signOut }}">Sign out</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isManageShops }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToSettings }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="font-size:20px;font-weight:700;color:#1A1A18">Manage shops</div>
+      </div>
+      <div style="padding:18px 20px;display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ shops }}" as="shop" hint-placeholder-count="3">
+          <div class="bkt-row" style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:13px 14px">
+            <svg width="16" height="10" viewBox="0 0 16 10"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.3)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+            <span style="width:14px;height:14px;border-radius:50%;background:{{ shop.color }};flex:none"></span>
+            <span style="flex:1;font-size:16px;color:#1A1A18;font-weight:600">{{ shop.name }}</span>
+          </div>
+        </sc-for>
+        <div onClick="{{ openAddShopFromManage }}" style="border:1px dashed rgba(0,0,0,.22);border-radius:14px;padding:13px 14px;color:rgba(26,26,24,.4);font-size:15px;font-weight:600;cursor:pointer">+ Add a shop</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isListsOverview }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;position:relative">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToSettings }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="font-size:26px;font-weight:700;color:#1A1A18">Your Lists</div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px">
+        <sc-for list="{{ allLists }}" as="l" hint-placeholder-count="2">
+          <div style="border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 16px;cursor:pointer" onClick="{{ l.select }}">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:16px;font-weight:600;color:#1A1A18">{{ l.name }}</span>
+              <sc-if value="{{ l.isActive }}" hint-placeholder-val="{{ false }}"><span style="font-size:12px;font-weight:700;color:#2456A6">Active</span></sc-if>
+            </div>
+          </div>
+        </sc-for>
+        <div onClick="{{ startNewList }}" style="border:1px dashed rgba(0,0,0,.2);border-radius:14px;padding:14px 16px;text-align:center;font-size:15px;color:rgba(26,26,24,.5);cursor:pointer">+ New list</div>
+      </div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.12);padding:16px 20px 30px">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+        <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-bottom:12px">Invite to {{ activeListName }}</div>
+        <div style="display:flex;align-items:center;gap:8px;background:#F5F5F2;border-radius:12px;padding:10px 12px">
+          <div style="flex:1;font-size:14px;color:rgba(26,26,24,.6);font-family:ui-monospace,monospace">basket.app/join/8f3k2</div>
+          <div style="font-size:13px;font-weight:600;color:#1A1A18;cursor:pointer">Copy</div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.4);z-index:5" onClick="{{ closeNav }}"></div>
+    <div style="position:absolute;left:0;top:60px;bottom:0;width:272px;background:#fff;box-shadow:4px 0 24px rgba(0,0,0,.12);z-index:6;padding:22px 18px;box-sizing:border-box;overflow-y:auto">
+      <div style="font-size:13px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Your lists</div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px">
+        <sc-for list="{{ navLists }}" as="l" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border-radius:12px;cursor:pointer;background:{{ l.bg }}" onClick="{{ l.select }}">
+            <span style="font-size:15px;color:{{ l.color }};font-weight:{{ l.weight }}">{{ l.name }}</span>
+          </div>
+        </sc-for>
+        <div style="padding:11px 12px;font-size:15px;color:#2456A6;font-weight:600;cursor:pointer" onClick="{{ startNewList }}">+ New list</div>
+      </div>
+      <div style="height:1px;background:rgba(0,0,0,.08);margin-bottom:16px"></div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ goManageShops }}">Manage shops</div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ goManageLists }}">Invite people</div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ openJoinFromNav }}">Join a list</div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ toggleOffline }}">{{ offlineLabel }}</div>
+      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ goSettings }}">Settings</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ productOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35);z-index:7" onClick="{{ closeProduct }}"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:8">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px;cursor:pointer" onClick="{{ closeProduct }}"></div>
+      <div style="width:100%;height:150px;border-radius:14px;background-image:repeating-linear-gradient(45deg,#eee,#eee 10px,#f6f6f4 10px,#f6f6f4 20px);display:flex;align-items:center;justify-content:center;margin-bottom:16px">
+        <span style="font:12px ui-monospace,monospace;color:rgba(0,0,0,.4)">product photo</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <span style="background:{{ selectedItem.shopColor }};color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:100px">{{ selectedItem.shopName }}</span>
+      </div>
+      <div style="font-size:22px;font-weight:700;color:#1A1A18;margin-bottom:4px">{{ selectedItem.name }}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid rgba(0,0,0,.08)">
+        <span style="font-size:15px;color:#1A1A18">Quantity</span>
+        <div style="display:flex;align-items:center;gap:14px">
+          <div onClick="{{ decQty }}" style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">–</div>
+          <span style="font-size:16px;font-weight:600;width:14px;text-align:center">{{ selectedItem.qty }}</span>
+          <div onClick="{{ incQty }}" style="width:30px;height:30px;border-radius:50%;background:#1A1A18;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer">+</div>
+        </div>
+      </div>
+      <div style="padding:12px 0;border-top:1px solid rgba(0,0,0,.08);display:flex;justify-content:space-between">
+        <span onClick="{{ removeItem }}" style="font-size:14px;color:#C0392B;font-weight:600;cursor:pointer">Remove from list</span>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ quickAddOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35);z-index:7" onClick="{{ closeQuickAdd }}"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:14px 20px 30px;z-index:8">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+      <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-bottom:14px">Add a product to {{ quickAddShopName }}</div>
+      <input class="bkt-input" placeholder="e.g. Bananas" value="{{ quickAddText }}" onChange="{{ setQuickAddText }}" />
+      <div class="bkt-btn" style="margin-top:14px" onClick="{{ submitQuickAdd }}">Add</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ addShopOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35);z-index:9" onClick="{{ closeAddShop }}"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:10">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+      <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:18px">Add a shop</div>
+      <div style="margin-bottom:16px">
+        <div style="font-size:13px;color:rgba(26,26,24,.5);margin-bottom:6px">Shop name</div>
+        <input class="bkt-input" placeholder="e.g. Lidl" value="{{ newShopName }}" onChange="{{ setNewShopName }}" />
+      </div>
+      <div style="margin-bottom:22px">
+        <div style="font-size:13px;color:rgba(26,26,24,.5);margin-bottom:10px">Tab color</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+          <sc-for list="{{ colorSwatches }}" as="sw" hint-placeholder-count="6">
+            <div onClick="{{ sw.select }}" style="width:34px;height:34px;border-radius:50%;background:{{ sw.hex }};display:flex;align-items:center;justify-content:center;cursor:pointer;border:{{ sw.ring }}">
+              <sc-if value="{{ sw.isSelected }}" hint-placeholder-val="{{ false }}"><div style="width:10px;height:10px;border-radius:50%;background:#fff"></div></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div class="bkt-btn" onClick="{{ createShop }}">Create shop tab</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ joinOverlayOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35);z-index:9" onClick="{{ closeJoinOverlay }}"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:10">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+      <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:6px">Join a list</div>
+      <div style="font-size:14px;color:rgba(26,26,24,.5);margin-bottom:18px">Enter the code someone shared with you.</div>
+      <input class="bkt-input" style="text-align:center;font-size:20px;letter-spacing:4px;font-weight:600" placeholder="8F3K2" value="{{ joinCode }}" onChange="{{ setJoinCode }}" />
+      <div class="bkt-btn" style="margin-top:16px" onClick="{{ submitJoinOverlay }}">Join list</div>
+    </div>
+    </sc-if>
+
+  </div>
+  </x-import>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;welcome&quot;,&quot;options&quot;:[&quot;welcome&quot;,&quot;username&quot;,&quot;name-list&quot;,&quot;pick-shops&quot;,&quot;invite&quot;,&quot;joinCode&quot;,&quot;joined&quot;,&quot;main&quot;,&quot;settings&quot;,&quot;manage-shops&quot;,&quot;lists-overview&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+class Component extends DCLogic {
+  state = {
+    screen: this.props.startScreen || 'welcome',
+    path: null,
+    flowMode: 'onboarding',
+    username: '',
+    triedUsername: false,
+    listNameInput: '',
+    joinCode: '',
+    shops: [
+      { id: 'ah', name: 'Albert Heijn', color: '#2456A6', selected: true },
+      { id: 'colruyt', name: 'Colruyt', color: '#E8791A', selected: true },
+      { id: 'delhaize', name: 'Delhaize', color: '#C0392B', selected: false },
+    ],
+    newShopName: '',
+    newShopColor: '#2456A6',
+    addShopReturn: 'main',
+    lists: ['Weekly Groceries', 'BBQ Party', 'Camping Trip'],
+    activeListIndex: 0,
+    activeTab: 'all',
+    navOpen: false,
+    productOpen: false,
+    addShopOpen: false,
+    joinOverlayOpen: false,
+    quickAddOpen: false,
+    quickAddText: '',
+    selectedItemId: null,
+    searchOpen: false,
+    searchText: '',
+    offline: false,
+    doneCollapsed: false,
+    celebrateDismissed: false,
+    snack: null,
+    swipeId: null,
+    swipeX: 0,
+    dragX: null,
+    items: [
+      { id: 1, name: 'Bananas', shop: 'ah', qty: 6, checked: false },
+      { id: 2, name: 'Pasta', shop: 'colruyt', qty: 2, checked: false },
+      { id: 3, name: 'Ground beef', shop: 'delhaize', qty: 1, checked: false },
+      { id: 4, name: 'Milk', shop: 'ah', qty: 2, checked: true },
+      { id: 5, name: 'Chocolate spread', shop: 'colruyt', qty: 1, checked: false },
+      { id: 6, name: 'Butter', shop: 'colruyt', qty: 1, checked: false },
+    ],
+    nextId: 7,
+  };
+
+  colorPalette = ['#2456A6', '#E8791A', '#C0392B', '#2E9E5B', '#8E5CD9', '#D9A62E'];
+
+  resetAll = () => this.setState({
+    screen: 'welcome', path: null, flowMode: 'onboarding', username: '', triedUsername: false,
+    listNameInput: '', joinCode: '', navOpen: false, productOpen: false, addShopOpen: false,
+    joinOverlayOpen: false, quickAddOpen: false, activeTab: 'all', activeListIndex: 0,
+    lists: ['Weekly Groceries', 'BBQ Party', 'Camping Trip'], triedJoin: false,
+  });
+
+  goCreatePath = () => this.setState({ path: 'create', screen: 'username' });
+  goJoinPath = () => this.setState({ path: 'join', screen: 'username' });
+  backToWelcome = () => this.setState({ screen: 'welcome' });
+  setUsername = (e) => this.setState({ username: e.target.value, triedUsername: false });
+  continueUsername = () => {
+    if (!this.state.username.trim()) { this.setState({ triedUsername: true }); return; }
+    if (this.state.path === 'join') this.setState({ screen: 'joinCode' });
+    else this.setState({ screen: 'name-list', listNameInput: '' });
+  };
+  backFromNameList = () => this.setState({ screen: this.state.flowMode === 'newList' ? 'main' : 'username' });
+  setListNameInput = (e) => this.setState({ listNameInput: e.target.value });
+  continueNameList = () => {
+    const name = this.state.listNameInput.trim() || 'New list';
+    if (this.state.flowMode === 'newList') {
+      const lists = [...this.state.lists, name];
+      this.setState({ lists, activeListIndex: lists.length - 1, screen: 'main', flowMode: 'onboarding' });
+    } else {
+      const lists = [...this.state.lists]; lists[0] = name;
+      this.setState({ lists, screen: 'pick-shops' });
+    }
+  };
+  backToNameListFromPick = () => this.setState({ screen: 'name-list' });
+  toggleShop = (id) => this.setState({ shops: this.state.shops.map(s => s.id === id ? { ...s, selected: !s.selected } : s) });
+  openAddShopFromPick = () => this.setState({ addShopOpen: true, addShopReturn: 'pick-shops', newShopName: '', newShopColor: '#2456A6' });
+  continuePickShops = () => this.setState({ screen: 'invite' });
+  backToPickShopsFromInvite = () => this.setState({ screen: 'pick-shops' });
+  finishOnboarding = () => this.setState({ screen: 'main' });
+  backToUsernameFromJoin = () => this.setState({ screen: 'username' });
+  setJoinCode = (e) => this.setState({ joinCode: e.target.value.toUpperCase().slice(0, 5), triedJoin: false });
+  submitJoinCode = () => {
+    const code = (this.state.joinCode || '').trim();
+    if (code !== '8F3K2') { this.setState({ triedJoin: true }); return; }
+    const lists = [...this.state.lists, 'Shared List (joined)'];
+    this.setState({ lists, activeListIndex: lists.length - 1, screen: 'joined', joinCode: '', triedJoin: false });
+  };
+  pickListName = (label) => this.setState({ listNameInput: label });
+
+  openNav = () => this.setState({ navOpen: true });
+  closeNav = () => this.setState({ navOpen: false });
+  selectList = (i) => this.setState({ activeListIndex: i, navOpen: false, activeTab: 'all', screen: 'main' });
+  selectTab = (id) => this.setState({ activeTab: id });
+  openAddShopFromMain = () => this.setState({ addShopOpen: true, addShopReturn: 'main', newShopName: '', newShopColor: '#2456A6' });
+  openProduct = (id) => this.setState({ productOpen: true, selectedItemId: id });
+  closeProduct = () => this.setState({ productOpen: false });
+  toggleChecked = (id) => this.setState({ items: this.state.items.map(i => i.id === id ? { ...i, checked: !i.checked } : i) });
+  incQty = () => this.setState({ items: this.state.items.map(i => i.id === this.state.selectedItemId ? { ...i, qty: i.qty + 1 } : i) });
+  decQty = () => this.setState({ items: this.state.items.map(i => i.id === this.state.selectedItemId ? { ...i, qty: Math.max(1, i.qty - 1) } : i) });
+  removeItem = () => this.setState({ items: this.state.items.filter(i => i.id !== this.state.selectedItemId), productOpen: false });
+
+  openSearch = () => this.setState({ searchOpen: true, searchText: '' });
+  closeSearch = () => this.setState({ searchOpen: false, searchText: '' });
+  setSearchText = (e) => this.setState({ searchText: e.target.value });
+  toggleOffline = () => this.setState({ offline: !this.state.offline, navOpen: false });
+  toggleDone = () => this.setState({ doneCollapsed: !this.state.doneCollapsed });
+  dismissCelebrate = () => this.setState({ celebrateDismissed: true });
+  clearChecked = () => {
+    const removed = this.state.items.filter(i => i.checked);
+    if (!removed.length) return;
+    this.setState({
+      items: this.state.items.filter(i => !i.checked),
+      snack: { text: removed.length + ' items cleared', restore: removed },
+      celebrateDismissed: true,
+    });
+  };
+  deleteItem = (id) => {
+    const removed = this.state.items.find(i => i.id === id);
+    if (!removed) return;
+    this.setState({
+      items: this.state.items.filter(i => i.id !== id),
+      snack: { text: removed.name + ' removed', restore: [removed] },
+      swipeId: null, swipeX: 0,
+    });
+  };
+  undoSnack = () => {
+    const s = this.state.snack;
+    if (!s) return;
+    this.setState({ items: [...this.state.items, ...s.restore], snack: null, celebrateDismissed: false });
+  };
+  dragStart = (id, e) => this.setState({ swipeId: id, dragX: e.clientX, swipeX: 0 });
+  dragMove = (id, e) => {
+    if (this.state.swipeId !== id || this.state.dragX == null) return;
+    const dx = Math.min(0, e.clientX - this.state.dragX);
+    this.setState({ swipeX: Math.max(dx, -220) });
+  };
+  dragEnd = (id) => {
+    if (this.state.swipeId !== id) return;
+    if (this.state.swipeX < -140) this.deleteItem(id);
+    else this.setState({ swipeId: null, swipeX: 0, dragX: null });
+  };
+
+  openQuickAdd = () => this.setState({ quickAddOpen: true, quickAddText: '' });
+  closeQuickAdd = () => this.setState({ quickAddOpen: false });
+  setQuickAddText = (e) => this.setState({ quickAddText: e.target.value });
+  submitQuickAdd = () => {
+    const name = this.state.quickAddText.trim();
+    if (!name) { this.setState({ quickAddOpen: false }); return; }
+    const shop = this.state.activeTab === 'all' ? (this.state.shops.find(s => s.selected) || this.state.shops[0]).id : this.state.activeTab;
+    const item = { id: this.state.nextId, name, shop, qty: 1, checked: false };
+    this.setState({ items: [...this.state.items, item], nextId: this.state.nextId + 1, quickAddOpen: false, quickAddText: '' });
+  };
+
+  setNewShopName = (e) => this.setState({ newShopName: e.target.value });
+  selectShopColor = (hex) => this.setState({ newShopColor: hex });
+  closeAddShop = () => this.setState({ addShopOpen: false });
+  createShop = () => {
+    const name = this.state.newShopName.trim();
+    if (!name) { this.setState({ addShopOpen: false }); return; }
+    const id = 'shop' + this.state.nextId;
+    const shops = [...this.state.shops, { id, name, color: this.state.newShopColor, selected: true }];
+    this.setState({ shops, addShopOpen: false, nextId: this.state.nextId + 1 });
+  };
+
+  goSettings = () => this.setState({ screen: 'settings', navOpen: false });
+  backToMain = () => this.setState({ screen: 'main' });
+  goManageShops = () => this.setState({ screen: 'manage-shops', navOpen: false });
+  backToSettings = () => this.setState({ screen: 'settings' });
+  goManageLists = () => this.setState({ screen: 'lists-overview', navOpen: false });
+  openAddShopFromManage = () => this.setState({ addShopOpen: true, addShopReturn: 'manage-shops', newShopName: '', newShopColor: '#2456A6' });
+  startNewList = () => this.setState({ flowMode: 'newList', listNameInput: '', screen: 'name-list', navOpen: false });
+  signOut = () => this.resetAll();
+  openJoinFromNav = () => this.setState({ joinOverlayOpen: true, navOpen: false, joinCode: '' });
+  closeJoinOverlay = () => this.setState({ joinOverlayOpen: false });
+  submitJoinOverlay = () => {
+    const lists = [...this.state.lists, 'Shared List (joined)'];
+    this.setState({ lists, activeListIndex: lists.length - 1, joinOverlayOpen: false, joinCode: '', screen: 'main' });
+  };
+
+  renderVals() {
+    const s = this.state;
+    const activeShop = s.shops.find(sh => sh.id === s.activeTab);
+    const activeTabColor = s.activeTab === 'all' ? '#1A1A18' : (activeShop ? activeShop.color : '#1A1A18');
+    const q = (s.searchText || '').trim().toLowerCase();
+    const inScope = s.items.filter(i => {
+      if (s.searchOpen) return q ? i.name.toLowerCase().includes(q) : true;
+      return s.activeTab === 'all' || i.shop === s.activeTab;
+    });
+    const decorate = (i) => {
+      const shop = s.shops.find(sh => sh.id === i.shop);
+      return {
+        ...i,
+        shopColor: shop ? shop.color : '#999',
+        checkBg: i.checked ? '#1A1A18' : 'transparent',
+        checkBorder: i.checked ? 'none' : '1.5px solid rgba(0,0,0,.2)',
+        swipeX: s.swipeId === i.id ? s.swipeX : 0,
+        open: () => this.openProduct(i.id),
+        toggleChecked: (e) => { e.stopPropagation(); this.toggleChecked(i.id); },
+        dragStart: (e) => this.dragStart(i.id, e),
+        dragMove: (e) => this.dragMove(i.id, e),
+        dragEnd: () => this.dragEnd(i.id),
+      };
+    };
+    const openItems = inScope.filter(i => !i.checked).map(decorate);
+    const checkedInScope = inScope.filter(i => i.checked);
+    const doneItems = s.doneCollapsed ? [] : checkedInScope.map(decorate);
+    const filteredItems = inScope.map(decorate);
+    const activeShopName = activeShop ? activeShop.name : '';
+    const isEmpty = inScope.length === 0;
+    const allDone = !s.celebrateDismissed && s.items.length > 0 && s.items.every(i => i.checked);
+    const selItem = s.items.find(i => i.id === s.selectedItemId) || { name: '', qty: 1, shop: '' };
+    const selShop = s.shops.find(sh => sh.id === selItem.shop);
+    const remaining = (shopId) => s.items.filter(i => !i.checked && (shopId === 'all' || i.shop === shopId)).length;
+    const tabShops = s.shops.filter(sh => sh.selected).map(sh => {
+      const n = remaining(sh.id);
+      return {
+        ...sh,
+        select: () => this.selectTab(sh.id),
+        tabBg: s.activeTab === sh.id ? sh.color : 'transparent',
+        tabColor: s.activeTab === sh.id ? '#fff' : 'rgba(26,26,24,.7)',
+        tabBorder: s.activeTab === sh.id ? 'none' : '1px solid rgba(0,0,0,.14)',
+        tabWeight: s.activeTab === sh.id ? 600 : 400,
+        tabLabel: n > 0 ? sh.name + ' · ' + n : sh.name,
+        dotColor: s.activeTab === sh.id ? '#fff' : sh.color,
+      };
+    });
+    const navLists = s.lists.map((name, i) => ({
+      name, select: () => this.selectList(i),
+      bg: i === s.activeListIndex ? '#F1F0EB' : 'transparent',
+      color: i === s.activeListIndex ? '#1A1A18' : 'rgba(26,26,24,.7)',
+      weight: i === s.activeListIndex ? 700 : 400,
+    }));
+    const allLists = s.lists.map((name, i) => ({ name, isActive: i === s.activeListIndex, select: () => this.selectList(i) }));
+    const colorSwatches = this.colorPalette.map(hex => ({
+      hex, isSelected: s.newShopColor === hex,
+      ring: s.newShopColor === hex ? '2.5px solid #1A1A18' : 'none',
+      select: () => this.selectShopColor(hex),
+    }));
+    return {
+      isWelcome: s.screen === 'welcome',
+      isUsername: s.screen === 'username',
+      isNameList: s.screen === 'name-list',
+      isPickShops: s.screen === 'pick-shops',
+      isInvite: s.screen === 'invite',
+      isJoinCode: s.screen === 'joinCode',
+      isJoined: s.screen === 'joined',
+      avatarInitial: s.username.trim() ? s.username.trim()[0].toUpperCase() : '',
+      avatarBg: s.username.trim() ? '#1A1A18' : 'transparent',
+      avatarColor: '#fff',
+      avatarBorder: s.username.trim() ? 'none' : '1.5px dashed rgba(26,26,24,.25)',
+      listNameSuggestions: ['Household', 'Big shop', 'BBQ'].map(label => ({ label, pick: () => this.pickListName(label) })),
+      previewTabs: s.shops.filter(sh => sh.selected),
+      showJoinError: !!s.triedJoin,
+      joinBoxes: [0, 1, 2, 3, 4].map(i => {
+        const code = s.joinCode || '';
+        return {
+          char: code[i] || '',
+          border: i === code.length ? '1.5px solid #1A1A18' : '1.5px solid rgba(0,0,0,.15)',
+        };
+      }),
+      isMain: s.screen === 'main',
+      isSettings: s.screen === 'settings',
+      isManageShops: s.screen === 'manage-shops',
+      isListsOverview: s.screen === 'lists-overview',
+      username: s.username,
+      showUsernameError: s.triedUsername && !s.username.trim(),
+      usernameBorderColor: s.triedUsername && !s.username.trim() ? '#C0392B' : 'rgba(0,0,0,.15)',
+      listNameInput: s.listNameInput,
+      nameListStepLabel: s.flowMode === 'newList' ? 'New list' : 'Step 2 of 3',
+      nameListTitle: s.flowMode === 'newList' ? 'Name your new list' : 'Name your first list',
+      joinCode: s.joinCode,
+      shops: s.shops.map(sh => ({ ...sh, notSelected: !sh.selected, toggle: () => this.toggleShop(sh.id) })),
+      tabShops, filteredItems, navLists, allLists, colorSwatches,
+      openItems, doneItems,
+      hasDone: checkedInScope.length > 0,
+      doneLabel: 'Done · ' + checkedInScope.length,
+      doneChevron: s.doneCollapsed ? -90 : 0,
+      toggleDone: this.toggleDone,
+      clearChecked: this.clearChecked,
+      showList: !isEmpty,
+      showEmpty: isEmpty,
+      showFab: !allDone,
+      emptyTitle: s.searchOpen ? 'No products match “' + (s.searchText || '') + '”'
+        : (s.activeTab === 'all' ? 'Nothing on the list yet' : 'Nothing for ' + activeShopName),
+      emptyBody: s.searchOpen ? 'Nothing on this list yet — want to add it?'
+        : (s.activeTab === 'all' ? 'Add your first product below.' : 'Items you add here will show on this tab.'),
+      emptyBtnLabel: s.searchOpen ? 'Add “' + (s.searchText || '') + '” to this list' : 'Add a product',
+      emptyBtnBg: s.activeTab === 'all' ? '#1A1A18' : activeTabColor,
+      emptyTint: s.activeTab === 'all' ? 'rgba(26,26,24,.2)' : activeTabColor,
+      emptyAction: this.openQuickAdd,
+      allDone,
+      celebrateTitle: 'All done — ' + s.items.length + ' items',
+      dismissCelebrate: this.dismissCelebrate,
+      snackOpen: !!s.snack,
+      snackText: s.snack ? s.snack.text : '',
+      undoSnack: this.undoSnack,
+      searchOpen: !!s.searchOpen,
+      searchClosed: !s.searchOpen,
+      searchText: s.searchText || '',
+      openSearch: this.openSearch, closeSearch: this.closeSearch, setSearchText: this.setSearchText,
+      offline: !!s.offline, toggleOffline: this.toggleOffline,
+      offlineLabel: s.offline ? 'Go back online' : 'Simulate offline',
+      allTabLabel: remaining('all') > 0 ? 'All · ' + remaining('all') : 'All',
+      activeListName: s.lists[s.activeListIndex],
+      userInitial: (s.username.trim()[0] || 'A').toUpperCase(),
+      displayUsername: s.username.trim() || 'Alex Janssens',
+      userEmailGuess: (s.username.trim() ? s.username.trim().toLowerCase().replace(/\s+/g, '.') : 'alex') + '@example.com',
+      allTabBg: s.activeTab === 'all' ? '#1A1A18' : 'transparent',
+      allTabColor: s.activeTab === 'all' ? '#fff' : 'rgba(26,26,24,.7)',
+      allTabBorder: s.activeTab === 'all' ? 'none' : '1px solid rgba(0,0,0,.14)',
+      selectAllTab: () => this.selectTab('all'),
+      activeTabColor,
+      selectedItem: { name: selItem.name, qty: selItem.qty, shopColor: selShop ? selShop.color : '#999', shopName: selShop ? selShop.name : '' },
+      quickAddShopName: s.activeTab === 'all' ? 'list' : (activeShop ? activeShop.name : 'list'),
+      navOpen: s.navOpen, productOpen: s.productOpen, addShopOpen: s.addShopOpen,
+      joinOverlayOpen: s.joinOverlayOpen, quickAddOpen: s.quickAddOpen,
+      newShopName: s.newShopName,
+      resetAll: this.resetAll, goCreatePath: this.goCreatePath, goJoinPath: this.goJoinPath,
+      backToWelcome: this.backToWelcome, setUsername: this.setUsername, continueUsername: this.continueUsername,
+      backFromNameList: this.backFromNameList, setListNameInput: this.setListNameInput, continueNameList: this.continueNameList,
+      backToNameListFromPick: this.backToNameListFromPick, openAddShopFromPick: this.openAddShopFromPick,
+      continuePickShops: this.continuePickShops, backToPickShopsFromInvite: this.backToPickShopsFromInvite,
+      finishOnboarding: this.finishOnboarding, backToUsernameFromJoin: this.backToUsernameFromJoin,
+      setJoinCode: this.setJoinCode, submitJoinCode: this.submitJoinCode,
+      openNav: this.openNav, closeNav: this.closeNav, openAddShopFromMain: this.openAddShopFromMain,
+      closeProduct: this.closeProduct, incQty: this.incQty, decQty: this.decQty, removeItem: this.removeItem,
+      openQuickAdd: this.openQuickAdd, closeQuickAdd: this.closeQuickAdd, setQuickAddText: this.setQuickAddText,
+      submitQuickAdd: this.submitQuickAdd, quickAddText: s.quickAddText,
+      setNewShopName: this.setNewShopName, closeAddShop: this.closeAddShop, createShop: this.createShop,
+      goSettings: this.goSettings, backToMain: this.backToMain, goManageShops: this.goManageShops,
+      backToSettings: this.backToSettings, goManageLists: this.goManageLists, openAddShopFromManage: this.openAddShopFromManage,
+      startNewList: this.startNewList, signOut: this.signOut, openJoinFromNav: this.openJoinFromNav,
+      closeJoinOverlay: this.closeJoinOverlay, submitJoinOverlay: this.submitJoinOverlay,
+    };
+  }
+}
+</script>
+</body>
+</html>
