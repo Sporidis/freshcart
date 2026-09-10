@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
@@ -162,3 +164,7 @@ class ColorChoice extends StatelessWidget {
     );
   }
 }
+
+@Preview(group: 'Onboarding', name: 'Add-a-shop sheet', size: Size(393, 520))
+Widget addShopSheetPreview() =>
+    previewApp(Scaffold(body: AddShopSheet(onAdd: (_, _) {})));

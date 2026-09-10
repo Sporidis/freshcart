@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
@@ -98,3 +100,13 @@ class OnboardingContinueButton extends ConsumerWidget {
     );
   }
 }
+
+@Preview(group: 'Onboarding', name: 'Continue button', size: Size(393, 140))
+Widget onboardingContinueButtonPreview() => previewApp(
+  const Scaffold(
+    body: Align(
+      alignment: Alignment.bottomCenter,
+      child: OnboardingContinueButton(),
+    ),
+  ),
+);

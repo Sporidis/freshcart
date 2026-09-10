@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
 
 class OnboardingStepIndicator extends StatelessWidget {
@@ -44,3 +46,21 @@ class OnboardingStepIndicator extends StatelessWidget {
     );
   }
 }
+
+@Preview(
+  group: 'Onboarding',
+  name: 'Step indicator · all three',
+  size: Size(393, 160),
+)
+Widget onboardingStepIndicatorPreview() => previewPiece(
+  const Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    spacing: 24,
+    children: [
+      OnboardingStepIndicator(step: OnboardingStep.displayName),
+      OnboardingStepIndicator(step: OnboardingStep.createList),
+      OnboardingStepIndicator(step: OnboardingStep.addShop),
+    ],
+  ),
+);

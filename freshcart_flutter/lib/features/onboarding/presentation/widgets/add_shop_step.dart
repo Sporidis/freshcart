@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
@@ -103,3 +105,6 @@ Color _flutterColor(HexColor color) => Color.fromARGB(
   color.green,
   color.blue,
 );
+
+@Preview(group: 'Onboarding', name: 'Step 3 · Your shops', size: previewPhone)
+Widget addShopStepPreview() => previewPage(const AddShopStep());

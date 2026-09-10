@@ -1,23 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen_animations.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/blob_background.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/cart_painter.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/grocery_item_shapes.dart';
 import 'package:go_router/go_router.dart';
 
-@Preview(name: 'Welcome Screen', size: Size(393, 852))
-Widget welcomeScreenPreview() => ProviderScope(
-  child: MaterialApp(
-    theme: AppTheme.light(AppTheme.brandSeed),
-    home: const WelcomeScreen(),
-    debugShowCheckedModeBanner: false,
-  ),
-);
+@Preview(group: 'Onboarding', name: 'Welcome', size: previewPhone)
+Widget welcomeScreenPreview() => previewApp(const WelcomeScreen());
 
 class WelcomeScreen extends ConsumerStatefulWidget {
   const WelcomeScreen({super.key});
