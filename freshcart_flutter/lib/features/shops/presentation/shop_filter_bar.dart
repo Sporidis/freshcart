@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 
 /// A row of chips for filtering a list by shop.
@@ -30,6 +31,25 @@ class ShopFilterBar extends ConsumerWidget {
     // Nothing to filter by yet — a single "all shops" chip would be noise.
     if (loaded.isEmpty) return const SizedBox.shrink();
 
+    // Remaining, not total: the count answers "how much is left to find in
+    // here?", so a checked-off item should make it tick down. It hides at
+    // zero rather than showing "0", which would read as a broken badge.
+    final items = switch (ref.watch(itemsControllerProvider(listId))) {
+      AsyncValue<Result<List<ShoppingItem>>>(
+        value: Ok<List<ShoppingItem>>(:final value),
+      ) =>
+        value,
+      _ => const <ShoppingItem>[],
+    };
+    int remainingIn(ShopId? shop) => items
+        .where((item) => !item.isChecked && item.matchesShopFilter(shop))
+        .length;
+
+    String labelFor(String name, ShopId? shop) {
+      final remaining = remainingIn(shop);
+      return remaining == 0 ? name : '$name · $remaining';
+    }
+
     return SizedBox(
       height: 56,
       child: ListView(
@@ -39,7 +59,7 @@ class ShopFilterBar extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             child: FilterChip(
-              label: Text(t.shops.all),
+              label: Text(labelFor(t.shops.all, null)),
               selected: selected == null,
               onSelected: (_) =>
                   ref.read(shopFilterProvider(listId).notifier).select(null),
@@ -53,7 +73,7 @@ class ShopFilterBar extends ConsumerWidget {
                   backgroundColor: Color(shop.color.argb),
                   radius: 8,
                 ),
-                label: Text(shop.name),
+                label: Text(labelFor(shop.name, shop.id)),
                 selected: selected == shop.id,
                 onSelected: (isSelected) => ref
                     .read(shopFilterProvider(listId).notifier)

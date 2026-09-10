@@ -9,14 +9,22 @@
     "memberCount": {
       "one": "{{n}} membre",
       "other": "{{n}} membres"
-    }
+    },
+    "emptyTitle": "Pas encore de listes",
+    "emptyBody": "Créez-en une pour votre foyer, ou rejoignez une liste partagée avec vous."
   },
   "items": {
     "empty": "Cette liste est vide.",
     "add": "Ajouter un article",
     "namePlaceholder": "De quoi avez-vous besoin ?",
     "notePlaceholder": "Note (facultatif)",
-    "checkedBy": "Coché par {{name}}"
+    "checkedBy": "Coché par {{name}}",
+    "emptyTitle": "Rien sur la liste",
+    "emptyBody": "Ajoutez votre premier produit ci-dessous.",
+    "emptyShopTitle": "Rien pour {{shop}}",
+    "emptyShopBody": "Les articles ajoutés ici apparaîtront sur cet onglet.",
+    "emptyShopAction": "Ajouter un produit",
+    "doneCount": "Terminé · {{n}}"
   },
   "shops": {
     "all": "Tous les magasins",

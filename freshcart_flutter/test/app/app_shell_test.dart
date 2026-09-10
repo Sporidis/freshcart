@@ -53,7 +53,7 @@ void main() {
 
       expect(find.text('My lists'), findsOneWidget);
       expect(
-        find.text('No lists yet. Create one to get started.'),
+        find.text('No lists yet'),
         findsOneWidget,
       );
     });

@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/name_prompt_dialog.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -19,6 +20,13 @@ class ListsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final lists = ref.watch(listsControllerProvider);
+    final isEmpty = switch (lists) {
+      AsyncValue<Result<List<ShoppingList>>>(
+        value: Ok<List<ShoppingList>>(:final value),
+      ) =>
+        value.isEmpty,
+      _ => false,
+    };
 
     return Scaffold(
       appBar: AppBar(
@@ -50,7 +58,34 @@ class ListsScreen extends ConsumerWidget {
             retryLabel: t.common.retry,
           ),
           Ok<List<ShoppingList>>(value: final items) when items.isEmpty =>
-            _EmptyState(message: t.lists.empty),
+            EmptyState(
+              icon: Icons.checklist_outlined,
+              title: t.lists.emptyTitle,
+              body: t.lists.emptyBody,
+              // The one empty that earns two actions: reached only by
+              // deleting your last list, so a single exit would strand
+              // anyone who got here by joining rather than creating.
+              footer: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => _showCreateDialog(context, ref, t),
+                      child: Text(t.lists.create),
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton(
+                      onPressed: () => _showJoinDialog(context, ref, t),
+                      child: Text(t.lists.join),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Ok<List<ShoppingList>>(value: final items) => RefreshIndicator(
             onRefresh: () =>
                 ref.read(listsControllerProvider.notifier).refresh(),
@@ -62,11 +97,16 @@ class ListsScreen extends ConsumerWidget {
           ),
         },
       },
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCreateDialog(context, ref, t),
-        icon: const Icon(Icons.add),
-        label: Text(t.lists.create),
-      ),
+      // Hidden while the empty state is up: that screen already offers New
+      // list as one of its two exits, and the same action twice reads as two
+      // different actions.
+      floatingActionButton: isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _showCreateDialog(context, ref, t),
+              icon: const Icon(Icons.add),
+              label: Text(t.lists.create),
+            ),
     );
   }
 
@@ -122,38 +162,6 @@ class _ListTile extends StatelessWidget {
     trailing: const Icon(Icons.chevron_right),
     onTap: () => context.go(Routes.listDetail(list.id)),
   );
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.message});
-
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.shopping_basket_outlined,
-              size: 64,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyLarge,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 class _Message extends StatelessWidget {
