@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
@@ -29,6 +30,7 @@ class _DisplayNameStepState extends ConsumerState<DisplayNameStep> {
     final displayName = ref.watch(
       onboardingControllerProvider.select((state) => state.displayName),
     );
+    final t = ref.watch(translationsProvider);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -36,12 +38,12 @@ class _DisplayNameStepState extends ConsumerState<DisplayNameStep> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'What should we call you?',
+            t.onboarding.nameTitle,
             style: Theme.of(context).textTheme.headlineLarge,
           ),
           const SizedBox(height: 8),
           Text(
-            'This is how your household sees you on shared lists.',
+            t.onboarding.nameSubtitle,
             style: Theme.of(context).textTheme.bodyMedium,
           ),
           const SizedBox(height: 24),
@@ -65,8 +67,8 @@ class _DisplayNameStepState extends ConsumerState<DisplayNameStep> {
                   controller: _controller,
                   onChanged: controller.updateDisplayName,
                   autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: 'e.g. Alex Janssens',
+                  decoration: InputDecoration(
+                    hintText: t.onboarding.namePlaceholder,
                   ),
                 ),
               ),

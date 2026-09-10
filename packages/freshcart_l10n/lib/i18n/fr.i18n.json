@@ -114,5 +114,53 @@
   },
   "settings": {
     "title": "Paramètres"
+  },
+  "splash": {
+    "loading": "Chargement de FreshCart"
+  },
+  "welcome": {
+    "headline": "Une liste.\nLe chariot de tous.",
+    "subhead": "Triée par magasin que vous fréquentez vraiment, mise à jour en direct pour tout le foyer.",
+    "getStarted": "Commencer",
+    "haveInviteCode": "J'ai un code d'invitation",
+    "sampleListName": "Courses de la semaine",
+    "sampleItem1": "Lait",
+    "sampleItem2": "Pâtes",
+    "sampleItem3": "Tomates",
+    "sampleItem4": "Café en grains",
+    "sampleActivity": "{{name}} a ajouté {{item}}"
+  },
+  "onboarding": {
+    "stepOf": "Étape {{step}} sur {{total}}",
+    "nameTitle": "Comment devons-nous vous appeler ?",
+    "nameSubtitle": "C'est ainsi que votre foyer vous voit sur les listes partagées.",
+    "namePlaceholder": "p. ex. Alex Janssens",
+    "listTitle": "Nommez votre première liste",
+    "listSubtitle": "Vous pourrez en ajouter d'autres plus tard — un barbecue, un voyage, de grosses courses.",
+    "listPlaceholder": "p. ex. Courses de la semaine",
+    "suggestionHousehold": "Foyer",
+    "suggestionBigShop": "Grosses courses",
+    "suggestionBbq": "Barbecue",
+    "shopsTitle": "Où faites-vous vos courses ?",
+    "shopsSubtitle": "Chaque magasin a son propre onglet et sa couleur. Choisissez une couleur que vous reconnaîtrez au rayon.",
+    "addShop": "Ajouter un magasin absent de la liste",
+    "tabsPreviewLabel": "Voici à quoi ressembleront vos onglets",
+    "allTab": "Tous",
+    "inviteTitle": "Vous faites les courses avec quelqu'un ?",
+    "inviteSubtitle": "Invitez-le et la liste se met à jour en direct pour vous deux. Vous pouvez le faire à tout moment.",
+    "shareCode": "Ou partagez le code",
+    "copyCode": "Copier le code",
+    "startMyList": "Démarrer ma liste",
+    "doLater": "Je ferai ça plus tard",
+    "continueCta": "Continuer",
+    "finishCta": "Terminer"
+  },
+  "join": {
+    "codeTitle": "Rejoindre une liste",
+    "codeSubtitle": "Entrez le code à 5 caractères de votre invitation.",
+    "codeLabel": "Code d'invitation",
+    "submit": "Rejoindre la liste",
+    "confirmTitle": "Vous y êtes",
+    "confirmBody": "Vous avez rejoint {{list}}."
   }
 }

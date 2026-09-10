@@ -813,3 +813,73 @@ a test that taps the rendered chips end to end (select, toggle off, switch shops
 to close that gap and confirm it directly, rather than trusting inspection alone. The likely
 actual source of "doesn't work": every row looked identical with no shop tag showing, so filtering
 by shop had nothing visible to distinguish before and after — the same dot fix above.
+
+## 60. Splash, Welcome and onboarding finished to match the design; join-by-code built as its own flow
+
+**Decision:** Four things landed together because they are one continuous path — "getting in" — and
+each one only makes sense against the others.
+
+**Splash is a real route (`/splash`), not a widget `main()` shows before `runApp`.** The old boot
+sequence awaited `AnonymousSessionBootstrap.ensureSignedIn` before calling `runApp` at all, so the
+*OS* launch image covered the wait, and `isNewIdentityProvider` was a plain bool pushed in through a
+`ProviderContainer` override once the answer was already known. That cannot produce the design's own
+note on the Splash frame — "the mark is a Hero — it flies to the top-left of Welcome rather than
+cutting" — because a route that does not exist yet cannot animate into one that replaces it. Now
+`runApp` fires immediately, `authBootstrapProvider` is a real `FutureProvider` `main()` kicks off
+without awaiting, and `SplashScreen` (the router's actual `initialLocation`) watches it and calls
+`context.go` the instant it resolves. "Skip the splash entirely" for a fast check needed no special
+casing: there is no artificial minimum hold anywhere in this, so a launch that resolves before the
+first frame's `ref.listen` even fires just never shows a second frame of it.
+
+**Welcome was rebuilt to the mockup, not kept as the from-scratch animated scene it had become** —
+a real, deliberate choice, not a default: the previous version (falling groceries into a basket,
+gradient blobs, a spinning wheel) was a legitimate creative take in the same spirit as decision #50's
+"adapted where it names the prototype," but this session's brief was to match the design *exactly*,
+which that scene structurally could not do (different content, no top-left mark for the Hero to land
+on). Asked directly, rebuilding to the mockup was the answer, so the animation code
+(`welcome_screen_animations.dart`, `blob_background.dart`, `cart_painter.dart`,
+`grocery_item_shapes.dart`) was deleted rather than kept unused. The tilted list-preview card, its
+checkmark rows and the floating "added a product" activity bubble are traced from the design's own
+markup; the bubble's sample name is "koliiin" rather than the mockup's own placeholder, per direct
+instruction — the one hardcoded display name anywhere in the app, and commented as such since it is
+not a real session's data. `BasketMark` (`widgets/basket_mark.dart`) draws the design's own basket
+SVG path with a `CustomPainter` rather than shipping an image asset, so one glyph can be recoloured
+and resized for both Splash's badge and Welcome's small mark and still share a `Hero` tag.
+
+**Onboarding gained a fourth step and its first real i18n.** Every string in the wizard (headlines,
+placeholders, the step indicator's "Step X of Y", the continue button) was hardcoded English before
+this pass, despite the rest of the app running through `slang` for five locales — an omission, not a
+choice, now fixed with new `welcome` / `onboarding` / `splash` / `join` translation sections across
+all five `.i18n.json` files. `OnboardingStep` gained `invite`, matching the design's own Step 4
+("Shopping with someone?"), which meant moving `OnboardingController.finish()` (now `submit()`) to
+fire on the *Shops → Invite* transition instead of at the wizard's end — Invite needs the real list's
+join code to show, so the list has to exist before that step renders. The one thing this could not
+inherit from the design's own click-through prototype: `submit()` is a real network round trip, so
+`Back` from Invite to Shops and pressing Continue again had to be guarded (`state.createdList != null`
+short-circuits straight back to Invite) — the design's own state machine just mutated local arrays and
+had no such failure mode to guard against. **Also kept, deliberately, not by default:** Step 1's
+design frame shows a shake-on-invalid-submit micro-interaction; this app's continue button instead
+hides itself until the step is valid (`OnboardingState.canContinue`), the same pattern already used
+for every other step — recreating one step's shake would mean two different "what happens when this
+step isn't done yet" conventions in one wizard for no visible gain.
+
+**Joining by code is its own controller and screen (`JoinFlowController` / `JoinFlowScreen`), not a
+second mode bolted onto `OnboardingController`.** The two flows share exactly one step in the design
+(the name) and diverge completely after it; a shared state machine would mean every onboarding-only
+field (list name, shop drafts) growing a "not applicable on this path" case. Explicitly scoped in:
+`JoinList` and `JoinCode` already existed domain-side (built for the signed-in "add another list"
+dialog on `ListsScreen`), so wiring Welcome's "I have an invite code" through to a proper name → code
+→ confirmation flow was smaller than it first looked. Explicitly scoped out, and named rather than
+silently cut: the design's QR code and "Scan QR instead" — a QR generator and a camera-scanning
+package are both real new dependencies this session did not add, so the invite step and the join
+screen show the code as text (via the existing `InviteCard`) and nothing else. `JoinCodeInput`
+currently renders a single working field (uppercased, capped at 5 characters) rather than the design's
+five separate auto-advancing boxes — left as a named follow-up with a working fallback already wired
+end to end, rather than blocking the rest of the flow on it.
+
+**Found along the way:** `AddShopStep` was the first screen in this feature to get an actual widget
+test, and it immediately caught a real bug the previous, testless state had been shipping — a plain
+`Column` (title, shop rows, the "add a shop" button, then a `Spacer`, then the tabs preview) overflows
+once there are enough shops or the keyboard shrinks the viewport. Fixed by splitting it the way the
+design's own markup already does: the shop list scrolls in its own `Expanded`, and the tabs preview
+stays pinned below as a fixed footer, never inside the scrollable area.

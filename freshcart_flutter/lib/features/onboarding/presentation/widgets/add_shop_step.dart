@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
@@ -32,69 +33,88 @@ class AddShopStep extends ConsumerWidget {
     ];
     final controller = ref.read(onboardingControllerProvider.notifier);
     final theme = Theme.of(context);
+    final t = ref.watch(translationsProvider);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Where do you shop?', style: theme.textTheme.headlineLarge),
-          const SizedBox(height: AppSpacing.gapSmall),
-          Text(
-            "Each shop gets its own tab and colour. Pick a colour you'll recognize in the aisle.",
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.gap * 2),
-          ...shopOptions.indexed.map(
-            (entry) => Padding(
-              key: ValueKey(entry.$2.$1),
-              padding: const EdgeInsets.only(bottom: AppSpacing.gap),
-              child: ShopOptionEntrance(
-                index: entry.$1,
-                child: ShopOption(
-                  name: entry.$2.$1,
-                  color: entry.$2.$2,
-                  selected: selectedShops.any(
-                    (item) => item.name == entry.$2.$1,
-                  ),
-                  onTap: () => controller.toggleShop(
-                    entry.$2.$1,
-                    HexColor.fromArgb(entry.$2.$2.toARGB32()),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Matches the design's own split: the shop list scrolls in its own
+        // `flex:1` area (there is no cap on how many shops someone adds),
+        // while the tabs preview below stays pinned as a fixed footer —
+        // a plain Column here would either overflow once enough shops (or a
+        // taller keyboard-shrunk viewport) push past the available height,
+        // or push the preview off-screen instead of keeping it in view.
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.onboarding.shopsTitle,
+                  style: theme.textTheme.headlineLarge,
+                ),
+                const SizedBox(height: AppSpacing.gapSmall),
+                Text(
+                  t.onboarding.shopsSubtitle,
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: AppSpacing.gap * 2),
+                ...shopOptions.indexed.map(
+                  (entry) => Padding(
+                    key: ValueKey(entry.$2.$1),
+                    padding: const EdgeInsets.only(bottom: AppSpacing.gap),
+                    child: ShopOptionEntrance(
+                      index: entry.$1,
+                      child: ShopOption(
+                        name: entry.$2.$1,
+                        color: entry.$2.$2,
+                        selected: selectedShops.any(
+                          (item) => item.name == entry.$2.$1,
+                        ),
+                        onTap: () => controller.toggleShop(
+                          entry.$2.$1,
+                          HexColor.fromArgb(entry.$2.$2.toARGB32()),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                OutlinedButton(
+                  onPressed: () => showModalBottomSheet<void>(
+                    context: context,
+                    isScrollControlled: true,
+                    showDragHandle: true,
+                    builder: (_) => AddShopSheet(onAdd: controller.addShop),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size.fromHeight(64),
+                    alignment: Alignment.centerLeft,
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadii.card),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpacing.screen,
+                    ),
+                  ),
+                  child: Text(
+                    '+ ${t.onboarding.addShop}',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.gap),
+              ],
             ),
           ),
-          OutlinedButton(
-            onPressed: () => showModalBottomSheet<void>(
-              context: context,
-              isScrollControlled: true,
-              showDragHandle: true,
-              builder: (_) => AddShopSheet(onAdd: controller.addShop),
-            ),
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(64),
-              alignment: Alignment.centerLeft,
-              side: BorderSide(color: theme.colorScheme.outlineVariant),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadii.card),
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screen,
-              ),
-            ),
-            child: Text(
-              '+ Add a shop not listed',
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const Spacer(),
-          ShopTabsPreview(shops: selectedShops),
-          const SizedBox(height: 16),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          child: ShopTabsPreview(shops: selectedShops, t: t),
+        ),
+      ],
     );
   }
 }

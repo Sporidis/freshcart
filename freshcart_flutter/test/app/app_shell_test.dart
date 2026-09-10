@@ -4,11 +4,11 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
-import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../fakes/fake_client.dart';
@@ -29,8 +29,11 @@ void main() {
       overrides: [
         serverpodClientProvider.overrideWithValue(client),
         // These tests are about the shell already showing the lists screen,
-        // not the onboarding gate — a restored (non-new) identity.
-        isNewIdentityProvider.overrideWithValue(false),
+        // not the onboarding gate — a restored (non-new) identity, resolved
+        // instantly rather than actually going through Splash's real bootstrap.
+        authBootstrapProvider.overrideWith(
+          (ref) async => (authenticated: true, isNewIdentity: false),
+        ),
       ],
     );
     addTearDown(container.dispose);

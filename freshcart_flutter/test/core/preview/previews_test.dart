@@ -5,13 +5,18 @@ import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/splash_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/create_list_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/display_name_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/invite_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/join_code_input.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
@@ -32,13 +37,18 @@ void main() {
   setUpAll(configurePluralResolvers);
 
   final previews = <String, Widget Function()>{
+    'splash': splashScreenPreview,
+    'basket mark': basketMarkPreview,
     'welcome': welcomeScreenPreview,
     'onboarding shell': onboardingScreenPreview,
     'step 1 · name': displayNameStepPreview,
     'step 2 · list': createListStepPreview,
     'step 3 · shops': addShopStepPreview,
+    'step 4 · invite': inviteStepPreview,
     'step indicator': onboardingStepIndicatorPreview,
     'continue button': onboardingContinueButtonPreview,
+    'join flow': joinFlowScreenPreview,
+    'join code input': joinCodeInputPreview,
     'shop option': shopOptionPreview,
     'add-a-shop sheet': addShopSheetPreview,
     'item row': itemTilePreview,

@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
 
-class OnboardingStepIndicator extends StatelessWidget {
+/// The design's dash-pill progress row: the whole 4-step wizard (name, list,
+/// shops, invite) rather than the 3-of-3 the mockup's own frames show, since
+/// this app's wizard runs one step longer than the screens it draws.
+class OnboardingStepIndicator extends ConsumerWidget {
   const OnboardingStepIndicator({required this.step, super.key});
 
   final OnboardingStep step;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(translationsProvider);
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
@@ -25,8 +33,8 @@ class OnboardingStepIndicator extends StatelessWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
                   color: step.index == index
-                      ? Colors.black
-                      : Colors.grey.shade300,
+                      ? AppColors.ink
+                      : theme.colorScheme.outlineVariant,
                 ),
               ),
             ),
@@ -34,10 +42,13 @@ class OnboardingStepIndicator extends StatelessWidget {
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              'Step ${step.index + 1} of ${OnboardingStep.values.length}',
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              t.onboarding.stepOf(
+                step: step.index + 1,
+                total: OnboardingStep.values.length,
+              ),
+              style: theme.textTheme.labelMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.grey,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
           ),

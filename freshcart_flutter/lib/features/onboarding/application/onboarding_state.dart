@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
 /// One page of the onboarding wizard, in display order.
-enum OnboardingStep { displayName, createList, addShop }
+enum OnboardingStep { displayName, createList, addShop, invite }
 
 class OnboardingShopDraft {
   const OnboardingShopDraft({required this.name, required this.color});
@@ -23,6 +23,7 @@ class OnboardingState {
     this.selectedShops = const [],
     this.isSubmitting = false,
     this.error,
+    this.createdList,
   });
 
   final OnboardingStep step;
@@ -34,6 +35,12 @@ class OnboardingState {
   final bool isSubmitting;
   final Failure? error;
 
+  /// The list [OnboardingController.submit] created, once the shops step is
+  /// done — only set once submission succeeds, which is also the only time
+  /// the wizard reaches [OnboardingStep.invite], the one step that needs it
+  /// (to show the real join code, not a placeholder).
+  final ShoppingList? createdList;
+
   OnboardingState copyWith({
     OnboardingStep? step,
     String? displayName,
@@ -42,6 +49,7 @@ class OnboardingState {
     bool? isSubmitting,
     Failure? error,
     bool clearError = false,
+    ShoppingList? createdList,
   }) {
     return OnboardingState(
       step: step ?? this.step,
@@ -50,6 +58,7 @@ class OnboardingState {
       selectedShops: selectedShops ?? this.selectedShops,
       isSubmitting: isSubmitting ?? this.isSubmitting,
       error: clearError ? null : (error ?? this.error),
+      createdList: createdList ?? this.createdList,
     );
   }
 
@@ -67,6 +76,6 @@ class OnboardingState {
       displayName,
     ).isOk,
     OnboardingStep.createList => ShoppingList.validateName(listName).isOk,
-    OnboardingStep.addShop => true,
+    OnboardingStep.addShop || OnboardingStep.invite => true,
   };
 }

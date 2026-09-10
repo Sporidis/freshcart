@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/features/onboarding/application/onboarding_sta
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/create_list_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/display_name_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/invite_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
 
@@ -73,10 +74,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                   DisplayNameStep(),
                   CreateListStep(),
                   AddShopStep(),
+                  InviteStep(),
                 ],
               ),
             ),
-            const OnboardingContinueButton(),
+            // Step 4 draws its own two buttons inline (design: "Start my
+            // list" / "I'll do this later", both leading the same place) —
+            // the shared footer below is for the three steps that each have
+            // exactly one way forward.
+            if (step != OnboardingStep.invite) const OnboardingContinueButton(),
           ],
         ),
       ),

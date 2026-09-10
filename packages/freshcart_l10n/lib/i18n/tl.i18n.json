@@ -114,5 +114,53 @@
   },
   "settings": {
     "title": "Mga Setting"
+  },
+  "splash": {
+    "loading": "Naglo-load ang FreshCart"
+  },
+  "welcome": {
+    "headline": "Isang listahan.\nSama-samang pamimili.",
+    "subhead": "Nakaayos ayon sa mga tindahang talagang pinupuntahan mo, live na nag-a-update para sa buong sambahayan.",
+    "getStarted": "Magsimula",
+    "haveInviteCode": "May invite code ako",
+    "sampleListName": "Lingguhang Grocery",
+    "sampleItem1": "Gatas",
+    "sampleItem2": "Pasta",
+    "sampleItem3": "Kamatis",
+    "sampleItem4": "Coffee beans",
+    "sampleActivity": "Idinagdag ni {{name}} ang {{item}}"
+  },
+  "onboarding": {
+    "stepOf": "Hakbang {{step}} ng {{total}}",
+    "nameTitle": "Ano ang itatawag namin sa iyo?",
+    "nameSubtitle": "Ganito ka makikita ng sambahayan mo sa mga shared na listahan.",
+    "namePlaceholder": "hal. Alex Janssens",
+    "listTitle": "Pangalanan ang unang listahan mo",
+    "listSubtitle": "Puwede kang magdagdag pa mamaya — isang BBQ, biyahe, malaking grocery.",
+    "listPlaceholder": "hal. Lingguhang Grocery",
+    "suggestionHousehold": "Sambahayan",
+    "suggestionBigShop": "Malaking grocery",
+    "suggestionBbq": "BBQ",
+    "shopsTitle": "Saan ka nagba-grocery?",
+    "shopsSubtitle": "Bawat tindahan may sariling tab at kulay. Pumili ng kulay na makikilala mo sa aisle.",
+    "addShop": "Magdagdag ng tindahang wala sa listahan",
+    "tabsPreviewLabel": "Ganito magiging hitsura ng mga tab mo",
+    "allTab": "Lahat",
+    "inviteTitle": "Sama-sama kayong namimili?",
+    "inviteSubtitle": "Anyayahan sila at mag-a-update ang listahan nang live para sa inyong dalawa. Puwede rin itong gawin anumang oras.",
+    "shareCode": "O ibahagi ang code",
+    "copyCode": "Kopyahin ang code",
+    "startMyList": "Simulan ang listahan ko",
+    "doLater": "Gagawin ko na lang mamaya",
+    "continueCta": "Magpatuloy",
+    "finishCta": "Tapos na"
+  },
+  "join": {
+    "codeTitle": "Sumali sa isang listahan",
+    "codeSubtitle": "Ilagay ang 5-karakter na code mula sa imbitasyon mo.",
+    "codeLabel": "Code ng pagsali",
+    "submit": "Sumali sa listahan",
+    "confirmTitle": "Nasali ka na",
+    "confirmBody": "Sumali sa {{list}}."
   }
 }

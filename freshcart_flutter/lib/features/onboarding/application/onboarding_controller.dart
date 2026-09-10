@@ -81,11 +81,16 @@ class OnboardingController extends _$OnboardingController {
   }
 
   /// Submits the draft: sets the display name, creates the first list, and
-  /// creates the shop if one was named.
+  /// creates every selected shop. Called when leaving [OnboardingStep.addShop]
+  /// rather than at the very end of the wizard — [OnboardingStep.invite],
+  /// the step after it, shows the *real* list's join code, so the list has
+  /// to exist before that step can render.
   ///
   /// Stops at the first failure rather than continuing partially, so the
-  /// wizard's error always names something the user just typed.
-  Future<Result<void>> finish() async {
+  /// wizard's error always names something the user just typed. On success,
+  /// advances to [OnboardingStep.invite] itself; the caller does not need a
+  /// separate [next] call.
+  Future<Result<void>> submit() async {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     // Trimming and length are the use case's business now, not this
@@ -119,7 +124,11 @@ class OnboardingController extends _$OnboardingController {
       }
     }
 
-    state = state.copyWith(isSubmitting: false);
+    state = state.copyWith(
+      isSubmitting: false,
+      createdList: list,
+      step: OnboardingStep.invite,
+    );
     return const Ok(null);
   }
 }
