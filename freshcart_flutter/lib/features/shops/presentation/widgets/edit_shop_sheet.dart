@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
@@ -205,4 +207,52 @@ class _Swatch extends StatelessWidget {
       ),
     );
   }
+}
+
+@Preview(group: 'Shops', name: 'Edit shop sheet', size: Size(393, 560))
+Widget editShopSheetPreview() {
+  Shop shop(String id, String name, int argb) => Shop(
+    id: ShopId(id),
+    listId: ListId('list-1'),
+    name: name,
+    color: HexColor.fromArgb(argb),
+  );
+
+  return previewApp(
+    Scaffold(
+      body: EditShopSheet(
+        shop: shop('s1', 'Colruyt', 0xFFE8791A),
+        siblings: [
+          shop('s1', 'Colruyt', 0xFFE8791A),
+          shop('s2', 'Albert Heijn', 0xFF2456A6),
+        ],
+        onSave: ({required name, required color}) async => null,
+      ),
+    ),
+  );
+}
+
+/// The clash warning, which only shows for a confusable pair.
+@Preview(group: 'Shops', name: 'Edit shop · colour clash', size: Size(393, 560))
+Widget editShopSheetClashPreview() {
+  Shop shop(String id, String name, int argb) => Shop(
+    id: ShopId(id),
+    listId: ListId('list-1'),
+    name: name,
+    color: HexColor.fromArgb(argb),
+  );
+
+  return previewApp(
+    Scaffold(
+      body: EditShopSheet(
+        // Two blues: easy to tell apart here, not in an aisle.
+        shop: shop('s2', 'Delhaize', 0xFF2A5AAA),
+        siblings: [
+          shop('s1', 'Albert Heijn', 0xFF2456A6),
+          shop('s2', 'Delhaize', 0xFF2A5AAA),
+        ],
+        onSave: ({required name, required color}) async => null,
+      ),
+    ),
+  );
 }
