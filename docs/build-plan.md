@@ -16,7 +16,47 @@ work.
 > `BUILD` (little learning value, easy to get wrong), and the parts where clean-arch judgment
 > is actually exercised default to `MENTOR`. Change any of them.
 
-## Phase 0 — Workspace scaffold · `BUILD`
+## Progress
+
+Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ blocked.
+
+| Phase | State | Note |
+| ----- | ----- | ---- |
+| 0 Workspace scaffold | ✅ | |
+| 1 Domain core | ✅ | 89 tests |
+| 2 Server models + endpoints | ✅ | 73 tests |
+| 3 App data layer | ✅ | |
+| 4 App shell | ✅ | |
+| 5 Lists | ✅ | |
+| 6 Items | ✅ | |
+| 7 Shops + dynamic theming | ✅ | |
+| 8 Real-time sync | ✅ | `ListRepository.watch` gap closed; see decisions #34–36 |
+| 9 Notifications | 🟡 | Ports, server aggregation and buffering done. **FCM adapter blocked** on a Firebase project — `firebase_core` cannot be added before `firebase_options.dart` exists without reddening CI. |
+| 10 Auth upgrade path | 🟡 | Email linking done and tested. **Google blocked** on an OAuth client id — returns an honest failure, see decisions #40. |
+| 11 Jaspr marketing site | 🟡 | Pages and components exist; SEO meta and Lighthouse pass not yet verified. No tests. |
+| 12 Test coverage + CI | 🟡 | CI runs analyze, format and all four suites, and asserts the golden rules by grep (decisions #41). Coverage gaps remain in `freshcart_web`. |
+
+**Suites:** 158 app · 89 domain · 73 server · 8 l10n.
+
+## Design flows
+
+The Claude Design handoff bundle in `docs/multi-shop-shopping-list-app/` defines nine flows.
+These are built *on top of* the phases above, not instead of them.
+
+| Flow | State | Note |
+| ---- | ----- | ---- |
+| 00 Onboarding | ✅ | Welcome + 3-step setup |
+| 01 Empty states | ✅ | |
+| 02 Done section | ✅ | 600 ms hold, decisions #47 |
+| 03 Gestures | ⛔ | Swipe-delete/undo and multi-select are buildable now; **drag-to-reorder needs a sort field** on `ShoppingItem` — model, migration and endpoint. |
+| 04 Editing lists & shops | ✅ | Live colour preview, decisions #45 and #48 |
+| 05 Household & sharing | ✅ | Deliberately omitted: last-active captions (no timestamp), QR toggle, code expiry. See the commit. |
+| 06 Search & suggestions | ⛔ | Search is buildable client-side; **"Recently bought" needs purchase-history tracking** that does not exist. |
+| 07 Offline & sync | ⛔ | Needs a connectivity port in the domain and cached reads. Overlaps the offline-first scope fork below. |
+| 08 Errors | ✅ | Three tiers, decisions #42 |
+
+
+## ✅ Phase 0 — Workspace scaffold · `BUILD`
 
 **Goal:** an empty but resolving monorepo with strict lints.
 
@@ -35,7 +75,7 @@ dart pub get           # resolves the whole workspace, one lockfile
 dart analyze           # clean
 ```
 
-## Phase 1 — Domain core · `MENTOR`
+## ✅ Phase 1 — Domain core · `MENTOR`
 
 **Goal:** the pure heart — `Result`/`Failure`, value objects, the first entities and ports.
 No Flutter, no Serverpod.
@@ -55,7 +95,7 @@ dart analyze packages/freshcart_domain   # clean; grep confirms no forbidden imp
 ```
 > Purity check: `! grep -rE "package:(flutter|serverpod|firebase|freshcart_client)" packages/freshcart_domain/lib`
 
-## Phase 2 — Server: models, migrations, first endpoints · `BUILD`
+## ✅ Phase 2 — Server: models, migrations, first endpoints · `BUILD`
 
 **Goal:** DB models + endpoints for lists and items, with real Postgres migrations.
 
@@ -74,7 +114,7 @@ dart run bin/main.dart --apply-migrations   # boots, DB in sync
 dart test                                    # endpoint tests pass
 ```
 
-## Phase 3 — App data layer: repositories + mappers · `MENTOR`
+## ✅ Phase 3 — App data layer: repositories + mappers · `MENTOR`
 
 **Goal:** wire the generated client to the domain ports. This is where DTO↔entity mapping is
 exercised — the reason `MENTOR` is the default here.
@@ -92,7 +132,7 @@ flutter test test/features/*/data           # mapper + repo tests pass
 ```
 > Boundary check: `! grep -rE "freshcart_client" freshcart_flutter/lib/features/*/application freshcart_flutter/lib/features/*/presentation`
 
-## Phase 4 — App shell: DI, router, theme, i18n · `BUILD`
+## ✅ Phase 4 — App shell: DI, router, theme, i18n · `BUILD`
 
 **Goal:** the app runs, shows an empty lists screen, is themable and translatable.
 
@@ -109,7 +149,7 @@ flutter analyze && flutter test
 flutter run   # app boots to an (empty) translated, themed lists screen
 ```
 
-## Phase 5 — Feature: Lists (create, join, view) · `MENTOR`
+## ✅ Phase 5 — Feature: Lists (create, join, view) · `MENTOR`
 
 **Goal:** first vertical slice end-to-end — controller → use case → repo → server → back.
 
@@ -119,20 +159,20 @@ membership guard in the router. Widget test for join-by-code.
 **Accept**: `flutter analyze && flutter test`; manual: create a list on one client, join it
 from another.
 
-## Phase 6 — Feature: Items (add, edit, check, remove, notes) · `MENTOR`
+## ✅ Phase 6 — Feature: Items (add, edit, check, remove, notes) · `MENTOR`
 
 **Goal:** the core interaction. Optimistic UI: apply locally, reconcile on server response,
 roll back on `ConflictFailure`.
 
 **Accept**: `flutter analyze && flutter test`; add/check/edit an item and see it persist.
 
-## Phase 7 — Feature: Shops + dynamic theming · `BUILD`
+## ✅ Phase 7 — Feature: Shops + dynamic theming · `BUILD`
 
 **Goal:** shops with colours, filter list by shop, theme shifts to the active shop's seed.
 
 **Accept**: switching the active shop animates the whole scheme; filter narrows the list.
 
-## Phase 8 — Real-time sync (Serverpod streams) · `MENTOR`
+## ✅ Phase 8 — Real-time sync (Serverpod streams) · `MENTOR`
 
 **Goal:** two open clients on one list see each other's edits live, no refresh.
 
@@ -142,7 +182,7 @@ merges server events into the list state; reconcile with optimistic local state.
 **Accept**: edit on client A appears on client B within the stream's latency, no manual reload.
 > Serverpod streaming API: verify against current docs, don't recall from memory.
 
-## Phase 9 — Notifications (in-app + FCM) · `BUILD`
+## 🟡 Phase 9 — Notifications (in-app + FCM) · `BUILD`
 
 **Goal:** background push via FCM behind `PushPort`; server aggregates + excludes the actor.
 
@@ -153,7 +193,7 @@ registration on sign-in; per-list mute setting.
 > Log the EU-iOS-web-push limitation in-code where token registration would otherwise assume
 > availability.
 
-## Phase 10 — Auth upgrade path (Google/email linking) · `MENTOR`
+## 🟡 Phase 10 — Auth upgrade path (Google/email linking) · `MENTOR`
 
 **Goal:** link a provider to the existing anonymous `authUserId`; data preserved; nudge on
 share/join.
@@ -161,7 +201,7 @@ share/join.
 **Accept**: upgrade an anonymous account to Google; all lists/items remain; `authUserId`
 unchanged.
 
-## Phase 11 — Jaspr marketing site · `BUILD`
+## 🟡 Phase 11 — Jaspr marketing site · `BUILD`
 
 **Goal:** SEO-friendly public landing page (real HTML/CSS, SSR/SSG), reusing domain copy/types
 where sensible from `freshcart_domain` / `freshcart_l10n`. No app functionality here.
@@ -169,7 +209,7 @@ where sensible from `freshcart_domain` / `freshcart_l10n`. No app functionality 
 **Accept**: `jaspr build` produces static HTML with meta tags; Lighthouse SEO is green.
 > Jaspr rendering mode + API: verify against current docs.
 
-## Phase 12 — Test coverage + CI polish · `BUILD`
+## 🟡 Phase 12 — Test coverage + CI polish · `BUILD`
 
 **Goal:** fill gaps to the DoD baseline; GitHub Actions running analyze + test on every push.
 

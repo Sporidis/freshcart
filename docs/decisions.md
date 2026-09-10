@@ -402,14 +402,18 @@ other people's changes) and reconciling purely on `updatedAt` (the server's olde
 "newer" by any timestamp the client can compare). Covered by a test that ticks one item while
 a third party renames another.
 
-## 36. Known gap: `ListRepository.watch` is still unimplemented
+## 36. `ListRepository.watch` streams list-level changes too (gap now closed)
 
-**Not a decision — an honest gap.** Phase 8's goal is that two open clients see each other's
-*item* edits live, which is the collaboration that matters in a shop. List-level changes
-(a rename, a new member joining) do not stream yet; `ListRepository.watch` throws
-`UnimplementedError` rather than returning an empty stream, so the omission is loud rather
-than silent. Nothing in the app calls it. It needs a second channel and endpoint of the same
-shape as the item one.
+**Decision:** `watch` is implemented by `ListRealtimeSource`, a second channel of the same
+shape as the item one, so a rename or a new member joining reaches an open detail screen
+without a refresh. **Why:** phase 8 originally scoped live sync to *item* edits — the
+collaboration that matters in a shop — and `watch` threw `UnimplementedError` so the omission
+was loud rather than silent. The household work made the gap user-visible: sharing a list is
+pointless if the person who shared it cannot see the other member arrive. **Trade-off:** two
+streams per open list instead of one. Acceptable — they are per-screen and closed with it.
+
+*Historical note:* decision entries are not rewritten when they are superseded, but this one
+asserted the opposite of the current behaviour, which is worse than no entry at all.
 
 ## 37. Push delivery sits behind a `PushSender` on the server and a `PushTokenSource` in the app
 
@@ -474,3 +478,103 @@ into something that can actually fail. The alternative, trusting review, is how 
 architectures rot. **Trade-off:** the checks are textual, so a sufficiently creative violation
 (a re-export chain) would slip past. That is acceptable: the rule exists to catch the ordinary
 mistake, made in a hurry, which is the one that actually happens.
+
+## 42. The error tier is decided by where a failure came from, not by what it is
+
+**Decision:** `core/error/error_tier.dart` maps `(Failure, FailureSource)` to one of
+`ErrorTier.inline | snackbar | screen`, where `FailureSource` is `input`, `write` or `load`.
+**Why:** the obvious design — switch on the `Failure` type — cannot work, because the same
+failure deserves different treatment depending on what the user was doing. A
+`NetworkFailure` while typing a join code belongs under the field; the identical failure
+while checking off an item belongs in a snackbar; while loading the list it must replace the
+screen, because there is nothing left to render. The failure type alone does not carry that
+information. Origin does, and `ValidationFailure` is the single case that overrides it: it is
+always about a specific field, so it is always inline. **Trade-off:** every call site must
+name its source, which is one more argument to get right. That is the point — it forces the
+question "what was the user doing?" at the place that knows the answer.
+
+## 43. Validation lives as statics on the entity, not in value objects
+
+**Decision:** `ShoppingItem.validateName`, `.validateQuantity`, `ShoppingList.validateName`,
+`Shop.validateName` and `AuthUser.validateDisplayName` return `Result<T>`; there is no
+`ItemName` or `ListName` wrapper type. **Why:** a value object that validates in its
+constructor has one fatal property here — it makes *reading* fallible. Server data flows
+through the mappers in `data/`, and a name that the server accepted under an older rule would
+crash the mapper rather than render. Constructors cannot return a `Result`, so the failure has
+nowhere to go but an exception, across the exact boundary golden rule "no throwing" forbids.
+Statics put the rule in one place on the entity that owns it, and keep it where it belongs: on
+the write path only. **Trade-off:** nothing in the type system stops an unvalidated `String`
+being passed to a use case. The use cases call the validator as their first act, so the rule is
+enforced by convention at one chokepoint rather than by the compiler everywhere.
+
+## 44. `invalidateSelf()` is guarded by `ref.mounted`
+
+**Decision:** both `ListsController` and `ShopsController` refresh through a private
+`_refreshIfAlive()` that checks `ref.mounted` first; 12 call sites use it. **Why:** a write can
+outlive the screen that started it. The household screen removes a member and routes away
+immediately; nothing on the destination watches `listsControllerProvider`, so it auto-disposes
+while the request is still in flight, and the `invalidateSelf()` that follows the await throws
+`UnmountedRefException`. This was found by the household tests but was never confined to that
+screen — the same latent bug already sat under `leave` and `delete`, hidden only because those
+screens happened to keep a watcher alive. **Trade-off:** a refresh can be silently skipped. That
+is correct: if nothing is watching the provider, there is no stale UI to fix, and the next
+watcher rebuilds it from scratch anyway.
+
+## 45. Deleting a shop asks what happens to its items
+
+**Decision:** `ShopRepository.remove` takes a `ShopItemDisposition` — `untag`, `moveToShop`
+(with a destination validated to be on the same list) or `deleteItems` — and the whole
+operation runs inside `session.db.transaction`. **Why:** the schema could answer this on its
+own with `onDelete`, and either answer would be wrong for somebody: cascade quietly destroys a
+shopping list, `SetNull` quietly untags it. Deleting a *shop* and deleting *the things you
+still need to buy* are different intentions, and only the user knows which one they mean. The
+UI therefore shows the item count and makes the choice explicit. **Trade-off:** three code
+paths and a modal instead of one `DELETE`. Bought by the fact that the destructive option is
+now deliberate rather than a side effect of a schema annotation.
+
+## 46. Ownership transfer is one transaction; an owner cannot remove themselves
+
+**Decision:** `ListService.transferOwnership` swaps both member roles *and* the list's
+`ownerId` inside a single transaction, and `removeMember` refuses when the target is the caller
+or the owner. **Why:** the failure modes of a partial transfer are worse than the failure: a
+list with two owners, or with none and therefore no one who can ever delete or share it, is
+unrecoverable through the app. A transaction makes both illegal states unreachable. The
+self-removal guard exists for the same reason — leaving would orphan the list, so the honest
+exit is to transfer first and then leave, which is two explicit acts rather than one
+irreversible accident. **Trade-off:** an owner who abandons a list strands it. Server-side
+reassignment is the eventual answer; refusing is the correct behaviour until it exists.
+
+## 47. The "recently checked" hold is provider state, not widget state
+
+**Decision:** `RecentlyChecked` keeps a checked item visible in place for 600 ms via timers in
+a `@riverpod` notifier, rather than in the row's `State`. **Why:** the item list rebuilds
+constantly — live updates, filter changes, optimistic writes — and a checked row is removed
+from its position by that rebuild. State held in the widget dies with the element the moment
+the row moves, so the animation the motion spec asks for would be cut off by the very rebuild
+it exists to soften. The provider outlives the widget tree it drives. **Trade-off:** timers
+need explicit cleanup, and `release()` exists so unchecking is immediate rather than waiting
+out a hold that no longer means anything.
+
+## 48. A shop's colour preview is app state, not sheet state
+
+**Decision:** `ShopColorPreview` holds the `(ShopId, HexColor)` being previewed globally, and
+`effectiveShopColor` resolves a shop's real colour against it. **Why:** the preview must retint
+things that are not descendants of the colour picker — the app bar, the filter chips, the rows
+behind the modal barrier. Local state can only repaint the subtree it sits in, so the one
+widget the user is looking *past* would keep the old colour, which is precisely the thing the
+preview is for. **Trade-off:** state that must be cleared on dismiss, or a cancelled edit
+leaves the app tinted. `clear()` is called on every exit from the sheet, including the barrier
+tap.
+
+## 49. Previews live beside the widget, and a test renders every one
+
+**Decision:** 24 `@Preview` functions sit at the bottom of the production files they preview
+(17 files), and `test/core/preview/previews_test.dart` renders each. **Why:** co-location is
+what the tooling expects — the previewer scans all of `lib/`, exactly as Compose and SwiftUI
+do — and the standing objection to it, that previews rot unnoticed, is answered by making them
+fail CI instead. A preview that no longer builds is then a red test, not a surprise weeks later.
+The shared harness (`previewApp` / `previewPage` / `previewPiece`) pins `AppLocale.en` and uses
+the real `AppTheme`, so a preview is showing the app's actual theme rather than a plausible
+imitation. **Trade-off:** production files are longer, and the harness takes no `overrides`
+because Riverpod 3 does not export the `Override` type — it can only be inferred inline — so
+previews needing fake data will take in-memory fakes in `lib/` rather than provider overrides.
