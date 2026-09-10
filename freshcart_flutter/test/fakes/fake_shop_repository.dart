@@ -25,15 +25,28 @@ class FakeShopRepository implements ShopRepository {
   /// wrote nothing.
   final List<Shop> savedShops = [];
 
+  /// Every call to [create], in order.
+  final List<({ListId listId, String name, HexColor color})> createCalls = [];
+
+  /// How many times [byList] has been called, so a test can assert a create
+  /// or edit refreshed the collection.
+  int byListCallCount = 0;
+
   @override
-  Future<Result<List<Shop>>> byList(ListId listId) async => byListResult;
+  Future<Result<List<Shop>>> byList(ListId listId) async {
+    byListCallCount++;
+    return byListResult;
+  }
 
   @override
   Future<Result<Shop>> create({
     required ListId listId,
     required String name,
     required HexColor color,
-  }) async => createResult ?? const Err(Failure.unexpected('create not set'));
+  }) async {
+    createCalls.add((listId: listId, name: name, color: color));
+    return createResult ?? const Err(Failure.unexpected('create not set'));
+  }
 
   @override
   Future<Result<Shop>> save(Shop shop) async {

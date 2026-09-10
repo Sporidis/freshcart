@@ -38,6 +38,7 @@
     "all": "All shops",
     "none": "No shop",
     "manage": "Manage shops",
+    "add": "Add shop",
     "edit": "Edit shop",
     "nameLabel": "Shop name",
     "colorLabel": "Tab colour",

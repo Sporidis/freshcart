@@ -38,6 +38,7 @@
     "all": "Tous les magasins",
     "none": "Aucun magasin",
     "manage": "Gérer les magasins",
+    "add": "Ajouter un magasin",
     "edit": "Modifier le magasin",
     "nameLabel": "Nom du magasin",
     "colorLabel": "Couleur de l’onglet",

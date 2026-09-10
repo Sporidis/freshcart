@@ -9,13 +9,16 @@ import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
 
-/// Renames and recolours a shop.
+/// Renames and recolours a shop, or creates a new one when [shop] is null.
 ///
 /// Every swatch tap previews immediately behind the sheet rather than waiting
 /// for Save, because the whole question a shop colour answers is "will I spot
 /// this in an aisle?" — and that cannot be judged from a swatch in a modal.
+/// There is nothing to retint behind the sheet for a shop that does not exist
+/// yet, so the live preview only fires in edit mode.
 class EditShopSheet extends ConsumerStatefulWidget {
-  /// Creates the sheet for [shop].
+  /// Creates the sheet. Pass `shop: null` to create a new shop instead of
+  /// editing an existing one.
   const EditShopSheet({
     required this.shop,
     required this.siblings,
@@ -23,13 +26,13 @@ class EditShopSheet extends ConsumerStatefulWidget {
     super.key,
   });
 
-  /// The shop being edited.
-  final Shop shop;
+  /// The shop being edited, or null when creating a new one.
+  final Shop? shop;
 
   /// The other shops on this list, for the colour-clash warning.
   final List<Shop> siblings;
 
-  /// Commits the edit. An error message keeps the sheet open.
+  /// Commits the add/edit. An error message keeps the sheet open.
   final Future<String?> Function({
     required String name,
     required HexColor color,
@@ -42,11 +45,26 @@ class EditShopSheet extends ConsumerStatefulWidget {
 
 class _EditShopSheetState extends ConsumerState<EditShopSheet> {
   late final TextEditingController _name = TextEditingController(
-    text: widget.shop.name,
+    text: widget.shop?.name ?? '',
   );
-  late HexColor _color = widget.shop.color;
+  late HexColor _color = widget.shop?.color ?? _firstUnusedPreset();
   String? _error;
   bool _saving = false;
+
+  bool get _isCreate => widget.shop == null;
+
+  /// The first preset that does not clash with a sibling's colour, or the
+  /// first preset outright if every one of them does — a starting point, not
+  /// a guarantee, since the user can always repick.
+  HexColor _firstUnusedPreset() {
+    for (final preset in AppColors.presetShopColors) {
+      final candidate = HexColor.fromArgb(preset.toARGB32());
+      if (widget.siblings.every((s) => !candidate.isCloseTo(s.color))) {
+        return candidate;
+      }
+    }
+    return HexColor.fromArgb(AppColors.presetShopColors.first.toARGB32());
+  }
 
   @override
   void dispose() {
@@ -56,13 +74,16 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
 
   void _pick(HexColor color) {
     setState(() => _color = color);
-    ref.read(shopColorPreviewProvider.notifier).preview(widget.shop.id, color);
+    final id = widget.shop?.id;
+    if (id != null) {
+      ref.read(shopColorPreviewProvider.notifier).preview(id, color);
+    }
   }
 
   /// The shop this colour could be confused with, if any.
   Shop? get _clashesWith {
     for (final other in widget.siblings) {
-      if (other.id == widget.shop.id) continue;
+      if (other.id == widget.shop?.id) continue;
       if (_color.isCloseTo(other.color)) return other;
     }
     return null;
@@ -82,7 +103,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
       });
       return;
     }
-    ref.read(shopColorPreviewProvider.notifier).clear();
+    if (!_isCreate) ref.read(shopColorPreviewProvider.notifier).clear();
     if (mounted) Navigator.of(context).pop();
   }
 
@@ -103,7 +124,10 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t.shops.edit, style: theme.textTheme.headlineSmall),
+          Text(
+            _isCreate ? t.shops.add : t.shops.edit,
+            style: theme.textTheme.headlineSmall,
+          ),
           const SizedBox(height: AppSpacing.gap),
           Text(t.shops.nameLabel, style: theme.textTheme.bodySmall),
           const SizedBox(height: 6),
@@ -150,7 +174,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: _saving ? null : _save,
-              child: Text(t.shops.saveChanges),
+              child: Text(_isCreate ? t.shops.add : t.shops.saveChanges),
             ),
           ),
         ],
@@ -250,6 +274,31 @@ Widget editShopSheetClashPreview() {
         siblings: [
           shop('s1', 'Albert Heijn', 0xFF2456A6),
           shop('s2', 'Delhaize', 0xFF2A5AAA),
+        ],
+        onSave: ({required name, required color}) async => null,
+      ),
+    ),
+  );
+}
+
+/// Create mode: no shop, an empty name, and a starting colour chosen to
+/// avoid the siblings already on the list.
+@Preview(group: 'Shops', name: 'Add shop', size: Size(393, 560))
+Widget editShopSheetCreatePreview() {
+  Shop shop(String id, String name, int argb) => Shop(
+    id: ShopId(id),
+    listId: ListId('list-1'),
+    name: name,
+    color: HexColor.fromArgb(argb),
+  );
+
+  return previewApp(
+    Scaffold(
+      body: EditShopSheet(
+        shop: null,
+        siblings: [
+          shop('s1', 'Colruyt', 0xFFE8791A),
+          shop('s2', 'Albert Heijn', 0xFF2456A6),
         ],
         onSave: ({required name, required color}) async => null,
       ),

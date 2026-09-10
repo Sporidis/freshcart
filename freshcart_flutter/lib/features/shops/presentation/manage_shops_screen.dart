@@ -25,6 +25,11 @@ class ManageShopsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final shops = ref.watch(shopsControllerProvider(listId));
+    final isEmpty = switch (shops) {
+      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
+        value.isEmpty,
+      _ => false,
+    };
 
     return Scaffold(
       appBar: AppBar(title: Text(t.shops.manage)),
@@ -43,6 +48,15 @@ class ManageShopsScreen extends ConsumerWidget {
             icon: Icons.storefront_outlined,
             title: t.shops.none,
             body: t.items.emptyShopBody,
+            // The only exit here, so it lives in the empty state itself
+            // rather than a FAB — same rule as ListsScreen's empty state.
+            action: SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _addShop(context, ref, listId, const []),
+                child: Text(t.shops.add),
+              ),
+            ),
           ),
           Ok<List<Shop>>(value: final loaded) => ListView(
             padding: const EdgeInsets.all(AppSpacing.screen),
@@ -53,6 +67,48 @@ class ManageShopsScreen extends ConsumerWidget {
           ),
         },
       },
+      // Hidden while the empty state is up, matching ListsScreen: the empty
+      // state already offers this as its one action.
+      floatingActionButton: isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () => _addShop(
+                context,
+                ref,
+                listId,
+                shops.value?.valueOrNull ?? const [],
+              ),
+              icon: const Icon(Icons.add),
+              label: Text(t.shops.add),
+            ),
+    );
+  }
+
+  /// Opens the create-mode sheet and commits through [ShopsController.create].
+  static Future<void> _addShop(
+    BuildContext context,
+    WidgetRef ref,
+    ListId listId,
+    List<Shop> siblings,
+  ) async {
+    final controller = ref.read(shopsControllerProvider(listId).notifier);
+    final t = ref.read(translationsProvider);
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => EditShopSheet(
+        shop: null,
+        siblings: siblings,
+        onSave: ({required name, required color}) async {
+          final result = await controller.create(name: name, color: color);
+          return switch (result) {
+            Ok<Shop>() => null,
+            Err<Shop>(:final failure) => failure.toMessage(t),
+          };
+        },
+      ),
     );
   }
 }
