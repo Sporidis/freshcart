@@ -6,6 +6,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -368,21 +369,12 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               children: [
                 if (widget.shopDotColor != null) ...[
                   Container(
+                    key: const ValueKey('shop-dot'),
                     width: 7,
                     height: 7,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       color: widget.shopDotColor,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                if (item.quantity > 1) ...[
-                  Text(
-                    '${item.quantity}×',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -402,8 +394,17 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
                     ),
                   ),
                 ),
-                if (item.hasNote)
+                if (item.quantity > 1) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    'x${item.quantity}',
+                    style: AppTextStyles.caption.copyWith(color: muted),
+                  ),
+                ],
+                if (item.hasNote) ...[
+                  const SizedBox(width: 6),
                   Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
+                ],
               ],
             ),
             subtitle: subtitle == null ? null : Text(subtitle),

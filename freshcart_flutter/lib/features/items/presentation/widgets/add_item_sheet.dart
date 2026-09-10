@@ -4,7 +4,12 @@ import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// What [AddItemSheet] hands back on save.
-typedef AddItemDetails = ({String name, int quantity, ShopId? shopId});
+typedef AddItemDetails = ({
+  String name,
+  int quantity,
+  ShopId? shopId,
+  String? noteText,
+});
 
 /// The detailed add path: name (already typed, still editable), quantity,
 /// and which shop it belongs to.
@@ -43,21 +48,27 @@ class _AddItemSheetState extends State<AddItemSheet> {
   late final TextEditingController _name = TextEditingController(
     text: widget.initialName,
   );
+  final TextEditingController _note = TextEditingController();
   int _quantity = 1;
   ShopId? _shopId;
 
   @override
   void dispose() {
     _name.dispose();
+    _note.dispose();
     super.dispose();
   }
 
   void _save() {
     final name = _name.text.trim();
     if (name.isEmpty) return;
-    Navigator.of(
-      context,
-    ).pop<AddItemDetails>((name: name, quantity: _quantity, shopId: _shopId));
+    final note = _note.text.trim();
+    Navigator.of(context).pop<AddItemDetails>((
+      name: name,
+      quantity: _quantity,
+      shopId: _shopId,
+      noteText: note.isEmpty ? null : note,
+    ));
   }
 
   @override
@@ -134,6 +145,14 @@ class _AddItemSheetState extends State<AddItemSheet> {
               ],
             ),
           ],
+          const SizedBox(height: 14),
+          TextField(
+            controller: _note,
+            textCapitalization: TextCapitalization.sentences,
+            textInputAction: TextInputAction.done,
+            decoration: InputDecoration(labelText: t.items.notePlaceholder),
+            onSubmitted: (_) => _save(),
+          ),
           const SizedBox(height: 18),
           SizedBox(
             width: double.infinity,

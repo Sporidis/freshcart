@@ -108,6 +108,45 @@ void main() {
       expect(find.text('Bread'), findsOneWidget);
     });
 
+    testWidgets('tapping a chip actually filters -- not just setting the '
+        'provider directly', (tester) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      items.byListResult = Ok([
+        buildItem(name: 'Milk').copyWith(shopId: colruyt.id),
+        buildItem(
+          id: '00000000-0000-4000-8000-0000000000b3',
+          name: 'Cake',
+        ).copyWith(shopId: bakery.id),
+      ]);
+
+      await pump(tester);
+      expect(find.text('Cake'), findsOneWidget);
+
+      // Chip labels carry a remaining count ("Colruyt · 1"), so match the
+      // shop name as a substring rather than the bare name.
+      await tester.tap(find.textContaining('Colruyt'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Cake'), findsNothing);
+
+      // Tapping the already-selected chip deselects it (FilterChip's own
+      // toggle semantics) rather than leaving the list stuck on one shop.
+      await tester.tap(find.textContaining('Colruyt'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cake'), findsOneWidget);
+
+      // "All shops" is always the way back too, from any shop's tab.
+      await tester.tap(find.textContaining('Bakery'));
+      await tester.pumpAndSettle();
+      expect(find.text('Milk'), findsNothing);
+
+      await tester.tap(find.textContaining('All shops'));
+      await tester.pumpAndSettle();
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Cake'), findsOneWidget);
+    });
+
     testWidgets('clearing the filter shows everything again', (tester) async {
       shops.byListResult = Ok([colruyt, bakery]);
       items.byListResult = Ok([

@@ -787,3 +787,29 @@ shop: a picture field would need real upload infrastructure (an entity field, a 
 either Serverpod's own file storage or a new dependency, since this app deliberately carries no
 Firebase beyond push) this session did not build, and was named and set aside as its own future
 piece rather than bolted on half-built.
+
+## 59. Quick-add fixes, item rows carry their shop, and the filter chip's tap path is now actually tested
+
+**Decision:** Three fixes in one pass, found together while working the same area:
+
+- `AddItemSheet` gained a note field (it already had one everywhere else an item can be
+  edited — `ItemEditorDialog` — and quietly not having it here was an omission, not a choice).
+- `QuickAddBar`'s "open details" callback was fire-and-forget, so a successful save through the
+  sheet never told the bar to clear itself — the field just sat there, full, looking like nothing
+  happened. It now mirrors the fast path's own contract (`Future<bool>`): true clears the text and
+  collapses the bar back to a bare button, false (cancelled, or the write failed) leaves the typed
+  name in place for another attempt, matching what a rejected quick-add already did.
+- Every item row now shows its shop as a small coloured dot, matching the mockup's own reference
+  screens (checked directly — the dot is not conditional on the "All" tab; the design's own
+  per-shop-tab screenshots carry it too, so it is unconditional here as well) — this was already
+  built for search results, just never wired into the ordinary list. Quantity moved from a bold,
+  primary-coloured prefix ("6×") to a muted suffix ("x6") after the name, matching `.fs-qty`'s own
+  styling and position in the reference markup rather than an invented placement.
+
+**On "shop navigation doesn't work":** the actual filter logic and the chip's tap wiring were
+both already correct — `shop_filter_test.dart` only ever drove the underlying provider directly,
+never the chip itself, so a real UI-wiring regression could have slipped past it unnoticed. Added
+a test that taps the rendered chips end to end (select, toggle off, switch shops, back to "All")
+to close that gap and confirm it directly, rather than trusting inspection alone. The likely
+actual source of "doesn't work": every row looked identical with no shop tag showing, so filtering
+by shop had nothing visible to distinguish before and after — the same dot fix above.
