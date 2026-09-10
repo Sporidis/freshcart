@@ -164,6 +164,18 @@ class AppTheme {
     seed: shopColor ?? AppColors.shopColorFallback,
   );
 
+  /// A readable colour to draw text/icons in on top of [background].
+  ///
+  /// A plain luminance check rather than `generatedScheme.onPrimary`: once
+  /// [background] is the shop's literal colour rather than an M3-generated
+  /// tone, the two are no longer a matched pair, and pairing arbitrary text
+  /// with the wrong one of them risks real contrast failures, not just a
+  /// slightly-off hue.
+  static Color _onColorFor(Color background) =>
+      ThemeData.estimateBrightnessForColor(background) == Brightness.dark
+      ? Colors.white
+      : AppColors.ink;
+
   static ThemeData _build({
     required Brightness brightness,
     required Color seed,
@@ -191,9 +203,18 @@ class AppTheme {
       brightness: brightness,
     );
     final isNeutralTheme = seed == brandSeed;
+    // The literal shop colour, not `generatedScheme.primary`: M3's seeding
+    // snaps any input to the nearest tone on its own generated ramp, which
+    // measurably shifts hue and saturation away from the swatch someone
+    // actually picked. `presetShopColors` are curated, already-good colours
+    // (AppColors' own doc comment), not raw user input that needs that
+    // correction -- so the accent everywhere (FAB, checkboxes, the selected
+    // chip) is the colour itself, matching the dot and chip that show it.
+    final primary = isNeutralTheme ? ink : seed;
+    final subtleSurface = isDark ? AppColors.subtleDark : AppColors.subtleLight;
     final scheme = generatedScheme.copyWith(
-      primary: isNeutralTheme ? ink : generatedScheme.primary,
-      onPrimary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
+      primary: primary,
+      onPrimary: isNeutralTheme ? (isDark ? ink : Colors.white) : _onColorFor(primary),
       secondary: isNeutralTheme ? ink : generatedScheme.secondary,
       onSecondary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
       tertiary: isNeutralTheme ? ink : generatedScheme.tertiary,
@@ -202,6 +223,18 @@ class AppTheme {
       onSurface: ink,
       error: AppColors.destructive,
       onError: Colors.white,
+      // The chrome is neutral ink-on-paper regardless of the active shop
+      // (this file's own governing rule, stated at the top) -- these tonal
+      // surfaces were left to whatever ColorScheme.fromSeed derived from the
+      // seed, which is how a bar as plain as the add-item field ended up
+      // tinted a stray olive-green. Pinned to the app's own neutral tokens
+      // instead of the generated ramp, same as `surface` just above.
+      surfaceContainerLowest: bg,
+      surfaceContainerLow: surface,
+      surfaceContainer: subtleSurface,
+      surfaceContainerHigh: subtleSurface,
+      surfaceContainerHighest: subtleSurface,
+      surfaceTint: Colors.transparent,
     );
 
     final textTheme = TextTheme(
@@ -321,9 +354,19 @@ class AppTheme {
         backgroundColor: Colors.transparent,
         selectedColor: scheme.primary,
         disabledColor: Colors.transparent,
-        labelStyle: AppTextStyles.label.copyWith(color: secondaryText),
-        secondaryLabelStyle: AppTextStyles.labelStrong.copyWith(
-          color: scheme.onPrimary,
+        // A WidgetStateColor, not `secondaryLabelStyle`: that property looks
+        // like the selected-state label style but Chip's own build method
+        // never actually reads it (confirmed against the installed Flutter
+        // SDK source) -- only `labelStyle` is consumed, resolved per-state.
+        // Without this, a selected chip's translucent unselected-style ink
+        // renders on top of `selectedColor` (near-black for the neutral
+        // theme), which is what made a selected tab's own label invisible.
+        labelStyle: AppTextStyles.label.copyWith(
+          color: WidgetStateColor.resolveWith(
+            (states) => states.contains(WidgetState.selected)
+                ? scheme.onPrimary
+                : secondaryText,
+          ),
         ),
         side: BorderSide(color: border),
         shape: const StadiumBorder(),

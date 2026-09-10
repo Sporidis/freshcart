@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
@@ -61,6 +62,11 @@ class ShopFilterBar extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
             child: FilterChip(
               label: Text(labelFor(t.shops.all, null)),
+              // The theme's labelStyle already switches colour by selection;
+              // weight is the one thing a ChipThemeData can't resolve per
+              // state, so the chip supplies it itself, since it already
+              // knows whether it is selected.
+              labelStyle: selected == null ? AppTextStyles.labelStrong : null,
               selected: selected == null,
               onSelected: (_) =>
                   ref.read(shopFilterProvider(listId).notifier).select(null),
@@ -79,6 +85,9 @@ class ShopFilterBar extends ConsumerWidget {
                   radius: 8,
                 ),
                 label: Text(labelFor(shop.name, shop.id)),
+                labelStyle: selected == shop.id
+                    ? AppTextStyles.labelStrong
+                    : null,
                 selected: selected == shop.id,
                 onSelected: (isSelected) => ref
                     .read(shopFilterProvider(listId).notifier)
