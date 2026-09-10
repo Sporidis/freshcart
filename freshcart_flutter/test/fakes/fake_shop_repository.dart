@@ -14,6 +14,10 @@ class FakeShopRepository implements ShopRepository {
   /// Ids passed to [remove], in order.
   final List<ShopId> removedIds = [];
 
+  /// Every shop passed to [save], in order. Lets a test assert that a preview
+  /// wrote nothing.
+  final List<Shop> savedShops = [];
+
   @override
   Future<Result<List<Shop>>> byList(ListId listId) async => byListResult;
 
@@ -25,7 +29,10 @@ class FakeShopRepository implements ShopRepository {
   }) async => createResult ?? const Err(Failure.unexpected('create not set'));
 
   @override
-  Future<Result<Shop>> save(Shop shop) async => Ok(shop);
+  Future<Result<Shop>> save(Shop shop) async {
+    savedShops.add(shop);
+    return Ok(shop);
+  }
 
   @override
   Future<Result<void>> remove(ShopId id) async {

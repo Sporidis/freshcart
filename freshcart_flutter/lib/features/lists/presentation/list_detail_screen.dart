@@ -217,6 +217,10 @@ class _ListMenu extends ConsumerWidget {
     return PopupMenuButton<void>(
       itemBuilder: (context) => [
         PopupMenuItem<void>(
+          onTap: () => context.go(Routes.manageShops(list.id)),
+          child: Text(t.shops.manage),
+        ),
+        PopupMenuItem<void>(
           onTap: () => _confirmLeave(context, ref),
           // The owner's Delete belongs here too, once the server can do it.
           enabled: !isOwner,
