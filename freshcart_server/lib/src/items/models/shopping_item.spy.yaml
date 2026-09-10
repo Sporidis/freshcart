@@ -19,6 +19,19 @@ fields:
 
   isChecked: bool, defaultModel=false
 
+  ### Manual ordering within a shop tab (drag-to-reorder). Fresh items append
+  ### past the current end; a drag slots one item between its new neighbours
+  ### by averaging their sortOrder, so a reorder only ever writes the one row
+  ### that moved. See ShoppingItem.sortOrderBetween in the domain package,
+  ### which is the single place that averaging is computed.
+  ###
+  ### defaultPersist, not defaultModel: a *database*-level default is what
+  ### lets this column be added to an existing table in place. defaultModel
+  ### alone left Postgres with no value to backfill existing rows with, and
+  ### `serverpod create-migration` refused, warning it would have to drop and
+  ### recreate the whole table instead.
+  sortOrder: double, defaultModel=0.0, defaultPersist=0.0
+
   ### Optional shop tag. `SetNull` on delete so removing a shop untags its
   ### items rather than deleting them — losing a shop must never lose the
   ### shopping.
@@ -46,5 +59,9 @@ fields:
   updatedAt: DateTime, defaultModel=now
 
 indexes:
+  # Compound with sortOrder, not listId alone: byList's query is now
+  # "every item on this list, in sortOrder", so the index should answer that
+  # query directly rather than filter on listId and sort the result set
+  # separately.
   freshcart_shopping_item_list_idx:
-    fields: listId
+    fields: listId, sortOrder

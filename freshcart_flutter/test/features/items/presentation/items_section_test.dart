@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
+import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../fakes/fake_item_repository.dart';
@@ -22,7 +23,7 @@ void main() {
 
   setUp(() => items = FakeItemRepository());
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<ProviderContainer> pump(WidgetTester tester) async {
     final list = buildList(members: [buildMember(displayName: 'Nikolaos')]);
     final container = ProviderContainer(
       overrides: [
@@ -43,6 +44,7 @@ void main() {
       ),
     );
     await tester.pumpAndSettle();
+    return container;
   }
 
   testWidgets('renders the items with quantity and note', (tester) async {
@@ -229,6 +231,81 @@ void main() {
     await tester.pump(ItemsController.swipeUndoWindow);
     await tester.pumpAndSettle();
     expect(items.removedIds, isEmpty);
+  });
+
+  group('drag to reorder', () {
+    final colruyt = ShopId('shop-colruyt');
+    // Matches buildList()'s default id -- there is only ever the one list on
+    // screen in this file's pump().
+    final listId = ListId('00000000-0000-4000-8000-000000000001');
+
+    testWidgets('no drag handle on the "All" tab -- reordering is scoped to one shop', (
+      tester,
+    ) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk', shopId: colruyt),
+        buildItem(id: 'b', name: 'Bread', shopId: colruyt),
+      ]);
+      await pump(tester);
+
+      expect(find.byIcon(Icons.drag_handle), findsNothing);
+    });
+
+    testWidgets('a handle appears once a shop tab is active', (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk', shopId: colruyt),
+        buildItem(id: 'b', name: 'Bread', shopId: colruyt),
+      ]);
+      final container = await pump(tester);
+
+      container.read(shopFilterProvider(listId).notifier).select(colruyt);
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.drag_handle), findsNWidgets(2));
+    });
+
+    testWidgets('checked rows never show a drag handle, even on a shop tab', (
+      tester,
+    ) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk', shopId: colruyt),
+        buildItem(id: 'b', name: 'Bread', shopId: colruyt, isChecked: true),
+      ]);
+      final container = await pump(tester);
+
+      container.read(shopFilterProvider(listId).notifier).select(colruyt);
+      await tester.pumpAndSettle();
+
+      expect(find.byIcon(Icons.drag_handle), findsOneWidget);
+    });
+
+    testWidgets('dragging the handle to the top saves a lower sortOrder', (
+      tester,
+    ) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk', shopId: colruyt, sortOrder: 10),
+        buildItem(id: 'b', name: 'Bread', shopId: colruyt, sortOrder: 20),
+        buildItem(id: 'c', name: 'Eggs', shopId: colruyt, sortOrder: 30),
+      ]);
+      final container = await pump(tester);
+      container.read(shopFilterProvider(listId).notifier).select(colruyt);
+      await tester.pumpAndSettle();
+
+      // Drag Eggs' handle (the last row) up past the first two.
+      await tester.drag(
+        find.byIcon(Icons.drag_handle).last,
+        const Offset(0, -500),
+      );
+      await tester.pumpAndSettle();
+
+      final saved = items.savedItems.where((i) => i.id == ItemId('c'));
+      expect(saved, isNotEmpty, reason: 'the drag should have saved Eggs');
+      expect(
+        saved.first.sortOrder,
+        lessThan(10),
+        reason: 'dropped above Milk, the row that was previously first',
+      );
+    });
   });
 
   testWidgets('a conflict unticks the row and says why', (tester) async {

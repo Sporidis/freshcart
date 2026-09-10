@@ -20,6 +20,7 @@ ShoppingItem buildItem({
   Note? note,
   UserId? checkedBy,
   DateTime? checkedAt,
+  double sortOrder = 0,
 }) => ShoppingItem(
   id: ItemId(id),
   listId: testList,
@@ -33,6 +34,7 @@ ShoppingItem buildItem({
   note: note,
   checkedBy: checkedBy,
   checkedAt: checkedAt,
+  sortOrder: sortOrder,
 );
 
 /// Builds a [ShoppingList] with sensible defaults, overriding only what a test

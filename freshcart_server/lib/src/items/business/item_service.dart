@@ -1,3 +1,8 @@
+// Aliased: this file's own ShoppingItem (below) is the generated Serverpod
+// model, and the domain package's entity of the same name is only reached
+// for sortOrderGap -- the one constant that has to agree with the pure
+// midpoint arithmetic in ShoppingItem.sortOrderBetween on the client.
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
@@ -35,7 +40,9 @@ abstract final class ItemService {
     );
   }
 
-  /// Every item on [listId], oldest first, for a caller who belongs to it.
+  /// Every item on [listId], in manual sort order (ties -- everything
+  /// predating the sortOrder column shares the same default -- broken by
+  /// creation order), for a caller who belongs to it.
   static Future<List<ShoppingItem>> byList(
     Session session,
     UuidValue listId,
@@ -45,8 +52,31 @@ abstract final class ItemService {
     return ShoppingItem.db.find(
       session,
       where: (t) => t.listId.equals(listId),
-      orderBy: (t) => t.createdAt,
+      orderByList: (t) => [
+        Order(column: t.sortOrder),
+        Order(column: t.createdAt),
+      ],
     );
+  }
+
+  /// The sortOrder that appends past the current end of [listId], for a
+  /// freshly-added item.
+  ///
+  /// A read-then-write rather than a single `MAX(sortOrder)` SQL expression:
+  /// Serverpod's query builder has no aggregate-function escape hatch short
+  /// of raw SQL, and one extra indexed lookup on `add` -- not a hot path --
+  /// is a smaller cost than hand-writing SQL for it.
+  static Future<double> _appendSortOrder(
+    Session session,
+    UuidValue listId,
+  ) async {
+    final last = await ShoppingItem.db.findFirstRow(
+      session,
+      where: (t) => t.listId.equals(listId),
+      orderBy: (t) => t.sortOrder,
+      orderDescending: true,
+    );
+    return (last?.sortOrder ?? 0) + domain.ShoppingItem.sortOrderGap;
   }
 
   /// Appends an item to [listId].
@@ -68,6 +98,7 @@ abstract final class ItemService {
         name: name,
         quantity: quantity,
         isChecked: false,
+        sortOrder: await _appendSortOrder(session, listId),
         shopId: shopId,
         note: noteText == null
             ? null

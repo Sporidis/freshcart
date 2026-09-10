@@ -24,6 +24,7 @@ export 'src/items/entities/shopping_item.dart';
 export 'src/items/ports/item_repository.dart';
 export 'src/items/use_cases/add_item.dart';
 export 'src/items/use_cases/edit_item.dart';
+export 'src/items/use_cases/reorder_item.dart';
 export 'src/items/use_cases/toggle_item_checked.dart';
 export 'src/items/value_objects/item_id.dart';
 // Lists

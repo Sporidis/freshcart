@@ -17,3 +17,8 @@ ToggleItemChecked toggleItemCheckedUseCase(Ref ref) =>
 @riverpod
 EditItem editItemUseCase(Ref ref) =>
     EditItem(ref.watch(itemRepositoryProvider));
+
+/// The [ReorderItem] use case, wired to the item repository.
+@riverpod
+ReorderItem reorderItemUseCase(Ref ref) =>
+    ReorderItem(ref.watch(itemRepositoryProvider));
