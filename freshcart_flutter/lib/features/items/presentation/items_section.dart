@@ -130,28 +130,18 @@ class _ItemList extends StatelessWidget {
               builder: (context) => ItemEditorDialog(item: item, t: t),
             );
             if (edit == null) return;
-            report(await controller.save(_applyEdit(item, edit)));
+            report(
+              await controller.edit(
+                item,
+                name: edit.name,
+                quantity: edit.quantity,
+                shopId: item.shopId,
+                noteText: edit.noteText,
+              ),
+            );
           },
         );
       },
     ),
   );
-
-  ShoppingItem _applyEdit(ShoppingItem item, ItemEdit edit) {
-    final trimmedNote = edit.noteText?.trim();
-    final hasNote = trimmedNote != null && trimmedNote.isNotEmpty;
-    return item.copyWith(
-      name: edit.name.trim(),
-      quantity: edit.quantity,
-      // A note's author is whoever last wrote it; the timestamp is local only
-      // until the server echoes the stored row back.
-      note: hasNote
-          ? Note(
-              text: trimmedNote,
-              authorId: item.note?.authorId ?? item.addedBy,
-              updatedAt: DateTime.now().toUtc(),
-            )
-          : null,
-    );
-  }
 }

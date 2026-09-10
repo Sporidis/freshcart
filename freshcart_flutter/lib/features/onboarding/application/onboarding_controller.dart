@@ -1,8 +1,8 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/auth_use_case_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/list_use_case_providers.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
-import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_use_case_providers.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'onboarding_controller.g.dart';
@@ -11,8 +11,6 @@ part 'onboarding_controller.g.dart';
 ///
 /// The shop can be recoloured later from the shops screen — this just gets a
 /// first list unblocked (`docs/decisions.md` shop-colour theming).
-final _defaultShopColor = HexColor.fromArgb(0xFF4CAF50);
-
 /// Drives the onboarding wizard: holds the draft answers, moves between
 /// [OnboardingStep]s, and submits them on [finish].
 ///
@@ -22,7 +20,18 @@ final _defaultShopColor = HexColor.fromArgb(0xFF4CAF50);
 @riverpod
 class OnboardingController extends _$OnboardingController {
   @override
-  OnboardingState build() => const OnboardingState();
+  OnboardingState build() => OnboardingState(
+    selectedShops: [
+      OnboardingShopDraft(
+        name: 'Albert Heijn',
+        color: HexColor.fromArgb(0xFF2456A6),
+      ),
+      OnboardingShopDraft(
+        name: 'Colruyt',
+        color: HexColor.fromArgb(0xFFE8791A),
+      ),
+    ],
+  );
 
   void updateDisplayName(String value) {
     state = state.copyWith(displayName: value, clearError: true);
@@ -32,8 +41,27 @@ class OnboardingController extends _$OnboardingController {
     state = state.copyWith(listName: value, clearError: true);
   }
 
-  void updateShopName(String value) {
-    state = state.copyWith(shopName: value, clearError: true);
+  void toggleShop(String name, HexColor color) {
+    final shops = [...state.selectedShops];
+    final index = shops.indexWhere((shop) => shop.name == name);
+    if (index == -1) {
+      shops.add(OnboardingShopDraft(name: name, color: color));
+    } else {
+      shops.removeAt(index);
+    }
+    state = state.copyWith(selectedShops: shops, clearError: true);
+  }
+
+  void addShop(String name, HexColor color) {
+    final trimmedName = name.trim();
+    if (trimmedName.isEmpty || state.isShopSelected(trimmedName)) return;
+    state = state.copyWith(
+      selectedShops: [
+        ...state.selectedShops,
+        OnboardingShopDraft(name: trimmedName, color: color),
+      ],
+      clearError: true,
+    );
   }
 
   /// Advances to the next step, if any.
@@ -60,15 +88,14 @@ class OnboardingController extends _$OnboardingController {
   Future<Result<void>> finish() async {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
-    final name = state.displayName.trim();
-    if (name.isNotEmpty) {
-      final result = await ref
-          .read(authRepositoryProvider)
-          .setDisplayName(name);
-      if (result case Err(:final failure)) {
-        state = state.copyWith(isSubmitting: false, error: failure);
-        return Err(failure);
-      }
+    // Trimming and length are the use case's business now, not this
+    // controller's — the wizard just hands over what the user typed.
+    final result = await ref.read(setDisplayNameUseCaseProvider)(
+      state.displayName,
+    );
+    if (result case Err(:final failure)) {
+      state = state.copyWith(isSubmitting: false, error: failure);
+      return Err(failure);
     }
 
     final listResult = await ref.read(createListUseCaseProvider)(
@@ -80,11 +107,12 @@ class OnboardingController extends _$OnboardingController {
     }
     final list = (listResult as Ok<ShoppingList>).value;
 
-    final shopName = state.shopName.trim();
-    if (shopName.isNotEmpty) {
-      final shopResult = await ref
-          .read(shopRepositoryProvider)
-          .create(listId: list.id, name: shopName, color: _defaultShopColor);
+    for (final shop in state.selectedShops) {
+      final shopResult = await ref.read(createShopUseCaseProvider)(
+        listId: list.id,
+        name: shop.name,
+        color: shop.color,
+      );
       if (shopResult case Err(:final failure)) {
         state = state.copyWith(isSubmitting: false, error: failure);
         return Err(failure);
