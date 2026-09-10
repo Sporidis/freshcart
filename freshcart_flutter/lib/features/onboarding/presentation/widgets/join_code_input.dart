@@ -3,27 +3,27 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 
-/// Captures a [JoinCode]: five characters, typed or pasted.
+/// Captures a [JoinCode]: five boxes, matching the design, backed by one
+/// real (invisible) text field.
 ///
-/// TODO(human): the design draws this as five separate boxes — type a
-/// character and focus auto-advances to the next box; backspace on an empty
-/// box steps back into the previous one and clears it; pasting a full code
-/// fills every box at once. That is not built yet: [build] below currently
-/// always returns [_PlainJoinCodeInput], a single field that already works
-/// end to end (uppercased, capped at 5 characters, monospace, wide
-/// letter-spacing), so nothing else in the join flow is blocked on this —
-/// swap `build` to return your segmented version once it exists.
-///
-/// Worth thinking about before you start: a `TextField` per box, each with
-/// its own `FocusNode`, reacting to `TextEditingController` changes to
-/// decide when to hop focus? Or one hidden, real `TextField` capturing all
-/// the input (so the platform keyboard, paste, and autofill all keep working
-/// for free) with five read-only boxes drawn on top of it just to *look*
-/// segmented? Both are legitimate; they trade off differently on how much
-/// platform behaviour (paste, autofill, voice input) you keep for free.
-class JoinCodeInput extends StatelessWidget {
+/// The design's own interaction — type a character and the "cursor" hops to
+/// the next box, backspace on an empty box steps back into the previous one
+/// and clears it, pasting a full code fills every box at once — turns out to
+/// already be exactly what a single ordinary text field does to a plain
+/// string: delete the last character, or replace the whole value on paste.
+/// There is no real per-box focus to hand off here, only the *look* of five
+/// boxes. So rather than five `TextField`s each juggling their own
+/// `FocusNode` (and hand-rolling backspace-into-the-previous-box and
+/// paste-splitting to match), this keeps one real `TextField` — fully
+/// transparent, sized over the whole row — doing the actual text editing,
+/// and draws five read-only boxes underneath purely for how it looks. That
+/// keeps the platform keyboard, paste, and SMS autofill suggestions all
+/// working for free, which five separate fields would each have to earn back
+/// on their own.
+class JoinCodeInput extends StatefulWidget {
   /// Creates the input. [value] is the code so far (already uppercased);
   /// [onChanged] fires with the new value on every edit.
   const JoinCodeInput({
@@ -43,59 +43,112 @@ class JoinCodeInput extends StatelessWidget {
   final bool autofocus;
 
   @override
-  Widget build(BuildContext context) {
-    // TODO(human): return your segmented five-box widget here instead, once
-    // it exists. See the class doc above.
-    return _PlainJoinCodeInput(
-      value: value,
-      onChanged: onChanged,
-      autofocus: autofocus,
-    );
-  }
+  State<JoinCodeInput> createState() => _JoinCodeInputState();
 }
 
-/// The working fallback: one field, capped and formatted like a join code,
-/// good enough to ship while [_SegmentedJoinCodeInput] is unbuilt.
-class _PlainJoinCodeInput extends StatefulWidget {
-  const _PlainJoinCodeInput({
-    required this.value,
-    required this.onChanged,
-    required this.autofocus,
-  });
-
-  final String value;
-  final ValueChanged<String> onChanged;
-  final bool autofocus;
-
-  @override
-  State<_PlainJoinCodeInput> createState() => _PlainJoinCodeInputState();
-}
-
-class _PlainJoinCodeInputState extends State<_PlainJoinCodeInput> {
-  late final _controller = TextEditingController(text: widget.value);
+class _JoinCodeInputState extends State<JoinCodeInput> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
+  late final FocusNode _focus = FocusNode()
+    ..addListener(() => setState(() {})); // repaint the active box's border.
 
   @override
   void dispose() {
     _controller.dispose();
+    _focus.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
-      controller: _controller,
-      autofocus: widget.autofocus,
-      textAlign: TextAlign.center,
-      textCapitalization: TextCapitalization.characters,
-      keyboardType: TextInputType.visiblePassword,
-      style: AppTextStyles.codeLarge.copyWith(fontSize: 24),
-      maxLength: JoinCode.length,
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
-        UpperCaseTextFormatter(),
-      ],
-      decoration: const InputDecoration(counterText: ''),
-      onChanged: widget.onChanged,
+    final text = _controller.text;
+    // The box about to receive the next character — the design's "cursor"
+    // is really just this box's border, since there is nowhere else for a
+    // blinking caret to visibly land once the real field is invisible.
+    final activeIndex = text.length.clamp(0, JoinCode.length - 1);
+
+    return GestureDetector(
+      // Tapping anywhere in the row should focus the field, not just its
+      // own (invisible, possibly narrower) hit area.
+      onTap: () => _focus.requestFocus(),
+      behavior: HitTestBehavior.translucent,
+      child: SizedBox(
+        height: 56,
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            Row(
+              children: [
+                for (final index in List.generate(JoinCode.length, (i) => i)) ...[
+                  if (index > 0) const SizedBox(width: 9),
+                  Expanded(
+                    child: _CodeBox(
+                      character: index < text.length ? text[index] : '',
+                      active: _focus.hasFocus && index == activeIndex,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+            // The real field: invisible, capturing every keystroke, paste
+            // and autofill suggestion. The boxes above are purely decorative.
+            Opacity(
+              opacity: 0,
+              child: TextField(
+                controller: _controller,
+                focusNode: _focus,
+                autofocus: widget.autofocus,
+                textCapitalization: TextCapitalization.characters,
+                keyboardType: TextInputType.visiblePassword,
+                maxLength: JoinCode.length,
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
+                  UpperCaseTextFormatter(),
+                ],
+                decoration: const InputDecoration(
+                  counterText: '',
+                  border: InputBorder.none,
+                ),
+                onChanged: (value) {
+                  setState(() {}); // the boxes read _controller.text directly.
+                  widget.onChanged(value);
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CodeBox extends StatelessWidget {
+  const _CodeBox({required this.character, required this.active});
+
+  final String character;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AnimatedContainer(
+      duration: AppMotion.quick,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppRadii.input),
+        border: Border.all(
+          color: active ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+          width: active ? 2 : 1.5,
+        ),
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        character,
+        style: AppTextStyles.codeLarge.copyWith(
+          fontSize: 22,
+          color: theme.colorScheme.onSurface,
+        ),
+      ),
     );
   }
 }

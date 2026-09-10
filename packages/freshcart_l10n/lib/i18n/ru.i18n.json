@@ -38,7 +38,15 @@
     "doneCount": "Готово · {{n}}",
     "clearChecked": "Очистить отмеченные",
     "itemRemoved": "{{name}} удалено",
-    "selectedCount": "Выбрано: {{n}}"
+    "selectedCount": "Выбрано: {{n}}",
+    "celebrateCount": {
+      "one": "Готово — {{n}} товар",
+      "few": "Готово — {{n}} товара",
+      "many": "Готово — {{n}} товаров",
+      "other": "Готово — {{n}} товара"
+    },
+    "celebrateBody": "Всё отмечено в списке «{{list}}».",
+    "keepList": "Оставить список"
   },
   "shops": {
     "all": "Все магазины",

@@ -36,7 +36,13 @@
     "doneCount": "Terminé · {{n}}",
     "clearChecked": "Effacer cochés",
     "itemRemoved": "{{name}} supprimé",
-    "selectedCount": "{{n}} sélectionné(s)"
+    "selectedCount": "{{n}} sélectionné(s)",
+    "celebrateCount": {
+      "one": "Tout est prêt — {{n}} article",
+      "other": "Tout est prêt — {{n}} articles"
+    },
+    "celebrateBody": "Tout est coché sur {{list}}.",
+    "keepList": "Garder la liste"
   },
   "shops": {
     "all": "Tous les magasins",

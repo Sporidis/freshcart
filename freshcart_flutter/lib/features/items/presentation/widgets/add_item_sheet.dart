@@ -26,6 +26,7 @@ class AddItemSheet extends StatefulWidget {
     required this.initialName,
     required this.shops,
     required this.t,
+    this.initialShopId,
     super.key,
   });
 
@@ -36,6 +37,12 @@ class AddItemSheet extends StatefulWidget {
   /// The shops on this list, to tag the item to one of them. Empty hides the
   /// picker entirely -- nothing to choose from is not worth a section.
   final List<Shop> shops;
+
+  /// The shop tab that was active when this sheet was opened, if any --
+  /// pre-selected here so adding an item while looking at one shop's tab
+  /// tags it to that shop by default. Still just a starting point: the
+  /// chips below let it be changed before saving.
+  final ShopId? initialShopId;
 
   /// Translations for the active locale.
   final Translations t;
@@ -50,7 +57,18 @@ class _AddItemSheetState extends State<AddItemSheet> {
   );
   final TextEditingController _note = TextEditingController();
   int _quantity = 1;
-  ShopId? _shopId;
+  late ShopId? _shopId = _initialShopId();
+
+  /// The active shop tab, but only if it is actually one of this list's
+  /// shops -- a stale filter (the shop was deleted by someone else between
+  /// opening the tab and opening this sheet) should fall back to "no shop"
+  /// rather than tag the item to something [widget.shops] does not offer a
+  /// chip for.
+  ShopId? _initialShopId() {
+    final id = widget.initialShopId;
+    if (id == null) return null;
+    return widget.shops.any((shop) => shop.id == id) ? id : null;
+  }
 
   @override
   void dispose() {

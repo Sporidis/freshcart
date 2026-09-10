@@ -11,11 +11,13 @@ import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/features/items/application/celebration_dismissed_provider.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_editor_dialog.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
@@ -56,6 +58,37 @@ class ItemsSection extends ConsumerWidget {
       selectionControllerProvider(list.id).select((s) => s.isNotEmpty),
     );
     final search = ref.watch(searchControllerProvider(list.id));
+
+    // The completion celebration looks at *every* item on the list, not
+    // just the active shop tab -- "all done" means the whole list, the same
+    // way the design's own `allDone` check does.
+    final allItems = switch (items) {
+      AsyncOutcome<List<ShoppingItem>>(value: Ok<List<ShoppingItem>>(:final value)) =>
+        value,
+      _ => const <ShoppingItem>[],
+    };
+    final allDone = allItems.isNotEmpty && allItems.every((i) => i.isChecked);
+    final celebrationDismissed = ref.watch(
+      celebrationDismissedProvider(list.id),
+    );
+
+    // The moment the list stops being fully checked -- an item added,
+    // unchecked, or cleared -- forget the dismissal, so the celebration is
+    // ready to show again the next time it actually applies, rather than
+    // staying silenced by one long-ago tap.
+    ref.listen(itemsControllerProvider(list.id), (previous, next) {
+      final nextItems = switch (next) {
+        AsyncOutcome<List<ShoppingItem>>(value: Ok<List<ShoppingItem>>(:final value)) =>
+          value,
+        _ => null,
+      };
+      if (nextItems == null) return;
+      final stillAllDone =
+          nextItems.isNotEmpty && nextItems.every((i) => i.isChecked);
+      if (!stillAllDone) {
+        ref.read(celebrationDismissedProvider(list.id).notifier).reset();
+      }
+    });
 
     /// Shows the message behind a rolled-back optimistic update.
     ///
@@ -124,6 +157,16 @@ class ItemsSection extends ConsumerWidget {
             },
           },
         ),
+        // Only once nothing else is competing for the bottom of the screen
+        // -- multi-select and search each have their own reason to hide the
+        // quick-add bar just below, and the same reasons apply here.
+        if (allDone && !celebrationDismissed && !selectionMode && !search.active)
+          CompletionCelebrationCard(
+            list: list,
+            itemCount: allItems.length,
+            t: t,
+            report: report,
+          ),
         // Slides out during multi-select or search (§10, §16): neither
         // leaves room for adding a fresh item the ordinary way -- search
         // offers its own "Add to list" inside the no-results state instead.
@@ -153,8 +196,12 @@ class ItemsSection extends ConsumerWidget {
                       context: context,
                       isScrollControlled: true,
                       showDragHandle: true,
-                      builder: (_) =>
-                          AddItemSheet(initialName: name, shops: shops, t: t),
+                      builder: (_) => AddItemSheet(
+                        initialName: name,
+                        shops: shops,
+                        initialShopId: shopFilter,
+                        t: t,
+                      ),
                     );
                     if (details == null) return false;
                     final failure = await controller.add(
