@@ -165,6 +165,6 @@ void main() {
     await pump(tester, asUserId: aliceId);
 
     expect(find.byType(InviteCard), findsOneWidget);
-    expect(find.text('ABC234'), findsOneWidget);
+    expect(find.text('ABC23'), findsOneWidget);
   });
 }

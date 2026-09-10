@@ -5,6 +5,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -31,7 +32,14 @@ void main() {
     shopRepository = FakeShopRepository();
   });
 
-  Future<ProviderContainer> pump(WidgetTester tester) async {
+  Future<ProviderContainer> pump(
+    WidgetTester tester, {
+    // Only the delete-confirmation test needs a resolved identity (to land
+    // on the owner branch of the list menu); everything else leaves this
+    // null and gets the default "assume membership until it resolves"
+    // behaviour the menu itself documents.
+    String? currentUserId,
+  }) async {
     final container = ProviderContainer(
       overrides: [
         listRepositoryProvider.overrideWithValue(repository),
@@ -40,6 +48,10 @@ void main() {
         // These tests are about ListsScreen itself, not the onboarding gate —
         // a restored (non-new) identity so the router starts on /lists.
         isNewIdentityProvider.overrideWithValue(false),
+        if (currentUserId != null)
+          currentUserIdProvider.overrideWith(
+            (ref) async => Ok(UserId(currentUserId)),
+          ),
       ],
     );
     addTearDown(container.dispose);
@@ -150,11 +162,11 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.group_add_outlined));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'abc234');
+      await tester.enterText(find.byType(TextField), 'abc23');
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
-      expect(repository.joinCalls.single.value, 'ABC234');
+      expect(repository.joinCalls.single.value, 'ABC23');
       expect(find.byType(AlertDialog), findsNothing);
     });
 
@@ -175,7 +187,7 @@ void main() {
         reason: 'JoinList parses the code before spending a request',
       );
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('A join code is 6 characters'), findsOneWidget);
+      expect(find.text('A join code is 5 characters'), findsOneWidget);
     });
 
     testWidgets('surfaces a code that matches no list', (tester) async {
@@ -184,11 +196,11 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.group_add_outlined));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'ZZZ999');
+      await tester.enterText(find.byType(TextField), 'ZZZ99');
       await tester.tap(find.text('Save'));
       await tester.pumpAndSettle();
 
-      expect(repository.joinCalls.single.value, 'ZZZ999');
+      expect(repository.joinCalls.single.value, 'ZZZ99');
       expect(find.text('Not found.'), findsOneWidget);
     });
   });
@@ -254,6 +266,52 @@ void main() {
     });
   });
 
+  group('deleting a list', () {
+    testWidgets('the confirmation names both the members and the products', (
+      tester,
+    ) async {
+      final list = buildList(
+        name: 'Groceries',
+        members: [
+          buildMember(),
+          buildMember(userId: 'user-2'),
+        ],
+      );
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+      itemRepository.byListResult = Ok([
+        buildItem(name: 'Milk'),
+        buildItem(id: '00000000-0000-4000-8000-0000000000a2', name: 'Bread'),
+        buildItem(id: '00000000-0000-4000-8000-0000000000a3', name: 'Eggs'),
+      ]);
+
+      await pump(tester, currentUserId: 'user-1');
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(PopupMenuButton<void>));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete list'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delete Groceries?'), findsOneWidget);
+      expect(
+        find.text(
+          'This removes the list and its 3 products for all 2 members. '
+          'It cannot be undone.',
+        ),
+        findsOneWidget,
+        reason: 'the count is why a bare "everything on it" is not enough',
+      );
+
+      await tester.tap(find.text('Delete for everyone'));
+      await tester.pumpAndSettle();
+
+      expect(repository.deleteCalls.single, list.id);
+      expect(find.text('My lists'), findsOneWidget);
+    });
+  });
+
   group('navigation', () {
     testWidgets('tapping a list opens its detail screen', (tester) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
@@ -266,7 +324,7 @@ void main() {
 
       // The detail screen shows the join code and the member count, with the
       // members themselves behind an expander.
-      expect(find.textContaining('ABC234'), findsOneWidget);
+      expect(find.textContaining('ABC23'), findsOneWidget);
       expect(find.text('1 member'), findsOneWidget);
 
       await tester.tap(find.text('1 member'));

@@ -18,7 +18,7 @@
     "leaveConfirmBody": "Vous ne verrez plus {{name}}. Les autres la conservent.",
     "delete": "Supprimer la liste",
     "deleteConfirmTitle": "Supprimer {{name}} ?",
-    "deleteConfirmBody": "Cela supprime la liste et tout son contenu pour les {{n}} membres. Action irréversible.",
+    "deleteConfirmBody": "Cela supprime la liste et ses {{items}} produits pour les {{n}} membres. Action irréversible.",
     "deleteForEveryone": "Supprimer pour tout le monde"
   },
   "items": {

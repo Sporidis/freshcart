@@ -18,7 +18,7 @@
     "leaveConfirmBody": "Hindi mo na makikita ang {{name}}. Mananatili ito sa iba.",
     "delete": "Burahin ang listahan",
     "deleteConfirmTitle": "Burahin ang {{name}}?",
-    "deleteConfirmBody": "Mabubura ang listahan at lahat ng laman nito para sa {{n}} miyembro. Hindi na ito maibabalik.",
+    "deleteConfirmBody": "Mabubura ang listahan at ang {{items}} produkto nito para sa {{n}} miyembro. Hindi na ito maibabalik.",
     "deleteForEveryone": "Burahin para sa lahat"
   },
   "items": {

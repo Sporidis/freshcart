@@ -52,6 +52,7 @@ void main() {
     'editable title': editableListTitlePreview,
     'edit shop sheet': editShopSheetPreview,
     'edit shop · clash': editShopSheetClashPreview,
+    'add shop sheet': editShopSheetCreatePreview,
     'delete shop · holds': deleteShopSheetPreview,
     'delete shop · empty': deleteShopSheetEmptyPreview,
   };

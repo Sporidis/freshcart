@@ -26,7 +26,7 @@ final dto.UuidValue shopUuid = dto.UuidValue.withValidation(
 /// Builds a wire [dto.ShoppingList].
 dto.ShoppingList buildListDto({
   String name = 'Groceries',
-  String joinCode = 'ABC234',
+  String joinCode = 'ABC23',
   List<dto.ListMember>? members,
 }) => dto.ShoppingList(
   id: listUuid,
