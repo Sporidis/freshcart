@@ -104,5 +104,11 @@
     "transferTitle": "Gawing may-ari si {{name}}?",
     "transferBody": "Mababago nila ang pangalan ng listahan, mabubura ito, at mapamamahalaan ang mga miyembro. Magiging karaniwang miyembro ka.",
     "transfer": "Gawing may-ari"
+  },
+  "search": {
+    "hint": "Maghanap ng produkto",
+    "noResultsTitle": "Walang tugmang produkto para sa ‘{{query}}’",
+    "addAction": "Idagdag ang \"{{query}}\" sa listahang ito",
+    "noResultsBody": "Tingnan ang spelling, o idagdag ito bilang bagong produkto."
   }
 }

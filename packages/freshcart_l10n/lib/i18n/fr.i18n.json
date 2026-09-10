@@ -104,5 +104,11 @@
     "transferTitle": "Rendre {{name}} propriétaire ?",
     "transferBody": "Cette personne pourra renommer la liste, la supprimer et gérer les membres. Vous devenez membre ordinaire.",
     "transfer": "Rendre propriétaire"
+  },
+  "search": {
+    "hint": "Rechercher des produits",
+    "noResultsTitle": "Aucun produit ne correspond à ‘{{query}}’",
+    "addAction": "Ajouter \"{{query}}\" à cette liste",
+    "noResultsBody": "Vérifiez l’orthographe, ou ajoutez-le comme nouveau produit."
   }
 }

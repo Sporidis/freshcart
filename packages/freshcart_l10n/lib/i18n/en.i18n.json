@@ -104,5 +104,11 @@
     "transferTitle": "Make {{name}} the owner?",
     "transferBody": "They will be able to rename the list, delete it and manage members. You become an ordinary member.",
     "transfer": "Make owner"
+  },
+  "search": {
+    "hint": "Search products",
+    "noResultsTitle": "No products match ‘{{query}}’",
+    "addAction": "Add \"{{query}}\" to this list",
+    "noResultsBody": "Check the spelling, or add it as a new product."
   }
 }

@@ -33,6 +33,8 @@ class ItemTile extends StatefulWidget {
     required this.index,
     required this.canReorder,
     required this.t,
+    this.shopDotColor,
+    this.highlightQuery,
     super.key,
   });
 
@@ -81,6 +83,17 @@ class ItemTile extends StatefulWidget {
 
   /// Translations for the active locale.
   final Translations t;
+
+  /// The item's shop colour, shown as a small dot before its name. Null
+  /// hides the dot -- used only in search results (§16: "results become one
+  /// flat list across all shops with the shop dot doing the disambiguating"),
+  /// since a single shop tab already makes the shop obvious from context.
+  final Color? shopDotColor;
+
+  /// The search query to bold matching substrings of the name against
+  /// (§16: "weight-600 rather than highlighted"). Null or empty leaves the
+  /// name plain.
+  final String? highlightQuery;
 
   @override
   State<ItemTile> createState() => _ItemTileState();
@@ -353,6 +366,17 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
             ),
             title: Row(
               children: [
+                if (widget.shopDotColor != null) ...[
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: widget.shopDotColor,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
                 if (item.quantity > 1) ...[
                   Text(
                     '${item.quantity}×',
@@ -367,7 +391,15 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
                   child: _StrikeThrough(
                     progress: _strike,
                     color: muted,
-                    child: Text(item.name, style: theme.textTheme.bodyLarge),
+                    child: Text.rich(
+                      TextSpan(
+                        children: _highlightSpans(
+                          item.name,
+                          widget.highlightQuery,
+                          theme.textTheme.bodyLarge,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
                 if (item.hasNote)
@@ -440,6 +472,39 @@ class _SelectionCircle extends StatelessWidget {
           : null,
     );
   }
+}
+
+/// Splits [text] into spans of [base], with every match of [query] set to
+/// weight 600 instead (§16: "weight-600 rather than highlighted" -- no
+/// background colour, just a heavier weight). A null or empty [query]
+/// returns [text] as a single plain span.
+///
+/// Every non-overlapping match is bolded, not just the first: a name
+/// containing the query twice should not read as if only one of them
+/// matched.
+List<InlineSpan> _highlightSpans(String text, String? query, TextStyle? base) {
+  if (query == null || query.isEmpty) return [TextSpan(text: text, style: base)];
+
+  final lowerText = text.toLowerCase();
+  final lowerQuery = query.toLowerCase();
+  final bold = base?.copyWith(fontWeight: FontWeight.w600);
+  final spans = <InlineSpan>[];
+  var cursor = 0;
+  while (true) {
+    final match = lowerText.indexOf(lowerQuery, cursor);
+    if (match < 0) {
+      spans.add(TextSpan(text: text.substring(cursor), style: base));
+      break;
+    }
+    if (match > cursor) {
+      spans.add(TextSpan(text: text.substring(cursor, match), style: base));
+    }
+    spans.add(
+      TextSpan(text: text.substring(match, match + query.length), style: bold),
+    );
+    cursor = match + query.length;
+  }
+  return spans;
 }
 
 /// Draws a strike-through across [child] as [progress] runs 0 to 1.

@@ -104,5 +104,11 @@
     "transferTitle": "{{name}} eigenaar maken?",
     "transferBody": "Zij kunnen dan de lijst hernoemen, verwijderen en leden beheren. Jij wordt gewoon lid.",
     "transfer": "Eigenaar maken"
+  },
+  "search": {
+    "hint": "Zoek producten",
+    "noResultsTitle": "Geen producten voor ‘{{query}}’",
+    "addAction": "\"{{query}}\" toevoegen aan deze lijst",
+    "noResultsBody": "Controleer de spelling, of voeg het toe als nieuw product."
   }
 }
