@@ -42,7 +42,15 @@
     "unauthorized": "Je hebt hier geen toegang toe.",
     "conflict": "Iemand anders heeft dit net gewijzigd. Probeer opnieuw.",
     "unexpected": "Er is iets misgegaan.",
-    "validation": "Controleer wat je hebt ingevuld."
+    "validation": "Controleer wat je hebt ingevuld.",
+    "couldNotSave": "Kon “{{name}}” niet opslaan",
+    "listDeletedTitle": "Deze lijst is verwijderd",
+    "listDeletedBody": "Iemand heeft deze lijst voor het hele huishouden verwijderd.",
+    "noAccessTitle": "Je hebt geen toegang meer",
+    "noAccessBody": "Je bent geen lid meer van deze lijst.",
+    "unexpectedTitle": "Er ging iets mis",
+    "unexpectedBody": "Probeer het opnieuw. Blijft het misgaan, sluit de app dan even af.",
+    "backToLists": "Terug naar je lijsten"
   },
   "account": {
     "title": "Beveilig je lijsten",

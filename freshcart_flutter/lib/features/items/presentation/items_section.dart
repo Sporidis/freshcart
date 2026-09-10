@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_field.dart';
@@ -49,11 +50,17 @@ class ItemsSection extends ConsumerWidget {
     ///
     /// Without this a row would tick, untick itself and leave the user
     /// wondering whether they mis-tapped.
-    void report(Failure? failure) {
+    void report(Failure? failure, {VoidCallback? onRetry}) {
       if (failure == null || !context.mounted) return;
-      ScaffoldMessenger.of(
+      // A failed write is the snackbar tier: the screen behind it is still
+      // perfectly usable, so it gets a message and a way to try again rather
+      // than being replaced.
+      showFailureSnackBar(
         context,
-      ).showSnackBar(SnackBar(content: Text(failure.toMessage(t))));
+        failure: failure,
+        t: t,
+        onRetry: onRetry,
+      );
     }
 
     return Column(
@@ -119,7 +126,7 @@ class _ItemList extends ConsumerWidget {
   final ShoppingList list;
   final Translations t;
   final ItemsController controller;
-  final void Function(Failure?) report;
+  final void Function(Failure?, {VoidCallback? onRetry}) report;
   final Future<void> Function() onRefresh;
 
   @override
@@ -155,9 +162,15 @@ class _ItemList extends ConsumerWidget {
         } else {
           recent.hold(item.id);
         }
-        report(await controller.toggle(item));
+        report(
+          await controller.toggle(item),
+          onRetry: () async => report(await controller.toggle(item)),
+        );
       },
-      onDelete: () async => report(await controller.remove(item)),
+      onDelete: () async => report(
+        await controller.remove(item),
+        onRetry: () async => report(await controller.remove(item)),
+      ),
       onEdit: () async {
         final edit = await showDialog<ItemEdit>(
           context: context,

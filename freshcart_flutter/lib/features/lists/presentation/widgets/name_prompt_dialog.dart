@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/error/error_tier.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
 
 /// A single-field dialog that submits through a fallible action.
 ///
@@ -50,6 +52,10 @@ class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
   String? _errorText;
   bool _busy = false;
 
+  /// Whether the current error deserves a shake. An expired invite or an
+  /// unreachable server is not the user's typo, so it says its piece quietly.
+  bool _shake = true;
+
   @override
   void dispose() {
     _controller.dispose();
@@ -72,6 +78,7 @@ class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
           // FailureMessage already shows a ValidationFailure's own message and
           // localizes everything else, so there is no special case here.
           _errorText = failure.toMessage(ref.read(translationsProvider));
+          _shake = shakesOn(failure);
         });
     }
   }
@@ -80,16 +87,27 @@ class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.title),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        enabled: !_busy,
-        textCapitalization: widget.capitalization,
-        decoration: InputDecoration(
-          labelText: widget.label,
-          errorText: _errorText,
+      content: ShakeOnError(
+        errorText: _errorText,
+        shake: _shake,
+        child: TextField(
+          controller: _controller,
+          autofocus: true,
+          enabled: !_busy,
+          textCapitalization: widget.capitalization,
+          decoration: InputDecoration(
+            labelText: widget.label,
+            errorText: _errorText,
+          ),
+          // The text is kept, never cleared: a mistyped code should be
+          // correctable rather than retyped from scratch. The error clears on
+          // the next keystroke so it stops nagging once they are fixing it.
+          onChanged: (_) {
+            if (_errorText == null) return;
+            setState(() => _errorText = null);
+          },
+          onSubmitted: (_) => _busy ? null : _submit(),
         ),
-        onSubmitted: (_) => _busy ? null : _submit(),
       ),
       actions: [
         TextButton(
