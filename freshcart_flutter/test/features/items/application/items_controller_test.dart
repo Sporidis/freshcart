@@ -211,6 +211,72 @@ void main() {
     });
   });
 
+  group('swipeDelete', () {
+    test('hides the row immediately, before the undo window ends', () async {
+      final item = buildItem();
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final undo = container
+          .read(itemsControllerProvider(listId).notifier)
+          .swipeDelete(item);
+
+      expect(currentItems(container), isEmpty);
+      expect(
+        repository.removedIds,
+        isEmpty,
+        reason: 'the server call is deferred, not immediate',
+      );
+
+      // Undo purely to cancel the pending timer so it does not outlive the
+      // test -- this test is about the immediate hide, not the undo path.
+      undo();
+    });
+
+    test('undo restores the exact row and cancels the pending removal', () async {
+      final item = buildItem(note: Note(
+        text: 'the oat one',
+        authorId: me,
+        updatedAt: DateTime.utc(2026, 9, 9),
+      ));
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final undo = container
+          .read(itemsControllerProvider(listId).notifier)
+          .swipeDelete(item);
+      expect(currentItems(container), isEmpty);
+
+      undo();
+
+      expect(currentItems(container).single, item);
+      // Cancelling means the server is never told, even once the window
+      // that would otherwise have committed the delete has passed.
+      await pumpEventQueue();
+      expect(repository.removedIds, isEmpty);
+    });
+
+    test('undo is idempotent -- a second tap does nothing odd', () async {
+      final item = buildItem();
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final undo = container
+          .read(itemsControllerProvider(listId).notifier)
+          .swipeDelete(item);
+      undo();
+      undo();
+
+      expect(currentItems(container), [item]);
+    });
+  });
+
   group('save', () {
     test('rolls an edit back on conflict', () async {
       final item = buildItem(name: 'Milk');

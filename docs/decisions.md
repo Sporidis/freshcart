@@ -612,3 +612,28 @@ guess makes the same true of what the screen shows while the request is in fligh
 **Trade-off:** a failure now rolls back the whole batch rather than clearing what it could —
 correct here, since "mostly cleared" is a worse, harder-to-explain state than "not cleared,
 try again."
+
+## 52. Swipe-to-delete is deferred client-side, and its recoil is `Dismissible`'s own, not a hand-rolled spring
+
+**Decision:** `ItemsController.swipeDelete` hides the row the instant the swipe commits, and
+only calls the server after a 4-second undo window (`swipeUndoWindow`) passes uncancelled —
+mirroring the Motion spec's swipe-to-delete rule (§10). The repository reference is captured
+into a local (`ref.read(itemRepositoryProvider)`) before the `Timer` is scheduled, not read
+again inside it: if the user navigates away and this controller is disposed before the timer
+fires, `ref` stops working but the plain Dart reference does not, so the delete still lands.
+`swipeDelete` returns the undo action synchronously rather than a `Future<Failure?>` like
+[remove] — the delete is deferred, so there is nothing to await yet, and a failure surfacing
+four seconds later, once the user is looking at a different row, would read as an unrelated
+bug rather than a response to anything they just did. **Trade-off:** a delete that fails once
+the window elapses is not surfaced at all; the alternative (a snackbar arriving seconds after
+the gesture that caused it, out of context) seemed worse than staying silent.
+
+**Also decided:** the swipe's cancel-and-spring-back motion is `Dismissible`'s own built-in
+recoil, not a hand-built replica of `AppMotion.spring`. `Dismissible` does not expose a way to
+swap in a custom physics curve for that recoil short of rebuilding the gesture/drag handling
+from scratch, and doing that just to match one easing curve on a cancelled swipe is
+disproportionate to what it would teach or how visible the difference actually is — flagged
+here rather than silently shipped as if it were the literal spec. The parts of §10 that
+`Dismissible` **does** expose directly — `dismissThresholds` at 0.4, a 220 ms `resizeDuration`,
+`mediumImpact()` and an icon pop on threshold crossing via `onUpdate` — are implemented as
+specified.

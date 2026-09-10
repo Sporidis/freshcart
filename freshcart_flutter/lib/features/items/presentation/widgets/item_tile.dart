@@ -4,8 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+
+/// The fraction of the row's width a swipe must cross before it commits to
+/// deleting, per the Motion spec (§10).
+const _swipeDismissThreshold = 0.4;
 
 /// One row of a shopping list.
 class ItemTile extends StatefulWidget {
@@ -15,7 +21,7 @@ class ItemTile extends StatefulWidget {
     required this.checkedByName,
     required this.onToggle,
     required this.onEdit,
-    required this.onDelete,
+    required this.onSwipeDelete,
     required this.t,
     super.key,
   });
@@ -32,8 +38,9 @@ class ItemTile extends StatefulWidget {
   /// Called when the row is tapped.
   final VoidCallback onEdit;
 
-  /// Called when the row is swiped away.
-  final VoidCallback onDelete;
+  /// Called once the swipe commits to deleting the row. Returns the undo
+  /// action, which this tile wires into the snackbar it shows.
+  final void Function() Function() onSwipeDelete;
 
   /// Translations for the active locale.
   final Translations t;
@@ -42,14 +49,45 @@ class ItemTile extends StatefulWidget {
   State<ItemTile> createState() => _ItemTileState();
 }
 
-class _ItemTileState extends State<ItemTile>
-    with SingleTickerProviderStateMixin {
+class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   /// Drives the strike-through wipe and the fade to 45%.
   late final AnimationController _strike = AnimationController(
     vsync: this,
     duration: AppMotion.quick,
     value: widget.item.isChecked ? 1 : 0,
   );
+
+  /// How far the current swipe has travelled, 0 to 1 of the row's width.
+  /// Feeds [_iconScale]; set from [_handleSwipeUpdate].
+  double _swipeProgress = 0;
+
+  /// Plays the delete icon's overshoot-and-settle "pop" the instant a swipe
+  /// crosses the dismiss threshold (Motion spec §10).
+  late final AnimationController _iconPop = AnimationController(
+    vsync: this,
+    duration: AppMotion.quick,
+  );
+  late final Animation<double> _iconPopOvershoot =
+      TweenSequence<double>([
+        TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.15), weight: 1),
+        TweenSequenceItem(tween: Tween(begin: 0.15, end: 0.0), weight: 1),
+      ]).animate(CurvedAnimation(parent: _iconPop, curve: Curves.easeOut));
+
+  /// The delete icon's scale: 0.7 while under 30% of the row's width,
+  /// ramping linearly to 1 by the time the row is fully swiped (§10), plus
+  /// whatever overshoot [_iconPop] is currently playing.
+  double get _iconScale {
+    const rampStart = 0.3;
+    final base = _swipeProgress <= rampStart
+        ? 0.7
+        : 0.7 +
+              0.3 *
+                  ((_swipeProgress - rampStart) / (1 - rampStart)).clamp(
+                    0.0,
+                    1.0,
+                  );
+    return base + _iconPopOvershoot.value;
+  }
 
   @override
   void didUpdateWidget(ItemTile oldWidget) {
@@ -66,6 +104,7 @@ class _ItemTileState extends State<ItemTile>
   @override
   void dispose() {
     _strike.dispose();
+    _iconPop.dispose();
     super.dispose();
   }
 
@@ -74,6 +113,38 @@ class _ItemTileState extends State<ItemTile>
     // useful, confirming an undo is noise.
     if (!widget.item.isChecked) unawaited(HapticFeedback.lightImpact());
     widget.onToggle();
+  }
+
+  /// Turns one swipe-drag update into the feedback the Motion spec (§10)
+  /// asks for: the delete icon tracking the drag, plus a haptic and an
+  /// overshoot "pop" the instant the swipe crosses the dismiss threshold.
+  void _handleSwipeUpdate(DismissUpdateDetails details) {
+    setState(() => _swipeProgress = details.progress);
+
+    // `details.reached` is true for every frame past the threshold, not just
+    // the first -- comparing against `details.previousReached` (rather than,
+    // say, the old `_swipeProgress`) is what isolates the single frame the
+    // drag actually crossed it, so the haptic and pop fire once per crossing
+    // instead of once per frame.
+    if (details.reached && !details.previousReached) {
+      unawaited(HapticFeedback.mediumImpact());
+      _iconPop.forward(from: 0);
+    }
+  }
+
+  /// Commits the swipe: hands off to the controller, which hides the row and
+  /// returns the undo action, then offers that action through a snackbar.
+  void _handleDismissed(BuildContext context) {
+    final undo = widget.onSwipeDelete();
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(widget.t.items.itemRemoved(name: widget.item.name)),
+          duration: ItemsController.swipeUndoWindow,
+          action: SnackBarAction(label: widget.t.common.undo, onPressed: undo),
+        ),
+      );
   }
 
   @override
@@ -86,20 +157,28 @@ class _ItemTileState extends State<ItemTile>
     return Dismissible(
       key: ValueKey(item.id.value),
       direction: DismissDirection.endToStart,
+      dismissThresholds: const {
+        DismissDirection.endToStart: _swipeDismissThreshold,
+      },
+      // 220 ms per the Motion spec (§10) -- the default resize is slower.
+      resizeDuration: const Duration(milliseconds: 220),
+      onUpdate: _handleSwipeUpdate,
       background: ColoredBox(
-        color: theme.colorScheme.errorContainer,
+        color: AppColors.destructive,
         child: Align(
           alignment: Alignment.centerRight,
           child: Padding(
             padding: const EdgeInsets.only(right: 24),
-            child: Icon(
-              Icons.delete_outline,
-              color: theme.colorScheme.onErrorContainer,
+            child: AnimatedBuilder(
+              animation: _iconPop,
+              builder: (context, child) =>
+                  Transform.scale(scale: _iconScale, child: child),
+              child: const Icon(Icons.delete_outline, color: Colors.white),
             ),
           ),
         ),
       ),
-      onDismissed: (_) => widget.onDelete(),
+      onDismissed: (_) => _handleDismissed(context),
       child: AnimatedBuilder(
         animation: _strike,
         builder: (context, child) => Opacity(
@@ -257,7 +336,7 @@ Widget itemTilePreview() {
           checkedByName: null,
           onToggle: () {},
           onEdit: () {},
-          onDelete: () {},
+          onSwipeDelete: () => () {},
           t: t,
         ),
         ItemTile(
@@ -273,7 +352,7 @@ Widget itemTilePreview() {
           checkedByName: null,
           onToggle: () {},
           onEdit: () {},
-          onDelete: () {},
+          onSwipeDelete: () => () {},
           t: t,
         ),
         ItemTile(
@@ -281,7 +360,7 @@ Widget itemTilePreview() {
           checkedByName: 'Sam',
           onToggle: () {},
           onEdit: () {},
-          onDelete: () {},
+          onSwipeDelete: () => () {},
           t: t,
         ),
       ],
