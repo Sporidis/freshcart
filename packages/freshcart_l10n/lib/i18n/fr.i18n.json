@@ -15,7 +15,11 @@
     "rename": "Renommer",
     "leave": "Quitter la liste",
     "leaveConfirmTitle": "Quitter cette liste ?",
-    "leaveConfirmBody": "Vous ne verrez plus {{name}}. Les autres la conservent."
+    "leaveConfirmBody": "Vous ne verrez plus {{name}}. Les autres la conservent.",
+    "delete": "Supprimer la liste",
+    "deleteConfirmTitle": "Supprimer {{name}} ?",
+    "deleteConfirmBody": "Cela supprime la liste et tout son contenu pour les {{n}} membres. Action irréversible.",
+    "deleteForEveryone": "Supprimer pour tout le monde"
   },
   "items": {
     "empty": "Cette liste est vide.",
@@ -38,7 +42,16 @@
     "nameLabel": "Nom du magasin",
     "colorLabel": "Couleur de l’onglet",
     "saveChanges": "Enregistrer",
-    "closeTo": "Proche de {{name}}"
+    "closeTo": "Proche de {{name}}",
+    "delete": "Supprimer le magasin",
+    "deleteTitle": "Supprimer {{name}} ?",
+    "deleteHolds": "{{name}} contient {{n}} produits. Choisissez leur sort.",
+    "deleteEmpty": "Ce magasin ne contient aucun produit.",
+    "moveTo": "Les déplacer vers {{name}}",
+    "moveKeeps": "Conserve les {{n}} produits",
+    "deleteItemsToo": "Supprimer aussi les produits",
+    "deleteItemsBody": "Supprime les {{n}} définitivement",
+    "untag": "Les laisser sans magasin"
   },
   "common": {
     "cancel": "Annuler",

@@ -14,6 +14,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/creat
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/display_name_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -51,6 +52,8 @@ void main() {
     'editable title': editableListTitlePreview,
     'edit shop sheet': editShopSheetPreview,
     'edit shop · clash': editShopSheetClashPreview,
+    'delete shop · holds': deleteShopSheetPreview,
+    'delete shop · empty': deleteShopSheetEmptyPreview,
   };
 
   for (final MapEntry(key: name, value: build) in previews.entries) {

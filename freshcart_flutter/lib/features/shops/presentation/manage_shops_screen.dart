@@ -7,8 +7,10 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 
 /// The shops on one list, editable.
@@ -100,6 +102,11 @@ class _ShopRow extends ConsumerWidget {
               Expanded(
                 child: Text(shop.name, style: theme.textTheme.titleMedium),
               ),
+              IconButton(
+                onPressed: () => _delete(context, ref),
+                icon: const Icon(Icons.delete_outline, size: 20),
+                tooltip: ref.read(translationsProvider).shops.delete,
+              ),
               const Icon(Icons.chevron_right, size: 20),
             ],
           ),
@@ -132,5 +139,44 @@ class _ShopRow extends ConsumerWidget {
     // sheet: an abandoned colour left tinting the app would be a lie about
     // what is stored.
     ref.read(shopColorPreviewProvider.notifier).clear();
+  }
+
+  Future<void> _delete(BuildContext context, WidgetRef ref) async {
+    final controller = ref.read(shopsControllerProvider(listId).notifier);
+    final t = ref.read(translationsProvider);
+
+    // The count is fetched before asking, because it is the question: an empty
+    // shop needs no decision, a shop holding six products needs a real one.
+    final count = switch (await controller.itemCount(shop.id)) {
+      Ok<int>(:final value) => value,
+      Err<int>(:final failure) => failure,
+    };
+    if (!context.mounted) return;
+    if (count is Failure) {
+      showFailureSnackBar(context, failure: count, t: t);
+      return;
+    }
+
+    final choice = await showModalBottomSheet<ShopDeletion>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => DeleteShopSheet(
+        shop: shop,
+        itemCount: count as int,
+        siblings: siblings,
+      ),
+    );
+    if (choice == null || !context.mounted) return;
+
+    final result = await controller.remove(
+      shop.id,
+      disposition: choice.disposition,
+      moveTo: choice.moveTo,
+    );
+    if (!context.mounted) return;
+    if (result case Err<void>(:final failure)) {
+      showFailureSnackBar(context, failure: failure, t: t);
+    }
   }
 }

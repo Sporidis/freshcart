@@ -40,9 +40,19 @@ class ShopsController extends _$ShopsController {
     return result;
   }
 
-  /// Deletes a shop. Items tagged to it are untagged, not deleted.
-  Future<Result<void>> remove(ShopId id) async {
-    final result = await ref.read(shopRepositoryProvider).remove(id);
+  /// How many items are tagged to [id], for the delete sheet to lead with.
+  Future<Result<int>> itemCount(ShopId id) =>
+      ref.read(shopRepositoryProvider).itemCount(id);
+
+  /// Deletes a shop, disposing of its items as [disposition] says.
+  Future<Result<void>> remove(
+    ShopId id, {
+    ShopItemDisposition disposition = ShopItemDisposition.untag,
+    ShopId? moveTo,
+  }) async {
+    final result = await ref
+        .read(shopRepositoryProvider)
+        .remove(id, disposition: disposition, moveTo: moveTo);
     if (result.isOk) ref.invalidateSelf();
     return result;
   }

@@ -34,19 +34,20 @@ import 'notifications/models/list_mute.dart' as _i20;
 import 'notifications/models/list_reference.dart' as _i21;
 import 'notifications/models/pending_item_notification.dart' as _i22;
 import 'shops/models/shop.dart' as _i23;
-import 'users/models/current_user.dart' as _i24;
-import 'users/models/member_profile.dart' as _i25;
+import 'shops/models/shop_item_disposition.dart' as _i24;
+import 'users/models/current_user.dart' as _i25;
+import 'users/models/member_profile.dart' as _i26;
 import 'package:freshcart_client/src/protocol/auth/models/linked_provider.dart'
-    as _i26;
-import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i27;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i28;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i29;
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+    as _i29;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i30;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i30;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i31;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i32;
 export 'auth/models/linked_provider.dart';
 export 'common/models/account_already_linked_exception.dart';
 export 'common/models/edit_conflict_exception.dart';
@@ -69,6 +70,7 @@ export 'notifications/models/list_mute.dart';
 export 'notifications/models/list_reference.dart';
 export 'notifications/models/pending_item_notification.dart';
 export 'shops/models/shop.dart';
+export 'shops/models/shop_item_disposition.dart';
 export 'users/models/current_user.dart';
 export 'users/models/member_profile.dart';
 export 'client.dart';
@@ -173,11 +175,14 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i23.Shop) {
       return _i23.Shop.fromJson(data) as T;
     }
-    if (t == _i24.CurrentUser) {
-      return _i24.CurrentUser.fromJson(data) as T;
+    if (t == _i24.ShopItemDisposition) {
+      return _i24.ShopItemDisposition.fromJson(data) as T;
     }
-    if (t == _i25.MemberProfile) {
-      return _i25.MemberProfile.fromJson(data) as T;
+    if (t == _i25.CurrentUser) {
+      return _i25.CurrentUser.fromJson(data) as T;
+    }
+    if (t == _i26.MemberProfile) {
+      return _i26.MemberProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.LinkedProvider?>()) {
       return (data != null ? _i2.LinkedProvider.fromJson(data) : null) as T;
@@ -258,11 +263,15 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i23.Shop?>()) {
       return (data != null ? _i23.Shop.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i24.CurrentUser?>()) {
-      return (data != null ? _i24.CurrentUser.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i24.ShopItemDisposition?>()) {
+      return (data != null ? _i24.ShopItemDisposition.fromJson(data) : null)
+          as T;
     }
-    if (t == _i1.getType<_i25.MemberProfile?>()) {
-      return (data != null ? _i25.MemberProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i25.CurrentUser?>()) {
+      return (data != null ? _i25.CurrentUser.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i26.MemberProfile?>()) {
+      return (data != null ? _i26.MemberProfile.fromJson(data) : null) as T;
     }
     if (t == List<_i15.ListMember>) {
       return (data as List).map((e) => deserialize<_i15.ListMember>(e)).toList()
@@ -325,32 +334,32 @@ class Protocol extends _i1.SerializationManager {
               : null)
           as T;
     }
-    if (t == List<_i26.LinkedProvider>) {
+    if (t == List<_i27.LinkedProvider>) {
       return (data as List)
-              .map((e) => deserialize<_i26.LinkedProvider>(e))
+              .map((e) => deserialize<_i27.LinkedProvider>(e))
               .toList()
           as T;
     }
-    if (t == List<_i27.ShoppingItem>) {
+    if (t == List<_i28.ShoppingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i27.ShoppingItem>(e))
+              .map((e) => deserialize<_i28.ShoppingItem>(e))
               .toList()
           as T;
     }
-    if (t == List<_i28.ShoppingList>) {
+    if (t == List<_i29.ShoppingList>) {
       return (data as List)
-              .map((e) => deserialize<_i28.ShoppingList>(e))
+              .map((e) => deserialize<_i29.ShoppingList>(e))
               .toList()
           as T;
     }
-    if (t == List<_i29.Shop>) {
-      return (data as List).map((e) => deserialize<_i29.Shop>(e)).toList() as T;
+    if (t == List<_i30.Shop>) {
+      return (data as List).map((e) => deserialize<_i30.Shop>(e)).toList() as T;
     }
-    try {
-      return _i30.Protocol().deserialize<T>(data, t);
-    } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
       return _i31.Protocol().deserialize<T>(data, t);
+    } on _i1.DeserializationTypeNotFoundException catch (_) {}
+    try {
+      return _i32.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -379,8 +388,9 @@ class Protocol extends _i1.SerializationManager {
       _i21.ListReference => 'ListReference',
       _i22.PendingItemNotification => 'PendingItemNotification',
       _i23.Shop => 'Shop',
-      _i24.CurrentUser => 'CurrentUser',
-      _i25.MemberProfile => 'MemberProfile',
+      _i24.ShopItemDisposition => 'ShopItemDisposition',
+      _i25.CurrentUser => 'CurrentUser',
+      _i26.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -439,16 +449,18 @@ class Protocol extends _i1.SerializationManager {
         return 'PendingItemNotification';
       case _i23.Shop():
         return 'Shop';
-      case _i24.CurrentUser():
+      case _i24.ShopItemDisposition():
+        return 'ShopItemDisposition';
+      case _i25.CurrentUser():
         return 'CurrentUser';
-      case _i25.MemberProfile():
+      case _i26.MemberProfile():
         return 'MemberProfile';
     }
-    className = _i30.Protocol().getClassNameForObject(data);
+    className = _i31.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i31.Protocol().getClassNameForObject(data);
+    className = _i32.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -527,19 +539,22 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'Shop') {
       return deserialize<_i23.Shop>(data['data']);
     }
+    if (dataClassName == 'ShopItemDisposition') {
+      return deserialize<_i24.ShopItemDisposition>(data['data']);
+    }
     if (dataClassName == 'CurrentUser') {
-      return deserialize<_i24.CurrentUser>(data['data']);
+      return deserialize<_i25.CurrentUser>(data['data']);
     }
     if (dataClassName == 'MemberProfile') {
-      return deserialize<_i25.MemberProfile>(data['data']);
+      return deserialize<_i26.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i30.Protocol().deserializeByClassName(data);
+      return _i31.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i31.Protocol().deserializeByClassName(data);
+      return _i32.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -554,10 +569,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i30.Protocol().mapRecordToJson(record);
+      return _i31.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i31.Protocol().mapRecordToJson(record);
+      return _i32.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

@@ -30,11 +30,13 @@ import 'package:freshcart_client/src/protocol/notifications/models/device_token.
 import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
     as _i10;
 import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i11;
-import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
+import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition.dart'
     as _i12;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i13;
-import 'protocol.dart' as _i14;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i14;
+import 'protocol.dart' as _i15;
 
 /// Upgrading an anonymous account by attaching credentials to it.
 /// {@category Endpoint}
@@ -392,7 +394,7 @@ class EndpointItem extends _i1.EndpointRef {
       );
 }
 
-/// Shopping lists: create, read, join, rename, leave.
+/// Shopping lists: create, read, join, rename, leave, delete.
 ///
 /// Thin by design — every method resolves the caller and hands straight off to
 /// [ListService], which is where the rules and the transactions live.
@@ -453,6 +455,14 @@ class EndpointList extends _i1.EndpointRef {
       caller.callServerEndpoint<void>(
         'list',
         'leave',
+        {'listId': listId},
+      );
+
+  /// Deletes a list the caller owns, for everyone on it.
+  _i2.Future<void> delete(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<void>(
+        'list',
+        'delete',
         {'listId': listId},
       );
 
@@ -569,12 +579,32 @@ class EndpointShop extends _i1.EndpointRef {
       );
 
   /// Deletes a shop, untagging its items rather than deleting them.
-  _i2.Future<void> remove(_i1.UuidValue shopId) =>
-      caller.callServerEndpoint<void>(
+  /// How many products are tagged to a shop.
+  _i2.Future<int> itemCount(_i1.UuidValue shopId) =>
+      caller.callServerEndpoint<int>(
         'shop',
-        'remove',
+        'itemCount',
         {'shopId': shopId},
       );
+
+  /// Deletes a shop, disposing of its products as the caller chooses.
+  ///
+  /// [disposition] is required at the call site rather than defaulted, because
+  /// the whole point of the flow is that someone decides what happens to the
+  /// products instead of finding out afterwards.
+  _i2.Future<void> remove(
+    _i1.UuidValue shopId,
+    _i12.ShopItemDisposition disposition,
+    _i1.UuidValue? moveToShopId,
+  ) => caller.callServerEndpoint<void>(
+    'shop',
+    'remove',
+    {
+      'shopId': shopId,
+      'disposition': disposition,
+      'moveToShopId': moveToShopId,
+    },
+  );
 }
 
 /// The caller's own FreshCart profile.
@@ -590,8 +620,8 @@ class EndpointProfile extends _i1.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i2.Future<_i12.CurrentUser> me() =>
-      caller.callServerEndpoint<_i12.CurrentUser>(
+  _i2.Future<_i13.CurrentUser> me() =>
+      caller.callServerEndpoint<_i13.CurrentUser>(
         'profile',
         'me',
         {},
@@ -605,8 +635,8 @@ class EndpointProfile extends _i1.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i2.Future<_i13.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i13.MemberProfile>(
+  _i2.Future<_i14.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i14.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
@@ -644,7 +674,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i14.Protocol(),
+         _i15.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

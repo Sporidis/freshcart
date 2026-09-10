@@ -15,7 +15,11 @@
     "rename": "Rename",
     "leave": "Leave list",
     "leaveConfirmTitle": "Leave this list?",
-    "leaveConfirmBody": "You will not see {{name}} any more. Everyone else keeps it."
+    "leaveConfirmBody": "You will not see {{name}} any more. Everyone else keeps it.",
+    "delete": "Delete list",
+    "deleteConfirmTitle": "Delete {{name}}?",
+    "deleteConfirmBody": "This removes the list and everything on it for all {{n}} members. It cannot be undone.",
+    "deleteForEveryone": "Delete for everyone"
   },
   "items": {
     "empty": "This list is empty.",
@@ -38,7 +42,16 @@
     "nameLabel": "Shop name",
     "colorLabel": "Tab colour",
     "saveChanges": "Save changes",
-    "closeTo": "Close to {{name}}"
+    "closeTo": "Close to {{name}}",
+    "delete": "Delete shop",
+    "deleteTitle": "Delete {{name}}?",
+    "deleteHolds": "{{name}} has {{n}} products. Choose what happens to them.",
+    "deleteEmpty": "This shop has no products.",
+    "moveTo": "Move them to {{name}}",
+    "moveKeeps": "Keeps all {{n}} products",
+    "deleteItemsToo": "Delete products too",
+    "deleteItemsBody": "Removes all {{n}} permanently",
+    "untag": "Leave them without a shop"
   },
   "common": {
     "cancel": "Cancel",

@@ -35,8 +35,21 @@ class ShopRepositoryImpl implements ShopRepository {
       _guard(() async => (await _client.shop.save(shop.toDto())).toDomain());
 
   @override
-  Future<Result<void>> remove(ShopId id) =>
-      _guard(() => _client.shop.remove(_uuid(id.value)));
+  Future<Result<int>> itemCount(ShopId id) =>
+      _guard(() => _client.shop.itemCount(_uuid(id.value)));
+
+  @override
+  Future<Result<void>> remove(
+    ShopId id, {
+    ShopItemDisposition disposition = ShopItemDisposition.untag,
+    ShopId? moveTo,
+  }) => _guard(
+    () => _client.shop.remove(
+      _uuid(id.value),
+      disposition.toDto(),
+      moveTo == null ? null : _uuid(moveTo.value),
+    ),
+  );
 
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);

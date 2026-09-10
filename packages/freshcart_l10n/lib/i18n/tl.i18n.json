@@ -15,7 +15,11 @@
     "rename": "Palitan ang pangalan",
     "leave": "Umalis sa listahan",
     "leaveConfirmTitle": "Aalis sa listahang ito?",
-    "leaveConfirmBody": "Hindi mo na makikita ang {{name}}. Mananatili ito sa iba."
+    "leaveConfirmBody": "Hindi mo na makikita ang {{name}}. Mananatili ito sa iba.",
+    "delete": "Burahin ang listahan",
+    "deleteConfirmTitle": "Burahin ang {{name}}?",
+    "deleteConfirmBody": "Mabubura ang listahan at lahat ng laman nito para sa {{n}} miyembro. Hindi na ito maibabalik.",
+    "deleteForEveryone": "Burahin para sa lahat"
   },
   "items": {
     "empty": "Walang laman ang listahang ito.",
@@ -38,7 +42,16 @@
     "nameLabel": "Pangalan ng tindahan",
     "colorLabel": "Kulay ng tab",
     "saveChanges": "I-save ang mga pagbabago",
-    "closeTo": "Malapit sa {{name}}"
+    "closeTo": "Malapit sa {{name}}",
+    "delete": "Burahin ang tindahan",
+    "deleteTitle": "Burahin ang {{name}}?",
+    "deleteHolds": "May {{n}} produkto ang {{name}}. Piliin kung ano ang mangyayari sa mga ito.",
+    "deleteEmpty": "Walang produkto ang tindahang ito.",
+    "moveTo": "Ilipat sa {{name}}",
+    "moveKeeps": "Mananatili ang lahat ng {{n}} produkto",
+    "deleteItemsToo": "Burahin din ang mga produkto",
+    "deleteItemsBody": "Permanenteng buburahin ang lahat ng {{n}}",
+    "untag": "Iwanang walang tindahan"
   },
   "common": {
     "cancel": "Kanselahin",

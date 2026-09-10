@@ -4,7 +4,7 @@ import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Shopping lists: create, read, join, rename, leave.
+/// Shopping lists: create, read, join, rename, leave, delete.
 ///
 /// Thin by design — every method resolves the caller and hands straight off to
 /// [ListService], which is where the rules and the transactions live.
@@ -52,6 +52,10 @@ class ListEndpoint extends Endpoint {
   /// Removes the caller from a list.
   Future<void> leave(Session session, UuidValue listId) =>
       ListService.leave(session, listId, session.requireUserId);
+
+  /// Deletes a list the caller owns, for everyone on it.
+  Future<void> delete(Session session, UuidValue listId) =>
+      ListService.delete(session, listId, session.requireUserId);
 
   /// Live changes to a list itself — its name and its membership.
   ///

@@ -148,6 +148,51 @@ void main() {
       expect(await endpoints.list.myLists(as(aliceId)), hasLength(1));
     });
 
+    test('delete removes the list for everyone on it', () async {
+      final list = await endpoints.list.create(as(aliceId), 'Groceries');
+      await endpoints.list.join(as(bobId), list.joinCode);
+
+      await endpoints.list.delete(as(aliceId), list.id!);
+
+      expect(await endpoints.list.myLists(as(aliceId)), isEmpty);
+      expect(
+        await endpoints.list.myLists(as(bobId)),
+        isEmpty,
+        reason: 'deleting ends the list for the household, not just the owner',
+      );
+    });
+
+    test('delete takes the items and shops with it', () async {
+      final list = await endpoints.list.create(as(aliceId), 'Groceries');
+      final shop = await endpoints.shop.create(
+        as(aliceId),
+        list.id!,
+        'Colruyt',
+        0xFF2E9E5B,
+      );
+      await endpoints.item.add(as(aliceId), list.id!, 'Milk', shopId: shop.id);
+
+      await endpoints.list.delete(as(aliceId), list.id!);
+
+      // The list is gone, so its children must be too -- reading them back
+      // now reports the list itself missing rather than an empty collection.
+      await expectLater(
+        endpoints.item.byList(as(aliceId), list.id!),
+        throwsA(isA<NotAMemberException>()),
+      );
+    });
+
+    test('a member cannot delete the list, only leave it', () async {
+      final list = await endpoints.list.create(as(aliceId), 'Groceries');
+      await endpoints.list.join(as(bobId), list.joinCode);
+
+      await expectLater(
+        endpoints.list.delete(as(bobId), list.id!),
+        throwsA(isA<NotAMemberException>()),
+      );
+      expect(await endpoints.list.myLists(as(aliceId)), hasLength(1));
+    });
+
     group('watchList', () {
       // MessageCentral.addListener runs synchronously, but the endpoint method
       // does one DB round trip (the membership check) before reaching it, and

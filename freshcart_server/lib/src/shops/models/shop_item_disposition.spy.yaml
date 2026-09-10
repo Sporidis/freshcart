@@ -1,0 +1,17 @@
+### What happens to the products tagged to a shop when that shop is deleted.
+###
+### Explicit rather than implied, because the design's rule is that products
+### are never destroyed silently: the caller has to say which of these it
+### means, and there is no default.
+enum: ShopItemDisposition
+serialized: byName
+values:
+  ### Leave the products on the list, untagged. The schema's ON DELETE SET
+  ### NULL already does this, so it is the cheapest of the three.
+  - untag
+
+  ### Move the products to another shop before deleting this one.
+  - moveToShop
+
+  ### Delete the products along with the shop.
+  - deleteItems

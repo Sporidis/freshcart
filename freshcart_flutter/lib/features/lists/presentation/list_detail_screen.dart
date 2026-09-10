@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
@@ -220,14 +221,63 @@ class _ListMenu extends ConsumerWidget {
           onTap: () => context.go(Routes.manageShops(list.id)),
           child: Text(t.shops.manage),
         ),
-        PopupMenuItem<void>(
-          onTap: () => _confirmLeave(context, ref),
-          // The owner's Delete belongs here too, once the server can do it.
-          enabled: !isOwner,
-          child: Text(t.lists.leave),
-        ),
+        // Owners delete, members leave -- one verb each, never both. The
+        // wrong one on the wrong account is how a shared list gets destroyed
+        // by somebody who only meant to walk away from it.
+        if (isOwner)
+          PopupMenuItem<void>(
+            onTap: () => _confirmDelete(context, ref),
+            child: Text(t.lists.delete),
+          )
+        else
+          PopupMenuItem<void>(
+            onTap: () => _confirmLeave(context, ref),
+            child: Text(t.lists.leave),
+          ),
       ],
     );
+  }
+
+  /// Deleting names the list and its member count, and is not undoable.
+  ///
+  /// A dialog rather than a snackbar with an undo, because there is nothing to
+  /// undo: this one is genuinely permanent, so it is worth interrupting for.
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(t.lists.deleteConfirmTitle(name: list.name)),
+        content: Text(
+          t.lists.deleteConfirmBody(n: list.members.length),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(t.common.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.destructive,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.of(context).pop(true),
+            child: Text(t.lists.deleteForEveryone),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final result = await ref
+        .read(listsControllerProvider.notifier)
+        .delete(list.id);
+    if (!context.mounted) return;
+    switch (result) {
+      case Ok<void>():
+        context.go(Routes.lists);
+      case Err<void>(:final failure):
+        showFailureSnackBar(context, failure: failure, t: t);
+    }
   }
 
   Future<void> _confirmLeave(BuildContext context, WidgetRef ref) async {

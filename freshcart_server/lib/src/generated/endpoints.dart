@@ -26,10 +26,12 @@ import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
 import 'package:freshcart_server/src/generated/notifications/models/device_platform.dart'
     as _i12;
 import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i13;
-import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
+import 'package:freshcart_server/src/generated/shops/models/shop_item_disposition.dart'
     as _i14;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i15;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i16;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -593,6 +595,24 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['listId'],
               ),
         ),
+        'delete': _i1.MethodConnector(
+          name: 'delete',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i7.ListEndpoint).delete(
+                session,
+                params['listId'],
+              ),
+        ),
         'watchList': _i1.MethodStreamConnector(
           name: 'watchList',
           params: {
@@ -780,8 +800,8 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['shop'],
               ),
         ),
-        'remove': _i1.MethodConnector(
-          name: 'remove',
+        'itemCount': _i1.MethodConnector(
+          name: 'itemCount',
           params: {
             'shopId': _i1.ParameterDescription(
               name: 'shopId',
@@ -793,9 +813,39 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
+              ) async => (endpoints['shop'] as _i9.ShopEndpoint).itemCount(
+                session,
+                params['shopId'],
+              ),
+        ),
+        'remove': _i1.MethodConnector(
+          name: 'remove',
+          params: {
+            'shopId': _i1.ParameterDescription(
+              name: 'shopId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'disposition': _i1.ParameterDescription(
+              name: 'disposition',
+              type: _i1.getType<_i14.ShopItemDisposition>(),
+              nullable: false,
+            ),
+            'moveToShopId': _i1.ParameterDescription(
+              name: 'moveToShopId',
+              type: _i1.getType<_i1.UuidValue?>(),
+              nullable: true,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
               ) async => (endpoints['shop'] as _i9.ShopEndpoint).remove(
                 session,
                 params['shopId'],
+                params['disposition'],
+                params['moveToShopId'],
               ),
         ),
       },
@@ -845,9 +895,9 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
-    modules['serverpod_auth_idp'] = _i14.Endpoints()
+    modules['serverpod_auth_idp'] = _i15.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i15.Endpoints()
+    modules['serverpod_auth_core'] = _i16.Endpoints()
       ..initializeEndpoints(server);
   }
 }

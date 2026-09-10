@@ -47,12 +47,11 @@ abstract final class ShopService {
     );
   }
 
-  /// Deletes a shop.
+  /// How many products are tagged to [shopId].
   ///
-  /// Items tagged to it are untagged rather than deleted — the ON DELETE SET
-  /// NULL on `shopId` does that in the database. Losing a shop must never lose
-  /// the shopping.
-  static Future<void> remove(
+  /// The delete sheet leads with this number, because "delete Colruyt" reads
+  /// very differently when it is holding six things than when it is empty.
+  static Future<int> itemCount(
     Session session,
     UuidValue shopId,
     UuidValue userId,
@@ -60,6 +59,67 @@ abstract final class ShopService {
     final stored = await Shop.db.findById(session, shopId);
     if (stored == null) throw ShopNotFoundException();
     await ListService.requireMembership(session, stored.listId, userId);
-    await Shop.db.deleteRow(session, stored);
+    return ShoppingItem.db.count(
+      session,
+      where: (t) => t.shopId.equals(shopId),
+    );
+  }
+
+  /// Deletes a shop, disposing of its products as [disposition] says.
+  ///
+  /// The caller must choose: products are never destroyed silently, and never
+  /// silently kept either when someone meant to clear them out. Untagging is
+  /// the safe default the schema already provides (ON DELETE SET NULL on
+  /// `shopId`), but it is still stated rather than assumed.
+  ///
+  /// Runs in a transaction: moving six products and then failing to delete the
+  /// shop would leave the list in a state the user never asked for.
+  static Future<void> remove(
+    Session session,
+    UuidValue shopId,
+    UuidValue userId, {
+    ShopItemDisposition disposition = ShopItemDisposition.untag,
+    UuidValue? moveToShopId,
+  }) async {
+    final stored = await Shop.db.findById(session, shopId);
+    if (stored == null) throw ShopNotFoundException();
+    await ListService.requireMembership(session, stored.listId, userId);
+
+    if (disposition == ShopItemDisposition.moveToShop) {
+      if (moveToShopId == null) {
+        throw ShopNotFoundException();
+      }
+      final target = await Shop.db.findById(session, moveToShopId);
+      // A shop from another list is not a valid destination: it would move
+      // products off the list they belong to.
+      if (target == null || target.listId != stored.listId) {
+        throw ShopNotFoundException();
+      }
+    }
+
+    await session.db.transaction((transaction) async {
+      switch (disposition) {
+        case ShopItemDisposition.untag:
+          break;
+        case ShopItemDisposition.moveToShop:
+          final items = await ShoppingItem.db.find(
+            session,
+            where: (t) => t.shopId.equals(shopId),
+            transaction: transaction,
+          );
+          await ShoppingItem.db.update(
+            session,
+            [for (final item in items) item.copyWith(shopId: moveToShopId)],
+            transaction: transaction,
+          );
+        case ShopItemDisposition.deleteItems:
+          await ShoppingItem.db.deleteWhere(
+            session,
+            where: (t) => t.shopId.equals(shopId),
+            transaction: transaction,
+          );
+      }
+      await Shop.db.deleteRow(session, stored, transaction: transaction);
+    });
   }
 }

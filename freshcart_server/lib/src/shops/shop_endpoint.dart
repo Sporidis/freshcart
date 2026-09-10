@@ -31,6 +31,25 @@ class ShopEndpoint extends Endpoint {
       ShopService.save(session, shop, session.requireUserId);
 
   /// Deletes a shop, untagging its items rather than deleting them.
-  Future<void> remove(Session session, UuidValue shopId) =>
-      ShopService.remove(session, shopId, session.requireUserId);
+  /// How many products are tagged to a shop.
+  Future<int> itemCount(Session session, UuidValue shopId) =>
+      ShopService.itemCount(session, shopId, session.requireUserId);
+
+  /// Deletes a shop, disposing of its products as the caller chooses.
+  ///
+  /// [disposition] is required at the call site rather than defaulted, because
+  /// the whole point of the flow is that someone decides what happens to the
+  /// products instead of finding out afterwards.
+  Future<void> remove(
+    Session session,
+    UuidValue shopId,
+    ShopItemDisposition disposition,
+    UuidValue? moveToShopId,
+  ) => ShopService.remove(
+    session,
+    shopId,
+    session.requireUserId,
+    disposition: disposition,
+    moveToShopId: moveToShopId,
+  );
 }
