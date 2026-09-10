@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
@@ -16,6 +17,7 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -71,6 +73,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final listId = widget.listId;
+    final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
     final list = ref.watch(listByIdProvider(listId));
 
@@ -111,23 +114,47 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     };
 
     return Scaffold(
+      // Only once there is a list to switch away from — the drawer's own
+      // content needs nothing else, but opening it over a loading or error
+      // screen would offer a way out of a state that already has one.
+      drawer: loaded == null ? null : ListsDrawer(currentListId: listId),
       appBar: AppBar(
         title: loaded == null
             ? Text(t.appName)
-            : EditableListTitle(
-                name: loaded.name,
-                onRename: (name) async {
-                  final result = await ref
-                      .read(listsControllerProvider.notifier)
-                      .rename(loaded.id, name);
-                  return switch (result) {
-                    Ok<ShoppingList>() => null,
-                    Err<ShoppingList>(:final failure) => failure.toMessage(t),
-                  };
-                },
+            : Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // The app's own name as a small kicker over the list's, the
+                  // way the design's every list screen carries it — this is
+                  // whose product this is, not what kind of screen it is.
+                  Text(
+                    t.appName,
+                    style: AppTextStyles.labelStrong.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  EditableListTitle(
+                    name: loaded.name,
+                    onRename: (name) async {
+                      final result = await ref
+                          .read(listsControllerProvider.notifier)
+                          .rename(loaded.id, name);
+                      return switch (result) {
+                        Ok<ShoppingList>() => null,
+                        Err<ShoppingList>(:final failure) => failure.toMessage(
+                          t,
+                        ),
+                      };
+                    },
+                  ),
+                ],
               ),
         actions: [
-          if (loaded != null) _ListMenu(list: loaded, t: t),
+          if (loaded != null) ...[
+            _MemberAvatar(list: loaded),
+            _ListMenu(list: loaded, t: t),
+          ],
         ],
       ),
       body: switch (list) {
@@ -143,7 +170,6 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               // The stakes are real here: this list is shared, so losing the
               // session would lose access to it.
               const UpgradeNudge(),
-              _Detail(list: shoppingList, t: t),
               ShopFilterBar(listId: listId),
               const Divider(height: 1),
               Expanded(child: ItemsSection(list: shoppingList)),
@@ -155,46 +181,47 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 }
 
-class _Detail extends StatelessWidget {
-  const _Detail({required this.list, required this.t});
+/// The signed-in member's own avatar, opening Household on tap.
+///
+/// Membership and the join code used to live in an inline expansion tile on
+/// this screen; both moved to Household, which the design reaches through
+/// exactly this avatar. Duplicating that content here would be two places
+/// showing the same thing, one of them stale the moment the other changes.
+class _MemberAvatar extends ConsumerWidget {
+  const _MemberAvatar({required this.list});
 
   final ShoppingList list;
-  final Translations t;
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ExpansionTile(
-      title: Text(t.lists.memberCount(n: list.members.length)),
-      subtitle: Text('${t.lists.joinCodeLabel}: ${list.joinCode.value}'),
-      children: [
-        ListTile(
-          leading: const Icon(Icons.key_outlined),
-          title: Text(t.lists.joinCodeLabel),
-          subtitle: SelectableText(
-            list.joinCode.value,
-            style: theme.textTheme.headlineSmall,
-          ),
-        ),
-        const Divider(),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-          child: Text(
-            t.lists.memberCount(n: list.members.length),
-            style: theme.textTheme.titleSmall,
-          ),
-        ),
-        for (final member in list.members)
-          ListTile(
-            leading: CircleAvatar(
-              child: Text(
-                member.displayName.characters.firstOrNull?.toUpperCase() ?? '?',
-              ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final currentUser = switch (ref.watch(currentUserIdProvider)) {
+      AsyncValue<Result<UserId>>(value: Ok<UserId>(:final value)) => value,
+      _ => null,
+    };
+    final me = currentUser == null
+        ? null
+        : list.members.where((m) => m.userId == currentUser).firstOrNull;
+    final initial =
+        me?.displayName.characters.firstOrNull?.toUpperCase() ?? '?';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: () => context.go(Routes.household(list.id)),
+        child: Padding(
+          padding: const EdgeInsets.all(6),
+          child: CircleAvatar(
+            radius: 16,
+            backgroundColor: AppColors.ink,
+            foregroundColor: Colors.white,
+            child: Text(
+              initial,
+              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
             ),
-            title: Text(member.displayName),
-            trailing: member.isOwner ? const Icon(Icons.star_outline) : null,
           ),
-      ],
+        ),
+      ),
     );
   }
 }
@@ -223,10 +250,8 @@ class _ListMenu extends ConsumerWidget {
 
     return PopupMenuButton<void>(
       itemBuilder: (context) => [
-        PopupMenuItem<void>(
-          onTap: () => context.go(Routes.household(list.id)),
-          child: Text(t.household.title),
-        ),
+        // Household itself is reached through the avatar in the app bar now,
+        // not the menu -- one door, not two, into the same screen.
         PopupMenuItem<void>(
           onTap: () => context.go(Routes.manageShops(list.id)),
           child: Text(t.shops.manage),

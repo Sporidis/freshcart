@@ -2,6 +2,7 @@
   "appName": "FreshCart",
   "lists": {
     "title": "Mijn lijsten",
+    "allLists": "Alle lijsten",
     "empty": "Nog geen lijsten. Maak er een om te beginnen.",
     "create": "Nieuwe lijst",
     "join": "Lijst toevoegen met code",

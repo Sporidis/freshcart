@@ -2,6 +2,7 @@
   "appName": "FreshCart",
   "lists": {
     "title": "Mga listahan ko",
+    "allLists": "Lahat ng listahan",
     "empty": "Wala pang listahan. Gumawa ng isa para makapagsimula.",
     "create": "Bagong listahan",
     "join": "Sumali sa listahan gamit ang code",

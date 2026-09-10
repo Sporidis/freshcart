@@ -578,3 +578,21 @@ the real `AppTheme`, so a preview is showing the app's actual theme rather than 
 imitation. **Trade-off:** production files are longer, and the harness takes no `overrides`
 because Riverpod 3 does not export the `Override` type — it can only be inferred inline — so
 previews needing fake data will take in-memory fakes in `lib/` rather than provider overrides.
+
+## 50. The list detail header follows the design's chrome, adapted where it named the prototype
+
+**Decision:** every list-detail-style screen gets the design's three-part header — a
+hamburger opening a lists-switcher drawer, an eyebrow-plus-title stack, and an avatar that
+opens Household — replacing the ad hoc `AppBar` and the in-page member/join-code expansion
+tile. The eyebrow reads `t.appName` ("FreshCart"), not the literal word the mockups show:
+that word is the prototype's own product name (it is also the splash screen's wordmark), so
+the faithful adaptation is *this app's* name in the same slot, not a copied string. **Why:**
+the design draws this header on ten of its thirty-three screens, consistently, which is a
+stronger signal than any single one of them; the avatar-opens-Household mapping was the only
+reading that made sense of an avatar with no on-screen menu ever shown next to it. Household
+already held the join code and member list (decisions.md #34, #46), so the old expansion tile
+became a second, un-live-updating copy of the same data — removed rather than kept alongside.
+**Trade-off:** the drawer is scoped to switching only (list, tap, gone) — creating and joining
+stay on `ListsScreen`, reached through a plain "All lists" row at the bottom, because the
+design shows no drawer state at all and duplicating the create/join flow into a second widget
+would be two places to keep in sync for a feature nobody asked for.
