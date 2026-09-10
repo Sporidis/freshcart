@@ -218,6 +218,10 @@ class _ListMenu extends ConsumerWidget {
     return PopupMenuButton<void>(
       itemBuilder: (context) => [
         PopupMenuItem<void>(
+          onTap: () => context.go(Routes.household(list.id)),
+          child: Text(t.household.title),
+        ),
+        PopupMenuItem<void>(
           onTap: () => context.go(Routes.manageShops(list.id)),
           child: Text(t.shops.manage),
         ),

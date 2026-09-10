@@ -28,6 +28,8 @@ list:
   - rename:
   - leave:
   - delete:
+  - removeMember:
+  - transferOwnership:
   - watchList:
 notification:
   - registerDevice:

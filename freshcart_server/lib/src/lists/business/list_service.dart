@@ -211,6 +211,73 @@ abstract final class ListService {
     await ShoppingList.db.deleteRow(session, list);
   }
 
+  /// Removes [targetUserId] from [listId], on the owner's authority.
+  ///
+  /// Separate from [leave] because they are different acts: leaving is
+  /// something you do to yourself, removal is something done to you. The
+  /// owner cannot remove themselves this way — that would leave the list
+  /// ownerless — and transferring first is the honest path out.
+  static Future<void> removeMember(
+    Session session,
+    UuidValue listId,
+    UuidValue actorId,
+    UuidValue targetUserId,
+  ) async {
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list == null) throw ListNotFoundException();
+    if (list.ownerId != actorId) throw NotAMemberException();
+    // Removing yourself is `leave`; removing the owner is not a thing.
+    if (targetUserId == list.ownerId) throw NotAMemberException();
+
+    await requireMembership(session, listId, targetUserId);
+    await ListMember.db.deleteWhere(
+      session,
+      where: (t) => t.listId.equals(listId) & t.userId.equals(targetUserId),
+    );
+    await _announce(session, listId);
+  }
+
+  /// Hands ownership of [listId] to [newOwnerId].
+  ///
+  /// The two role changes and the list's own `ownerId` move together in a
+  /// transaction: a list with two owners, or none, is worse than one that
+  /// never changed hands.
+  static Future<ShoppingList> transferOwnership(
+    Session session,
+    UuidValue listId,
+    UuidValue actorId,
+    UuidValue newOwnerId,
+  ) async {
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list == null) throw ListNotFoundException();
+    if (list.ownerId != actorId) throw NotAMemberException();
+
+    final incoming = await requireMembership(session, listId, newOwnerId);
+    final outgoing = await requireMembership(session, listId, actorId);
+    if (newOwnerId == actorId) return _withMembers(session, list);
+
+    final updated = await session.db.transaction((transaction) async {
+      await ListMember.db.updateRow(
+        session,
+        incoming.copyWith(role: MemberRole.owner),
+        transaction: transaction,
+      );
+      await ListMember.db.updateRow(
+        session,
+        outgoing.copyWith(role: MemberRole.member),
+        transaction: transaction,
+      );
+      return ShoppingList.db.updateRow(
+        session,
+        list.copyWith(ownerId: newOwnerId),
+        transaction: transaction,
+      );
+    });
+
+    await _announce(session, listId);
+    return _withMembers(session, updated);
+  }
+
   /// Throws [NotAMemberException] unless [userId] belongs to [listId].
   ///
   /// Every read and write path funnels through this, so authorisation is one

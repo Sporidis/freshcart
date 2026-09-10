@@ -36,6 +36,12 @@ class FakeListRepository implements ListRepository {
   /// Every id [delete] was called with, in order.
   final List<ListId> deleteCalls = [];
 
+  /// Every member [removeMember] was asked to remove, in order.
+  final List<({ListId id, UserId userId})> removeMemberCalls = [];
+
+  /// Every transfer requested, in order.
+  final List<({ListId id, UserId userId})> transferCalls = [];
+
   /// Codes passed to [joinByCode], in order.
   final List<JoinCode> joinCalls = [];
 
@@ -80,6 +86,21 @@ class FakeListRepository implements ListRepository {
   Future<Result<void>> delete(ListId id) async {
     deleteCalls.add(id);
     return const Ok(null);
+  }
+
+  @override
+  Future<Result<void>> removeMember(ListId id, UserId userId) async {
+    removeMemberCalls.add((id: id, userId: userId));
+    return const Ok(null);
+  }
+
+  @override
+  Future<Result<ShoppingList>> transferOwnership(
+    ListId id,
+    UserId userId,
+  ) async {
+    transferCalls.add((id: id, userId: userId));
+    return Ok(buildList());
   }
 
   /// Feeds [watch]. Tests push updates through this to simulate another

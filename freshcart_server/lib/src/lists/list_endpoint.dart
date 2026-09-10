@@ -57,6 +57,30 @@ class ListEndpoint extends Endpoint {
   Future<void> delete(Session session, UuidValue listId) =>
       ListService.delete(session, listId, session.requireUserId);
 
+  /// Removes another member from a list the caller owns.
+  Future<void> removeMember(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+  ) => ListService.removeMember(
+    session,
+    listId,
+    session.requireUserId,
+    userId,
+  );
+
+  /// Hands ownership of a list the caller owns to another member.
+  Future<ShoppingList> transferOwnership(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+  ) => ListService.transferOwnership(
+    session,
+    listId,
+    session.requireUserId,
+    userId,
+  );
+
   /// Live changes to a list itself — its name and its membership.
   ///
   /// Sends the whole [ShoppingList], not a delta: unlike items, a list is a

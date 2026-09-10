@@ -82,5 +82,21 @@
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "linked": "Your account is secured."
+  },
+  "household": {
+    "title": "Household",
+    "you": "You",
+    "owner": "Owner",
+    "youOwner": "You · Owner",
+    "invite": "Invite",
+    "copyCode": "Copy code",
+    "copied": "Copied",
+    "makeOwner": "Make owner",
+    "removeMember": "Remove from list",
+    "removeTitle": "Remove {{name}}?",
+    "removeBody": "They will not see this list any more. You can invite them again later.",
+    "transferTitle": "Make {{name}} the owner?",
+    "transferBody": "They will be able to rename the list, delete it and manage members. You become an ordinary member.",
+    "transfer": "Make owner"
   }
 }

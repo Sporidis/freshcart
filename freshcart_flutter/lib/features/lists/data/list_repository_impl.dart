@@ -48,6 +48,22 @@ class ListRepositoryImpl implements ListRepository {
       _guard(() => _client.list.delete(_uuid(id.value)));
 
   @override
+  Future<Result<void>> removeMember(ListId id, UserId userId) => _guard(
+    () => _client.list.removeMember(_uuid(id.value), _uuid(userId.value)),
+  );
+
+  @override
+  Future<Result<ShoppingList>> transferOwnership(
+    ListId id,
+    UserId userId,
+  ) => _guard(
+    () async => (await _client.list.transferOwnership(
+      _uuid(id.value),
+      _uuid(userId.value),
+    )).toDomain(),
+  );
+
+  @override
   Stream<Result<ShoppingList>> watch(ListId id) =>
       ListRealtimeSource(_client).watch(id);
 

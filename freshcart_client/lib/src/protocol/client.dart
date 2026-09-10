@@ -466,6 +466,32 @@ class EndpointList extends _i1.EndpointRef {
         {'listId': listId},
       );
 
+  /// Removes another member from a list the caller owns.
+  _i2.Future<void> removeMember(
+    _i1.UuidValue listId,
+    _i1.UuidValue userId,
+  ) => caller.callServerEndpoint<void>(
+    'list',
+    'removeMember',
+    {
+      'listId': listId,
+      'userId': userId,
+    },
+  );
+
+  /// Hands ownership of a list the caller owns to another member.
+  _i2.Future<_i8.ShoppingList> transferOwnership(
+    _i1.UuidValue listId,
+    _i1.UuidValue userId,
+  ) => caller.callServerEndpoint<_i8.ShoppingList>(
+    'list',
+    'transferOwnership',
+    {
+      'listId': listId,
+      'userId': userId,
+    },
+  );
+
   /// Live changes to a list itself — its name and its membership.
   ///
   /// Sends the whole [ShoppingList], not a delta: unlike items, a list is a
