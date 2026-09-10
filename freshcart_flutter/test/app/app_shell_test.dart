@@ -116,10 +116,11 @@ void main() {
         tester.element(find.byType(Scaffold)),
       ).colorScheme.primary;
       expect(after, isNot(before));
-      expect(
-        after,
-        ColorScheme.fromSeed(seedColor: Color(shopColour.argb)).primary,
-      );
+      // The shop's own colour, not what ColorScheme.fromSeed would have
+      // derived from it: M3's seeding snaps a colour to the nearest tone on
+      // its own generated ramp, which visibly shifts hue and saturation away
+      // from a swatch someone actually picked (see AppTheme._build).
+      expect(after, Color(shopColour.argb));
     });
 
     testWidgets('clearing the shop returns to the brand seed', (tester) async {
