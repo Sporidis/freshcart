@@ -36,9 +36,14 @@ class FallingItem extends StatelessWidget {
 
 /// A round fruit with a small leaf — built from a circle and a rounded rect.
 class AppleShape extends StatelessWidget {
-  const AppleShape({super.key, required this.color});
+  const AppleShape({
+    super.key,
+    required this.color,
+    required this.leafColor,
+  });
 
   final Color color;
+  final Color leafColor;
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +70,7 @@ class AppleShape extends StatelessWidget {
                 width: 14,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4CAF50),
+                  color: leafColor,
                   borderRadius: BorderRadius.circular(4),
                 ),
               ),

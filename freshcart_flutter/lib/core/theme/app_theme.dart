@@ -186,13 +186,23 @@ class AppTheme {
     final buttonBg = isDark ? Colors.white : AppColors.ink;
     final buttonFg = isDark ? AppColors.ink : Colors.white;
 
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness)
-        .copyWith(
-          surface: surface,
-          onSurface: ink,
-          error: AppColors.destructive,
-          onError: Colors.white,
-        );
+    final generatedScheme = ColorScheme.fromSeed(
+      seedColor: seed,
+      brightness: brightness,
+    );
+    final isNeutralTheme = seed == brandSeed;
+    final scheme = generatedScheme.copyWith(
+      primary: isNeutralTheme ? ink : generatedScheme.primary,
+      onPrimary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
+      secondary: isNeutralTheme ? ink : generatedScheme.secondary,
+      onSecondary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
+      tertiary: isNeutralTheme ? ink : generatedScheme.tertiary,
+      onTertiary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
+      surface: surface,
+      onSurface: ink,
+      error: AppColors.destructive,
+      onError: Colors.white,
+    );
 
     final textTheme = TextTheme(
       displayLarge: AppTextStyles.largeTitle.copyWith(color: ink),
