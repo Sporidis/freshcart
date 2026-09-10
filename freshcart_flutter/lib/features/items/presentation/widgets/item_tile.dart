@@ -13,6 +13,10 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// deleting, per the Motion spec (§10).
 const _swipeDismissThreshold = 0.4;
 
+/// How far the checkbox slides right to make room for the selection circle,
+/// per the Motion spec (§10).
+const _checkboxSlide = 8.0;
+
 /// One row of a shopping list.
 class ItemTile extends StatefulWidget {
   /// Creates a tile for [item].
@@ -22,6 +26,11 @@ class ItemTile extends StatefulWidget {
     required this.onToggle,
     required this.onEdit,
     required this.onSwipeDelete,
+    required this.selectionMode,
+    required this.selected,
+    required this.onToggleSelection,
+    required this.onLongPress,
+    required this.index,
     required this.t,
     super.key,
   });
@@ -42,6 +51,26 @@ class ItemTile extends StatefulWidget {
   /// action, which this tile wires into the snackbar it shows.
   final void Function() Function() onSwipeDelete;
 
+  /// Whether the list is in multi-select mode right now.
+  final bool selectionMode;
+
+  /// Whether this row is one of the selected ones. Only meaningful while
+  /// [selectionMode] is true.
+  final bool selected;
+
+  /// Called when a tap should toggle this row's selection rather than its
+  /// checked state -- i.e. every tap while [selectionMode] is true.
+  final VoidCallback onToggleSelection;
+
+  /// Called once the long-press gesture fires (§10: 500 ms), to enter or add
+  /// to the selection.
+  final VoidCallback onLongPress;
+
+  /// This row's position in the list, for the selection reveal's stagger
+  /// (§10: 25 ms per row). Rows that cannot be multi-selected (the Done
+  /// section) pass 0, since they never actually reveal.
+  final int index;
+
   /// Translations for the active locale.
   final Translations t;
 
@@ -55,6 +84,33 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     vsync: this,
     duration: AppMotion.quick,
     value: widget.item.isChecked ? 1 : 0,
+  );
+
+  /// The row's own scale: the long-press "keep holding" tell (0.97) and its
+  /// spring-back, both driven directly rather than through a Tween, since
+  /// each has its own target reached from `animateTo` calls at different
+  /// moments rather than a single start-to-end run.
+  late final AnimationController _pressScale = AnimationController(
+    vsync: this,
+    duration: AppMotion.quick,
+    value: 1,
+  );
+
+  /// Set 300 ms into a press; cancelled on release or once the long press
+  /// fires. Its own field rather than reusing `_pressScale`'s ticking,
+  /// because "has 300 ms passed" is a plain wall-clock question independent
+  /// of animation state.
+  Timer? _pressTellTimer;
+
+  /// Reveals the selection circle and slides the checkbox aside on entering
+  /// selection mode (§10: 240 ms, staggered by [ItemTile.index]); reverses,
+  /// unstaggered, on exit. Starts already-settled rather than at 0 so a row
+  /// built fresh *while* selection mode is active (scrolled into view, for
+  /// instance) does not visibly animate in from nothing.
+  late final AnimationController _selectionReveal = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 240),
+    value: widget.selectionMode ? 1 : 0,
   );
 
   /// How far the current swipe has travelled, 0 to 1 of the row's width.
@@ -92,12 +148,22 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   @override
   void didUpdateWidget(ItemTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.item.isChecked == oldWidget.item.isChecked) return;
-    if (widget.item.isChecked) {
-      _strike.forward();
-    } else {
-      // Unchecking reverses with no overshoot: the intent is unambiguous.
-      _strike.reverse();
+    if (widget.item.isChecked != oldWidget.item.isChecked) {
+      if (widget.item.isChecked) {
+        _strike.forward();
+      } else {
+        // Unchecking reverses with no overshoot: the intent is unambiguous.
+        _strike.reverse();
+      }
+    }
+    if (widget.selectionMode != oldWidget.selectionMode) {
+      if (widget.selectionMode) {
+        unawaited(_enterSelectionReveal());
+      } else {
+        // Exiting is not staggered -- only the entry draws the eye down the
+        // list; leaving should read as one dismissal, not a second wave.
+        _selectionReveal.reverse();
+      }
     }
   }
 
@@ -105,6 +171,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   void dispose() {
     _strike.dispose();
     _iconPop.dispose();
+    _pressScale.dispose();
+    _pressTellTimer?.cancel();
+    _selectionReveal.dispose();
     super.dispose();
   }
 
@@ -113,6 +182,51 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     // useful, confirming an undo is noise.
     if (!widget.item.isChecked) unawaited(HapticFeedback.lightImpact());
     widget.onToggle();
+  }
+
+  /// A tap on the row: toggles selection while selection mode is active,
+  /// otherwise the usual checked/unchecked toggle.
+  void _activateRow() {
+    if (widget.selectionMode) {
+      unawaited(HapticFeedback.selectionClick());
+      widget.onToggleSelection();
+    } else {
+      _handleToggle();
+    }
+  }
+
+  Future<void> _enterSelectionReveal() async {
+    await Future<void>.delayed(AppMotion.selectionStagger(widget.index));
+    if (!mounted) return;
+    _selectionReveal.forward();
+  }
+
+  /// The finger touched down: starts the clock on the "keep holding" tell.
+  void _handlePressStart(PointerDownEvent event) {
+    _pressTellTimer?.cancel();
+    // 300 ms per §10 -- the row starts easing toward 0.97 from here, so it
+    // visibly reaches it right around the 500 ms mark the long press fires.
+    _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
+      unawaited(_pressScale.animateTo(0.97, duration: AppMotion.quick));
+    });
+  }
+
+  /// The finger lifted or the gesture was cancelled before firing: whatever
+  /// tell had started springs back.
+  void _handlePressEnd(PointerEvent event) {
+    _pressTellTimer?.cancel();
+    _pressTellTimer = null;
+    unawaited(_pressScale.animateTo(1, duration: AppMotion.quick));
+  }
+
+  /// The long press committed (§10: 500 ms): confirms with a haptic, snaps
+  /// the row back to size, and hands off to the controller.
+  void _handleLongPressFire() {
+    _pressTellTimer?.cancel();
+    _pressTellTimer = null;
+    unawaited(HapticFeedback.mediumImpact());
+    unawaited(_pressScale.animateTo(1, duration: AppMotion.quick));
+    widget.onLongPress();
   }
 
   /// Turns one swipe-drag update into the feedback the Motion spec (§10)
@@ -154,70 +268,110 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     final subtitle = _subtitle();
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    return Dismissible(
-      key: ValueKey(item.id.value),
-      direction: DismissDirection.endToStart,
-      dismissThresholds: const {
-        DismissDirection.endToStart: _swipeDismissThreshold,
-      },
-      // 220 ms per the Motion spec (§10) -- the default resize is slower.
-      resizeDuration: const Duration(milliseconds: 220),
-      onUpdate: _handleSwipeUpdate,
-      background: ColoredBox(
-        color: AppColors.destructive,
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 24),
-            child: AnimatedBuilder(
-              animation: _iconPop,
-              builder: (context, child) =>
-                  Transform.scale(scale: _iconScale, child: child),
-              child: const Icon(Icons.delete_outline, color: Colors.white),
+    return Listener(
+      // Raw pointer events, not a second gesture recognizer: a `Listener`
+      // sits outside Flutter's gesture arena entirely, so timing the 300 ms
+      // tell here cannot compete with -- or steal -- the tap and long-press
+      // recognizers the `ListTile` below owns.
+      onPointerDown: _handlePressStart,
+      onPointerUp: _handlePressEnd,
+      onPointerCancel: _handlePressEnd,
+      child: Dismissible(
+        key: ValueKey(item.id.value),
+        // Selection mode owns the gesture instead: a swipe mid-select would
+        // be ambiguous between "delete this one" and "drag to select".
+        direction: widget.selectionMode
+            ? DismissDirection.none
+            : DismissDirection.endToStart,
+        dismissThresholds: const {
+          DismissDirection.endToStart: _swipeDismissThreshold,
+        },
+        // 220 ms per the Motion spec (§10) -- the default resize is slower.
+        resizeDuration: const Duration(milliseconds: 220),
+        onUpdate: _handleSwipeUpdate,
+        background: ColoredBox(
+          color: AppColors.destructive,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.only(right: 24),
+              child: AnimatedBuilder(
+                animation: _iconPop,
+                builder: (context, child) =>
+                    Transform.scale(scale: _iconScale, child: child),
+                child: const Icon(Icons.delete_outline, color: Colors.white),
+              ),
             ),
           ),
         ),
-      ),
-      onDismissed: (_) => _handleDismissed(context),
-      child: AnimatedBuilder(
-        animation: _strike,
-        builder: (context, child) => Opacity(
-          // 45% once checked: present, but plainly already in the trolley.
-          opacity: 1 - (_strike.value * 0.55),
-          child: child,
-        ),
-        child: CheckboxListTile(
-          value: item.isChecked,
-          onChanged: (_) => _handleToggle(),
-          controlAffinity: ListTileControlAffinity.leading,
-          title: Row(
-            children: [
-              if (item.quantity > 1) ...[
-                Text(
-                  '${item.quantity}×',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(width: 8),
-              ],
-              Expanded(
-                child: _StrikeThrough(
-                  progress: _strike,
-                  color: muted,
-                  child: Text(item.name, style: theme.textTheme.bodyLarge),
+        onDismissed: (_) => _handleDismissed(context),
+        child: AnimatedBuilder(
+          animation: Listenable.merge([_strike, _pressScale]),
+          builder: (context, child) => Transform.scale(
+            scale: _pressScale.value,
+            child: Opacity(
+              // 45% once checked: present, but plainly already in the trolley.
+              opacity: 1 - (_strike.value * 0.55),
+              child: child,
+            ),
+          ),
+          child: ListTile(
+            onTap: _activateRow,
+            onLongPress: _handleLongPressFire,
+            leading: AnimatedBuilder(
+              animation: _selectionReveal,
+              builder: (context, child) => SizedBox(
+                width: 48,
+                child: Stack(
+                  alignment: Alignment.centerLeft,
+                  children: [
+                    Opacity(
+                      opacity: _selectionReveal.value,
+                      child: _SelectionCircle(selected: widget.selected),
+                    ),
+                    Transform.translate(
+                      offset: Offset(
+                        _checkboxSlide * _selectionReveal.value,
+                        0,
+                      ),
+                      child: Checkbox(
+                        value: item.isChecked,
+                        onChanged: (_) => _activateRow(),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              if (item.hasNote)
-                Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
-            ],
-          ),
-          subtitle: subtitle == null ? null : Text(subtitle),
-          secondary: IconButton(
-            onPressed: widget.onEdit,
-            icon: const Icon(Icons.edit_outlined),
-            tooltip: widget.t.common.save,
+            ),
+            title: Row(
+              children: [
+                if (item.quantity > 1) ...[
+                  Text(
+                    '${item.quantity}×',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                Expanded(
+                  child: _StrikeThrough(
+                    progress: _strike,
+                    color: muted,
+                    child: Text(item.name, style: theme.textTheme.bodyLarge),
+                  ),
+                ),
+                if (item.hasNote)
+                  Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
+              ],
+            ),
+            subtitle: subtitle == null ? null : Text(subtitle),
+            trailing: IconButton(
+              onPressed: widget.onEdit,
+              icon: const Icon(Icons.edit_outlined),
+              tooltip: widget.t.common.save,
+            ),
           ),
         ),
       ),
@@ -231,6 +385,36 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       return widget.t.items.checkedBy(name: widget.checkedByName!);
     }
     return null;
+  }
+}
+
+/// The circle that stands in for the checkbox once selection mode is active:
+/// outlined while unselected, filled with a check once tapped. The 120 ms
+/// fill is [AnimatedContainer]'s own transition, driven purely by [selected]
+/// changing -- no controller of its own, since nothing here needs staggering
+/// or to be read mid-flight the way the reveal does.
+class _SelectionCircle extends StatelessWidget {
+  const _SelectionCircle({required this.selected});
+
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final outline = Theme.of(context).colorScheme.outline;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 120),
+      width: 22,
+      height: 22,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: selected ? primary : Colors.transparent,
+        border: Border.all(color: selected ? primary : outline, width: 1.5),
+      ),
+      child: selected
+          ? const Icon(Icons.check, size: 14, color: Colors.white)
+          : null,
+    );
   }
 }
 
@@ -337,6 +521,11 @@ Widget itemTilePreview() {
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
+          selectionMode: false,
+          selected: false,
+          onToggleSelection: () {},
+          onLongPress: () {},
+          index: 0,
           t: t,
         ),
         ItemTile(
@@ -353,6 +542,11 @@ Widget itemTilePreview() {
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
+          selectionMode: false,
+          selected: false,
+          onToggleSelection: () {},
+          onLongPress: () {},
+          index: 0,
           t: t,
         ),
         ItemTile(
@@ -361,6 +555,11 @@ Widget itemTilePreview() {
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
+          selectionMode: false,
+          selected: false,
+          onToggleSelection: () {},
+          onLongPress: () {},
+          index: 0,
           t: t,
         ),
       ],

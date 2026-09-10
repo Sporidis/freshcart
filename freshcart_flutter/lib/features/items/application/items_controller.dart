@@ -329,6 +329,46 @@ class ItemsController extends _$ItemsController {
     }
   }
 
+  /// Deletes a multi-selected set of rows, taking them off screen immediately
+  /// and putting them all back if the server refuses.
+  ///
+  /// Same shape as [clearChecked] and for the same reason: "Delete" on a
+  /// selection is one promise covering every row in it, so it is one
+  /// transaction server-side and one optimistic guess here, not [remove]
+  /// looped per id.
+  Future<Failure?> removeSelected(Set<ItemId> ids) async {
+    final before = _current;
+    if (before == null) return const Failure.unexpected('No items loaded');
+    if (ids.isEmpty) return null;
+
+    final selected = [
+      for (final item in before)
+        if (ids.contains(item.id)) item,
+    ];
+    for (final item in selected) {
+      _pending[item.id] = item;
+    }
+    _show([
+      for (final item in before)
+        if (!ids.contains(item.id)) item,
+    ]);
+
+    final result = await ref
+        .read(itemRepositoryProvider)
+        .removeMany(listId, [for (final item in selected) item.id]);
+    for (final item in selected) {
+      _pending.remove(item.id);
+    }
+
+    switch (result) {
+      case Ok<int>():
+        return null;
+      case Err<int>(:final failure):
+        _show(before);
+        return failure;
+    }
+  }
+
   /// Re-reads the items from the server.
   Future<void> refresh() async => ref.invalidateSelf();
 }

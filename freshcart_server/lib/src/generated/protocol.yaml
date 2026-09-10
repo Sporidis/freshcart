@@ -20,6 +20,7 @@ item:
   - save:
   - remove:
   - clearChecked:
+  - removeMany:
   - watchList:
 list:
   - myLists:

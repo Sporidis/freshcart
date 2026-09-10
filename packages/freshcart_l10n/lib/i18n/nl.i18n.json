@@ -35,7 +35,8 @@
     "emptyShopAction": "Product toevoegen",
     "doneCount": "Klaar · {{n}}",
     "clearChecked": "Afgevinkte wissen",
-    "itemRemoved": "{{name}} verwijderd"
+    "itemRemoved": "{{name}} verwijderd",
+    "selectedCount": "Geselecteerd · {{n}}"
   },
   "shops": {
     "all": "Alle winkels",

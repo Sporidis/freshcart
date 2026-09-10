@@ -35,7 +35,8 @@
     "emptyShopAction": "Add a product",
     "doneCount": "Done · {{n}}",
     "clearChecked": "Clear checked",
-    "itemRemoved": "{{name}} removed"
+    "itemRemoved": "{{name}} removed",
+    "selectedCount": "{{n}} selected"
   },
   "shops": {
     "all": "All shops",

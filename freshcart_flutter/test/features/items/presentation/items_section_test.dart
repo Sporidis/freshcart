@@ -162,7 +162,7 @@ void main() {
     expect(find.text('Milk'), findsOneWidget);
     final milkTile = find.ancestor(
       of: find.text('Milk'),
-      matching: find.byType(CheckboxListTile),
+      matching: find.byType(ListTile),
     );
     expect(
       tester

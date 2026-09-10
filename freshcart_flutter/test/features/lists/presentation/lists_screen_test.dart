@@ -439,4 +439,101 @@ void main() {
       },
     );
   });
+
+  group('multi-select', () {
+    Future<void> openGroceries(WidgetTester tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+      itemRepository.byListResult = Ok([
+        buildItem(name: 'Milk'),
+        buildItem(id: '00000000-0000-4000-8000-0000000000a2', name: 'Bread'),
+      ]);
+
+      await pump(tester);
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'long-pressing a row enters selection and shows the contextual bar',
+      (tester) async {
+        await openGroceries(tester);
+
+        await tester.longPress(find.text('Milk'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('1 selected'), findsOneWidget);
+        expect(find.text('Delete'), findsOneWidget);
+        // The quick-add bar has no place mid-selection.
+        expect(find.byType(TextField), findsNothing);
+      },
+    );
+
+    testWidgets('tapping another row adds it to the selection', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+
+      await tester.longPress(find.text('Milk'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Bread'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('2 selected'), findsOneWidget);
+    });
+
+    testWidgets('tapping a selected row again removes it, exiting once empty', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+
+      await tester.longPress(find.text('Milk'));
+      await tester.pumpAndSettle();
+      expect(find.text('1 selected'), findsOneWidget);
+
+      await tester.tap(find.text('Milk'));
+      await tester.pumpAndSettle();
+
+      // Nothing left selected -- the mode is over, the ordinary header is
+      // back, and the row underneath is untouched.
+      expect(find.text('1 selected'), findsNothing);
+      expect(find.text('Milk'), findsOneWidget);
+    });
+
+    testWidgets('Delete removes the selected rows and exits the mode', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+
+      await tester.longPress(find.text('Milk'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      expect(
+        itemRepository.removeManyCalls.single.single,
+        ItemId('00000000-0000-4000-8000-0000000000aa'),
+      );
+      expect(find.text('Milk'), findsNothing);
+      expect(find.text('Bread'), findsOneWidget);
+      // Back to the ordinary header, not left on an empty selection.
+      expect(find.text('1 selected'), findsNothing);
+    });
+
+    testWidgets('the close button exits without deleting anything', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+
+      await tester.longPress(find.text('Milk'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.close));
+      await tester.pumpAndSettle();
+
+      expect(itemRepository.removeManyCalls, isEmpty);
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Bread'), findsOneWidget);
+    });
+  });
 }

@@ -211,6 +211,58 @@ void main() {
     });
   });
 
+  group('removeSelected', () {
+    test('takes exactly the selected rows off screen immediately', () async {
+      final milk = buildItem(id: 'a', name: 'Milk');
+      final bread = buildItem(id: 'b', name: 'Bread');
+      final eggs = buildItem(id: 'c', name: 'Eggs');
+      repository.byListResult = Ok([milk, bread, eggs]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .removeSelected({milk.id, bread.id});
+
+      expect(failure, isNull);
+      expect((await itemsOf(container)).single.id, eggs.id);
+      expect(repository.removeManyCalls.single, unorderedEquals([milk.id, bread.id]));
+    });
+
+    test('puts every selected row back when the server refuses', () async {
+      final milk = buildItem(id: 'a', name: 'Milk');
+      final bread = buildItem(id: 'b', name: 'Bread');
+      repository.byListResult = Ok([milk, bread]);
+      repository.removeManyResult = const Err(Failure.network('offline'));
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .removeSelected({milk.id, bread.id});
+
+      expect(failure, isA<NetworkFailure>());
+      expect((await itemsOf(container)).map((i) => i.id), [milk.id, bread.id]);
+    });
+
+    test('does nothing given an empty selection', () async {
+      final item = buildItem();
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .removeSelected(const {});
+
+      expect(failure, isNull);
+      expect(repository.removeManyCalls, isEmpty);
+    });
+  });
+
   group('swipeDelete', () {
     test('hides the row immediately, before the undo window ends', () async {
       final item = buildItem();

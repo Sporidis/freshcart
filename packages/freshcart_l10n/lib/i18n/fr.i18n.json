@@ -35,7 +35,8 @@
     "emptyShopAction": "Ajouter un produit",
     "doneCount": "Terminé · {{n}}",
     "clearChecked": "Effacer cochés",
-    "itemRemoved": "{{name}} supprimé"
+    "itemRemoved": "{{name}} supprimé",
+    "selectedCount": "{{n}} sélectionné(s)"
   },
   "shops": {
     "all": "Tous les magasins",

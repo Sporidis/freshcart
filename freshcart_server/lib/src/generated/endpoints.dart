@@ -480,6 +480,30 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['listId'],
               ),
         ),
+        'removeMany': _i1.MethodConnector(
+          name: 'removeMany',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'itemIds': _i1.ParameterDescription(
+              name: 'itemIds',
+              type: _i1.getType<List<_i1.UuidValue>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i6.ItemEndpoint).removeMany(
+                session,
+                params['listId'],
+                params['itemIds'],
+              ),
+        ),
         'watchList': _i1.MethodStreamConnector(
           name: 'watchList',
           params: {

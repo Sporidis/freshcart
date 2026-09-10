@@ -37,7 +37,8 @@
     "emptyShopAction": "Добавить товар",
     "doneCount": "Готово · {{n}}",
     "clearChecked": "Очистить отмеченные",
-    "itemRemoved": "{{name}} удалено"
+    "itemRemoved": "{{name}} удалено",
+    "selectedCount": "Выбрано: {{n}}"
   },
   "shops": {
     "all": "Все магазины",

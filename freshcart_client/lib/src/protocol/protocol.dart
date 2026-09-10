@@ -346,6 +346,10 @@ class Protocol extends _i1.SerializationManager {
               .toList()
           as T;
     }
+    if (t == List<_i1.UuidValue>) {
+      return (data as List).map((e) => deserialize<_i1.UuidValue>(e)).toList()
+          as T;
+    }
     if (t == List<_i29.ShoppingList>) {
       return (data as List)
               .map((e) => deserialize<_i29.ShoppingList>(e))

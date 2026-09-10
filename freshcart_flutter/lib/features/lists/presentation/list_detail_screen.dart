@@ -8,12 +8,14 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -113,49 +115,103 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       _ => null,
     };
 
+    final selection = ref.watch(selectionControllerProvider(listId));
+    final selectionMode = selection.isNotEmpty;
+    final selectionNotifier = ref.read(
+      selectionControllerProvider(listId).notifier,
+    );
+
     return Scaffold(
       // Only once there is a list to switch away from — the drawer's own
       // content needs nothing else, but opening it over a loading or error
       // screen would offer a way out of a state that already has one.
       drawer: loaded == null ? null : ListsDrawer(currentListId: listId),
       appBar: AppBar(
-        title: loaded == null
-            ? Text(t.appName)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // The app's own name as a small kicker over the list's, the
-                  // way the design's every list screen carries it — this is
-                  // whose product this is, not what kind of screen it is.
-                  Text(
-                    t.appName,
-                    style: AppTextStyles.labelStrong.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  EditableListTitle(
-                    name: loaded.name,
-                    onRename: (name) async {
-                      final result = await ref
-                          .read(listsControllerProvider.notifier)
-                          .rename(loaded.id, name);
-                      return switch (result) {
-                        Ok<ShoppingList>() => null,
-                        Err<ShoppingList>(:final failure) => failure.toMessage(
-                          t,
+        // Selection mode replaces the drawer's hamburger with a way out of
+        // selection instead -- opening the list switcher mid-select would
+        // abandon the selection with no way back to it.
+        leading: selectionMode
+            ? IconButton(
+                icon: const Icon(Icons.close),
+                tooltip: t.common.cancel,
+                onPressed: selectionNotifier.clear,
+              )
+            : null,
+        title: AnimatedSwitcher(
+          duration: AppMotion.durationFor(context, AppMotion.standard),
+          // The header cross-fades into the contextual bar (§10) rather than
+          // being replaced by a whole separate widget tree, so it reads as
+          // one bar changing what it says, not a screen change.
+          child: selectionMode
+              ? Text(
+                  t.items.selectedCount(n: selection.length),
+                  key: const ValueKey('selection'),
+                )
+              : KeyedSubtree(
+                  key: const ValueKey('normal'),
+                  child: loaded == null
+                      ? Text(t.appName)
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // The app's own name as a small kicker over the
+                            // list's, the way the design's every list screen
+                            // carries it — this is whose product this is,
+                            // not what kind of screen it is.
+                            Text(
+                              t.appName,
+                              style: AppTextStyles.labelStrong.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            EditableListTitle(
+                              name: loaded.name,
+                              onRename: (name) async {
+                                final result = await ref
+                                    .read(listsControllerProvider.notifier)
+                                    .rename(loaded.id, name);
+                                return switch (result) {
+                                  Ok<ShoppingList>() => null,
+                                  Err<ShoppingList>(:final failure) =>
+                                    failure.toMessage(t),
+                                };
+                              },
+                            ),
+                          ],
                         ),
-                      };
-                    },
+                ),
+        ),
+        actions: selectionMode
+            ? [
+                // "Move" is left out here: it would need a shop-picker
+                // sheet, and there isn't one anywhere in the app yet to
+                // reuse — building the app's first one just for this one
+                // button is its own piece of work, not this one.
+                TextButton(
+                  onPressed: () async {
+                    final failure = await ref
+                        .read(itemsControllerProvider(listId).notifier)
+                        .removeSelected(selection);
+                    if (!context.mounted) return;
+                    if (failure == null) {
+                      selectionNotifier.clear();
+                    } else {
+                      showFailureSnackBar(context, failure: failure, t: t);
+                    }
+                  },
+                  style: TextButton.styleFrom(
+                    foregroundColor: AppColors.destructive,
                   ),
+                  child: Text(t.common.delete),
+                ),
+              ]
+            : [
+                if (loaded != null) ...[
+                  _MemberAvatar(list: loaded),
+                  _ListMenu(list: loaded, t: t),
                 ],
-              ),
-        actions: [
-          if (loaded != null) ...[
-            _MemberAvatar(list: loaded),
-            _ListMenu(list: loaded, t: t),
-          ],
-        ],
+              ],
       ),
       body: switch (list) {
         AsyncLoading<Result<ShoppingList>>() => const Center(

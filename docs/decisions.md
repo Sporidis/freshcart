@@ -637,3 +637,24 @@ here rather than silently shipped as if it were the literal spec. The parts of �
 `Dismissible` **does** expose directly — `dismissThresholds` at 0.4, a 220 ms `resizeDuration`,
 `mediumImpact()` and an icon pop on threshold crossing via `onUpdate` — are implemented as
 specified.
+
+## 53. Multi-select scopes to open rows only, and ships without "Move"
+
+**Decision:** Long-press multi-select (`SelectionController`, per list) only arms on the open
+(unchecked) rows — `ItemTile` always renders out of selection mode for a row under the Done
+divider. There is no separate "selection mode active" flag: the mode *is* having a non-empty
+selection, so deselecting the last row exits it the same way emptying it any other way would.
+The contextual bar's "Delete" calls a new `ItemEndpoint.removeMany`, which deletes exactly the
+selected ids from the list in one transaction — the same reasoning as #51's `clearChecked`:
+"delete these" is one promise covering the whole selection, so a loop of `remove` calls that
+can fail partway through would break it. **Why the scoping:** checked items already have their
+own bulk action (Clear checked, §12) and their own locked/settled treatment (drag-reorder
+excludes them the same way, per §10) — letting them into a *second* bulk-delete mechanism would
+mean two overlapping ways to do roughly the same thing, with no rule for which wins.
+
+**Trade-off, stated rather than quietly worked around:** the contextual bar's "Move" action
+(§10: "3 selected · Move · Delete · ✕") is not built. Reassigning an item's shop has no UI
+anywhere in the app yet — not even the single-item editor exposes it — so "Move" is not a small
+addition here, it is the app's *first* shop-picker, and building one just to unblock this one
+toolbar button is its own piece of work with its own design questions (a sheet? inline chips?
+does it reuse for the single-item case too?), not a corner to cut silently inside this feature.

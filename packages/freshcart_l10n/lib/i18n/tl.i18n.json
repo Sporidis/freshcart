@@ -35,7 +35,8 @@
     "emptyShopAction": "Magdagdag ng produkto",
     "doneCount": "Tapos · {{n}}",
     "clearChecked": "Alisin ang naka-check",
-    "itemRemoved": "Naalis ang {{name}}"
+    "itemRemoved": "Naalis ang {{name}}",
+    "selectedCount": "{{n}} napili"
   },
   "shops": {
     "all": "Lahat ng tindahan",
