@@ -43,14 +43,14 @@ void main() {
     });
 
     test('rejects a name past the maximum', () async {
-      final result = await createList('x' * (CreateList.maxNameLength + 1));
+      final result = await createList('x' * (ShoppingList.maxNameLength + 1));
 
       expect(result.failureOrNull, isA<ValidationFailure>());
       expect(lists.createCalls, isEmpty);
     });
 
     test('accepts a name exactly at the maximum', () async {
-      final result = await createList('x' * CreateList.maxNameLength);
+      final result = await createList('x' * ShoppingList.maxNameLength);
       expect(result.isOk, isTrue);
     });
 
