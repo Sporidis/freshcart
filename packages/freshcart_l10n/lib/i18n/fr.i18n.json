@@ -11,7 +11,11 @@
       "other": "{{n}} membres"
     },
     "emptyTitle": "Pas encore de listes",
-    "emptyBody": "Créez-en une pour votre foyer, ou rejoignez une liste partagée avec vous."
+    "emptyBody": "Créez-en une pour votre foyer, ou rejoignez une liste partagée avec vous.",
+    "rename": "Renommer",
+    "leave": "Quitter la liste",
+    "leaveConfirmTitle": "Quitter cette liste ?",
+    "leaveConfirmBody": "Vous ne verrez plus {{name}}. Les autres la conservent."
   },
   "items": {
     "empty": "Cette liste est vide.",
@@ -28,7 +32,13 @@
   },
   "shops": {
     "all": "Tous les magasins",
-    "none": "Aucun magasin"
+    "none": "Aucun magasin",
+    "manage": "Gérer les magasins",
+    "edit": "Modifier le magasin",
+    "nameLabel": "Nom du magasin",
+    "colorLabel": "Couleur de l’onglet",
+    "saveChanges": "Enregistrer",
+    "closeTo": "Proche de {{name}}"
   },
   "common": {
     "cancel": "Annuler",

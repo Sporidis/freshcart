@@ -24,6 +24,15 @@ class FakeListRepository implements ListRepository {
   /// Names passed to [create], in order.
   final List<String> createCalls = [];
 
+  /// What [rename] will return. Defaults to echoing the new name back.
+  Result<ShoppingList>? renameResult;
+
+  /// Every argument list [rename] was called with, in order.
+  final List<({ListId id, String name})> renameCalls = [];
+
+  /// Every id [leave] was called with, in order.
+  final List<ListId> leaveCalls = [];
+
   /// Codes passed to [joinByCode], in order.
   final List<JoinCode> joinCalls = [];
 
@@ -53,11 +62,16 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
-  Future<Result<ShoppingList>> rename(ListId id, String name) =>
-      throw UnimplementedError();
+  Future<Result<ShoppingList>> rename(ListId id, String name) async {
+    renameCalls.add((id: id, name: name));
+    return renameResult ?? Ok(buildList(name: name));
+  }
 
   @override
-  Future<Result<void>> leave(ListId id) => throw UnimplementedError();
+  Future<Result<void>> leave(ListId id) async {
+    leaveCalls.add(id);
+    return const Ok(null);
+  }
 
   /// Feeds [watch]. Tests push updates through this to simulate another
   /// client renaming the list, or someone joining or leaving.

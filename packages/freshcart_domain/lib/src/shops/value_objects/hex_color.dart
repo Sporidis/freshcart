@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 
@@ -46,6 +48,42 @@ extension type const HexColor._(int argb) implements Object {
 
   /// The blue channel, 0-255.
   int get blue => argb & 0xFF;
+
+  /// How different this colour looks from [other], to a human eye.
+  ///
+  /// Plain RGB distance is a poor stand-in for perception: it rates a green
+  /// pair as far apart as a blue pair that looks identical. This is the
+  /// "redmean" weighting — a cheap approximation that tracks perceived
+  /// difference closely enough for the one question being asked, without
+  /// dragging a colour-science conversion into a pure-Dart package.
+  ///
+  /// Alpha is ignored: shop colours are always opaque, and a difference in
+  /// transparency is not what "these two look alike" means.
+  ///
+  /// Ranges from 0 (identical) to roughly 765 (black against white).
+  double perceptualDistanceTo(HexColor other) {
+    final meanRed = (red + other.red) / 2;
+    final deltaRed = red - other.red;
+    final deltaGreen = green - other.green;
+    final deltaBlue = blue - other.blue;
+    return math.sqrt(
+      (2 + meanRed / 256) * deltaRed * deltaRed +
+          4 * deltaGreen * deltaGreen +
+          (2 + (255 - meanRed) / 256) * deltaBlue * deltaBlue,
+    );
+  }
+
+  /// The distance below which two shop colours are too easy to confuse.
+  ///
+  /// Tuned for the job they do: telling apart 8px dots glanced at in a shop
+  /// aisle, not swatches compared side by side. Deliberately forgiving — the
+  /// app warns, never blocks, so a false positive costs a caption while a
+  /// false negative costs someone buying the wrong thing.
+  static const double confusableDistance = 60;
+
+  /// Whether [other] is close enough to be mistaken for this colour.
+  bool isCloseTo(HexColor other) =>
+      perceptualDistanceTo(other) < confusableDistance;
 
   /// Renders as `#RRGGBB`, dropping a fully opaque alpha channel.
   String toHex() {

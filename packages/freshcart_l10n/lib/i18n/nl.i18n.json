@@ -11,7 +11,11 @@
       "other": "{{n}} leden"
     },
     "emptyTitle": "Nog geen lijsten",
-    "emptyBody": "Begin er een voor je huishouden, of sluit je aan bij een gedeelde lijst."
+    "emptyBody": "Begin er een voor je huishouden, of sluit je aan bij een gedeelde lijst.",
+    "rename": "Naam wijzigen",
+    "leave": "Lijst verlaten",
+    "leaveConfirmTitle": "Deze lijst verlaten?",
+    "leaveConfirmBody": "Je ziet {{name}} niet meer. De anderen houden de lijst."
   },
   "items": {
     "empty": "Deze lijst is leeg.",
@@ -28,7 +32,13 @@
   },
   "shops": {
     "all": "Alle winkels",
-    "none": "Geen winkel"
+    "none": "Geen winkel",
+    "manage": "Winkels beheren",
+    "edit": "Winkel bewerken",
+    "nameLabel": "Winkelnaam",
+    "colorLabel": "Tabkleur",
+    "saveChanges": "Wijzigingen opslaan",
+    "closeTo": "Lijkt op {{name}}"
   },
   "common": {
     "cancel": "Annuleren",
