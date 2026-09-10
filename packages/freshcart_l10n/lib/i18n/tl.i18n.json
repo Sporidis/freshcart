@@ -82,5 +82,21 @@
     "emailLabel": "Email",
     "passwordLabel": "Password",
     "linked": "Protektado na ang iyong account."
+  },
+  "household": {
+    "title": "Sambahayan",
+    "you": "Ikaw",
+    "owner": "May-ari",
+    "youOwner": "Ikaw · May-ari",
+    "invite": "Mag-imbita",
+    "copyCode": "Kopyahin ang code",
+    "copied": "Nakopya",
+    "makeOwner": "Gawing may-ari",
+    "removeMember": "Alisin sa listahan",
+    "removeTitle": "Alisin si {{name}}?",
+    "removeBody": "Hindi na nila makikita ang listahang ito. Maaari mo silang imbitahan ulit.",
+    "transferTitle": "Gawing may-ari si {{name}}?",
+    "transferBody": "Mababago nila ang pangalan ng listahan, mabubura ito, at mapamamahalaan ang mga miyembro. Magiging karaniwang miyembro ka.",
+    "transfer": "Gawing may-ari"
   }
 }

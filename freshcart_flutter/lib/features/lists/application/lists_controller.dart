@@ -19,14 +19,14 @@ class ListsController extends _$ListsController {
   /// replacing the whole screen with an error.
   Future<Result<ShoppingList>> create(String name) async {
     final result = await ref.read(createListUseCaseProvider)(name);
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
   }
 
   /// Joins a list by code and refreshes the collection on success.
   Future<Result<ShoppingList>> join(String rawCode) async {
     final result = await ref.read(joinListUseCaseProvider)(rawCode);
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
   }
 
@@ -37,7 +37,7 @@ class ListsController extends _$ListsController {
   /// field, not on top of the screen.
   Future<Result<ShoppingList>> rename(ListId id, String name) async {
     final result = await ref.read(renameListUseCaseProvider)(id, name);
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
   }
 
@@ -48,15 +48,47 @@ class ListsController extends _$ListsController {
   /// on the server yet.
   Future<Result<void>> leave(ListId id) async {
     final result = await ref.read(listRepositoryProvider).leave(id);
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
   }
 
   /// Deletes a list for everyone on it. Owner only, enforced server-side.
   Future<Result<void>> delete(ListId id) async {
     final result = await ref.read(listRepositoryProvider).delete(id);
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
+  }
+
+  /// Removes another member, on the owner's authority.
+  Future<Result<void>> removeMember(ListId id, UserId userId) async {
+    final result = await ref
+        .read(listRepositoryProvider)
+        .removeMember(id, userId);
+    if (result.isOk) _refreshIfAlive();
+    return result;
+  }
+
+  /// Hands ownership to another member.
+  Future<Result<ShoppingList>> transferOwnership(
+    ListId id,
+    UserId userId,
+  ) async {
+    final result = await ref
+        .read(listRepositoryProvider)
+        .transferOwnership(id, userId);
+    if (result.isOk) _refreshIfAlive();
+    return result;
+  }
+
+  /// Re-reads this controller's own collection, if it is still alive.
+  ///
+  /// A write can outlive the screen that started it: the household screen
+  /// removes a member and routes away, and nothing there watches this
+  /// provider, so it auto-disposes while the request is still in flight.
+  /// Refreshing a cache that no longer exists is not an error — there is
+  /// simply nothing left to refresh.
+  void _refreshIfAlive() {
+    if (ref.mounted) ref.invalidateSelf();
   }
 
   /// Re-reads the lists, for pull-to-refresh and after leaving a list.

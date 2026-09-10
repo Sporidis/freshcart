@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
+import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
@@ -20,6 +21,12 @@ abstract final class Routes {
 
   /// The concrete path for [listId].
   static String listDetail(ListId listId) => '/lists/${listId.value}';
+
+  /// The path pattern for one list's household screen.
+  static const String householdPattern = 'household';
+
+  /// The concrete path for [listId]'s household.
+  static String household(ListId listId) => '/lists/${listId.value}/household';
 
   /// The path pattern for one list's shop management screen.
   static const String manageShopsPattern = 'shops';
@@ -62,6 +69,14 @@ GoRouter appRouter(Ref ref) => GoRouter(
         GoRoute(
           path: ':listId',
           routes: <RouteBase>[
+            GoRoute(
+              path: Routes.householdPattern,
+              builder: (context, state) {
+                final raw = state.pathParameters['listId'];
+                if (raw == null || raw.isEmpty) return const ListsScreen();
+                return HouseholdScreen(listId: ListId(raw));
+              },
+            ),
             GoRoute(
               path: Routes.manageShopsPattern,
               builder: (context, state) {

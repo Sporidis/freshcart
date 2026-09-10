@@ -22,7 +22,7 @@ class ShopsController extends _$ShopsController {
       name: name,
       color: color,
     );
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
   }
 
@@ -36,7 +36,7 @@ class ShopsController extends _$ShopsController {
       name: name,
       color: color,
     );
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
   }
 
@@ -53,8 +53,19 @@ class ShopsController extends _$ShopsController {
     final result = await ref
         .read(shopRepositoryProvider)
         .remove(id, disposition: disposition, moveTo: moveTo);
-    if (result.isOk) ref.invalidateSelf();
+    if (result.isOk) _refreshIfAlive();
     return result;
+  }
+
+  /// Re-reads this controller's own collection, if it is still alive.
+  ///
+  /// A write can outlive the screen that started it: the household screen
+  /// removes a member and routes away, and nothing there watches this
+  /// provider, so it auto-disposes while the request is still in flight.
+  /// Refreshing a cache that no longer exists is not an error — there is
+  /// simply nothing left to refresh.
+  void _refreshIfAlive() {
+    if (ref.mounted) ref.invalidateSelf();
   }
 }
 

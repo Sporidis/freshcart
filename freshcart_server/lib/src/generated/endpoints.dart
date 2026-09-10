@@ -613,6 +613,55 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['listId'],
               ),
         ),
+        'removeMember': _i1.MethodConnector(
+          name: 'removeMember',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i7.ListEndpoint).removeMember(
+                session,
+                params['listId'],
+                params['userId'],
+              ),
+        ),
+        'transferOwnership': _i1.MethodConnector(
+          name: 'transferOwnership',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'userId': _i1.ParameterDescription(
+              name: 'userId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['list'] as _i7.ListEndpoint).transferOwnership(
+                    session,
+                    params['listId'],
+                    params['userId'],
+                  ),
+        ),
         'watchList': _i1.MethodStreamConnector(
           name: 'watchList',
           params: {

@@ -1,3 +1,4 @@
+import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/lists/entities/shopping_list.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
@@ -36,6 +37,19 @@ abstract interface class ListRepository {
   /// its owner may do it. Collapsing the two into one call with a flag is how
   /// somebody destroys a shared list meaning to walk away from it.
   Future<Result<void>> delete(ListId id);
+
+  /// Removes [userId] from list [id], on the owner's authority.
+  ///
+  /// Not the same as [leave]: leaving is something you do to yourself,
+  /// removal is something done to you, and only the list's owner may do it.
+  Future<Result<void>> removeMember(ListId id, UserId userId);
+
+  /// Hands ownership of list [id] to [userId], who must already be a member.
+  ///
+  /// The outgoing owner becomes an ordinary member. This is the honest way
+  /// out for an owner who wants to leave — the alternative would be a list
+  /// nobody can rename or delete.
+  Future<Result<ShoppingList>> transferOwnership(ListId id, UserId userId);
 
   /// Live view of list [id], re-emitting whenever anyone changes it.
   ///

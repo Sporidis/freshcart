@@ -82,5 +82,21 @@
     "emailLabel": "E-mailadres",
     "passwordLabel": "Wachtwoord",
     "linked": "Je account is beveiligd."
+  },
+  "household": {
+    "title": "Huishouden",
+    "you": "Jij",
+    "owner": "Eigenaar",
+    "youOwner": "Jij · Eigenaar",
+    "invite": "Uitnodigen",
+    "copyCode": "Code kopiëren",
+    "copied": "Gekopieerd",
+    "makeOwner": "Eigenaar maken",
+    "removeMember": "Uit lijst verwijderen",
+    "removeTitle": "{{name}} verwijderen?",
+    "removeBody": "Ze zien deze lijst niet meer. Je kunt ze later opnieuw uitnodigen.",
+    "transferTitle": "{{name}} eigenaar maken?",
+    "transferBody": "Zij kunnen dan de lijst hernoemen, verwijderen en leden beheren. Jij wordt gewoon lid.",
+    "transfer": "Eigenaar maken"
   }
 }

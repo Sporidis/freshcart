@@ -113,6 +113,14 @@ class FakeListRepository implements ListRepository {
   Future<Result<void>> delete(ListId id) => throw UnimplementedError();
 
   @override
+  Future<Result<void>> removeMember(ListId id, UserId userId) =>
+      throw UnimplementedError();
+
+  @override
+  Future<Result<ShoppingList>> transferOwnership(ListId id, UserId userId) =>
+      throw UnimplementedError();
+
+  @override
   Future<Result<List<ShoppingList>>> myLists() => throw UnimplementedError();
 
   @override

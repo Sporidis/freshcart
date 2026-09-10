@@ -82,5 +82,21 @@
     "emailLabel": "E-mail",
     "passwordLabel": "Mot de passe",
     "linked": "Votre compte est sécurisé."
+  },
+  "household": {
+    "title": "Foyer",
+    "you": "Vous",
+    "owner": "Propriétaire",
+    "youOwner": "Vous · Propriétaire",
+    "invite": "Inviter",
+    "copyCode": "Copier le code",
+    "copied": "Copié",
+    "makeOwner": "Rendre propriétaire",
+    "removeMember": "Retirer de la liste",
+    "removeTitle": "Retirer {{name}} ?",
+    "removeBody": "Cette personne ne verra plus la liste. Vous pourrez la réinviter plus tard.",
+    "transferTitle": "Rendre {{name}} propriétaire ?",
+    "transferBody": "Cette personne pourra renommer la liste, la supprimer et gérer les membres. Vous devenez membre ordinaire.",
+    "transfer": "Rendre propriétaire"
   }
 }

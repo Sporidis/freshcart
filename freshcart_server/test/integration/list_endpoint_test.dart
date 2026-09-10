@@ -193,6 +193,102 @@ void main() {
       expect(await endpoints.list.myLists(as(aliceId)), hasLength(1));
     });
 
+    group('managing members', () {
+      test('the owner can remove another member', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        await endpoints.list.removeMember(
+          as(aliceId),
+          list.id!,
+          UuidValue.withValidation(bobId),
+        );
+
+        expect(await endpoints.list.myLists(as(bobId)), isEmpty);
+        expect(await endpoints.list.myLists(as(aliceId)), hasLength(1));
+      });
+
+      test('a member cannot remove anyone', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        await expectLater(
+          endpoints.list.removeMember(
+            as(bobId),
+            list.id!,
+            UuidValue.withValidation(aliceId),
+          ),
+          throwsA(isA<NotAMemberException>()),
+        );
+      });
+
+      test('the owner cannot remove themselves', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+        await expectLater(
+          endpoints.list.removeMember(
+            as(aliceId),
+            list.id!,
+            UuidValue.withValidation(aliceId),
+          ),
+          throwsA(isA<NotAMemberException>()),
+          reason: 'that would leave the list ownerless; transfer or delete',
+        );
+      });
+
+      test('ownership transfers, and swaps both roles', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        final after = await endpoints.list.transferOwnership(
+          as(aliceId),
+          list.id!,
+          UuidValue.withValidation(bobId),
+        );
+
+        expect(after.ownerId, UuidValue.withValidation(bobId));
+        final roles = {
+          for (final m in after.members!) m.userId: m.role,
+        };
+        expect(roles[UuidValue.withValidation(bobId)], MemberRole.owner);
+        expect(
+          roles[UuidValue.withValidation(aliceId)],
+          MemberRole.member,
+          reason: 'a list with two owners is worse than one that never moved',
+        );
+      });
+
+      test('the new owner can then delete, and the old one cannot', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.transferOwnership(
+          as(aliceId),
+          list.id!,
+          UuidValue.withValidation(bobId),
+        );
+
+        await expectLater(
+          endpoints.list.delete(as(aliceId), list.id!),
+          throwsA(isA<NotAMemberException>()),
+        );
+        await endpoints.list.delete(as(bobId), list.id!);
+        expect(await endpoints.list.myLists(as(bobId)), isEmpty);
+      });
+
+      test('ownership cannot be given to a non-member', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+        await expectLater(
+          endpoints.list.transferOwnership(
+            as(aliceId),
+            list.id!,
+            UuidValue.withValidation(bobId),
+          ),
+          throwsA(isA<NotAMemberException>()),
+        );
+      });
+    });
+
     group('watchList', () {
       // MessageCentral.addListener runs synchronously, but the endpoint method
       // does one DB round trip (the membership check) before reaching it, and
