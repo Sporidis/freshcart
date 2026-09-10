@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen_animations.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/blob_background.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/cart_painter.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/grocery_item_shapes.dart';
+import 'package:go_router/go_router.dart';
 
 @Preview(name: 'Welcome Screen', size: Size(393, 852))
 Widget welcomeScreenPreview() => ProviderScope(
@@ -43,7 +46,9 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   }
 
   void _navigateToOnboarding() {
-    // Onboarding flow / routing hooks in here later.
+    // go, not push: Welcome is a dead end once left, same as the splash it
+    // will one day sit behind — there is nothing to come back to.
+    context.go(Routes.onboarding);
   }
 
   @override
@@ -126,7 +131,10 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
                                 path: anim.item1Path,
                                 rotate: anim.item1Rotate,
                                 bottom: 108,
-                                child: AppleShape(color: colors.tertiary),
+                                child: AppleShape(
+                                  color: colors.tertiary,
+                                  leafColor: AppColors.ink,
+                                ),
                               ),
                               FallingItem(
                                 path: anim.item2Path,
