@@ -12,3 +12,8 @@ AddItem addItemUseCase(Ref ref) => AddItem(ref.watch(itemRepositoryProvider));
 @riverpod
 ToggleItemChecked toggleItemCheckedUseCase(Ref ref) =>
     ToggleItemChecked(ref.watch(itemRepositoryProvider));
+
+/// The [EditItem] use case, wired to the item repository.
+@riverpod
+EditItem editItemUseCase(Ref ref) =>
+    EditItem(ref.watch(itemRepositoryProvider));

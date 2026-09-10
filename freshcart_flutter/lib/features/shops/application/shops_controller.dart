@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_use_case_providers.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -16,9 +17,25 @@ class ShopsController extends _$ShopsController {
     required String name,
     required HexColor color,
   }) async {
-    final result = await ref
-        .read(shopRepositoryProvider)
-        .create(listId: listId, name: name, color: color);
+    final result = await ref.read(createShopUseCaseProvider)(
+      listId: listId,
+      name: name,
+      color: color,
+    );
+    if (result.isOk) ref.invalidateSelf();
+    return result;
+  }
+
+  /// Renames and/or recolours a shop, refreshing the collection on success.
+  ///
+  /// Recolouring re-seeds the app theme when this shop is the active one, so
+  /// the refresh is what makes the new colour take hold everywhere.
+  Future<Result<Shop>> edit(Shop shop, {String? name, HexColor? color}) async {
+    final result = await ref.read(editShopUseCaseProvider)(
+      shop,
+      name: name,
+      color: color,
+    );
     if (result.isOk) ref.invalidateSelf();
     return result;
   }

@@ -140,9 +140,41 @@ class ItemsController extends _$ItemsController {
     );
   }
 
-  /// Saves an edited [item], applying the change immediately.
-  Future<Failure?> save(ShoppingItem item) =>
-      _optimistically(item, () => ref.read(itemRepositoryProvider).save(item));
+  /// Applies a user's edit to [item], showing it immediately.
+  ///
+  /// Takes the raw field values rather than a finished [ShoppingItem] on
+  /// purpose: building the edited entity is a domain transformation
+  /// ([ShoppingItem.withEdit]) guarded by domain rules, and a caller that
+  /// handed us a pre-built entity could — and did — skip both.
+  Future<Failure?> edit(
+    ShoppingItem item, {
+    required String name,
+    required int quantity,
+    ShopId? shopId,
+    String? noteText,
+  }) {
+    // The same entity method the use case will apply, so the local guess and
+    // the eventual truth are computed one way. An invalid edit is rejected by
+    // the use case before any network call and rolls straight back.
+    final optimistic = item.withEdit(
+      name: name.trim(),
+      quantity: quantity,
+      shopId: shopId,
+      noteText: noteText,
+      at: DateTime.now().toUtc(),
+    );
+
+    return _optimistically(
+      optimistic,
+      () => ref.read(editItemUseCaseProvider)(
+        item,
+        name: name,
+        quantity: quantity,
+        shopId: shopId,
+        noteText: noteText,
+      ),
+    );
+  }
 
   /// Adds an item, showing it only once the server has accepted it.
   ///

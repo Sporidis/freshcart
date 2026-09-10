@@ -222,10 +222,59 @@ void main() {
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .save(item.copyWith(name: 'Oat milk'));
+          .edit(item, name: 'Oat milk', quantity: 1);
 
       expect(failure, const Failure.conflict());
       expect((await itemsOf(container)).single.name, 'Milk');
+    });
+
+    test('applies a valid edit optimistically', () async {
+      final item = buildItem(name: 'Milk');
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .edit(item, name: '  Oat milk  ', quantity: 3);
+
+      expect(failure, isNull);
+      expect((await itemsOf(container)).single.name, 'Oat milk');
+      expect((await itemsOf(container)).single.quantity, 3);
+    });
+
+    // The edit path used to reach the repository unvalidated, so an item could
+    // be renamed to something AddItem would never have allowed.
+    test('rejects a blank name without reaching the repository', () async {
+      final item = buildItem(name: 'Milk');
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .edit(item, name: '   ', quantity: 1);
+
+      expect(failure, isA<ValidationFailure>());
+      expect(repository.savedItems, isEmpty);
+      expect((await itemsOf(container)).single.name, 'Milk');
+    });
+
+    test('rejects a quantity below one', () async {
+      final item = buildItem(name: 'Milk');
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .edit(item, name: 'Milk', quantity: 0);
+
+      expect(failure, isA<ValidationFailure>());
+      expect(repository.savedItems, isEmpty);
     });
   });
 

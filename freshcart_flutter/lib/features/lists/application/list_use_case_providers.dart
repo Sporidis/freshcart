@@ -16,3 +16,8 @@ CreateList createListUseCase(Ref ref) =>
 @riverpod
 JoinList joinListUseCase(Ref ref) =>
     JoinList(ref.watch(listRepositoryProvider));
+
+/// The [RenameList] use case, wired to the list repository.
+@riverpod
+RenameList renameListUseCase(Ref ref) =>
+    RenameList(ref.watch(listRepositoryProvider));
