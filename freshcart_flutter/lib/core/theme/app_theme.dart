@@ -404,6 +404,12 @@ class AppTheme {
         subtitleTextStyle: AppTextStyles.caption.copyWith(color: mutedText),
         contentPadding: EdgeInsets.zero,
         minLeadingWidth: 0,
+        // AppColors.selectedRow{Light,Dark} were defined but never wired to
+        // anything -- the drawer's "currently open" list row is the first
+        // place that actually needs a selected-row treatment.
+        selectedTileColor: isDark
+            ? AppColors.selectedRowDark
+            : AppColors.selectedRowLight,
       ),
 
       dividerTheme: DividerThemeData(color: divider, thickness: 1, space: 1),

@@ -727,3 +727,38 @@ plainer than growing the other one's branching further.
   "not yet confirmed" mark on unsynced rows) means designing local persistence, a write queue
   and reconciliation from scratch, which is an architecture decision on its own footing, not
   a UI pass over existing plumbing the way search and the three gesture flows were.
+
+## 56. The upgrade nudge is permanently dismissible, backed by shared_preferences, with Settings as its new home
+
+**Decision:** "Secure your lists" now carries a close button, and dismissing it is permanent —
+`UpgradeNudgeDismissed` persists the flag via `shared_preferences`, not in-memory state, so it
+does not simply reappear on the next cold start. `shared_preferences` over the already-present
+`flutter_secure_storage`: the flag is a plain UI preference, not a secret, and secure storage is
+already a dependency only for what the auth packages need internally — reusing it here for
+something that isn't a secret would be the wrong tool wearing the right one's name. **Why
+permanent, when the banner's own doc comment argues for asking again "when the stakes become
+real":** direct product feedback overrides that original reasoning here — repeating it on every
+list opened reads as nagging, not helpfulness, and the same action needing to stay reachable
+somewhere is a separate problem from whether the banner should keep interrupting to offer it.
+
+**That somewhere is a new Settings screen** (`/settings`), reached from the drawer. Not
+list-scoped — linking an email is an account-wide fact, not a property of whichever list happens
+to be open — so it does not belong on Household (membership of *one* list) or buried in a list's
+overflow menu. `LinkEmailDialog` is now public and opened through one shared
+`showLinkEmailDialog`, so the nudge and Settings cannot drift into two different dialogs for the
+same action.
+
+## 57. Drawer rows get the Household avatar treatment; two stray theme tokens get wired to their evident purpose
+
+**Decision:** The lists-switcher drawer's rows now carry a monogram avatar per list (first
+letter, ink-filled when current) instead of a bare radio glyph, mirroring `_MemberRow` in
+Household — the same visual language for "a specific X" (a person, a list) throughout the app,
+rather than two different conventions for what is structurally the same kind of row. Along the
+way, two theme tokens that existed but were never actually used got wired to what they were
+evidently for: `AppColors.selectedRow{Light,Dark}` is now `ListTileThemeData.selectedTileColor`
+(nothing rendered a selected row any differently before this), and every drawer/footer row gets
+explicit `contentPadding` — the app's `ListTileThemeData.contentPadding: EdgeInsets.zero` is
+deliberate for rows that already wrap their own padding (matches `lists_screen.dart`'s and
+`item_tile.dart`'s own `ListTile`s), but nothing in the drawer was supplying that wrapper, so its
+text sat flush against the drawer's edges. A footer "Settings" row joins "All lists", added for
+decision #56.

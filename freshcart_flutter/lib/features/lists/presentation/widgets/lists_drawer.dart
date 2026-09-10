@@ -4,6 +4,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,7 +21,7 @@ import 'package:go_router/go_router.dart';
 /// Deliberately just a switcher: creating and joining lists already have a
 /// home on [ListsScreen][], and duplicating that flow here would be a second
 /// place to keep in sync for no reader benefit — "All lists" at the bottom is
-/// the door back to it.
+/// the door back to it, alongside "Settings" for whatever is not list-scoped.
 class ListsDrawer extends ConsumerWidget {
   /// Creates the drawer, highlighting [currentListId] among the others.
   const ListsDrawer({required this.currentListId, super.key});
@@ -45,7 +47,12 @@ class ListsDrawer extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 4),
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                24,
+                AppSpacing.screen,
+                16,
+              ),
               child: Text(t.lists.title, style: theme.textTheme.headlineSmall),
             ),
             Expanded(
@@ -54,22 +61,18 @@ class ListsDrawer extends ConsumerWidget {
                   value: Ok<List<ShoppingList>>(:final value),
                 ) =>
                   ListView(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     children: [
                       for (final list in value)
-                        ListTile(
-                          leading: Icon(
-                            list.id == currentListId
-                                ? Icons.radio_button_checked
-                                : Icons.radio_button_unchecked,
-                            color: list.id == currentListId
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.outline,
+                        _ListRow(
+                          list: list,
+                          isCurrent: list.id == currentListId,
+                          memberLabel: t.lists.memberCount(
+                            n: list.members.length,
                           ),
-                          title: Text(list.name),
-                          subtitle: Text(
-                            t.lists.memberCount(n: list.members.length),
-                          ),
-                          selected: list.id == currentListId,
                           onTap: () => openList(list.id),
                         ),
                     ],
@@ -81,17 +84,117 @@ class ListsDrawer extends ConsumerWidget {
               },
             ),
             const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.list_alt_outlined),
-              title: Text(t.lists.allLists),
-              onTap: () {
-                Navigator.of(context).pop();
-                context.go(Routes.lists);
-              },
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Column(
+                children: [
+                  _DrawerAction(
+                    icon: Icons.list_alt_outlined,
+                    label: t.lists.allLists,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go(Routes.lists);
+                    },
+                  ),
+                  _DrawerAction(
+                    icon: Icons.settings_outlined,
+                    label: t.settings.title,
+                    onTap: () {
+                      Navigator.of(context).pop();
+                      context.go(Routes.settings);
+                    },
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
+}
+
+/// One list, with a monogram avatar rather than a bare radio glyph — the
+/// same visual language Household already uses for member rows, so a row
+/// that means "a specific list" or "a specific person" reads the same way
+/// everywhere in the app.
+class _ListRow extends StatelessWidget {
+  const _ListRow({
+    required this.list,
+    required this.isCurrent,
+    required this.memberLabel,
+    required this.onTap,
+  });
+
+  final ShoppingList list;
+  final bool isCurrent;
+  final String memberLabel;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final initial = list.name.trim().isEmpty
+        ? '?'
+        : list.name.trim()[0].toUpperCase();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: ListTile(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 4,
+        ),
+        selected: isCurrent,
+        leading: CircleAvatar(
+          radius: 18,
+          backgroundColor: isCurrent
+              ? AppColors.ink
+              : theme.colorScheme.outlineVariant,
+          foregroundColor: isCurrent ? Colors.white : theme.colorScheme.onSurface,
+          child: Text(initial, style: AppTextStyles.bodyStrong),
+        ),
+        title: Text(
+          list.name,
+          style: isCurrent ? AppTextStyles.bodyStrong : AppTextStyles.body,
+        ),
+        subtitle: Text(memberLabel),
+        trailing: isCurrent
+            ? Icon(Icons.check, size: 18, color: theme.colorScheme.primary)
+            : null,
+        onTap: onTap,
+      ),
+    );
+  }
+}
+
+/// A footer row: "All lists", "Settings". Same shape, so the two read as a
+/// pair rather than one being an afterthought under the other.
+class _DrawerAction extends StatelessWidget {
+  const _DrawerAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+    child: ListTile(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadii.card),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      leading: Icon(icon),
+      title: Text(label),
+      onTap: onTap,
+    ),
+  );
 }

@@ -63,7 +63,8 @@
     "save": "Opslaan",
     "delete": "Verwijderen",
     "retry": "Opnieuw proberen",
-    "undo": "Ongedaan maken"
+    "undo": "Ongedaan maken",
+    "dismiss": "Sluiten"
   },
   "errors": {
     "network": "Geen verbinding met de server.",
@@ -110,5 +111,8 @@
     "noResultsTitle": "Geen producten voor ‘{{query}}’",
     "addAction": "\"{{query}}\" toevoegen aan deze lijst",
     "noResultsBody": "Controleer de spelling, of voeg het toe als nieuw product."
+  },
+  "settings": {
+    "title": "Instellingen"
   }
 }

@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/di/is_new_identity_provider.dart';
+import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
@@ -34,6 +35,9 @@ abstract final class Routes {
   /// The concrete path for [listId]'s shops.
   static String manageShops(ListId listId) => '/lists/${listId.value}/shops';
 
+  /// Account-level settings, not scoped to any one list.
+  static const String settings = '/settings';
+
   /// The welcome screen.
   static const String welcome = '/welcome';
 
@@ -61,6 +65,10 @@ GoRouter appRouter(Ref ref) => GoRouter(
     GoRoute(
       path: Routes.onboarding,
       builder: (context, state) => const OnboardingScreen(),
+    ),
+    GoRoute(
+      path: Routes.settings,
+      builder: (context, state) => const SettingsScreen(),
     ),
     GoRoute(
       path: Routes.lists,

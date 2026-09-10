@@ -368,6 +368,26 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Hardware'), findsOneWidget);
     });
 
+    testWidgets('the drawer\'s Settings entry navigates to Settings', (
+      tester,
+    ) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+
+      await pump(tester);
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.menu));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Settings'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(Drawer), findsNothing);
+      expect(find.widgetWithText(AppBar, 'Settings'), findsOneWidget);
+    });
+
     testWidgets('a list the user cannot see reports no access', (tester) async {
       final list = buildList(name: 'Groceries');
       repository.myListsResult = Ok([list]);

@@ -63,7 +63,8 @@
     "save": "Save",
     "delete": "Delete",
     "retry": "Try again",
-    "undo": "Undo"
+    "undo": "Undo",
+    "dismiss": "Dismiss"
   },
   "errors": {
     "network": "Could not reach the server.",
@@ -110,5 +111,8 @@
     "noResultsTitle": "No products match ‘{{query}}’",
     "addAction": "Add \"{{query}}\" to this list",
     "noResultsBody": "Check the spelling, or add it as a new product."
+  },
+  "settings": {
+    "title": "Settings"
   }
 }
