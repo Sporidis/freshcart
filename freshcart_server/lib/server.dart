@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/notifications/business/fcm_push_sender.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/notifications/future_calls/flush_notifications_call.dart';
 import 'package:freshcart_server/src/web/routes/app_config_route.dart';
@@ -29,6 +30,16 @@ void run(List<String> args) async {
     FlushNotificationsCall(),
     NotificationService.flushCallName,
   );
+
+  // Real FCM delivery once a service-account key exists; every developer
+  // without one keeps the logging sender, and the server still starts
+  // (docs/decisions.md #7).
+  final fcmSender = await FcmPushSender.tryCreate(
+    'config/firebase-service-account.json',
+  );
+  if (fcmSender != null) {
+    NotificationService.sender = fcmSender;
+  }
 
   // Setup a default page at the web root.
   // These are used by the default page.

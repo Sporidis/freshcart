@@ -47,6 +47,10 @@ GoogleService-Info.plist
 firebase_options.dart
 .firebase/
 
+# The server-side FCM credential: a service-account private key, never a
+# per-developer client config like the ones above. See FcmPushSender.
+freshcart_server/config/firebase-service-account.json
+
 # ---------------------------------------------------------------------------
 # Flutter / platform
 # ---------------------------------------------------------------------------
