@@ -18,7 +18,7 @@
     "leaveConfirmBody": "Je ziet {{name}} niet meer. De anderen houden de lijst.",
     "delete": "Lijst verwijderen",
     "deleteConfirmTitle": "{{name}} verwijderen?",
-    "deleteConfirmBody": "Dit verwijdert de lijst en alles erop voor alle {{n}} leden. Dit kan niet ongedaan worden gemaakt.",
+    "deleteConfirmBody": "Dit verwijdert de lijst en de {{items}} producten erop voor alle {{n}} leden. Dit kan niet ongedaan worden gemaakt.",
     "deleteForEveryone": "Voor iedereen verwijderen"
   },
   "items": {

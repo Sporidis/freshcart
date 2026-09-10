@@ -13,7 +13,7 @@ void main() {
 
       expect(domain.id.value, listUuid.uuid);
       expect(domain.name, 'Groceries');
-      expect(domain.joinCode.value, 'ABC234');
+      expect(domain.joinCode.value, 'ABC23');
       expect(domain.ownerId.value, userUuid.uuid);
       expect(domain.createdAt, testNow);
       expect(domain.members, hasLength(1));
@@ -27,8 +27,8 @@ void main() {
 
     test('re-parses the join code into a validated value object', () {
       expect(
-        buildListDto(joinCode: 'ABC234').toDomain().joinCode,
-        JoinCode.parse('ABC234').valueOrNull,
+        buildListDto(joinCode: 'ABC23').toDomain().joinCode,
+        JoinCode.parse('ABC23').valueOrNull,
       );
     });
 
@@ -44,7 +44,7 @@ void main() {
     test('rejects a list with no id', () {
       final noId = dto.ShoppingList(
         name: 'Groceries',
-        joinCode: 'ABC234',
+        joinCode: 'ABC23',
         ownerId: userUuid,
         createdAt: testNow,
       );

@@ -3,15 +3,15 @@ import 'package:freshcart_domain/src/core/result.dart';
 
 /// The short code a person types to join someone else's shopping list.
 ///
-/// Six characters from an unambiguous alphabet — no `I`, `O`, `0` or `1` — so a
-/// code read aloud in a kitchen or copied off a screen does not turn into a
+/// Five characters from an unambiguous alphabet — no `I`, `O`, `0` or `1` — so
+/// a code read aloud in a kitchen or copied off a screen does not turn into a
 /// support problem.
 extension type const JoinCode._(String value) implements Object {
   /// The characters a generated code may contain.
   static const String alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
   /// How many characters a code has.
-  static const int length = 6;
+  static const int length = 5;
 
   /// Parses user input, normalising case and surrounding whitespace.
   ///

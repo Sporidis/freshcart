@@ -31,7 +31,7 @@ void main() {
     test('create issues a join code from the unambiguous alphabet', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
 
-      expect(list.joinCode, hasLength(6));
+      expect(list.joinCode, hasLength(5));
       // The domain excludes I, O, 0 and 1 so a spoken code is unambiguous.
       expect(list.joinCode, isNot(matches(RegExp('[IO01]'))));
     });
@@ -92,7 +92,7 @@ void main() {
 
     test('join rejects a well-formed code that matches nothing', () async {
       await expectLater(
-        endpoints.list.join(as(bobId), 'ZZZZZZ'),
+        endpoints.list.join(as(bobId), 'ZZZZZ'),
         throwsA(isA<InvalidJoinCodeException>()),
       );
     });

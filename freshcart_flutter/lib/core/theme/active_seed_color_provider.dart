@@ -22,4 +22,14 @@ class ActiveSeedColor extends _$ActiveSeedColor {
   /// Themes the app from [color], or back to the brand seed when null.
   void select(HexColor? color) =>
       state = color == null ? AppTheme.brandSeed : Color(color.argb);
+
+  /// [select], but only if this provider is still alive.
+  ///
+  /// For callbacks that outlive the widget that scheduled them — a screen's
+  /// `dispose()` clearing the seed colour on a microtask, say. `ref` is only
+  /// reachable from inside the notifier's own methods (Riverpod 3), which is
+  /// why this exists here rather than as a check at the call site.
+  void selectIfAlive(HexColor? color) {
+    if (ref.mounted) select(color);
+  }
 }

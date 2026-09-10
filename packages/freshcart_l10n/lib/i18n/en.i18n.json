@@ -18,7 +18,7 @@
     "leaveConfirmBody": "You will not see {{name}} any more. Everyone else keeps it.",
     "delete": "Delete list",
     "deleteConfirmTitle": "Delete {{name}}?",
-    "deleteConfirmBody": "This removes the list and everything on it for all {{n}} members. It cannot be undone.",
+    "deleteConfirmBody": "This removes the list and its {{items}} products for all {{n}} members. It cannot be undone.",
     "deleteForEveryone": "Delete for everyone"
   },
   "items": {

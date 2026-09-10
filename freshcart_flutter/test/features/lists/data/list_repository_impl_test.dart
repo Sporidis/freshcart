@@ -40,12 +40,12 @@ void main() {
 
     test('joinByCode sends the validated code string', () async {
       client.handler = (_, _, _) => buildListDto();
-      final code = JoinCode.parse('ABC234').valueOrNull!;
+      final code = JoinCode.parse('ABC23').valueOrNull!;
 
       await repository.joinByCode(code);
 
       expect(client.calls.single.method, 'join');
-      expect(client.calls.single.args['joinCode'], 'ABC234');
+      expect(client.calls.single.args['joinCode'], 'ABC23');
     });
 
     test('byId sends the id as a UUID', () async {

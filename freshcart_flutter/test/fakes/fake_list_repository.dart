@@ -133,7 +133,7 @@ class FakeListRepository implements ListRepository {
 ShoppingList buildList({
   String id = '00000000-0000-4000-8000-000000000001',
   String name = 'Groceries',
-  String joinCode = 'ABC234',
+  String joinCode = 'ABC23',
   List<ListMember> members = const [],
 }) => ShoppingList(
   id: ListId(id),

@@ -17,7 +17,7 @@ void main() {
     ShoppingList aList() => ShoppingList(
       id: testList,
       name: 'Groceries',
-      joinCode: JoinCode.parse('ABC234').valueOrNull!,
+      joinCode: JoinCode.parse('ABC23').valueOrNull!,
       ownerId: testUser,
       createdAt: testNow,
     );
@@ -25,10 +25,10 @@ void main() {
     test('joins the list when the code is valid', () async {
       lists.joinResult = Ok(aList());
 
-      final result = await joinList('abc234');
+      final result = await joinList('abc23');
 
       expect(result.valueOrNull?.name, 'Groceries');
-      expect(lists.joinCalls.single.value, 'ABC234');
+      expect(lists.joinCalls.single.value, 'ABC23');
     });
 
     test('rejects a malformed code without touching the network', () async {
@@ -45,7 +45,7 @@ void main() {
     test('passes a repository failure through unchanged', () async {
       lists.joinResult = const Err(Failure.notFound());
 
-      final result = await joinList('ABC234');
+      final result = await joinList('ABC23');
 
       expect(result.failureOrNull, const Failure.notFound());
     });

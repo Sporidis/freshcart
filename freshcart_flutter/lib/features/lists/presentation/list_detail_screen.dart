@@ -12,6 +12,7 @@ import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
+import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -55,9 +56,14 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     // Leaving the list drops its shop colour, so the lists screen is not left
     // wearing the theme of a shop the user is no longer looking at. Deferred to
     // a microtask because a provider must not be written during teardown.
+    //
+    // selectIfAlive, not select: the same guard as _refreshIfAlive elsewhere.
+    // A fast pop-then-navigate-away can dispose activeSeedColorProvider
+    // itself before this microtask runs (nothing else on the destination
+    // watches it), and writing to a torn-down provider throws.
     final notifier = _seedColor;
     if (notifier != null) {
-      scheduleMicrotask(() => notifier.select(null));
+      scheduleMicrotask(() => notifier.selectIfAlive(null));
     }
     super.dispose();
   }
@@ -242,17 +248,31 @@ class _ListMenu extends ConsumerWidget {
     );
   }
 
-  /// Deleting names the list and its member count, and is not undoable.
+  /// Deleting names the list, its member count and its item count, and is
+  /// not undoable.
+  ///
+  /// The item count comes from [itemsControllerProvider], already watched by
+  /// [ItemsSection] on this same screen — reading it here is free, not a
+  /// second fetch. It is a plain read rather than a watch: the dialog is
+  /// built once, when it opens, and does not need to react to a count that
+  /// changes while it is up.
   ///
   /// A dialog rather than a snackbar with an undo, because there is nothing to
   /// undo: this one is genuinely permanent, so it is worth interrupting for.
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final itemCount = switch (ref.read(itemsControllerProvider(list.id))) {
+      AsyncValue<Result<List<ShoppingItem>>>(
+        value: Ok<List<ShoppingItem>>(:final value),
+      ) =>
+        value.length,
+      _ => 0,
+    };
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(t.lists.deleteConfirmTitle(name: list.name)),
         content: Text(
-          t.lists.deleteConfirmBody(n: list.members.length),
+          t.lists.deleteConfirmBody(items: itemCount, n: list.members.length),
         ),
         actions: [
           TextButton(
