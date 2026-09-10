@@ -15,6 +15,7 @@ import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
@@ -49,6 +50,12 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   /// by then — so the notifier is held onto here instead.
   ActiveSeedColor? _seedColor;
 
+  /// Backs the header's search field once it is open. Its own controller
+  /// rather than `TextEditingController(text: ...)` rebuilt from provider
+  /// state every frame, which would fight the user's cursor position on
+  /// every keystroke.
+  final TextEditingController _searchField = TextEditingController();
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -69,6 +76,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     if (notifier != null) {
       scheduleMicrotask(() => notifier.selectIfAlive(null));
     }
+    _searchField.dispose();
     super.dispose();
   }
 
@@ -121,6 +129,20 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       selectionControllerProvider(listId).notifier,
     );
 
+    final search = ref.watch(searchControllerProvider(listId));
+    final searchNotifier = ref.read(searchControllerProvider(listId).notifier);
+    // Both clear the field alongside the provider: without it, the next time
+    // search opens it would flash whatever was typed the time before.
+    void openSearch() {
+      _searchField.clear();
+      searchNotifier.open();
+    }
+
+    void closeSearch() {
+      _searchField.clear();
+      searchNotifier.close();
+    }
+
     return Scaffold(
       // Only once there is a list to switch away from — the drawer's own
       // content needs nothing else, but opening it over a loading or error
@@ -129,23 +151,52 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       appBar: AppBar(
         // Selection mode replaces the drawer's hamburger with a way out of
         // selection instead -- opening the list switcher mid-select would
-        // abandon the selection with no way back to it.
+        // abandon the selection with no way back to it. Search does the
+        // same, for the same reason.
         leading: selectionMode
             ? IconButton(
                 icon: const Icon(Icons.close),
                 tooltip: t.common.cancel,
                 onPressed: selectionNotifier.clear,
               )
+            : search.active
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                tooltip: t.common.cancel,
+                onPressed: closeSearch,
+              )
             : null,
         title: AnimatedSwitcher(
-          duration: AppMotion.durationFor(context, AppMotion.standard),
-          // The header cross-fades into the contextual bar (§10) rather than
-          // being replaced by a whole separate widget tree, so it reads as
-          // one bar changing what it says, not a screen change.
+          // 280 ms per §16 -- its own value, distinct from the 260 ms token
+          // the selection cross-fade uses; one switcher can only run one
+          // duration, so this is what both transitions share.
+          duration: AppMotion.durationFor(
+            context,
+            const Duration(milliseconds: 280),
+          ),
+          switchInCurve: AppMotion.enter,
+          switchOutCurve: AppMotion.enter,
+          // The header cross-fades into the contextual bar (§10) or the
+          // search field (§16) rather than being replaced by a whole
+          // separate widget tree, so it reads as one bar changing what it
+          // says, not a screen change.
           child: selectionMode
               ? Text(
                   t.items.selectedCount(n: selection.length),
                   key: const ValueKey('selection'),
+                )
+              : search.active
+              ? TextField(
+                  key: const ValueKey('search'),
+                  controller: _searchField,
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: t.search.hint,
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                  onChanged: searchNotifier.updateQuery,
                 )
               : KeyedSubtree(
                   key: const ValueKey('normal'),
@@ -206,8 +257,18 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                   child: Text(t.common.delete),
                 ),
               ]
+            // The field itself takes the actions' place while searching --
+            // nothing here is meaningful mid-search, and the back arrow in
+            // leading is already the way out.
+            : search.active
+            ? const []
             : [
                 if (loaded != null) ...[
+                  IconButton(
+                    icon: const Icon(Icons.search),
+                    tooltip: t.search.hint,
+                    onPressed: openSearch,
+                  ),
                   _MemberAvatar(list: loaded),
                   _ListMenu(list: loaded, t: t),
                 ],
@@ -226,8 +287,21 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               // The stakes are real here: this list is shared, so losing the
               // session would lose access to it.
               const UpgradeNudge(),
-              ShopFilterBar(listId: listId),
-              const Divider(height: 1),
+              // The tab strip slides away while searching (§16): search
+              // results already span every shop, so a filter that would only
+              // narrow them back down has nothing to do here.
+              AnimatedSize(
+                duration: AppMotion.durationFor(context, AppMotion.standard),
+                curve: AppMotion.enter,
+                child: search.active
+                    ? const SizedBox(width: double.infinity)
+                    : Column(
+                        children: [
+                          ShopFilterBar(listId: listId),
+                          const Divider(height: 1),
+                        ],
+                      ),
+              ),
               Expanded(child: ItemsSection(list: shoppingList)),
             ],
           ),

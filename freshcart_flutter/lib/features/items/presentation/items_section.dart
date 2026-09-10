@@ -13,11 +13,13 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_field.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_editor_dialog.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/search_results.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -52,6 +54,7 @@ class ItemsSection extends ConsumerWidget {
     final selectionMode = ref.watch(
       selectionControllerProvider(list.id).select((s) => s.isNotEmpty),
     );
+    final search = ref.watch(searchControllerProvider(list.id));
 
     /// Shows the message behind a rolled-back optimistic update.
     ///
@@ -84,6 +87,19 @@ class ItemsSection extends ConsumerWidget {
               Err<List<ShoppingItem>>(:final failure) => Center(
                 child: Text(failure.toMessage(t)),
               ),
+              // Search bypasses the shop filter and the open/done split
+              // entirely (§16: "one flat list across all shops") -- checked
+              // first, ahead of the ordinary empty-state and list branches,
+              // so it wins regardless of what they would have shown.
+              Ok<List<ShoppingItem>>(value: final all) when search.active =>
+                SearchResults(
+                  list: list,
+                  allItems: all,
+                  query: search.query,
+                  t: t,
+                  controller: controller,
+                  report: report,
+                ),
               // Two different empties, and the difference matters: an empty
               // shop tab is a filter result, so it names the shop and tints
               // to its colour, while an empty list is the first-run state and
@@ -107,13 +123,13 @@ class ItemsSection extends ConsumerWidget {
             },
           },
         ),
-        // Slides out during multi-select (§10): adding one item makes no
-        // sense mid-selection, and its own place at the bottom of the
-        // screen is exactly where "Delete"/"Move" would otherwise crowd it.
+        // Slides out during multi-select or search (§10, §16): neither
+        // leaves room for adding a fresh item the ordinary way -- search
+        // offers its own "Add to list" inside the no-results state instead.
         AnimatedSize(
           duration: AppMotion.durationFor(context, AppMotion.standard),
           curve: AppMotion.enter,
-          child: selectionMode
+          child: selectionMode || search.active
               ? const SizedBox(width: double.infinity)
               : AddItemField(
                   t: t,

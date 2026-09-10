@@ -695,3 +695,35 @@ drop (both directly supported) but not once per index crossed while dragging. Al
 from the same root cause — `ReorderableListView` owns those specific timings internally and
 does not expose them — and matching them exactly would mean rebuilding the widget from
 `Draggable`/`DragTarget` primitives to save what is, in practice, a very small visual gap.
+
+## 55. Search is local-only and its own header mode; suggestions and offline are named, not built
+
+**Decision:** Search (§16) is a third header mode alongside the normal title and the multi-select
+contextual bar, all three cross-fading through the same `AnimatedSwitcher` rather than three
+separate widget trees, so the header reads as one bar changing what it says. `SearchController`
+tracks `active` and `query` as two separate fields rather than treating an empty query as
+closed the way `SelectionController` treats an empty selection: opening the field intentionally
+leaves it active with nothing typed yet, and that state has to survive rendering with an empty
+`TextField`, not collapse the instant it does. Results are computed client-side, against every
+item already loaded for the list, regardless of shop or checked state — matching the spec's
+"local-only, no spinner, results filter per keystroke" — so no new data source or endpoint was
+needed. Rendered through a new `SearchResults` widget rather than a fourth mode threaded into
+`_ItemList`: search bypasses the shop filter and the open/done split entirely, and none of
+`ItemTile`'s selection or drag wiring applies to a result row, so a separate small widget stayed
+plainer than growing the other one's branching further.
+
+**Deferred, and why, rather than silently left out:**
+
+- **Suggestion chips and "Recently bought"** (§16's second half) need a concept this app does
+  not have yet: per-household purchase history, ranked by recency × frequency. That is new
+  domain modelling — an event log or a frequency table, a new server endpoint, a new screen
+  (drawer → Recently bought) — not an extension of anything already built, so it did not belong
+  bundled into this pass.
+- **Offline & sync (§18)** is the biggest single gap left in the whole spec, and deliberately not
+  started here. Its own text says why it is out of scope for a quiet addition: *"Firestore's
+  local cache does the work; the UI's job is honesty without anxiety."* This app is Serverpod
+  over Postgres, not Firestore — there is no local-cache-first sync engine underneath to be
+  honest *about*. Building genuine offline support (edit while offline, sync on reconnect, a
+  "not yet confirmed" mark on unsynced rows) means designing local persistence, a write queue
+  and reconciliation from scratch, which is an architecture decision on its own footing, not
+  a UI pass over existing plumbing the way search and the three gesture flows were.

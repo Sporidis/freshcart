@@ -536,4 +536,90 @@ void main() {
       expect(find.text('Bread'), findsOneWidget);
     });
   });
+
+  group('search', () {
+    Future<void> openGroceries(WidgetTester tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+      itemRepository.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+      ]);
+
+      await pump(tester);
+      await tester.tap(find.text('Groceries'));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'tapping the search icon expands the field and hides the quick-add bar',
+      (tester) async {
+        await openGroceries(tester);
+
+        expect(find.byKey(const ValueKey('search')), findsNothing);
+
+        await tester.tap(find.byIcon(Icons.search));
+        await tester.pumpAndSettle();
+
+        expect(find.byKey(const ValueKey('search')), findsOneWidget);
+        expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+        // The quick-add field is the only other TextField this screen has.
+        expect(find.byType(TextField), findsOneWidget);
+      },
+    );
+
+    testWidgets('typing filters to matching products only', (tester) async {
+      await openGroceries(tester);
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('search')), 'mil');
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Bread'), findsNothing);
+    });
+
+    testWidgets(
+      'no matches offers to add the search text, which actually adds it',
+      (tester) async {
+        itemRepository.addResult = Ok(buildItem(name: 'Eggs'));
+        await openGroceries(tester);
+
+        await tester.tap(find.byIcon(Icons.search));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byKey(const ValueKey('search')), 'eggs');
+        await tester.pumpAndSettle();
+
+        expect(find.text('No products match ‘eggs’'), findsOneWidget);
+
+        await tester.tap(find.text('Add "eggs" to this list'));
+        await tester.pumpAndSettle();
+
+        // The addition lands in the same search: "Eggs" now matches the
+        // query still typed, so the dead end resolves into a real result.
+        expect(find.text('No products match ‘eggs’'), findsNothing);
+        expect(find.text('Eggs'), findsOneWidget);
+      },
+    );
+
+    testWidgets('the back arrow closes search and restores the tab strip', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('search')), 'mil');
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('search')), findsNothing);
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Bread'), findsOneWidget);
+    });
+  });
 }
