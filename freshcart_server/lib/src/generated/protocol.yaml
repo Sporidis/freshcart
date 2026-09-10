@@ -19,6 +19,7 @@ item:
   - add:
   - save:
   - remove:
+  - clearChecked:
   - watchList:
 list:
   - myLists:

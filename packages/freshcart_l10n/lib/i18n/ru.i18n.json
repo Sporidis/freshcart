@@ -35,7 +35,8 @@
     "emptyShopTitle": "Ничего для «{{shop}}»",
     "emptyShopBody": "Добавленные здесь товары появятся на этой вкладке.",
     "emptyShopAction": "Добавить товар",
-    "doneCount": "Готово · {{n}}"
+    "doneCount": "Готово · {{n}}",
+    "clearChecked": "Очистить отмеченные"
   },
   "shops": {
     "all": "Все магазины",

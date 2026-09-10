@@ -32,6 +32,9 @@ abstract interface class ItemRepository {
   /// Deletes item [id].
   Future<Result<void>> remove(ItemId id);
 
+  /// Deletes every checked item on [listId], returning how many were removed.
+  Future<Result<int>> clearChecked(ListId listId);
+
   /// Live view of the items on [listId] (Phase 8).
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId);
 }

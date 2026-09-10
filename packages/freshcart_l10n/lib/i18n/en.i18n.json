@@ -33,7 +33,8 @@
     "emptyShopTitle": "Nothing for {{shop}}",
     "emptyShopBody": "Items you add here will show on this tab.",
     "emptyShopAction": "Add a product",
-    "doneCount": "Done · {{n}}"
+    "doneCount": "Done · {{n}}",
+    "clearChecked": "Clear checked"
   },
   "shops": {
     "all": "All shops",

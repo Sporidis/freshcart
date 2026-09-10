@@ -33,7 +33,8 @@
     "emptyShopTitle": "Niets voor {{shop}}",
     "emptyShopBody": "Wat je hier toevoegt, verschijnt op dit tabblad.",
     "emptyShopAction": "Product toevoegen",
-    "doneCount": "Klaar · {{n}}"
+    "doneCount": "Klaar · {{n}}",
+    "clearChecked": "Afgevinkte wissen"
   },
   "shops": {
     "all": "Alle winkels",

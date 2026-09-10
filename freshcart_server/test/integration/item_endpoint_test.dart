@@ -139,6 +139,49 @@ void main() {
       );
     });
 
+    test(
+      'clearChecked deletes every checked item and leaves the rest',
+      () async {
+        final list = await aSharedList();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+        final eggs = await endpoints.item.add(as(aliceId), list.id!, 'Eggs');
+        await endpoints.item.save(
+          as(aliceId),
+          milk.copyWith(isChecked: true),
+        );
+        await endpoints.item.save(
+          as(aliceId),
+          bread.copyWith(isChecked: true),
+        );
+
+        final removed = await endpoints.item.clearChecked(
+          as(aliceId),
+          list.id!,
+        );
+
+        expect(removed, 2);
+        final remaining = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(remaining.map((i) => i.id), [eggs.id]);
+      },
+    );
+
+    test('clearChecked refuses a non-member', () async {
+      final list = await aSharedList();
+      await expectLater(
+        endpoints.item.clearChecked(as(strangerId), list.id!),
+        throwsA(isA<NotAMemberException>()),
+      );
+    });
+
+    test('clearChecked is a no-op when nothing is checked', () async {
+      final list = await aSharedList();
+      await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+      expect(await endpoints.item.clearChecked(as(aliceId), list.id!), 0);
+      expect(await endpoints.item.byList(as(aliceId), list.id!), hasLength(1));
+    });
+
     test('remove deletes the item, and refuses a non-member', () async {
       final list = await aSharedList();
       final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');

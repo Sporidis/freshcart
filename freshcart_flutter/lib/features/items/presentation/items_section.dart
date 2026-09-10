@@ -201,6 +201,8 @@ class _ItemList extends ConsumerWidget {
               onToggle: ref
                   .read(doneSectionCollapsedProvider(list.id).notifier)
                   .toggle,
+              clearLabel: t.items.clearChecked,
+              onClear: () async => report(await controller.clearChecked()),
             ),
             // Checked rows are never removed, only folded: the shopper needs
             // to see what is already in the trolley.

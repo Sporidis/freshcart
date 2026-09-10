@@ -48,6 +48,10 @@ class ItemEndpoint extends Endpoint {
   Future<void> remove(Session session, UuidValue itemId) =>
       ItemService.remove(session, itemId, session.requireUserId);
 
+  /// Deletes every checked item on the list, returning how many were removed.
+  Future<int> clearChecked(Session session, UuidValue listId) =>
+      ItemService.clearChecked(session, listId, session.requireUserId);
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the

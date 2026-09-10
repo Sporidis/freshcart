@@ -596,3 +596,19 @@ became a second, un-live-updating copy of the same data — removed rather than 
 stay on `ListsScreen`, reached through a plain "All lists" row at the bottom, because the
 design shows no drawer state at all and duplicating the create/join flow into a second widget
 would be two places to keep in sync for a feature nobody asked for.
+
+## 51. "Clear checked" is one transaction, not a loop of `remove`
+
+**Decision:** `ItemService.clearChecked` deletes every checked item on a list inside a single
+`session.db.transaction`, via `ShoppingItem.db.deleteWhere`, and announces one `removed`
+change per row afterward so open clients drop them the same way an individual delete does.
+The client's `ItemsController.clearChecked` mirrors this with one optimistic guess for the
+whole batch, not [remove] called once per item. **Why:** the design's own name for the
+action is a promise — "all of them" — and a client-side loop of individual deletes cannot
+keep it: the third request in ten could fail, leaving half the trolley cleared and half not,
+with no single failure to report and no clean way to roll back the ones that already
+succeeded. One transaction makes partial failure impossible on the server, and one optimistic
+guess makes the same true of what the screen shows while the request is in flight.
+**Trade-off:** a failure now rolls back the whole batch rather than clearing what it could —
+correct here, since "mostly cleared" is a worse, harder-to-explain state than "not cleared,
+try again."

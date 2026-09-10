@@ -33,7 +33,8 @@
     "emptyShopTitle": "Rien pour {{shop}}",
     "emptyShopBody": "Les articles ajoutés ici apparaîtront sur cet onglet.",
     "emptyShopAction": "Ajouter un produit",
-    "doneCount": "Terminé · {{n}}"
+    "doneCount": "Terminé · {{n}}",
+    "clearChecked": "Effacer cochés"
   },
   "shops": {
     "all": "Tous les magasins",

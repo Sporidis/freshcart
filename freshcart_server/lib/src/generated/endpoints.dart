@@ -462,6 +462,24 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['itemId'],
               ),
         ),
+        'clearChecked': _i1.MethodConnector(
+          name: 'clearChecked',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i6.ItemEndpoint).clearChecked(
+                session,
+                params['listId'],
+              ),
+        ),
         'watchList': _i1.MethodStreamConnector(
           name: 'watchList',
           params: {
