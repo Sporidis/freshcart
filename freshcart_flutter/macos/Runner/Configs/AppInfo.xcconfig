@@ -8,7 +8,7 @@
 PRODUCT_NAME = freshcart_flutter
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.nikolaosporidis.freshcart
+PRODUCT_BUNDLE_IDENTIFIER = com.nikolaossporidis.freshcart
 
 // The copyright displayed in application information
 PRODUCT_COPYRIGHT = Copyright © 2026 Nikolaos Sporidis. All rights reserved.
