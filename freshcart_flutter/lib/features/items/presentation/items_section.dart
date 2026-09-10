@@ -156,14 +156,15 @@ class ItemsSection extends ConsumerWidget {
                       builder: (_) =>
                           AddItemSheet(initialName: name, shops: shops, t: t),
                     );
-                    if (details == null) return;
-                    report(
-                      await controller.add(
-                        name: details.name,
-                        quantity: details.quantity,
-                        shopId: details.shopId,
-                      ),
+                    if (details == null) return false;
+                    final failure = await controller.add(
+                      name: details.name,
+                      quantity: details.quantity,
+                      shopId: details.shopId,
+                      noteText: details.noteText,
                     );
+                    report(failure);
+                    return failure == null;
                   },
                 ),
         ),
@@ -207,6 +208,20 @@ class _ItemList extends ConsumerWidget {
     // turns: a selection in progress owns it instead.
     final canReorder = shopFilter != null && selection.isEmpty;
 
+    // The shop dot shows on every row, filtered tab or not -- the design's
+    // own reference screens carry it even on a single shop's tab, not just
+    // "All" (confirmed against the mockup rather than assumed).
+    final shops = switch (ref.watch(shopsControllerProvider(list.id))) {
+      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
+        value,
+      _ => const <Shop>[],
+    };
+    Color? dotFor(ShopId? shopId) {
+      if (shopId == null) return null;
+      final shop = shops.where((s) => s.id == shopId).firstOrNull;
+      return shop == null ? null : Color(shop.color.argb);
+    }
+
     // A row counts as "still shopping" while it is being held, so a just-ticked
     // item keeps its place for 600 ms instead of jumping the moment it is
     // tapped — see RecentlyChecked.
@@ -229,6 +244,7 @@ class _ItemList extends ConsumerWidget {
       item: item,
       t: t,
       index: index ?? 0,
+      shopDotColor: dotFor(item.shopId),
       canReorder: index != null && canReorder,
       selectionMode: index != null && selection.isNotEmpty,
       selected: selection.contains(item.id),

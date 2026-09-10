@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -37,8 +38,11 @@ class QuickAddBar extends StatefulWidget {
   /// AddItemField's onSubmit had.
   final Future<bool> Function(String name) onQuickAdd;
 
-  /// Opens the details sheet, pre-filled with [name].
-  final void Function(String name) onOpenDetails;
+  /// Opens the details sheet, pre-filled with [name], and reports whether it
+  /// actually added something. True clears the field and collapses the bar
+  /// back to a bare button; false (cancelled, or the write failed) leaves
+  /// the typed text in place for another attempt.
+  final Future<bool> Function(String name) onOpenDetails;
 
   /// Translations for the active locale.
   final Translations t;
@@ -111,10 +115,22 @@ class _QuickAddBarState extends State<QuickAddBar>
         _open();
       case _Phase.expanded:
         if (_hasText) {
-          widget.onOpenDetails(_controller.text.trim());
+          unawaited(_openDetails());
         } else {
           _collapse();
         }
+    }
+  }
+
+  Future<void> _openDetails() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final added = await widget.onOpenDetails(_controller.text.trim());
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (added) {
+      _controller.clear();
+      _collapse();
     }
   }
 

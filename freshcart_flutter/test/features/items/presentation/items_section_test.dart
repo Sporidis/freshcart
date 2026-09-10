@@ -11,24 +11,31 @@ import 'package:freshcart_flutter/features/items/presentation/items_section.dart
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
+import '../../../fakes/fake_shop_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);
 
   late FakeItemRepository items;
+  late FakeShopRepository shops;
   final me = UserId('user-1');
 
-  setUp(() => items = FakeItemRepository());
+  setUp(() {
+    items = FakeItemRepository();
+    shops = FakeShopRepository();
+  });
 
   Future<ProviderContainer> pump(WidgetTester tester) async {
     final list = buildList(members: [buildMember(displayName: 'Nikolaos')]);
     final container = ProviderContainer(
       overrides: [
         itemRepositoryProvider.overrideWithValue(items),
+        shopRepositoryProvider.overrideWithValue(shops),
         currentUserIdProvider.overrideWith((ref) async => Ok(me)),
       ],
     );
@@ -65,8 +72,49 @@ void main() {
     await pump(tester);
 
     expect(find.text('Milk'), findsOneWidget);
-    expect(find.text('2×'), findsOneWidget);
+    expect(find.text('x2'), findsOneWidget);
     expect(find.text('the seeded one'), findsOneWidget);
+  });
+
+  testWidgets('a tagged item shows its shop as a coloured dot', (
+    tester,
+  ) async {
+    final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+    shops.byListResult = Ok([colruyt]);
+    items.byListResult = Ok([
+      buildItem(name: 'Milk', shopId: colruyt.id),
+      buildItem(id: '00000000-0000-4000-8000-0000000000bb', name: 'Bread'),
+    ]);
+
+    await pump(tester);
+
+    final milkRow = find.ancestor(
+      of: find.text('Milk'),
+      matching: find.byType(ListTile),
+    );
+    final milkDot = tester.widget<Container>(
+      find.descendant(
+        of: milkRow,
+        matching: find.byKey(const ValueKey('shop-dot')),
+      ),
+    );
+    expect(
+      (milkDot.decoration! as BoxDecoration).color,
+      Color(colruyt.color.argb),
+    );
+
+    // Untagged: no dot, nothing to disambiguate.
+    final breadRow = find.ancestor(
+      of: find.text('Bread'),
+      matching: find.byType(ListTile),
+    );
+    expect(
+      find.descendant(
+        of: breadRow,
+        matching: find.byKey(const ValueKey('shop-dot')),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets('shows the empty state', (tester) async {
@@ -422,35 +470,76 @@ void main() {
       await tester.tap(find.byIcon(Icons.add));
       await tester.pumpAndSettle();
 
-      final sheetField = find.descendant(
-        of: find.byType(AddItemSheet),
-        matching: find.byType(TextField),
+      // The sheet has two fields now (name, note) -- the name one is the
+      // one that should carry "Bread" over from the bar.
+      final sheetFields = tester.widgetList<TextField>(
+        find.descendant(
+          of: find.byType(AddItemSheet),
+          matching: find.byType(TextField),
+        ),
       );
-      expect(sheetField, findsOneWidget);
-      expect(tester.widget<TextField>(sheetField).controller?.text, 'Bread');
+      expect(
+        sheetFields.map((f) => f.controller?.text),
+        contains('Bread'),
+      );
     },
   );
 
-  testWidgets('the details sheet adds with the chosen quantity and shop', (
-    tester,
-  ) async {
-    items.addResult = Ok(buildItem(name: 'Bread'));
-    await pump(tester);
+  testWidgets(
+    'the details sheet adds with the chosen quantity, shop and note, '
+    'then clears and collapses the bar',
+    (tester) async {
+      items.addResult = Ok(buildItem(name: 'Bread'));
+      await pump(tester);
 
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Bread');
-    await tester.pump();
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
 
-    // Bump the quantity to 2, then save from the sheet.
-    await tester.tap(find.byIcon(Icons.add_circle_outline));
-    await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, 'Add item'));
-    await tester.pumpAndSettle();
+      // Bump the quantity to 2, jot a note, then save from the sheet.
+      await tester.tap(find.byIcon(Icons.add_circle_outline));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.widgetWithText(TextField, 'Note (optional)'),
+        'the seeded loaf',
+      );
+      await tester.tap(find.widgetWithText(FilledButton, 'Add item'));
+      await tester.pumpAndSettle();
 
-    expect(items.addCalls.single.quantity, 2);
-    expect(items.addCalls.single.name, 'Bread');
-  });
+      expect(items.addCalls.single.quantity, 2);
+      expect(items.addCalls.single.name, 'Bread');
+      expect(items.addCalls.single.noteText, 'the seeded loaf');
+
+      // Back to a bare button: the bar does not sit there half-full once
+      // the sheet has actually added the item.
+      expect(find.byType(TextField), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a cancelled details sheet leaves the typed name in the bar',
+    (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      // Dismiss the sheet without saving (drag handle / tap the scrim).
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+
+      expect(items.addCalls, isEmpty);
+      final barField = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .single;
+      expect(barField.controller?.text, 'Bread');
+    },
+  );
 }
