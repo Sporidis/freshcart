@@ -15,7 +15,9 @@ dependencies:
   slang: ^4.19.1
 
 dev_dependencies:
-  build_runner: ^2.10.0
   flutter_lints: ^6.0.0
-  slang_build_runner: ^4.19.0
   test: ^1.25.6
+  # No build_runner / slang_build_runner: that builder only reads build.yaml
+  # (which this repo has none of), never slang.yaml, so `build_runner build`
+  # here would silently regenerate with every slang default instead of this
+  # package's config. Regenerate with `dart run slang` — see CLAUDE.md.

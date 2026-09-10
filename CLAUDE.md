@@ -160,12 +160,24 @@ dart run bin/main.dart --apply-migrations   # run server, apply DB migrations
 serverpod create-migration           # after changing DB model yaml
 
 # app (from freshcart_flutter/)
-dart run build_runner build          # riverpod/freezed/slang codegen
+dart run build_runner build          # riverpod/freezed codegen
                                      # NB: --delete-conflicting-outputs was REMOVED from
                                      # build_runner and is now ignored with a warning
 flutter analyze
 flutter test
 flutter run
+
+# translations (from packages/freshcart_l10n/) — NOT build_runner.
+# slang_build_runner's builder never reads slang.yaml (it only reads
+# build.yaml, which this repo has none of), so `build_runner build` here
+# silently falls back to every slang default: English base locale,
+# flutter_integration: true (imports package:flutter, breaking Jaspr's use
+# of this package), and strings.g.dart instead of translations.g.dart,
+# which freshcart_l10n.dart does not export. Confirmed from
+# slang_build_runner's source, not assumed. CI already gets this right
+# (see .github/workflows/ci.yml) — this note exists so a human or an agent
+# running codegen ad hoc doesn't rediscover it the hard way.
+dart run slang
 
 # web (from freshcart_web/)
 jaspr serve                          # dev

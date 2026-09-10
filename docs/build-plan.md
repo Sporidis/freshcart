@@ -139,7 +139,12 @@ flutter test test/features/*/data           # mapper + repo tests pass
 **Build**
 1. `core/di` root `ProviderScope`; `core/router` go_router with an auth guard placeholder.
 2. `core/theme`: `ColorScheme.fromSeed`, light/dark, animated scheme swap hook.
-3. `freshcart_l10n` with slang; `nl` default + `en`, `fr`; wire `build_runner`.
+3. `freshcart_l10n` with slang; `nl` default + `en`, `fr`. Regenerated with
+   `dart run slang`, **not** `build_runner build` — `slang_build_runner`'s
+   builder only reads `build.yaml`, which this repo has none of, so
+   `build_runner` here silently falls back to every slang default (English
+   base locale, `flutter_integration: true`, wrong output filename). See the
+   note in the root `CLAUDE.md` cheatsheet.
 4. Empty `ListsScreen` behind the router.
 
 **Accept**
