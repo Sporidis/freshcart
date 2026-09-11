@@ -14,6 +14,15 @@ fields:
   ### lookup, and so a name survives even after an account upgrade.
   displayName: String
 
+  ### Denormalised the same way as `displayName`, for the same reason: a
+  ### snapshot taken at join time, not kept live in sync with a later
+  ### profile edit.
+  avatarColorArgb: int?
+
+  ### Also denormalised at join time -- already the resolved public URL, not
+  ### a storage path, since this row has no reason to ever recompute it.
+  avatarPhotoUrl: String?
+
   role: MemberRole
 
   joinedAt: DateTime, defaultModel=now

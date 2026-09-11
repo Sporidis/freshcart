@@ -36,7 +36,8 @@ import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i13;
 import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
     as _i14;
-import 'protocol.dart' as _i15;
+import 'dart:typed_data' as _i15;
+import 'protocol.dart' as _i16;
 
 /// Upgrading an anonymous account by attaching credentials to it.
 /// {@category Endpoint}
@@ -703,6 +704,30 @@ class EndpointProfile extends _i1.EndpointRef {
         'setDisplayName',
         {'displayName': displayName},
       );
+
+  /// Sets the caller's avatar colour.
+  _i2.Future<_i14.MemberProfile> setAvatarColor(int avatarColorArgb) =>
+      caller.callServerEndpoint<_i14.MemberProfile>(
+        'profile',
+        'setAvatarColor',
+        {'avatarColorArgb': avatarColorArgb},
+      );
+
+  /// Uploads and sets the caller's avatar photo.
+  _i2.Future<_i14.MemberProfile> setAvatarPhoto(_i15.ByteData bytes) =>
+      caller.callServerEndpoint<_i14.MemberProfile>(
+        'profile',
+        'setAvatarPhoto',
+        {'bytes': bytes},
+      );
+
+  /// Removes the caller's avatar photo, if they have one.
+  _i2.Future<_i14.MemberProfile?> clearAvatarPhoto() =>
+      caller.callServerEndpoint<_i14.MemberProfile?>(
+        'profile',
+        'clearAvatarPhoto',
+        {},
+      );
 }
 
 class Modules {
@@ -736,7 +761,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i15.Protocol(),
+         _i16.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

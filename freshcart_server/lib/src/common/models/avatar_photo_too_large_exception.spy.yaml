@@ -1,0 +1,6 @@
+### Thrown when an uploaded avatar photo exceeds the server's own size cap.
+###
+### The client is expected to have already downsized the image before
+### upload; this is the backstop for a client that skipped that step, not
+### the size a well-behaved upload is expected to reach.
+exception: AvatarPhotoTooLargeException

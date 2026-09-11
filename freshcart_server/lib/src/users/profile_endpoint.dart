@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:freshcart_server/src/auth/business/account_link_service.dart';
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
@@ -19,6 +21,14 @@ class ProfileEndpoint extends Endpoint {
     return CurrentUser(
       userId: userId,
       displayName: await ProfileService.displayNameFor(session, userId),
+      avatarColorArgb: await ProfileService.avatarColorArgbFor(
+        session,
+        userId,
+      ),
+      avatarPhotoUrl: await ProfileService.avatarPhotoUrlFor(
+        session,
+        userId,
+      ),
       isAnonymous: !await AccountLinkService.isRecoverable(session, userId),
     );
   }
@@ -34,4 +44,20 @@ class ProfileEndpoint extends Endpoint {
         session.requireUserId,
         displayName,
       );
+
+  /// Sets the caller's avatar colour.
+  Future<MemberProfile> setAvatarColor(Session session, int avatarColorArgb) =>
+      ProfileService.setAvatarColor(
+        session,
+        session.requireUserId,
+        avatarColorArgb,
+      );
+
+  /// Uploads and sets the caller's avatar photo.
+  Future<MemberProfile> setAvatarPhoto(Session session, ByteData bytes) =>
+      ProfileService.setAvatarPhoto(session, session.requireUserId, bytes);
+
+  /// Removes the caller's avatar photo, if they have one.
+  Future<MemberProfile?> clearAvatarPhoto(Session session) =>
+      ProfileService.clearAvatarPhoto(session, session.requireUserId);
 }

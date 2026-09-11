@@ -28,6 +28,8 @@ class ListEndpoint extends Endpoint {
       userId,
       name,
       await ProfileService.displayNameFor(session, userId),
+      await ProfileService.avatarColorArgbFor(session, userId),
+      await ProfileService.avatarPhotoUrlFor(session, userId),
     );
   }
 
@@ -39,6 +41,8 @@ class ListEndpoint extends Endpoint {
       userId,
       joinCode,
       await ProfileService.displayNameFor(session, userId),
+      await ProfileService.avatarColorArgbFor(session, userId),
+      await ProfileService.avatarPhotoUrlFor(session, userId),
     );
   }
 

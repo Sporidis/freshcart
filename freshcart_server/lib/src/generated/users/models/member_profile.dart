@@ -34,6 +34,8 @@ abstract class MemberProfile
     required this.authUserId,
     this.authUser,
     required this.displayName,
+    this.avatarColorArgb,
+    this.avatarPhotoPath,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -42,6 +44,8 @@ abstract class MemberProfile
     required _i1.UuidValue authUserId,
     _i2.AuthUser? authUser,
     required String displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoPath,
     DateTime? createdAt,
   }) = _MemberProfileImpl;
 
@@ -59,6 +63,8 @@ abstract class MemberProfile
               jsonSerialization['authUser'],
             ),
       displayName: jsonSerialization['displayName'] as String,
+      avatarColorArgb: jsonSerialization['avatarColorArgb'] as int?,
+      avatarPhotoPath: jsonSerialization['avatarPhotoPath'] as String?,
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -80,6 +86,16 @@ abstract class MemberProfile
   /// The name collaborators see next to this user's changes.
   String displayName;
 
+  /// A colour the user picked for their own avatar, from the same swatch
+  /// presets a shop's own colour uses. `null` until they choose one.
+  int? avatarColorArgb;
+
+  /// Storage path of an uploaded avatar photo (in the `public` cloud
+  /// storage bucket), or `null` if none is set. The path, not the public
+  /// URL: `ProfileService` recomputes the URL on read, so moving buckets
+  /// later would not mean back-filling every row.
+  String? avatarPhotoPath;
+
   DateTime createdAt;
 
   @override
@@ -93,6 +109,8 @@ abstract class MemberProfile
     _i1.UuidValue? authUserId,
     _i2.AuthUser? authUser,
     String? displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoPath,
     DateTime? createdAt,
   });
   @override
@@ -103,6 +121,8 @@ abstract class MemberProfile
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJson(),
       'displayName': displayName,
+      if (avatarColorArgb != null) 'avatarColorArgb': avatarColorArgb,
+      if (avatarPhotoPath != null) 'avatarPhotoPath': avatarPhotoPath,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -115,6 +135,8 @@ abstract class MemberProfile
       'authUserId': authUserId.toJson(),
       if (authUser != null) 'authUser': authUser?.toJsonForProtocol(),
       'displayName': displayName,
+      if (avatarColorArgb != null) 'avatarColorArgb': avatarColorArgb,
+      if (avatarPhotoPath != null) 'avatarPhotoPath': avatarPhotoPath,
       'createdAt': createdAt.toJson(),
     };
   }
@@ -157,12 +179,16 @@ class _MemberProfileImpl extends MemberProfile {
     required _i1.UuidValue authUserId,
     _i2.AuthUser? authUser,
     required String displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoPath,
     DateTime? createdAt,
   }) : super._(
          id: id,
          authUserId: authUserId,
          authUser: authUser,
          displayName: displayName,
+         avatarColorArgb: avatarColorArgb,
+         avatarPhotoPath: avatarPhotoPath,
          createdAt: createdAt,
        );
 
@@ -175,6 +201,8 @@ class _MemberProfileImpl extends MemberProfile {
     _i1.UuidValue? authUserId,
     Object? authUser = _Undefined,
     String? displayName,
+    Object? avatarColorArgb = _Undefined,
+    Object? avatarPhotoPath = _Undefined,
     DateTime? createdAt,
   }) {
     return MemberProfile(
@@ -184,6 +212,12 @@ class _MemberProfileImpl extends MemberProfile {
           ? authUser
           : this.authUser?.copyWith(),
       displayName: displayName ?? this.displayName,
+      avatarColorArgb: avatarColorArgb is int?
+          ? avatarColorArgb
+          : this.avatarColorArgb,
+      avatarPhotoPath: avatarPhotoPath is String?
+          ? avatarPhotoPath
+          : this.avatarPhotoPath,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -204,6 +238,17 @@ class MemberProfileUpdateTable extends _i1.UpdateTable<MemberProfileTable> {
     value,
   );
 
+  _i1.ColumnValue<int, int> avatarColorArgb(int? value) => _i1.ColumnValue(
+    table.avatarColorArgb,
+    value,
+  );
+
+  _i1.ColumnValue<String, String> avatarPhotoPath(String? value) =>
+      _i1.ColumnValue(
+        table.avatarPhotoPath,
+        value,
+      );
+
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -223,6 +268,14 @@ class MemberProfileTable extends _i1.Table<_i1.UuidValue?> {
       'displayName',
       this,
     );
+    avatarColorArgb = _i1.ColumnInt(
+      'avatarColorArgb',
+      this,
+    );
+    avatarPhotoPath = _i1.ColumnString(
+      'avatarPhotoPath',
+      this,
+    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -238,6 +291,16 @@ class MemberProfileTable extends _i1.Table<_i1.UuidValue?> {
 
   /// The name collaborators see next to this user's changes.
   late final _i1.ColumnString displayName;
+
+  /// A colour the user picked for their own avatar, from the same swatch
+  /// presets a shop's own colour uses. `null` until they choose one.
+  late final _i1.ColumnInt avatarColorArgb;
+
+  /// Storage path of an uploaded avatar photo (in the `public` cloud
+  /// storage bucket), or `null` if none is set. The path, not the public
+  /// URL: `ProfileService` recomputes the URL on read, so moving buckets
+  /// later would not mean back-filling every row.
+  late final _i1.ColumnString avatarPhotoPath;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -259,6 +322,8 @@ class MemberProfileTable extends _i1.Table<_i1.UuidValue?> {
     id,
     authUserId,
     displayName,
+    avatarColorArgb,
+    avatarPhotoPath,
     createdAt,
   ];
 

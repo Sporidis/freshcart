@@ -21,6 +21,8 @@ abstract class ListMember implements _i1.SerializableModel {
     required this.listId,
     required this.userId,
     required this.displayName,
+    this.avatarColorArgb,
+    this.avatarPhotoUrl,
     required this.role,
     DateTime? joinedAt,
   }) : joinedAt = joinedAt ?? DateTime.now();
@@ -30,6 +32,8 @@ abstract class ListMember implements _i1.SerializableModel {
     required _i1.UuidValue listId,
     required _i1.UuidValue userId,
     required String displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoUrl,
     required _i2.MemberRole role,
     DateTime? joinedAt,
   }) = _ListMemberImpl;
@@ -42,6 +46,8 @@ abstract class ListMember implements _i1.SerializableModel {
       listId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['listId']),
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       displayName: jsonSerialization['displayName'] as String,
+      avatarColorArgb: jsonSerialization['avatarColorArgb'] as int?,
+      avatarPhotoUrl: jsonSerialization['avatarPhotoUrl'] as String?,
       role: _i2.MemberRole.fromJson((jsonSerialization['role'] as String)),
       joinedAt: jsonSerialization['joinedAt'] == null
           ? null
@@ -64,6 +70,15 @@ abstract class ListMember implements _i1.SerializableModel {
   /// lookup, and so a name survives even after an account upgrade.
   String displayName;
 
+  /// Denormalised the same way as `displayName`, for the same reason: a
+  /// snapshot taken at join time, not kept live in sync with a later
+  /// profile edit.
+  int? avatarColorArgb;
+
+  /// Also denormalised at join time -- already the resolved public URL, not
+  /// a storage path, since this row has no reason to ever recompute it.
+  String? avatarPhotoUrl;
+
   _i2.MemberRole role;
 
   DateTime joinedAt;
@@ -76,6 +91,8 @@ abstract class ListMember implements _i1.SerializableModel {
     _i1.UuidValue? listId,
     _i1.UuidValue? userId,
     String? displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoUrl,
     _i2.MemberRole? role,
     DateTime? joinedAt,
   });
@@ -87,6 +104,8 @@ abstract class ListMember implements _i1.SerializableModel {
       'listId': listId.toJson(),
       'userId': userId.toJson(),
       'displayName': displayName,
+      if (avatarColorArgb != null) 'avatarColorArgb': avatarColorArgb,
+      if (avatarPhotoUrl != null) 'avatarPhotoUrl': avatarPhotoUrl,
       'role': role.toJson(),
       'joinedAt': joinedAt.toJson(),
     };
@@ -106,6 +125,8 @@ class _ListMemberImpl extends ListMember {
     required _i1.UuidValue listId,
     required _i1.UuidValue userId,
     required String displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoUrl,
     required _i2.MemberRole role,
     DateTime? joinedAt,
   }) : super._(
@@ -113,6 +134,8 @@ class _ListMemberImpl extends ListMember {
          listId: listId,
          userId: userId,
          displayName: displayName,
+         avatarColorArgb: avatarColorArgb,
+         avatarPhotoUrl: avatarPhotoUrl,
          role: role,
          joinedAt: joinedAt,
        );
@@ -126,6 +149,8 @@ class _ListMemberImpl extends ListMember {
     _i1.UuidValue? listId,
     _i1.UuidValue? userId,
     String? displayName,
+    Object? avatarColorArgb = _Undefined,
+    Object? avatarPhotoUrl = _Undefined,
     _i2.MemberRole? role,
     DateTime? joinedAt,
   }) {
@@ -134,6 +159,12 @@ class _ListMemberImpl extends ListMember {
       listId: listId ?? this.listId,
       userId: userId ?? this.userId,
       displayName: displayName ?? this.displayName,
+      avatarColorArgb: avatarColorArgb is int?
+          ? avatarColorArgb
+          : this.avatarColorArgb,
+      avatarPhotoUrl: avatarPhotoUrl is String?
+          ? avatarPhotoUrl
+          : this.avatarPhotoUrl,
       role: role ?? this.role,
       joinedAt: joinedAt ?? this.joinedAt,
     );

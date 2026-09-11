@@ -49,3 +49,6 @@ profile:
   - me:
   - displayName:
   - setDisplayName:
+  - setAvatarColor:
+  - setAvatarPhoto:
+  - clearAvatarPhoto:
