@@ -35,13 +35,13 @@ domain still compiles.** If that ever stops being true, the layering is broken.
 
 A ✅ means "this row may depend on this column." Anything not ticked is a violation.
 
-| ↓ can import →      | pure Dart | freshcart_domain | freshcart_l10n | freshcart_client | Serverpod | Flutter | Firebase |
-| ------------------- | :-------: | :--------------: | :------------: | :--------------: | :-------: | :-----: | :------: |
-| **domain**          | ✅        | ✅ (itself)      | ❌             | ❌               | ❌        | ❌      | ❌       |
-| **data**            | ✅        | ✅               | ❌             | ✅               | ❌\*      | ❌\*\*  | ✅ (FCM adapter only) |
-| **application**     | ✅        | ✅               | ❌             | ❌               | ❌        | ✅ (Riverpod) | ❌ |
-| **presentation**    | ✅        | ✅               | ✅             | ❌               | ❌        | ✅      | ❌       |
-| **server endpoints**| ✅        | ✅               | ❌             | ❌               | ✅        | ❌      | ✅ (send push) |
+| ↓ can import →       | pure Dart | freshcart_domain | freshcart_l10n | freshcart_client | Serverpod |    Flutter    |       Firebase        |
+| -------------------- | :-------: | :--------------: | :------------: | :--------------: | :-------: | :-----------: | :-------------------: |
+| **domain**           |    ✅     |   ✅ (itself)    |       ❌       |        ❌        |    ❌     |      ❌       |          ❌           |
+| **data**             |    ✅     |        ✅        |       ❌       |        ✅        |   ❌\*    |    ❌\*\*     | ✅ (FCM adapter only) |
+| **application**      |    ✅     |        ✅        |       ❌       |        ❌        |    ❌     | ✅ (Riverpod) |          ❌           |
+| **presentation**     |    ✅     |        ✅        |       ✅       |        ❌        |    ❌     |      ✅       |          ❌           |
+| **server endpoints** |    ✅     |        ✅        |       ❌       |        ❌        |    ✅     |      ❌       |    ✅ (send push)     |
 
 - \* The **app's** data layer talks to Serverpod only through the generated `freshcart_client`,
   not the `serverpod` server package.
@@ -55,17 +55,17 @@ A ✅ means "this row may depend on this column." Anything not ticked is a viola
 
 ## Where each concept lives
 
-| Concept                                   | Lives in |
-| ----------------------------------------- | -------- |
-| Entities, value objects, `Failure` union  | `packages/freshcart_domain/.../domain/` |
-| Repository **interfaces** (ports)         | `packages/freshcart_domain/.../domain/` |
-| Use cases (application-agnostic logic)    | `packages/freshcart_domain/.../domain/` |
-| Repository **implementations**            | `freshcart_flutter/.../features/<f>/data/` |
-| DTO ↔ entity mappers                       | `freshcart_flutter/.../features/<f>/data/mappers/` |
-| Riverpod providers/controllers            | `freshcart_flutter/.../features/<f>/application/` |
-| Screens, widgets                          | `freshcart_flutter/.../features/<f>/presentation/` |
-| DB models, endpoints, server ops          | `freshcart_server/` |
-| Generated protocol + client               | `freshcart_client/` (never hand-edit) |
+| Concept                                  | Lives in                                           |
+| ---------------------------------------- | -------------------------------------------------- |
+| Entities, value objects, `Failure` union | `packages/freshcart_domain/.../domain/`            |
+| Repository **interfaces** (ports)        | `packages/freshcart_domain/.../domain/`            |
+| Use cases (application-agnostic logic)   | `packages/freshcart_domain/.../domain/`            |
+| Repository **implementations**           | `freshcart_flutter/.../features/<f>/data/`         |
+| DTO ↔ entity mappers                     | `freshcart_flutter/.../features/<f>/data/mappers/` |
+| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/`  |
+| Screens, widgets                         | `freshcart_flutter/.../features/<f>/presentation/` |
+| DB models, endpoints, server ops         | `freshcart_server/`                                |
+| Generated protocol + client              | `freshcart_client/` (never hand-edit)              |
 
 Putting entities, ports, and use cases in the shared `freshcart_domain` package (not inside
 the app) is deliberate: the same pure logic is reusable by the app, the Jaspr site, and even
@@ -107,7 +107,7 @@ packages/freshcart_domain/lib/src/lists/
 ## The mapping pattern (the clean-arch hill)
 
 Serverpod generates a model, say `ShoppingList`, in `freshcart_client`. That is a **DTO** —
-wire shape, nullable fields, no behaviour. The domain has its own `ShoppingList` entity —
+wire shape, nullable fields, no behavior. The domain has its own `ShoppingList` entity —
 non-null invariants, value objects, methods. They are different types and the mapper is the
 only bridge.
 
@@ -181,7 +181,7 @@ localized message via `core/error`. Exceptions are for programmer errors only.
 ## Auth (locked decisions, realised here)
 
 Serverpod-native, **anonymous-first**. One stable `authUserId` from day one; Google/email are
-added later as *linked* Serverpod providers, so upgrading an account keeps all data — no
+added later as _linked_ Serverpod providers, so upgrading an account keeps all data — no
 migration. Firebase is scoped to FCM and never used for identity. Everything sits behind an
 `AuthPort` in the domain so adding a provider is a swap, not a rewrite.
 
@@ -224,7 +224,7 @@ flowchart TD
 > **Documented platform limitation, on purpose:** iOS web push for PWAs is gated in the EU,
 > so the free PWA-install path will not deliver background push to EU iPhones. In-app live
 > updates still work. Real iOS background push needs a native build + paid Apple Developer
-> account, deferred. This is a constraint we *document*, not a bug we chase.
+> account, deferred. This is a constraint we _document_, not a bug we chase.
 
 ## Dynamic theming
 
