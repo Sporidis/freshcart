@@ -12,6 +12,15 @@ fields:
   ### The name collaborators see, or a placeholder if none is set yet.
   displayName: String
 
+  ### A colour the caller picked for their own avatar, or `null` if they
+  ### have not set one -- the client falls back to its own deterministic
+  ### hash colour in that case.
+  avatarColorArgb: int?
+
+  ### The caller's avatar photo, already resolved to a public URL, or `null`
+  ### if they have not set one.
+  avatarPhotoUrl: String?
+
   ### Whether the account has any credential attached.
   ###
   ### False means an anonymous session: losing this device loses access to every

@@ -28,10 +28,11 @@ import 'package:freshcart_server/src/generated/notifications/models/device_platf
 import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i13;
 import 'package:freshcart_server/src/generated/shops/models/shop_item_disposition.dart'
     as _i14;
+import 'dart:typed_data' as _i15;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
-    as _i15;
-import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i16;
+import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
+    as _i17;
 
 class Endpoints extends _i1.EndpointDispatch {
   @override
@@ -1008,11 +1009,59 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['displayName'],
                   ),
         ),
+        'setAvatarColor': _i1.MethodConnector(
+          name: 'setAvatarColor',
+          params: {
+            'avatarColorArgb': _i1.ParameterDescription(
+              name: 'avatarColorArgb',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i10.ProfileEndpoint).setAvatarColor(
+                    session,
+                    params['avatarColorArgb'],
+                  ),
+        ),
+        'setAvatarPhoto': _i1.MethodConnector(
+          name: 'setAvatarPhoto',
+          params: {
+            'bytes': _i1.ParameterDescription(
+              name: 'bytes',
+              type: _i1.getType<_i15.ByteData>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i10.ProfileEndpoint).setAvatarPhoto(
+                    session,
+                    params['bytes'],
+                  ),
+        ),
+        'clearAvatarPhoto': _i1.MethodConnector(
+          name: 'clearAvatarPhoto',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i10.ProfileEndpoint)
+                  .clearAvatarPhoto(session),
+        ),
       },
     );
-    modules['serverpod_auth_idp'] = _i15.Endpoints()
+    modules['serverpod_auth_idp'] = _i16.Endpoints()
       ..initializeEndpoints(server);
-    modules['serverpod_auth_core'] = _i16.Endpoints()
+    modules['serverpod_auth_core'] = _i17.Endpoints()
       ..initializeEndpoints(server);
   }
 }

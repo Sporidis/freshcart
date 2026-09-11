@@ -68,11 +68,17 @@ abstract final class ListService {
   }
 
   /// Creates a list owned by [userId], with [userId] as its first member.
+  ///
+  /// [avatarColorArgb] and [avatarPhotoUrl] are snapshotted onto the new
+  /// membership row exactly like [displayName] already is -- see
+  /// `ListMember`'s own doc comment.
   static Future<ShoppingList> create(
     Session session,
     UuidValue userId,
     String name,
     String displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoUrl,
   ) async {
     return session.db
         .transaction((transaction) async {
@@ -95,6 +101,8 @@ abstract final class ListService {
               listId: list.id!,
               userId: userId,
               displayName: displayName,
+              avatarColorArgb: avatarColorArgb,
+              avatarPhotoUrl: avatarPhotoUrl,
               role: MemberRole.owner,
               joinedAt: DateTime.now().toUtc(),
             ),
@@ -114,6 +122,8 @@ abstract final class ListService {
     UuidValue userId,
     String rawCode,
     String displayName,
+    int? avatarColorArgb,
+    String? avatarPhotoUrl,
   ) async {
     final parsed = domain.JoinCode.parse(rawCode);
     final code = switch (parsed) {
@@ -140,6 +150,8 @@ abstract final class ListService {
           listId: list.id!,
           userId: userId,
           displayName: displayName,
+          avatarColorArgb: avatarColorArgb,
+          avatarPhotoUrl: avatarPhotoUrl,
           role: MemberRole.member,
           joinedAt: DateTime.now().toUtc(),
         ),

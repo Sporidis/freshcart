@@ -20,6 +20,16 @@ fields:
   ### The name collaborators see next to this user's changes.
   displayName: String
 
+  ### A colour the user picked for their own avatar, from the same swatch
+  ### presets a shop's own colour uses. `null` until they choose one.
+  avatarColorArgb: int?
+
+  ### Storage path of an uploaded avatar photo (in the `public` cloud
+  ### storage bucket), or `null` if none is set. The path, not the public
+  ### URL: `ProfileService` recomputes the URL on read, so moving buckets
+  ### later would not mean back-filling every row.
+  avatarPhotoPath: String?
+
   createdAt: DateTime, defaultModel=now
 
 indexes:
