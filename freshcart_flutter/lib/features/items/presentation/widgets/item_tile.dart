@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:ui' show lerpDouble;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
@@ -36,6 +38,7 @@ class ItemTile extends StatefulWidget {
     required this.t,
     this.shopDotColor,
     this.highlightQuery,
+    this.justAdded = false,
     super.key,
   });
 
@@ -96,6 +99,12 @@ class ItemTile extends StatefulWidget {
   /// name plain.
   final String? highlightQuery;
 
+  /// Whether this row is the one [ItemsController.add] just landed, so it
+  /// should play its one-shot entrance: a scale from 0.94 and a tinted flash
+  /// that fades over 900 ms (§09, "The add control"). Read once, at mount --
+  /// see the state class's own `initState`.
+  final bool justAdded;
+
   @override
   State<ItemTile> createState() => _ItemTileState();
 }
@@ -134,6 +143,31 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     duration: const Duration(milliseconds: 240),
     value: widget.selectionMode ? 1 : 0,
   );
+
+  /// The new-row entrance: scale 0.94 → 1 with a tinted flash fading out
+  /// alongside it, over 900 ms (§09). Runs once, from [initState] -- unlike
+  /// [widget.justAdded] itself, which [ItemsSection] can only guarantee is
+  /// true for the single build this row's `ItemTile` first mounts on, this
+  /// animation's own value must keep going for the full 900 ms regardless of
+  /// what the flag does after that.
+  late final AnimationController _entrance = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+    value: widget.justAdded ? 0 : 1,
+  );
+  late final Animation<double> _entranceEased = CurvedAnimation(
+    parent: _entrance,
+    curve: AppMotion.enter,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.justAdded) {
+      unawaited(HapticFeedback.lightImpact());
+      _entrance.forward();
+    }
+  }
 
   /// How far the current swipe has travelled, 0 to 1 of the row's width.
   /// Feeds [_iconScale]; set from [_handleSwipeUpdate].
@@ -196,6 +230,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     _pressScale.dispose();
     _pressTellTimer?.cancel();
     _selectionReveal.dispose();
+    _entrance.dispose();
     super.dispose();
   }
 
@@ -328,15 +363,29 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
         ),
         onDismissed: (_) => _handleDismissed(context),
         child: AnimatedBuilder(
-          animation: Listenable.merge([_strike, _pressScale]),
-          builder: (context, child) => Transform.scale(
-            scale: _pressScale.value,
-            child: Opacity(
-              // 45% once checked: present, but plainly already in the trolley.
-              opacity: 1 - (_strike.value * 0.55),
-              child: child,
-            ),
-          ),
+          animation: Listenable.merge([_strike, _pressScale, _entrance]),
+          builder: (context, child) {
+            final tint = widget.shopDotColor ?? theme.colorScheme.primary;
+            return Transform.scale(
+              scale:
+                  _pressScale.value *
+                  lerpDouble(0.94, 1, _entranceEased.value)!,
+              // Material, not a plain DecoratedBox: ListTile paints its own
+              // splashes on the nearest Material ancestor, and a coloured
+              // DecoratedBox sitting between it and that ancestor would hide
+              // them (a real, debug-mode-flagged issue, not a style choice).
+              child: Material(
+                // Fades to nothing over the same 900 ms the scale settles in
+                // over -- there is no resting tint once it is done.
+                color: tint.withValues(alpha: 0.16 * (1 - _entranceEased.value)),
+                child: Opacity(
+                  // 45% once checked: present, but plainly already in the trolley.
+                  opacity: 1 - (_strike.value * 0.55),
+                  child: child,
+                ),
+              ),
+            );
+          },
           child: ListTile(
             onTap: _activateRow,
             onLongPress: _handleLongPressFire,
@@ -653,6 +702,22 @@ Widget itemTilePreview() {
           onLongPress: () {},
           index: 0,
           canReorder: false,
+          t: t,
+        ),
+        ItemTile(
+          item: item(id: 'd', name: 'Olive oil'),
+          shopDotColor: const Color(0xFFE8791A),
+          checkedByName: null,
+          onToggle: () {},
+          onEdit: () {},
+          onSwipeDelete: () => () {},
+          selectionMode: false,
+          selected: false,
+          onToggleSelection: () {},
+          onLongPress: () {},
+          index: 0,
+          canReorder: false,
+          justAdded: true,
           t: t,
         ),
       ],

@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
@@ -375,6 +376,116 @@ void main() {
       findsOneWidget,
     );
   });
+
+  group('the quick-add bar follows the active shop tab', () {
+    final listId = ListId('00000000-0000-4000-8000-000000000001');
+    final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+
+    testWidgets('placeholder and leading dot only appear once a shop tab '
+        'is active', (tester) async {
+      shops.byListResult = Ok([colruyt]);
+      final container = await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      // "All" tab: the generic placeholder, no dot.
+      expect(find.text('What do you need?'), findsOneWidget);
+      expect(find.byKey(const ValueKey('quick-add-dot')), findsNothing);
+
+      container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+      await tester.pumpAndSettle();
+
+      expect(find.text('Add to Colruyt'), findsOneWidget);
+      expect(find.byKey(const ValueKey('quick-add-dot')), findsOneWidget);
+    });
+
+    testWidgets(
+      'the icon button greys out while empty, and colours in once there '
+      'is text',
+      (tester) async {
+        await pump(tester);
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+
+        Color bgOf() =>
+            (tester
+                        .widget<AnimatedContainer>(
+                          find.byKey(const ValueKey('quick-add-icon-bg')),
+                        )
+                        .decoration!
+                    as BoxDecoration)
+                .color!;
+
+        final emptyBg = bgOf();
+        await tester.enterText(find.byType(TextField), 'Bread');
+        await tester.pumpAndSettle();
+        final typedBg = bgOf();
+
+        expect(emptyBg, isNot(typedBg));
+      },
+    );
+
+    testWidgets(
+      'the Enter fast path tags the new item to the active shop tab, '
+      'the same as the details sheet does',
+      (tester) async {
+        shops.byListResult = Ok([colruyt]);
+        items.addResult = Ok(buildItem(name: 'Pasta'));
+        final container = await pump(tester);
+
+        container
+            .read(shopFilterProvider(listId).notifier)
+            .select(colruyt.id);
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.add));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Pasta');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        expect(items.addCalls.single.shopId, colruyt.id);
+      },
+    );
+  });
+
+  testWidgets(
+    "a newly added row's entrance flash is gone well after 900 ms, so "
+    'switching shop tabs later does not replay it',
+    (tester) async {
+      final listId = ListId('00000000-0000-4000-8000-000000000001');
+      // Non-empty from the start, so _ItemList (and its watch of
+      // recentlyAddedProvider) is already mounted before the add lands --
+      // an empty list renders the empty state instead, which watches
+      // nothing here.
+      items.byListResult = Ok([buildItem(id: 'existing', name: 'Milk')]);
+      items.addResult = Ok(buildItem(name: 'Bread'));
+      final container = await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+
+      // Flushes the add's own await chain (bar -> onQuickAdd -> controller
+      // -> repository) without advancing the clock -- a single bare pump()
+      // is not enough for every hop of it, and pumpAndSettle() would also
+      // drive the 900 ms flash timer to completion before this can check it
+      // was ever set.
+      for (var i = 0; i < 5; i++) {
+        await tester.pump();
+      }
+
+      expect(
+        container.read(recentlyAddedProvider(listId)),
+        isNotNull,
+        reason: 'the row should be flagged the instant the add lands',
+      );
+
+      await tester.pump(const Duration(milliseconds: 1000));
+      expect(container.read(recentlyAddedProvider(listId)), isNull);
+    },
+  );
 
   testWidgets('the quick-add button rolls a field out, then back in', (
     tester,
