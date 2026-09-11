@@ -9,14 +9,14 @@ written justification in [`docs/decisions.md`](docs/decisions.md).
 
 ## Layout
 
-| Path | What |
-| --- | --- |
+| Path                        | What                                                                        |
+| --------------------------- | --------------------------------------------------------------------------- |
 | `packages/freshcart_domain` | Pure Dart domain: entities, ports, use cases. Imports **nothing** but Dart. |
-| `packages/freshcart_l10n` | Shared slang translations (`nl` default, `en`, `fr`). |
-| `freshcart_server` | Serverpod server — endpoints, DB models, migrations. |
-| `freshcart_client` | Serverpod-generated client. **Never hand-edit.** |
-| `freshcart_flutter` | The Flutter app. Feature-first; `data/` maps client DTOs → domain. |
-| `freshcart_web` | Jaspr marketing site (SSG). Resolves independently — see below. |
+| `packages/freshcart_l10n`   | Shared slang translations (`nl` default, `en`, `fr`).                       |
+| `freshcart_server`          | Serverpod server — endpoints, DB models, migrations.                        |
+| `freshcart_client`          | Serverpod-generated client. **Never hand-edit.**                            |
+| `freshcart_flutter`         | The Flutter app. Feature-first; `data/` maps client DTOs → domain.          |
+| `freshcart_web`             | Jaspr marketing site (SSG). Resolves independently — see below.             |
 
 Read [`docs/architecture.md`](docs/architecture.md) before touching `packages/` or any
 feature's `data/` layer, and [`docs/build-plan.md`](docs/build-plan.md) for build order.
@@ -56,13 +56,13 @@ cd freshcart_flutter && flutter test
 
 `.github/workflows/ci.yml` runs on every push and pull request:
 
-| Job | What it proves |
-| --- | --- |
-| `analyze` | `dart analyze` and `dart format` clean across the tree, **plus** the two golden rules asserted directly: the domain imports nothing but pure Dart, and `freshcart_client` never appears above `data/`. |
-| `test-dart` | Domain use-case and value-object tests; translation and pluralisation tests. |
-| `test-server` | Endpoint tests against a real Postgres — they exist to verify migrations, foreign keys and transactions, none of which a fake would exercise. |
-| `test-app` | Repository, mapper, controller and widget tests. |
-| `build-web` | The marketing site builds, and its `<title>`, description, Open Graph, canonical and JSON-LD survived the build. |
+| Job           | What it proves                                                                                                                                                                                         |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `analyze`     | `dart analyze` and `dart format` clean across the tree, **plus** the two golden rules asserted directly: the domain imports nothing but pure Dart, and `freshcart_client` never appears above `data/`. |
+| `test-dart`   | Domain use-case and value-object tests; translation and pluralization tests.                                                                                                                           |
+| `test-server` | Endpoint tests against a real Postgres — they exist to verify migrations, foreign keys and transactions, none of which a fake would exercise.                                                          |
+| `test-app`    | Repository, mapper, controller and widget tests.                                                                                                                                                       |
+| `build-web`   | The marketing site builds, and its `<title>`, description, Open Graph, canonical and JSON-LD survived the build.                                                                                       |
 
 Every job regenerates `build_runner` and slang output first, because that output
 is deliberately not committed (`docs/decisions.md` #14).
@@ -71,4 +71,4 @@ is deliberately not committed (`docs/decisions.md` #14).
 
 Golden rules, layering and commit format live in [`CLAUDE.md`](CLAUDE.md). The short
 version: **the dependency rule points inward**, Serverpod types stop at `data/`, and code
-is organised feature-first.
+is organized feature-first.
