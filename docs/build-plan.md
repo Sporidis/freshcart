@@ -36,7 +36,7 @@ Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ block
 | 11 Jaspr marketing site | 🟡 | Pages and components exist; SEO meta and Lighthouse pass not yet verified. No tests, and CI has no job for this package. |
 | 12 Test coverage + CI | 🟡 | CI runs analyze, format and all four suites, and asserts the golden rules by grep (decisions #41). Coverage gaps remain in `freshcart_web` — no `test-web` job exists yet. |
 
-**Suites:** 242 app · 96 domain · 88 server · 8 l10n.
+**Suites:** 247 app · 96 domain · 88 server · 8 l10n.
 
 ## Design flows
 

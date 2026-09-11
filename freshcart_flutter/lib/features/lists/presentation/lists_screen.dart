@@ -34,7 +34,11 @@ class ListsScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: t.lists.join,
-            onPressed: () => _showJoinDialog(context, ref, t),
+            onPressed: () => showJoinListDialog(
+              context,
+              ProviderScope.containerOf(context, listen: false),
+              t,
+            ),
             icon: const Icon(Icons.group_add_outlined),
           ),
         ],
@@ -71,7 +75,11 @@ class ListsScreen extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: () => _showCreateDialog(context, ref, t),
+                      onPressed: () => showCreateListDialog(
+                        context,
+                        ProviderScope.containerOf(context, listen: false),
+                        t,
+                      ),
                       child: Text(t.lists.create),
                     ),
                   ),
@@ -79,7 +87,11 @@ class ListsScreen extends ConsumerWidget {
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton(
-                      onPressed: () => _showJoinDialog(context, ref, t),
+                      onPressed: () => showJoinListDialog(
+                        context,
+                        ProviderScope.containerOf(context, listen: false),
+                        t,
+                      ),
                       child: Text(t.lists.join),
                     ),
                   ),
@@ -103,50 +115,72 @@ class ListsScreen extends ConsumerWidget {
       floatingActionButton: isEmpty
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => _showCreateDialog(context, ref, t),
+              onPressed: () => showCreateListDialog(
+                context,
+                ProviderScope.containerOf(context, listen: false),
+                t,
+              ),
               icon: const Icon(Icons.add),
               label: Text(t.lists.create),
             ),
     );
   }
-
-  Future<void> _showCreateDialog(
-    BuildContext context,
-    WidgetRef ref,
-    Translations t,
-  ) => showDialog<bool>(
-    context: context,
-    builder: (context) => NamePromptDialog(
-      title: t.lists.create,
-      label: t.lists.title,
-      submitLabel: t.common.save,
-      cancelLabel: t.common.cancel,
-      onSubmit: (value) async => ref
-          .read(listsControllerProvider.notifier)
-          .create(value)
-          .then((r) => r.map<void>((_) {})),
-    ),
-  );
-
-  Future<void> _showJoinDialog(
-    BuildContext context,
-    WidgetRef ref,
-    Translations t,
-  ) => showDialog<bool>(
-    context: context,
-    builder: (context) => NamePromptDialog(
-      title: t.lists.join,
-      label: t.lists.joinCodeLabel,
-      submitLabel: t.common.save,
-      cancelLabel: t.common.cancel,
-      capitalization: TextCapitalization.characters,
-      onSubmit: (value) async => ref
-          .read(listsControllerProvider.notifier)
-          .join(value)
-          .then((r) => r.map<void>((_) {})),
-    ),
-  );
 }
+
+/// Opens the "New list" dialog. Top-level (not a method on [ListsScreen]) so
+/// [ListsDrawer]'s own inline "New list" row can call the exact same flow
+/// rather than a second copy of it -- one dialog, two entry points, the same
+/// reasoning as decisions #63's item sheet.
+///
+/// Takes the [ProviderContainer] itself rather than a [WidgetRef]: the
+/// drawer's own row pops the drawer (closing, and eventually disposing, the
+/// widget whose `ref` that would otherwise be) before this dialog's
+/// `onSubmit` ever runs, sometimes seconds later once someone actually
+/// types a name -- a `WidgetRef` captured from that widget is unsafe to read
+/// by then, `Riverpod` says so explicitly (`ConsumerWidgetElement.read`
+/// asserts the element is not disposed). The container itself has no such
+/// lifecycle tied to one widget, so grabbing it once via
+/// `ProviderScope.containerOf(context, listen: false)`, before anything
+/// pops, sidesteps the whole problem.
+Future<void> showCreateListDialog(
+  BuildContext context,
+  ProviderContainer container,
+  Translations t,
+) => showDialog<bool>(
+  context: context,
+  builder: (context) => NamePromptDialog(
+    title: t.lists.create,
+    label: t.lists.title,
+    submitLabel: t.common.save,
+    cancelLabel: t.common.cancel,
+    onSubmit: (value) async => container
+        .read(listsControllerProvider.notifier)
+        .create(value)
+        .then((r) => r.map<void>((_) {})),
+  ),
+);
+
+/// Opens the "Join a list" dialog. Top-level for the same reason as
+/// [showCreateListDialog], and takes a [ProviderContainer] for the same
+/// reason too.
+Future<void> showJoinListDialog(
+  BuildContext context,
+  ProviderContainer container,
+  Translations t,
+) => showDialog<bool>(
+  context: context,
+  builder: (context) => NamePromptDialog(
+    title: t.lists.join,
+    label: t.lists.joinCodeLabel,
+    submitLabel: t.common.save,
+    cancelLabel: t.common.cancel,
+    capitalization: TextCapitalization.characters,
+    onSubmit: (value) async => container
+        .read(listsControllerProvider.notifier)
+        .join(value)
+        .then((r) => r.map<void>((_) {})),
+  ),
+);
 
 class _ListTile extends StatelessWidget {
   const _ListTile({required this.list, required this.t});

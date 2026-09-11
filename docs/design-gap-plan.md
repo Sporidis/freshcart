@@ -23,7 +23,7 @@ behaviour*, not new visual language.
 | Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | ✅ Built — decisions #62 |
 | Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | ✅ Built for the add control — decisions #64. Search's own "Recently bought" UI still to come. |
 | Unify the add/edit item sheet into one component | Small–Medium | ✅ Built — decisions #63 |
-| Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | Not built |
+| Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | ✅ Avatars + inline rows built — decisions #65. Remaining count still deferred (needs a per-list summary endpoint). |
 | Settings: 4-group restructure | Medium | Not built (current screen is one card) |
 | Edit profile: user-chosen avatar colour | Small–Medium | Not built — **domain change** |
 | Appearance screen (theme mode, larger text, reduce-motion status) | Medium | Not built — no shop-tint toggle, see decisions |
@@ -116,14 +116,15 @@ add them.
 
 ## 4. Drawer
 
-- **Remaining count + member avatars per row** ("6 left" / "All done", a small stack of who else
-  is on that list) — a rendering change against data the drawer's list-switcher already has
-  access to (`ListsController`'s collection already carries `members`; "remaining count" needs
-  each list's own item counts, which the drawer does not currently fetch — it would need to read
-  from wherever `ItemsController` or a lighter summary endpoint already knows this, ideally
-  without each drawer open triggering N item-list fetches for N lists).
-- **Inline "New list" / "Join a list" rows** — decided above: add them, alongside the existing
-  entry points on `ListsScreen`.
+- ~~**Member avatars per row**~~ — ✅ built, decisions #65. A small overlapping stack of who else
+  is on that list (capped at three, "+N" for the rest), from data the drawer's list-switcher
+  already had (`ListsController`'s collection already carries `members`).
+- ~~**Inline "New list" / "Join a list" rows**~~ — ✅ built, decisions #65. Reuse the same dialogs
+  `ListsScreen` already opens, not a second copy.
+- **Remaining count** ("6 left" / "All done") — still **not built**. Needs each list's own item
+  counts, which the drawer does not currently fetch — a lighter per-list summary endpoint,
+  ideally without each drawer open triggering N item-list fetches for N lists. Deferred as its own
+  future backend piece rather than folded into the avatar/inline-rows pass.
 
 ## 5. Settings restructure
 
@@ -220,8 +221,8 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
 2. ~~**Unify the item sheet** (§3)~~ — ✅ built, decisions #63.
 3. ~~**Item-name suggestions** (§2)~~ — ✅ built, decisions #64. The add control's chips read
    from it now; Flow 06's "Recently bought" is unblocked but not itself built yet.
-4. **Drawer enrichment** (§4) — remaining count/avatars, plus the now-decided inline
-   New list / Join a list rows.
+4. ~~**Drawer enrichment** (§4)~~ — ✅ member avatars + inline New list / Join a list built,
+   decisions #65. Remaining count still deferred, needs its own summary endpoint.
 5. **Edit profile + stored avatar colour** (§6) — small domain change, self-contained.
 6. **List settings screen** (§9) — retiring Household as part of the same change, since nothing
    downstream should keep pointing at a screen that is going away.

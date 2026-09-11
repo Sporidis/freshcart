@@ -1033,3 +1033,41 @@ field), matching what was actually asked for. Flow 06's "Recently bought" sectio
 screen wants the exact same underlying capability and is now fully unblocked (`itemSuggestionsProvider`
 and the server endpoint are generic, not add-control-specific) but was not itself built in this
 pass — a small, separate follow-up UI piece, not a backend gap any more.
+
+## 65. Drawer enrichment (Flow 10, §4) — member avatars and inline create/join, remaining count deferred
+
+**Decision:** Fourth item off `docs/design-gap-plan.md`'s build order, and deliberately only half
+of §4. Built: a small overlapping-avatar stack per list row (capped at three, a "+N" circle for
+the rest), showing who else — not the viewer's own row — is on each list; and the two inline
+"New list" / "Join a list" rows decided earlier, drawn inside the scrollable list of lists itself
+rather than tucked into the footer, matching the design's own frame. Not built: "6 left" / "All
+done" remaining-item counts. That half needs each list's own item counts, which the drawer does
+not currently fetch, and getting it right means a lighter per-list summary the drawer can call
+without N item-list fetches for N lists open at once — the same "no aggregate-function escape
+hatch short of raw SQL, do small parallel calls instead" shape `ItemService` already uses
+elsewhere, not something to bolt on as a side effect of an avatar-stack change. Left as its own
+future backend piece rather than widened into here.
+
+**Reused rather than duplicated:** the avatar stack's colouring calls the same
+`AppColors.avatarColorFor` member rows and item "checked by" chips already use, keyed off
+`ListMember.userId.value`. The two inline rows call the exact same `showCreateListDialog` /
+`showJoinListDialog` `ListsScreen` itself uses (decisions #63's "one component, more than one
+entry point" reasoning, applied again) — no second copy of either dialog's flow to keep in sync.
+
+**A real bug found and fixed along the way, not a hypothetical one:** wiring the inline rows into
+`ListsDrawer` at first passed the drawer's own `WidgetRef` straight into the shared dialog
+functions, the same way every other call site in the app already worked. It compiled, and by
+inspection looked identical to the existing `ListsScreen` call sites. A widget test tapping
+through the actual flow — enter a name, tap Save — caught what inspection didn't: `Riverpod`
+throws `StateError: Using 'ref' when a widget is about to or has been unmounted is unsafe`,
+because the row's own `onTap` pops the drawer (unmounting `ListsDrawer`) *before* the dialog's
+`onSubmit` ever runs — sometimes seconds later, once someone actually finishes typing. A `ref`
+captured from a widget's `build` does not outlive that widget; a dialog opened *after* that widget
+closes needs something with its own lifecycle instead. Fixed by changing
+`showCreateListDialog`/`showJoinListDialog` to take a `ProviderContainer` rather than a
+`WidgetRef` — grabbed once via `ProviderScope.containerOf(context, listen: false)` *before* the
+pop, at every call site (both of `ListsDrawer`'s new rows, and all four existing ones in
+`ListsScreen`, for consistency, though only the drawer's were ever actually unsafe). Worth calling
+out on its own: this is exactly the kind of bug `CLAUDE.md`'s "tests live beside the phase that
+adds the feature" rule is for — it would not have been caught by `flutter analyze`, only by
+actually driving the interaction.
