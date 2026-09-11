@@ -42,7 +42,8 @@
       "other": "All done — {{n}} items"
     },
     "celebrateBody": "Everything on {{list}} is checked off.",
-    "keepList": "Keep list"
+    "keepList": "Keep list",
+    "addTo": "Add to {{shop}}"
   },
   "shops": {
     "all": "All shops",

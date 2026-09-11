@@ -14,6 +14,7 @@ import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/celebration_dismissed_provider.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
@@ -54,6 +55,14 @@ class ItemsSection extends ConsumerWidget {
     final items = ref.watch(itemsControllerProvider(list.id));
     final controller = ref.read(itemsControllerProvider(list.id).notifier);
     final shopFilter = ref.watch(shopFilterProvider(list.id));
+    final shops = switch (ref.watch(shopsControllerProvider(list.id))) {
+      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
+        value,
+      _ => const <Shop>[],
+    };
+    final activeShop = shopFilter == null
+        ? null
+        : shops.where((s) => s.id == shopFilter).firstOrNull;
     final selectionMode = ref.watch(
       selectionControllerProvider(list.id).select((s) => s.isNotEmpty),
     );
@@ -177,21 +186,19 @@ class ItemsSection extends ConsumerWidget {
               ? const SizedBox(width: double.infinity)
               : QuickAddBar(
                   t: t,
+                  activeShopName: activeShop?.name,
                   onQuickAdd: (name) async {
-                    final failure = await controller.add(name: name);
+                    // Tags to whichever shop tab is active, the same as the
+                    // details sheet already does -- "Enter" is meant to be
+                    // the fast path to the same result, not a different one.
+                    final failure = await controller.add(
+                      name: name,
+                      shopId: shopFilter,
+                    );
                     report(failure);
                     return failure == null;
                   },
                   onOpenDetails: (name) async {
-                    final shops = switch (ref.read(
-                      shopsControllerProvider(list.id),
-                    )) {
-                      AsyncValue<Result<List<Shop>>>(
-                        value: Ok<List<Shop>>(:final value),
-                      ) =>
-                        value,
-                      _ => const <Shop>[],
-                    };
                     final details = await showModalBottomSheet<AddItemDetails>(
                       context: context,
                       isScrollControlled: true,
@@ -246,6 +253,7 @@ class _ItemList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final holding = ref.watch(recentlyCheckedProvider(list.id));
+    final justAddedId = ref.watch(recentlyAddedProvider(list.id));
     final collapsed = ref.watch(doneSectionCollapsedProvider(list.id));
     final selection = ref.watch(selectionControllerProvider(list.id));
     final selectionController = ref.read(
@@ -290,6 +298,7 @@ class _ItemList extends ConsumerWidget {
       key: ValueKey(item.id.value),
       item: item,
       t: t,
+      justAdded: item.id == justAddedId,
       index: index ?? 0,
       shopDotColor: dotFor(item.shopId),
       canReorder: index != null && canReorder,

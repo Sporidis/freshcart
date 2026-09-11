@@ -20,7 +20,7 @@ behaviour*, not new visual language.
 
 | Area | Size | State |
 | ---- | ---- | ----- |
-| Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | Not built |
+| Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | ✅ Built — decisions #62 |
 | Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | Not built — new capability |
 | Unify the add/edit item sheet into one component | Small–Medium | Not built (two components today) |
 | Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | Not built |
@@ -53,7 +53,7 @@ as an open question.
 7. **Item-name suggestion scope** — **per-list**, not household-wide. Matches how shops are
    already scoped to one list (decisions #19).
 
-## 1. The add control (Flow 09)
+## 1. The add control (Flow 09) — ✅ built, decisions #62
 
 The core mechanic — a resting circle that rolls into a full-width field, the `+`/`×` glyph
 rotation, Enter-commits-and-stays-open vs. tap-opens-the-sheet — is already built
@@ -216,7 +216,7 @@ entirely rather than coexisting with it:
 Cheapest/most-isolated first. The architectural question (shop-tint toggle) that would have held
 up the Appearance screen is resolved — skipped — so nothing here is still blocked on a decision.
 
-1. **Add-control polish** (§1) — small, self-contained, no domain changes.
+1. ~~**Add-control polish** (§1)~~ — ✅ built, decisions #62.
 2. **Unify the item sheet** (§3) — worth doing before anything else adds fields to either sheet.
 3. **Item-name suggestions** (§2) — unblocks both the add control's chips and Flow 06's
    "Recently bought," so one piece of work closes two named gaps.

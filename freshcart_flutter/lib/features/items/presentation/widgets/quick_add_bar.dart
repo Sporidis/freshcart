@@ -3,6 +3,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The floating control that replaces a persistent add-item bar.
@@ -24,12 +25,22 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// "cancel"). The same glyph rotating both ways is what makes "the x turns
 /// back into a plus" a literal description of what happens, not a metaphor
 /// implemented as two different icons cross-fading.
+///
+/// Resting, this is a single circle "tinted to the active shop" (the
+/// design's own words) -- elevated, with a colour-matched shadow. Open, it
+/// "flattens into the sheet-adjacent surface": the pill itself goes back to
+/// plain white/surface with a hairline border, and the shop's colour survives
+/// as two smaller things instead -- a leading dot before the text, and the
+/// trailing button's own fill, which then also answers "is there anything to
+/// commit": grey and muted while the field is empty, shop-coloured the
+/// moment there is text.
 class QuickAddBar extends StatefulWidget {
   /// Creates the control.
   const QuickAddBar({
     required this.onQuickAdd,
     required this.onOpenDetails,
     required this.t,
+    this.activeShopName,
     super.key,
   });
 
@@ -47,6 +58,13 @@ class QuickAddBar extends StatefulWidget {
   /// Translations for the active locale.
   final Translations t;
 
+  /// The active shop tab's name, or null on "All" (or when the list has no
+  /// shops yet) -- drives the placeholder ("Add to Colruyt" vs. a generic
+  /// prompt) and the leading dot. The colour itself is not a separate
+  /// parameter: it is already `theme.colorScheme.primary`, since selecting a
+  /// shop tab re-themes the whole app to that shop's colour (decisions #32).
+  final String? activeShopName;
+
   @override
   State<QuickAddBar> createState() => _QuickAddBarState();
 }
@@ -56,6 +74,7 @@ enum _Phase { collapsed, expanded }
 class _QuickAddBarState extends State<QuickAddBar>
     with SingleTickerProviderStateMixin {
   static const double _diameter = 56;
+  static const double _buttonDiameter = 44;
 
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focus = FocusNode();
@@ -152,6 +171,23 @@ class _QuickAddBarState extends State<QuickAddBar>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final shopColor = theme.colorScheme.primary;
+    final placeholder = widget.activeShopName == null
+        ? widget.t.items.namePlaceholder
+        : widget.t.items.addTo(shop: widget.activeShopName!);
+
+    // Grey and muted while there is nothing to commit; shop-coloured (and
+    // white-on-colour) the moment there is text, or while still collapsed --
+    // matching the resting FAB, which has no "empty" state of its own to
+    // distinguish.
+    final buttonIsMuted = _phase == _Phase.expanded && !_hasText;
+    final buttonColor = buttonIsMuted
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+        : shopColor;
+    final glyphColor = buttonIsMuted
+        ? theme.colorScheme.onSurface.withValues(alpha: 0.55)
+        : theme.colorScheme.onPrimary;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
       child: SizedBox(
@@ -165,6 +201,16 @@ class _QuickAddBarState extends State<QuickAddBar>
                 constraints.maxWidth,
                 _reveal.value,
               )!;
+              // The pill's own fill: shop-coloured at rest, plain surface
+              // once open -- "flattens into the sheet-adjacent surface"
+              // (design note). One continuous lerp rather than a hard swap,
+              // since it rides the same width animation.
+              final fill = Color.lerp(
+                shopColor,
+                theme.colorScheme.surface,
+                _reveal.value,
+              )!;
+              final borderAlpha = _reveal.value.clamp(0.0, 1.0);
               return Align(
                 alignment: Alignment.centerRight,
                 child: SizedBox(
@@ -174,9 +220,15 @@ class _QuickAddBarState extends State<QuickAddBar>
                   // its ends meet in the middle and it reads as a circle, at
                   // full width it reads as a pill. One shape, not a swap.
                   child: Material(
-                    color: theme.colorScheme.primary,
+                    color: fill,
                     elevation: 3,
-                    shape: const StadiumBorder(),
+                    shape: StadiumBorder(
+                      side: BorderSide(
+                        color: theme.colorScheme.outlineVariant.withValues(
+                          alpha: borderAlpha,
+                        ),
+                      ),
+                    ),
                     child: Row(
                       children: [
                         if (_reveal.value > 0)
@@ -189,49 +241,75 @@ class _QuickAddBarState extends State<QuickAddBar>
                                 1.0,
                               ),
                               child: Padding(
-                                padding: const EdgeInsets.only(left: 22),
-                                child: TextField(
-                                  controller: _controller,
-                                  focusNode: _focus,
-                                  enabled: !_busy,
-                                  textCapitalization:
-                                      TextCapitalization.sentences,
-                                  textInputAction: TextInputAction.done,
-                                  style: TextStyle(
-                                    color: theme.colorScheme.onPrimary,
-                                  ),
-                                  cursorColor: theme.colorScheme.onPrimary,
-                                  decoration: InputDecoration(
-                                    hintText: widget.t.items.namePlaceholder,
-                                    hintStyle: TextStyle(
-                                      color: theme.colorScheme.onPrimary
-                                          .withValues(alpha: 0.7),
+                                padding: const EdgeInsets.only(left: 18),
+                                child: Row(
+                                  children: [
+                                    if (widget.activeShopName != null) ...[
+                                      Container(
+                                        key: const ValueKey('quick-add-dot'),
+                                        width: AppSizes.shopDot,
+                                        height: AppSizes.shopDot,
+                                        decoration: BoxDecoration(
+                                          color: shopColor,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 11),
+                                    ],
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _controller,
+                                        focusNode: _focus,
+                                        enabled: !_busy,
+                                        textCapitalization:
+                                            TextCapitalization.sentences,
+                                        textInputAction: TextInputAction.done,
+                                        style: TextStyle(
+                                          color: theme.colorScheme.onSurface,
+                                        ),
+                                        cursorColor: shopColor,
+                                        decoration: InputDecoration(
+                                          hintText: placeholder,
+                                          hintStyle: TextStyle(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                        ),
+                                        onSubmitted: (_) => _quickAdd(),
+                                      ),
                                     ),
-                                    border: InputBorder.none,
-                                    isDense: true,
-                                  ),
-                                  onSubmitted: (_) => _quickAdd(),
+                                  ],
                                 ),
                               ),
                             ),
                           ),
-                        SizedBox(
-                          width: _diameter,
-                          height: _diameter,
-                          child: IconButton(
-                            onPressed: _busy ? null : _handleIconTap,
-                            tooltip: _phase == _Phase.collapsed
-                                ? widget.t.items.add
-                                : (_hasText
-                                      ? widget.t.items.add
-                                      : widget.t.common.cancel),
-                            icon: AnimatedRotation(
-                              turns: _showsPlus ? 0 : 0.125,
-                              duration: AppMotion.quick,
-                              curve: AppMotion.enter,
-                              child: Icon(
-                                Icons.add,
-                                color: theme.colorScheme.onPrimary,
+                        Padding(
+                          padding: const EdgeInsets.all(6),
+                          child: AnimatedContainer(
+                            key: const ValueKey('quick-add-icon-bg'),
+                            duration: AppMotion.quick,
+                            width: _buttonDiameter,
+                            height: _buttonDiameter,
+                            decoration: BoxDecoration(
+                              color: buttonColor,
+                              shape: BoxShape.circle,
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              onPressed: _busy ? null : _handleIconTap,
+                              tooltip: _phase == _Phase.collapsed
+                                  ? widget.t.items.add
+                                  : (_hasText
+                                        ? widget.t.items.add
+                                        : widget.t.common.cancel),
+                              icon: AnimatedRotation(
+                                turns: _showsPlus ? 0 : 0.125,
+                                duration: AppMotion.quick,
+                                curve: AppMotion.enter,
+                                child: Icon(Icons.add, color: glyphColor),
                               ),
                             ),
                           ),

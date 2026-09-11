@@ -42,7 +42,8 @@
       "other": "Tapos na — {{n}} na item"
     },
     "celebrateBody": "Naka-check na lahat sa {{list}}.",
-    "keepList": "Panatilihin ang listahan"
+    "keepList": "Panatilihin ang listahan",
+    "addTo": "Idagdag sa {{shop}}"
   },
   "shops": {
     "all": "Lahat ng tindahan",

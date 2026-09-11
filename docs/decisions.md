@@ -928,3 +928,41 @@ fully checked, "Clear checked" is now genuinely offered in two places (the Done 
 card) — both call the same use case, so there is nothing to get out of sync, and duplicating a
 one-tap action across two natural places a person's eye might land felt better than hiding one of
 them for the sake of there being exactly one button.
+
+## 62. Add-control polish (Flow 09) — the first item off the design-gap plan
+
+**Decision:** `QuickAddBar` now matches the re-export's own refinements rather than the earlier
+build's simpler shop-tinted-pill treatment. Traced from the design's own four frames (resting →
+rolling open → open+empty → text entered): resting is a solid circle "tinted to the active shop";
+open, it "flattens into the sheet-adjacent surface" — the pill itself goes back to a plain
+`colorScheme.surface` with a hairline border, and the shop's colour survives as two smaller things
+instead: a leading dot before the text, and the trailing button's own fill, which doubles as the
+answer to "is there anything to commit" — grey and muted while empty, shop-coloured the instant
+there is text. The placeholder itself is now shop-aware ("Add to Colruyt" vs. a generic prompt on
+"All"), reusing `theme.colorScheme.primary` for the colour (already the active shop's colour end
+to end, since selecting a tab re-themes the whole app — decisions #32) rather than plumbing a
+second colour value through for the same thing.
+
+**Found and fixed along the way, not originally scoped:** the fast Enter-path (`onQuickAdd`) never
+tagged the new item to the active shop tab at all — only the detail sheet did, after the previous
+session's fix. The design's own "5 · Enter — committed" frame shows the new row landing under the
+active shop's group, confirming the fast path is supposed to tag too; fixed to match, and to match
+the user's own direct ask that whichever shop tab is active is what a fast add should land in by
+default, changeable via the detail sheet, not skipped by it.
+
+**The new-row entrance** (scale 0.94 → 1, a tinted flash fading over 900 ms, `lightImpact()`) is
+driven by a `RecentlyAdded` provider mirroring `RecentlyChecked`'s own shape (a `Timer`-backed
+family provider, so it survives a rebuild) — but with a narrower job: `ItemTile`'s own `initState`
+reads it once, at the moment a new row's tile first mounts, and plays the whole 900 ms locally from
+there. The flag only has to be right for that one build, not for the full 900 ms the way
+`RecentlyChecked`'s hold does, which is what makes reusing the same "read once at mount" trick
+sound rather than a coincidence. Scoped to this device's own adds only — a live snapshot bringing
+in someone else's new item does not flash — matching the literal frame it comes from ("Enter,
+still open," the person who is typing watching their own row land), not extended into realtime
+sync's own separate territory.
+
+**Found by a debug-mode assertion, not by inspection:** the tint was first built as a plain
+`DecoratedBox` wrapping the row's `ListTile`; Flutter's own runtime check caught that a `ListTile`
+paints its splashes on the nearest `Material` ancestor, and a coloured `DecoratedBox` sitting
+between it and that ancestor would hide them. Fixed by using a `Material` for the tint instead,
+which is also the correct semantic choice, not just a workaround.

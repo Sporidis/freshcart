@@ -42,7 +42,8 @@
       "other": "Helemaal klaar — {{n}} items"
     },
     "celebrateBody": "Alles op {{list}} is afgevinkt.",
-    "keepList": "Lijst bewaren"
+    "keepList": "Lijst bewaren",
+    "addTo": "Toevoegen aan {{shop}}"
   },
   "shops": {
     "all": "Alle winkels",

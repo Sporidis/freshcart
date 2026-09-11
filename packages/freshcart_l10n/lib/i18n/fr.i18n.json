@@ -42,7 +42,8 @@
       "other": "Tout est prêt — {{n}} articles"
     },
     "celebrateBody": "Tout est coché sur {{list}}.",
-    "keepList": "Garder la liste"
+    "keepList": "Garder la liste",
+    "addTo": "Ajouter à {{shop}}"
   },
   "shops": {
     "all": "Tous les magasins",
