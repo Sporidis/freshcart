@@ -4,7 +4,9 @@ The design bundle in `docs/multi-shop-shopping-list-app/` was re-exported on 202
 new flows that did not exist when phases 0–12 (`docs/build-plan.md`) were scoped: **09 — The add
 control** and **10 — Drawer, settings & preferences**. This doc is the gap analysis: what the
 design now wants, what the app already has, and what is left to build to close the difference —
-written *before* any of it is built, per `CLAUDE.md`'s "plan before you build" rule.
+written *before* any of it is built, per `CLAUDE.md`'s "plan before you build" rule. Every open
+question it originally raised was put to Nikolaos directly and is resolved below (§ Decisions) —
+this is no longer a planning doc waiting on answers, it is ready to build from.
 
 Source read for this doc: `Flow Screens.dc.html` (visual spec for both flows, in full), the
 interactive prototype `Shopping List App.dc.html`'s state machine (confirms `profile`,
@@ -19,15 +21,37 @@ behaviour*, not new visual language.
 | Area | Size | State |
 | ---- | ---- | ----- |
 | Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | Not built |
-| Item-name suggestions (shared by the add control and Flow 06 search) | Medium | Not built — new capability |
+| Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | Not built — new capability |
 | Unify the add/edit item sheet into one component | Small–Medium | Not built (two components today) |
-| Drawer: remaining count + member avatars per row | Small | Not built |
-| Drawer: inline "New list" / "Join a list" | Small | Not built — **reopens decisions #50** |
+| Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | Not built |
 | Settings: 4-group restructure | Medium | Not built (current screen is one card) |
 | Edit profile: user-chosen avatar colour | Small–Medium | Not built — **domain change** |
-| Appearance screen (theme mode, shop-tint toggle, larger text, reduce motion) | Medium–Large | Not built — **tint toggle affects a signature feature** |
+| Appearance screen (theme mode, larger text, reduce-motion status) | Medium | Not built — no shop-tint toggle, see decisions |
 | Notifications preferences (4 push toggles + per-list mute) | Large | Not built — one item needs local scheduled notifications, a new dependency |
-| List settings screen (rename, members, per-list behaviour, shops, leave/delete) | Medium | Mostly relocating what exists, plus one new toggle |
+| List settings screen (replaces Household; rename, members, per-list behaviour, shops, leave/delete) | Medium | Mostly relocating what exists, plus one new toggle |
+
+## Decisions
+
+Put to Nikolaos directly on 2026-09-11; these override anything the sections below still phrase
+as an open question.
+
+1. **Drawer create/join rows** — **add them.** Create/join now live in both the drawer and
+   `ListsScreen`, accepting decisions #50's original "two places" cost because the design now
+   draws them explicitly.
+2. **Shop-tint toggle** — **skip it.** Per-shop dynamic theming stays always-on, not an optional
+   preference. The Appearance screen does not get this row.
+3. **"Reduce motion"** — **read-only status**, not a toggle. It shows what `AppMotion.reduced`
+   already reads from the OS; it must not render as an interactive switch, since there is nothing
+   for tapping it to do.
+4. **"Keep checked items" vs. "Clear checked after shopping"** — **one preference, not two.** The
+   global Settings toggle is dropped; the per-list "Clear checked after shopping" (§9, List
+   settings) is the one that ships.
+5. **List settings vs. Household** — **List settings replaces Household.** Household's members
+   list, roles, invite, remove/transfer all move into List settings' "Members" group; Household
+   as a separate screen goes away.
+6. **"Manage lists" row in Settings** — **links to the existing `ListsScreen`**, not a new screen.
+7. **Item-name suggestion scope** — **per-list**, not household-wide. Matches how shops are
+   already scoped to one list (decisions #19).
 
 ## 1. The add control (Flow 09)
 
@@ -60,27 +84,24 @@ already has (the active shop, its name and colour), except for the next item.
 Flow 09's add control shows history chips ("Olive oil", "Olives", "Olive tapenade") once two
 characters are typed, sourced from a flat list of past product names. Flow 06 ("Search &
 suggestions", already flagged 🟡 in `build-plan.md`) wants the same thing for "Recently bought."
-These are the same underlying capability wanted from two different screens, so it should be
-designed once.
+These are the same underlying capability wanted from two different screens, so it is designed
+once — and scoped to one list at a time (decisions above), not the whole household.
 
-**What it needs:** a way to answer "what product names has this household typed before, most
-recent or most frequent first" — the natural approach would be a distinct-names query over each
-list's own item history (or the household's, across lists — see open decision below), reusing
-`ShoppingItem` rows rather than a new table. **Checked against the current server model:**
+**What it needs:** a way to answer "what product names has this list's history typed before, most
+recent or most frequent first." **Checked against the current server model:**
 `ItemService.remove`/`clearChecked`/`removeMany` all call `deleteRow`/`deleteWhere` directly — a
 hard delete, no `isDeleted` flag — so a name's history disappears the moment the item is removed
 or cleared, which is most items eventually. A real suggestions feature needs *some* record that
-survives the item being deleted: either a genuinely new small table (`item_name_history` or
-similar — just a name, a list/household id, and a last-used timestamp, written to on every
-`AddItem` rather than derived from `ShoppingItem` after the fact), or turning `ShoppingItem`
-removal into a soft delete everywhere (a bigger, more invasive change with its own
-consequences for every existing query). The dedicated small table is very likely the smaller,
-safer piece of work.
+survives the item being deleted: a genuinely new small table (`item_name_history` or similar —
+just a name, a list id, and a last-used timestamp, written to on every `AddItem` rather than
+derived from `ShoppingItem` after the fact) is the smaller, safer piece of work, versus turning
+`ShoppingItem` removal into a soft delete everywhere (a bigger, more invasive change with its own
+consequences for every existing query).
 
 **Shape of the work:** a new domain port method (e.g. `ItemRepository.suggestNames(query, listId)`
-or similar), a server endpoint backing it (likely a `SELECT DISTINCT name ... ORDER BY
-last used`-style query, so no new migration if removals are already soft), and two small UI
-consumers (the add control's chip row, the search screen's "Recently bought" section).
+or similar), a server endpoint backing it (a `SELECT DISTINCT name ... ORDER BY last used`-style
+query against the new table), and two small UI consumers (the add control's chip row, the search
+screen's "Recently bought" section).
 
 ## 3. One item sheet, not two
 
@@ -95,21 +116,14 @@ add them.
 
 ## 4. Drawer
 
-Two separate, differently-sized changes:
-
 - **Remaining count + member avatars per row** ("6 left" / "All done", a small stack of who else
   is on that list) — a rendering change against data the drawer's list-switcher already has
   access to (`ListsController`'s collection already carries `members`; "remaining count" needs
   each list's own item counts, which the drawer does not currently fetch — it would need to read
   from wherever `ItemsController` or a lighter summary endpoint already knows this, ideally
   without each drawer open triggering N item-list fetches for N lists).
-- **Inline "New list" / "Join a list" rows.** This directly reopens decisions #50, which
-  deliberately kept the drawer to switching only and left create/join on `ListsScreen`, reasoning
-  that the design showed no drawer state with them and duplicating the flow into a second widget
-  would be two places to keep in sync for nothing. The new export explicitly draws them in the
-  drawer. **Open decision:** add them to the drawer (matching the new design, accepting the
-  "two places" cost) or keep drawer-is-switch-only and treat this frame as the design not yet
-  reflecting the earlier call — this needs your steer either way, not a silent pick.
+- **Inline "New list" / "Join a list" rows** — decided above: add them, alongside the existing
+  entry points on `ListsScreen`.
 
 ## 5. Settings restructure
 
@@ -117,16 +131,18 @@ The current `SettingsScreen` is one card (anonymous vs. linked account, decision
 design wants four groups under one screen:
 
 - **Profile row** at the top (avatar, name, "Joined \<date\>", Edit → a new Edit profile screen).
-- **Lists & shops**: Manage lists, Manage shops (with a count), Household.
-- **Preferences**: Appearance, Notifications, "Keep checked items" toggle, Haptics toggle.
+- **Lists & shops**: Manage lists (→ `ListsScreen`, decided above), Manage shops (with a count),
+  Household — folded into List settings per the decisions above, so this row's destination
+  changes from "open Household" to "open the relevant list's List settings," or this row drops
+  entirely if there is no single list in context from Settings (worth a final look once List
+  settings exists — Settings is not scoped to one list, so "Household" here may simply have no
+  replacement and should be removed rather than repointed).
+- **Preferences**: Appearance, Notifications, Haptics toggle. (No global "Keep checked items" —
+  dropped per the decisions above; that preference now lives per-list in List settings only.)
 - **About**: Help & feedback, Sign out, version footer.
 
-Mostly a restructure of existing destinations (Household, Manage shops already exist as screens;
-"Manage lists" does not yet exist as its own screen — today creating/renaming/leaving/deleting a
-list all happen from `ListsScreen` directly, not a dedicated management view, so this row either
-opens `ListsScreen` or wants its own screen — worth confirming which). The upgrade nudge
-(decisions #56) still belongs somewhere in here too, most naturally folded into the profile row's
-area rather than kept as its own separate section.
+The upgrade nudge (decisions #56) still belongs somewhere in here too, most naturally folded into
+the profile row's area rather than kept as its own separate section.
 
 ## 6. Edit profile: a user-chosen avatar colour
 
@@ -142,30 +158,20 @@ read the stored value once it exists.
 
 ## 7. Appearance screen
 
-Three things bundled in one screen, worth separating because they are different sizes:
+Two things now, not three — the shop-tint toggle is not being built (decisions above):
 
 - **Explicit theme-mode choice (Light/Dark/System).** `MaterialApp.router` already supplies both
   `theme` and `darkTheme`, so the app already *follows the system* by default — there is no
   current way for a user to pin Light or Dark regardless of the system, which is what this screen
   adds. Small: a persisted enum preference (`shared_preferences`, same tool as decisions #56) read
   into `MaterialApp.router`'s `themeMode`.
-- **"Tint tabs with shop colours"** (on by default in the prototype's own state).
-  **Open decision, and the biggest one in this doc:** per-shop
-  dynamic theming (decisions #32, #7 in the original design docs, one of this app's headline
-  portfolio features) becoming *optional* is a real architectural question, not a styling toggle
-  — `AppTheme.forShop` is called from the router/app-shell level today assuming it always applies.
-  Making it conditional needs a preference read at that same level, and a defined "off" state
-  (falls back to the neutral `AppTheme.light/dark(AppTheme.brandSeed)` this app already uses for
-  chrome, per `AppColors`' own doc comment) rather than a genuinely new theme. Confirm this is
-  wanted before it is built — it is easy to build, but worth being a deliberate choice given what
-  it is turning off.
 - **"Larger list text"** — a text-scale preference, most simply a `MediaQuery` `TextScaler`
   override applied at the app root, scoped conservatively (the design's own note is "easier to
   read at arm's length," not a full accessibility text-scale system).
-- **"Reduce motion"**, drawn as a toggle but captioned "Follows your system setting" — reads as
-  a status display of `AppMotion.reduced` (which already exists and already reads the OS
-  setting), not a real independent preference. Worth confirming it is not meant to be a manual
-  override that can *diverge* from the OS setting before treating it as read-only.
+
+Plus **"Reduce motion"** as a read-only status row (decisions above) — rendered without the
+interactive switch styling the design mockup gives it, since there is no independent state behind
+it to toggle; it just reports what `AppMotion.reduced` already knows.
 
 ## 8. Notifications preferences
 
@@ -188,64 +194,41 @@ Four named push toggles plus per-list mute:
 
 ## 9. List settings screen
 
-Reached from a list's own header, distinct from Settings. Mostly relocating things that already
-exist:
+Reached from a list's own header, and — per the decisions above — **replaces Household**
+entirely rather than coexisting with it:
 
 - Rename → already possible (`EditableListTitle`).
-- Members, "You · Owner" badge, remove/transfer, "Invite someone" → all already exist on
-  `HouseholdScreen`. **Open decision:** does "List settings" *replace* Household, wrap it as one
-  of its sections, or do the two coexist as separate destinations reached from different places?
-  The design draws members inline on this screen rather than pointing at a separate Household
-  screen, which reads as "replace," but worth confirming rather than assuming.
+- Members, "You · Owner" badge, remove/transfer, "Invite someone" → move here from
+  `HouseholdScreen`, which is retired once this ships (its logic is not rebuilt, just relocated —
+  the existing controller/use cases behind member management stay as they are).
 - "Shops on this list" (count, opens shop management) → already exists as `ManageShopsScreen`,
   just needs a launch point here.
-- Leave / Delete for everyone → already exist as actions on `ListsScreen`'s list menu; this adds
-  a second place to reach them, or (if List settings replaces the relevant part of that menu)
-  relocates them.
+- Leave / Delete for everyone → already exist as actions on `ListsScreen`'s list menu; List
+  settings becomes a second, list-scoped place to reach them (both stay, since `ListsScreen`'s
+  own per-row menu is still how you act on a list you are not currently inside).
 - **New:** "Clear checked after shopping" — a per-list toggle that, once on, asks to clear
   checked items once the list is complete rather than only ever clearing on an explicit tap. This
-  is genuinely new behaviour, and it overlaps the global "Keep checked items" toggle in Settings
-  (§5 above) — **open decision:** are these two independent preferences (a global default plus a
-  per-list override), or does the design mean one and describe it twice from two different
-  screens? Needs resolving before building either, so they do not end up fighting over the same
-  behaviour.
+  is the one preference from the "keep checked / clear checked" overlap (decisions above) that
+  actually ships.
 
 ## Suggested build order
 
-Roughly cheapest/most-isolated first, and holding the one open decision with real architectural
-weight (shop-tint toggle) for a deliberate go/no-go before touching the theming layer:
+Cheapest/most-isolated first. The architectural question (shop-tint toggle) that would have held
+up the Appearance screen is resolved — skipped — so nothing here is still blocked on a decision.
 
 1. **Add-control polish** (§1) — small, self-contained, no domain changes.
 2. **Unify the item sheet** (§3) — worth doing before anything else adds fields to either sheet.
 3. **Item-name suggestions** (§2) — unblocks both the add control's chips and Flow 06's
    "Recently bought," so one piece of work closes two named gaps.
-4. **Drawer row enrichment** (§4, the remaining-count/avatars half only — the inline
-   create/join half waits on its open decision).
+4. **Drawer enrichment** (§4) — remaining count/avatars, plus the now-decided inline
+   New list / Join a list rows.
 5. **Edit profile + stored avatar colour** (§6) — small domain change, self-contained.
-6. **Settings restructure** (§5) — mostly wiring existing destinations into a new layout.
-7. **List settings screen** (§9) — once its "replaces Household?" question is answered.
-8. **Appearance screen** (§7) — theme-mode and larger-text pieces are safe to build immediately;
-   hold the shop-tint toggle for its own explicit yes.
+6. **List settings screen** (§9) — retiring Household as part of the same change, since nothing
+   downstream should keep pointing at a screen that is going away.
+7. **Settings restructure** (§5) — once List settings exists, so its "Household" row has
+   somewhere real to point (or is dropped, per §5's own note).
+8. **Appearance screen** (§7) — theme-mode, larger-text and the reduce-motion status row; no
+   longer has a held-back piece.
 9. **Notifications preferences** (§8) — largest single piece, and the only one needing a new
    dependency (local scheduled notifications) — do this last, and possibly split "list finished"
    push + per-list mute from the local-notification scheduler as two separate phases.
-
-## Open decisions, collected
-
-Everything below needs your call before (or while) it is built — flagged inline above, repeated
-here so none of them get missed:
-
-1. **Drawer create/join rows** — add them (reopening decisions #50), or keep the drawer
-   switch-only?
-2. **Shop-tint toggle in Appearance** — make dynamic per-shop theming optional, or is this one
-   frame of the export not meant to be taken literally?
-3. **"Reduce motion" in Appearance** — a real manual override, or just a status readout of the OS
-   setting (in which case it should not be drawn as an interactive toggle)?
-4. **"Keep checked items" (global) vs. "Clear checked after shopping" (per-list)** — two
-   independent preferences, or the same idea described twice?
-5. **List settings vs. Household** — does List settings replace Household, wrap it, or do both
-   screens coexist?
-6. **"Manage lists" row in Settings** — its own new screen, or a link to the existing
-   `ListsScreen`?
-7. **Item-name suggestion scope** — per-list history, or household-wide across every list a user
-   belongs to?
