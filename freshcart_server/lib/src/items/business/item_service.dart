@@ -119,7 +119,67 @@ abstract final class ItemService {
       ),
       itemName: inserted.name,
     );
+    // Best-effort bookkeeping for suggestions -- must never fail the add
+    // itself, the same reasoning as _announce's own fire-and-forget push.
+    try {
+      await _recordNameHistory(session, listId, name);
+    } on Object catch (_) {
+      // Swallowed on purpose: the item was already added successfully.
+    }
     return inserted;
+  }
+
+  /// Records that [name] was just added to [listId], so it can be suggested
+  /// again later -- upserts rather than always inserting, since the unique
+  /// index on (listId, name) means a repeat add updates [lastUsedAt] on the
+  /// existing row instead of failing on the constraint.
+  static Future<void> _recordNameHistory(
+    Session session,
+    UuidValue listId,
+    String name,
+  ) async {
+    final now = DateTime.now().toUtc();
+    final existing = await ItemNameHistory.db.findFirstRow(
+      session,
+      where: (t) => t.listId.equals(listId) & t.name.equals(name),
+    );
+    if (existing == null) {
+      await ItemNameHistory.db.insertRow(
+        session,
+        ItemNameHistory(listId: listId, name: name, lastUsedAt: now),
+      );
+    } else {
+      await ItemNameHistory.db.updateRow(
+        session,
+        existing.copyWith(lastUsedAt: now),
+      );
+    }
+  }
+
+  /// Product names typed on [listId] before, matching [query], most
+  /// recently used first -- the add control's suggestion chips.
+  ///
+  /// Empty for anything under two characters: matching against one letter
+  /// would surface most of a list's history at once, which is noise, not a
+  /// suggestion.
+  static Future<List<String>> suggestNames(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+    String query, {
+    int limit = 5,
+  }) async {
+    await ListService.requireMembership(session, listId, userId);
+    final trimmed = query.trim();
+    if (trimmed.length < 2) return const [];
+    final rows = await ItemNameHistory.db.find(
+      session,
+      where: (t) => t.listId.equals(listId) & t.name.ilike('%$trimmed%'),
+      orderBy: (t) => t.lastUsedAt,
+      orderDescending: true,
+      limit: limit,
+    );
+    return [for (final row in rows) row.name];
   }
 
   /// Writes [incoming] back, refusing the write if someone else got there

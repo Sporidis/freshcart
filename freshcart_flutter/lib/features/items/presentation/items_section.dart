@@ -184,6 +184,7 @@ class ItemsSection extends ConsumerWidget {
           child: selectionMode || search.active
               ? const SizedBox(width: double.infinity)
               : QuickAddBar(
+                  listId: list.id,
                   t: t,
                   activeShopName: activeShop?.name,
                   onQuickAdd: (name) async {
@@ -379,7 +380,7 @@ class _ItemList extends ConsumerWidget {
       return ReorderableListView(
         shrinkWrap: true,
         physics: const NeverScrollableScrollPhysics(),
-        // The default drag-anywhere-on-mobile-after-a-long-press behaviour
+        // The default drag-anywhere-on-mobile-after-a-long-press behavior
         // would collide with long-press already meaning "enter multi-select"
         // (§10, its own gesture) -- a dedicated handle sidesteps the clash
         // instead of overloading one gesture with two meanings.

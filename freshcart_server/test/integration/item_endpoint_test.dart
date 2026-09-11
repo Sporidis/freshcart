@@ -360,5 +360,81 @@ void main() {
         throwsA(isA<ItemNotFoundException>()),
       );
     });
+
+    group('suggestNames', () {
+      test('an added name becomes a suggestion, matched case-insensitively', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Olive oil');
+
+        final suggestions = await endpoints.item.suggestNames(
+          as(aliceId),
+          list.id!,
+          'oliv',
+        );
+
+        expect(suggestions, ['Olive oil']);
+      });
+
+      test('nothing under two characters -- too broad to be a suggestion', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Olive oil');
+
+        expect(
+          await endpoints.item.suggestNames(as(aliceId), list.id!, 'o'),
+          isEmpty,
+        );
+      });
+
+      test('adding the same name again does not duplicate the suggestion', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        await endpoints.item.add(as(bobId), list.id!, 'Milk');
+
+        final suggestions = await endpoints.item.suggestNames(
+          as(aliceId),
+          list.id!,
+          'milk',
+        );
+
+        expect(suggestions, ['Milk']);
+      });
+
+      test('most recently used first', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Apple');
+        await endpoints.item.add(as(aliceId), list.id!, 'Apricot');
+        // Re-adding "Apple" bumps it back to the front.
+        await endpoints.item.add(as(aliceId), list.id!, 'Apple');
+
+        final suggestions = await endpoints.item.suggestNames(
+          as(aliceId),
+          list.id!,
+          'ap',
+        );
+
+        expect(suggestions, ['Apple', 'Apricot']);
+      });
+
+      test("scoped to the list -- another list's history does not leak in", () async {
+        final list = await aSharedList();
+        final otherList = await endpoints.list.create(as(aliceId), 'Camping');
+        await endpoints.item.add(as(aliceId), otherList.id!, 'Bread');
+
+        expect(
+          await endpoints.item.suggestNames(as(aliceId), list.id!, 'bread'),
+          isEmpty,
+        );
+      });
+
+      test('refuses a non-member', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        await expectLater(
+          endpoints.item.suggestNames(as(strangerId), list.id!, 'milk'),
+          throwsA(isA<NotAMemberException>()),
+        );
+      });
+    });
   });
 }

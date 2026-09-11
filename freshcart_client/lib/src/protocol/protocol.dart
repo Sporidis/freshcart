@@ -23,31 +23,32 @@ import 'common/models/not_a_member_exception.dart' as _i9;
 import 'common/models/shop_not_found_exception.dart' as _i10;
 import 'items/models/item_change.dart' as _i11;
 import 'items/models/item_change_kind.dart' as _i12;
-import 'items/models/note.dart' as _i13;
-import 'items/models/shopping_item.dart' as _i14;
-import 'lists/models/list_member.dart' as _i15;
-import 'lists/models/member_role.dart' as _i16;
-import 'lists/models/shopping_list.dart' as _i17;
-import 'notifications/models/device_platform.dart' as _i18;
-import 'notifications/models/device_token.dart' as _i19;
-import 'notifications/models/list_mute.dart' as _i20;
-import 'notifications/models/list_reference.dart' as _i21;
-import 'notifications/models/pending_item_notification.dart' as _i22;
-import 'shops/models/shop.dart' as _i23;
-import 'shops/models/shop_item_disposition.dart' as _i24;
-import 'users/models/current_user.dart' as _i25;
-import 'users/models/member_profile.dart' as _i26;
+import 'items/models/item_name_history.dart' as _i13;
+import 'items/models/note.dart' as _i14;
+import 'items/models/shopping_item.dart' as _i15;
+import 'lists/models/list_member.dart' as _i16;
+import 'lists/models/member_role.dart' as _i17;
+import 'lists/models/shopping_list.dart' as _i18;
+import 'notifications/models/device_platform.dart' as _i19;
+import 'notifications/models/device_token.dart' as _i20;
+import 'notifications/models/list_mute.dart' as _i21;
+import 'notifications/models/list_reference.dart' as _i22;
+import 'notifications/models/pending_item_notification.dart' as _i23;
+import 'shops/models/shop.dart' as _i24;
+import 'shops/models/shop_item_disposition.dart' as _i25;
+import 'users/models/current_user.dart' as _i26;
+import 'users/models/member_profile.dart' as _i27;
 import 'package:freshcart_client/src/protocol/auth/models/linked_provider.dart'
-    as _i27;
-import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i28;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i29;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i30;
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+    as _i30;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i31;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i31;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i32;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i33;
 export 'auth/models/linked_provider.dart';
 export 'common/models/account_already_linked_exception.dart';
 export 'common/models/edit_conflict_exception.dart';
@@ -59,6 +60,7 @@ export 'common/models/not_a_member_exception.dart';
 export 'common/models/shop_not_found_exception.dart';
 export 'items/models/item_change.dart';
 export 'items/models/item_change_kind.dart';
+export 'items/models/item_name_history.dart';
 export 'items/models/note.dart';
 export 'items/models/shopping_item.dart';
 export 'lists/models/list_member.dart';
@@ -142,47 +144,50 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i12.ItemChangeKind) {
       return _i12.ItemChangeKind.fromJson(data) as T;
     }
-    if (t == _i13.Note) {
-      return _i13.Note.fromJson(data) as T;
+    if (t == _i13.ItemNameHistory) {
+      return _i13.ItemNameHistory.fromJson(data) as T;
     }
-    if (t == _i14.ShoppingItem) {
-      return _i14.ShoppingItem.fromJson(data) as T;
+    if (t == _i14.Note) {
+      return _i14.Note.fromJson(data) as T;
     }
-    if (t == _i15.ListMember) {
-      return _i15.ListMember.fromJson(data) as T;
+    if (t == _i15.ShoppingItem) {
+      return _i15.ShoppingItem.fromJson(data) as T;
     }
-    if (t == _i16.MemberRole) {
-      return _i16.MemberRole.fromJson(data) as T;
+    if (t == _i16.ListMember) {
+      return _i16.ListMember.fromJson(data) as T;
     }
-    if (t == _i17.ShoppingList) {
-      return _i17.ShoppingList.fromJson(data) as T;
+    if (t == _i17.MemberRole) {
+      return _i17.MemberRole.fromJson(data) as T;
     }
-    if (t == _i18.DevicePlatform) {
-      return _i18.DevicePlatform.fromJson(data) as T;
+    if (t == _i18.ShoppingList) {
+      return _i18.ShoppingList.fromJson(data) as T;
     }
-    if (t == _i19.DeviceToken) {
-      return _i19.DeviceToken.fromJson(data) as T;
+    if (t == _i19.DevicePlatform) {
+      return _i19.DevicePlatform.fromJson(data) as T;
     }
-    if (t == _i20.ListMute) {
-      return _i20.ListMute.fromJson(data) as T;
+    if (t == _i20.DeviceToken) {
+      return _i20.DeviceToken.fromJson(data) as T;
     }
-    if (t == _i21.ListReference) {
-      return _i21.ListReference.fromJson(data) as T;
+    if (t == _i21.ListMute) {
+      return _i21.ListMute.fromJson(data) as T;
     }
-    if (t == _i22.PendingItemNotification) {
-      return _i22.PendingItemNotification.fromJson(data) as T;
+    if (t == _i22.ListReference) {
+      return _i22.ListReference.fromJson(data) as T;
     }
-    if (t == _i23.Shop) {
-      return _i23.Shop.fromJson(data) as T;
+    if (t == _i23.PendingItemNotification) {
+      return _i23.PendingItemNotification.fromJson(data) as T;
     }
-    if (t == _i24.ShopItemDisposition) {
-      return _i24.ShopItemDisposition.fromJson(data) as T;
+    if (t == _i24.Shop) {
+      return _i24.Shop.fromJson(data) as T;
     }
-    if (t == _i25.CurrentUser) {
-      return _i25.CurrentUser.fromJson(data) as T;
+    if (t == _i25.ShopItemDisposition) {
+      return _i25.ShopItemDisposition.fromJson(data) as T;
     }
-    if (t == _i26.MemberProfile) {
-      return _i26.MemberProfile.fromJson(data) as T;
+    if (t == _i26.CurrentUser) {
+      return _i26.CurrentUser.fromJson(data) as T;
+    }
+    if (t == _i27.MemberProfile) {
+      return _i27.MemberProfile.fromJson(data) as T;
     }
     if (t == _i1.getType<_i2.LinkedProvider?>()) {
       return (data != null ? _i2.LinkedProvider.fromJson(data) : null) as T;
@@ -229,120 +234,137 @@ class Protocol extends _i1.SerializationManager {
     if (t == _i1.getType<_i12.ItemChangeKind?>()) {
       return (data != null ? _i12.ItemChangeKind.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i13.Note?>()) {
-      return (data != null ? _i13.Note.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i13.ItemNameHistory?>()) {
+      return (data != null ? _i13.ItemNameHistory.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i14.ShoppingItem?>()) {
-      return (data != null ? _i14.ShoppingItem.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i14.Note?>()) {
+      return (data != null ? _i14.Note.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i15.ListMember?>()) {
-      return (data != null ? _i15.ListMember.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i15.ShoppingItem?>()) {
+      return (data != null ? _i15.ShoppingItem.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i16.MemberRole?>()) {
-      return (data != null ? _i16.MemberRole.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i16.ListMember?>()) {
+      return (data != null ? _i16.ListMember.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i17.ShoppingList?>()) {
-      return (data != null ? _i17.ShoppingList.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i17.MemberRole?>()) {
+      return (data != null ? _i17.MemberRole.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i18.DevicePlatform?>()) {
-      return (data != null ? _i18.DevicePlatform.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i18.ShoppingList?>()) {
+      return (data != null ? _i18.ShoppingList.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i19.DeviceToken?>()) {
-      return (data != null ? _i19.DeviceToken.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i19.DevicePlatform?>()) {
+      return (data != null ? _i19.DevicePlatform.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i20.ListMute?>()) {
-      return (data != null ? _i20.ListMute.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i20.DeviceToken?>()) {
+      return (data != null ? _i20.DeviceToken.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i21.ListReference?>()) {
-      return (data != null ? _i21.ListReference.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i21.ListMute?>()) {
+      return (data != null ? _i21.ListMute.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i22.PendingItemNotification?>()) {
-      return (data != null ? _i22.PendingItemNotification.fromJson(data) : null)
+    if (t == _i1.getType<_i22.ListReference?>()) {
+      return (data != null ? _i22.ListReference.fromJson(data) : null) as T;
+    }
+    if (t == _i1.getType<_i23.PendingItemNotification?>()) {
+      return (data != null ? _i23.PendingItemNotification.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i23.Shop?>()) {
-      return (data != null ? _i23.Shop.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i24.Shop?>()) {
+      return (data != null ? _i24.Shop.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i24.ShopItemDisposition?>()) {
-      return (data != null ? _i24.ShopItemDisposition.fromJson(data) : null)
+    if (t == _i1.getType<_i25.ShopItemDisposition?>()) {
+      return (data != null ? _i25.ShopItemDisposition.fromJson(data) : null)
           as T;
     }
-    if (t == _i1.getType<_i25.CurrentUser?>()) {
-      return (data != null ? _i25.CurrentUser.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i26.CurrentUser?>()) {
+      return (data != null ? _i26.CurrentUser.fromJson(data) : null) as T;
     }
-    if (t == _i1.getType<_i26.MemberProfile?>()) {
-      return (data != null ? _i26.MemberProfile.fromJson(data) : null) as T;
+    if (t == _i1.getType<_i27.MemberProfile?>()) {
+      return (data != null ? _i27.MemberProfile.fromJson(data) : null) as T;
     }
-    if (t == List<_i15.ListMember>) {
-      return (data as List).map((e) => deserialize<_i15.ListMember>(e)).toList()
+    if (t == List<_i16.ListMember>) {
+      return (data as List).map((e) => deserialize<_i16.ListMember>(e)).toList()
           as T;
     }
-    if (t == _i1.getType<List<_i15.ListMember>?>()) {
+    if (t == _i1.getType<List<_i16.ListMember>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i15.ListMember>(e))
+                    .map((e) => deserialize<_i16.ListMember>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i14.ShoppingItem>) {
+    if (t == List<_i15.ShoppingItem>) {
       return (data as List)
-              .map((e) => deserialize<_i14.ShoppingItem>(e))
+              .map((e) => deserialize<_i15.ShoppingItem>(e))
               .toList()
           as T;
     }
-    if (t == _i1.getType<List<_i14.ShoppingItem>?>()) {
+    if (t == _i1.getType<List<_i15.ShoppingItem>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i14.ShoppingItem>(e))
+                    .map((e) => deserialize<_i15.ShoppingItem>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i23.Shop>) {
-      return (data as List).map((e) => deserialize<_i23.Shop>(e)).toList() as T;
+    if (t == List<_i24.Shop>) {
+      return (data as List).map((e) => deserialize<_i24.Shop>(e)).toList() as T;
     }
-    if (t == _i1.getType<List<_i23.Shop>?>()) {
+    if (t == _i1.getType<List<_i24.Shop>?>()) {
       return (data != null
-              ? (data as List).map((e) => deserialize<_i23.Shop>(e)).toList()
+              ? (data as List).map((e) => deserialize<_i24.Shop>(e)).toList()
               : null)
           as T;
     }
-    if (t == List<_i20.ListMute>) {
-      return (data as List).map((e) => deserialize<_i20.ListMute>(e)).toList()
+    if (t == List<_i21.ListMute>) {
+      return (data as List).map((e) => deserialize<_i21.ListMute>(e)).toList()
           as T;
     }
-    if (t == _i1.getType<List<_i20.ListMute>?>()) {
+    if (t == _i1.getType<List<_i21.ListMute>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i20.ListMute>(e))
+                    .map((e) => deserialize<_i21.ListMute>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i22.PendingItemNotification>) {
+    if (t == List<_i23.PendingItemNotification>) {
       return (data as List)
-              .map((e) => deserialize<_i22.PendingItemNotification>(e))
+              .map((e) => deserialize<_i23.PendingItemNotification>(e))
               .toList()
           as T;
     }
-    if (t == _i1.getType<List<_i22.PendingItemNotification>?>()) {
+    if (t == _i1.getType<List<_i23.PendingItemNotification>?>()) {
       return (data != null
               ? (data as List)
-                    .map((e) => deserialize<_i22.PendingItemNotification>(e))
+                    .map((e) => deserialize<_i23.PendingItemNotification>(e))
                     .toList()
               : null)
           as T;
     }
-    if (t == List<_i27.LinkedProvider>) {
+    if (t == List<_i13.ItemNameHistory>) {
       return (data as List)
-              .map((e) => deserialize<_i27.LinkedProvider>(e))
+              .map((e) => deserialize<_i13.ItemNameHistory>(e))
               .toList()
           as T;
     }
-    if (t == List<_i28.ShoppingItem>) {
+    if (t == _i1.getType<List<_i13.ItemNameHistory>?>()) {
+      return (data != null
+              ? (data as List)
+                    .map((e) => deserialize<_i13.ItemNameHistory>(e))
+                    .toList()
+              : null)
+          as T;
+    }
+    if (t == List<_i28.LinkedProvider>) {
       return (data as List)
-              .map((e) => deserialize<_i28.ShoppingItem>(e))
+              .map((e) => deserialize<_i28.LinkedProvider>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i29.ShoppingItem>) {
+      return (data as List)
+              .map((e) => deserialize<_i29.ShoppingItem>(e))
               .toList()
           as T;
     }
@@ -350,20 +372,23 @@ class Protocol extends _i1.SerializationManager {
       return (data as List).map((e) => deserialize<_i1.UuidValue>(e)).toList()
           as T;
     }
-    if (t == List<_i29.ShoppingList>) {
+    if (t == List<String>) {
+      return (data as List).map((e) => deserialize<String>(e)).toList() as T;
+    }
+    if (t == List<_i30.ShoppingList>) {
       return (data as List)
-              .map((e) => deserialize<_i29.ShoppingList>(e))
+              .map((e) => deserialize<_i30.ShoppingList>(e))
               .toList()
           as T;
     }
-    if (t == List<_i30.Shop>) {
-      return (data as List).map((e) => deserialize<_i30.Shop>(e)).toList() as T;
+    if (t == List<_i31.Shop>) {
+      return (data as List).map((e) => deserialize<_i31.Shop>(e)).toList() as T;
     }
     try {
-      return _i31.Protocol().deserialize<T>(data, t);
+      return _i32.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i32.Protocol().deserialize<T>(data, t);
+      return _i33.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -381,20 +406,21 @@ class Protocol extends _i1.SerializationManager {
       _i10.ShopNotFoundException => 'ShopNotFoundException',
       _i11.ItemChange => 'ItemChange',
       _i12.ItemChangeKind => 'ItemChangeKind',
-      _i13.Note => 'Note',
-      _i14.ShoppingItem => 'ShoppingItem',
-      _i15.ListMember => 'ListMember',
-      _i16.MemberRole => 'MemberRole',
-      _i17.ShoppingList => 'ShoppingList',
-      _i18.DevicePlatform => 'DevicePlatform',
-      _i19.DeviceToken => 'DeviceToken',
-      _i20.ListMute => 'ListMute',
-      _i21.ListReference => 'ListReference',
-      _i22.PendingItemNotification => 'PendingItemNotification',
-      _i23.Shop => 'Shop',
-      _i24.ShopItemDisposition => 'ShopItemDisposition',
-      _i25.CurrentUser => 'CurrentUser',
-      _i26.MemberProfile => 'MemberProfile',
+      _i13.ItemNameHistory => 'ItemNameHistory',
+      _i14.Note => 'Note',
+      _i15.ShoppingItem => 'ShoppingItem',
+      _i16.ListMember => 'ListMember',
+      _i17.MemberRole => 'MemberRole',
+      _i18.ShoppingList => 'ShoppingList',
+      _i19.DevicePlatform => 'DevicePlatform',
+      _i20.DeviceToken => 'DeviceToken',
+      _i21.ListMute => 'ListMute',
+      _i22.ListReference => 'ListReference',
+      _i23.PendingItemNotification => 'PendingItemNotification',
+      _i24.Shop => 'Shop',
+      _i25.ShopItemDisposition => 'ShopItemDisposition',
+      _i26.CurrentUser => 'CurrentUser',
+      _i27.MemberProfile => 'MemberProfile',
       _ => null,
     };
   }
@@ -431,40 +457,42 @@ class Protocol extends _i1.SerializationManager {
         return 'ItemChange';
       case _i12.ItemChangeKind():
         return 'ItemChangeKind';
-      case _i13.Note():
+      case _i13.ItemNameHistory():
+        return 'ItemNameHistory';
+      case _i14.Note():
         return 'Note';
-      case _i14.ShoppingItem():
+      case _i15.ShoppingItem():
         return 'ShoppingItem';
-      case _i15.ListMember():
+      case _i16.ListMember():
         return 'ListMember';
-      case _i16.MemberRole():
+      case _i17.MemberRole():
         return 'MemberRole';
-      case _i17.ShoppingList():
+      case _i18.ShoppingList():
         return 'ShoppingList';
-      case _i18.DevicePlatform():
+      case _i19.DevicePlatform():
         return 'DevicePlatform';
-      case _i19.DeviceToken():
+      case _i20.DeviceToken():
         return 'DeviceToken';
-      case _i20.ListMute():
+      case _i21.ListMute():
         return 'ListMute';
-      case _i21.ListReference():
+      case _i22.ListReference():
         return 'ListReference';
-      case _i22.PendingItemNotification():
+      case _i23.PendingItemNotification():
         return 'PendingItemNotification';
-      case _i23.Shop():
+      case _i24.Shop():
         return 'Shop';
-      case _i24.ShopItemDisposition():
+      case _i25.ShopItemDisposition():
         return 'ShopItemDisposition';
-      case _i25.CurrentUser():
+      case _i26.CurrentUser():
         return 'CurrentUser';
-      case _i26.MemberProfile():
+      case _i27.MemberProfile():
         return 'MemberProfile';
     }
-    className = _i31.Protocol().getClassNameForObject(data);
+    className = _i32.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i32.Protocol().getClassNameForObject(data);
+    className = _i33.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -510,55 +538,58 @@ class Protocol extends _i1.SerializationManager {
     if (dataClassName == 'ItemChangeKind') {
       return deserialize<_i12.ItemChangeKind>(data['data']);
     }
+    if (dataClassName == 'ItemNameHistory') {
+      return deserialize<_i13.ItemNameHistory>(data['data']);
+    }
     if (dataClassName == 'Note') {
-      return deserialize<_i13.Note>(data['data']);
+      return deserialize<_i14.Note>(data['data']);
     }
     if (dataClassName == 'ShoppingItem') {
-      return deserialize<_i14.ShoppingItem>(data['data']);
+      return deserialize<_i15.ShoppingItem>(data['data']);
     }
     if (dataClassName == 'ListMember') {
-      return deserialize<_i15.ListMember>(data['data']);
+      return deserialize<_i16.ListMember>(data['data']);
     }
     if (dataClassName == 'MemberRole') {
-      return deserialize<_i16.MemberRole>(data['data']);
+      return deserialize<_i17.MemberRole>(data['data']);
     }
     if (dataClassName == 'ShoppingList') {
-      return deserialize<_i17.ShoppingList>(data['data']);
+      return deserialize<_i18.ShoppingList>(data['data']);
     }
     if (dataClassName == 'DevicePlatform') {
-      return deserialize<_i18.DevicePlatform>(data['data']);
+      return deserialize<_i19.DevicePlatform>(data['data']);
     }
     if (dataClassName == 'DeviceToken') {
-      return deserialize<_i19.DeviceToken>(data['data']);
+      return deserialize<_i20.DeviceToken>(data['data']);
     }
     if (dataClassName == 'ListMute') {
-      return deserialize<_i20.ListMute>(data['data']);
+      return deserialize<_i21.ListMute>(data['data']);
     }
     if (dataClassName == 'ListReference') {
-      return deserialize<_i21.ListReference>(data['data']);
+      return deserialize<_i22.ListReference>(data['data']);
     }
     if (dataClassName == 'PendingItemNotification') {
-      return deserialize<_i22.PendingItemNotification>(data['data']);
+      return deserialize<_i23.PendingItemNotification>(data['data']);
     }
     if (dataClassName == 'Shop') {
-      return deserialize<_i23.Shop>(data['data']);
+      return deserialize<_i24.Shop>(data['data']);
     }
     if (dataClassName == 'ShopItemDisposition') {
-      return deserialize<_i24.ShopItemDisposition>(data['data']);
+      return deserialize<_i25.ShopItemDisposition>(data['data']);
     }
     if (dataClassName == 'CurrentUser') {
-      return deserialize<_i25.CurrentUser>(data['data']);
+      return deserialize<_i26.CurrentUser>(data['data']);
     }
     if (dataClassName == 'MemberProfile') {
-      return deserialize<_i26.MemberProfile>(data['data']);
+      return deserialize<_i27.MemberProfile>(data['data']);
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i31.Protocol().deserializeByClassName(data);
+      return _i32.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i32.Protocol().deserializeByClassName(data);
+      return _i33.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -573,10 +604,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i31.Protocol().mapRecordToJson(record);
+      return _i32.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i32.Protocol().mapRecordToJson(record);
+      return _i33.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }

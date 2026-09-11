@@ -1,0 +1,36 @@
+### A product name typed on a list before, so the add control's suggestion
+### chips (and, eventually, search's own "Recently bought") can offer it
+### again. Kept as its own record rather than derived from ShoppingItem:
+### every delete path (ItemService.remove, clearChecked, removeMany) is a
+### hard delete, so a name would disappear from history the moment the item
+### did -- exactly when a suggestion for it (re-adding something just
+### cleared off a finished list) would be most useful.
+class: ItemNameHistory
+table: freshcart_item_name_history
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+
+  ### The list this history belongs to. Suggestions are per-list, not
+  ### household-wide -- the same scope shops already use (decisions #19).
+  listId: UuidValue, relation(name=list_item_names, parent=freshcart_shopping_list, onDelete=Cascade)
+
+  ### Exactly as typed. Matched case-insensitively at query time (ILIKE), but
+  ### the unique index below is on the exact string, so "Milk" and "milk"
+  ### persist as two separate rows -- a deliberate simplification, not an
+  ### oversight (see decisions.md).
+  name: String
+
+  ### Bumped every time [name] is added again, so suggestions surface the
+  ### most recently used first, not just whichever was typed first.
+  lastUsedAt: DateTime, defaultModel=now
+
+indexes:
+  ### Ordered per-list lookups: "this list's history, most recent first".
+  freshcart_item_name_history_list_idx:
+    fields: listId, lastUsedAt
+
+  ### One history row per distinct name per list -- ItemService.add upserts
+  ### into this rather than inserting a fresh row every time.
+  freshcart_item_name_history_unique_idx:
+    fields: listId, name
+    unique: true

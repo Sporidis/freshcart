@@ -33,6 +33,10 @@ fields:
   ### Buffered notifications awaiting a flush.
   pendingNotifications: List<PendingItemNotification>?, relation(name=list_pending_notifications)
 
+  ### Product names typed on this list before, for the add control's
+  ### suggestion chips.
+  itemNameHistory: List<ItemNameHistory>?, relation(name=list_item_names)
+
 indexes:
   freshcart_shopping_list_join_code_idx:
     fields: joinCode

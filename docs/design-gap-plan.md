@@ -21,7 +21,7 @@ behaviour*, not new visual language.
 | Area | Size | State |
 | ---- | ---- | ----- |
 | Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | ✅ Built — decisions #62 |
-| Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | Not built — new capability |
+| Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | ✅ Built for the add control — decisions #64. Search's own "Recently bought" UI still to come. |
 | Unify the add/edit item sheet into one component | Small–Medium | ✅ Built — decisions #63 |
 | Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | Not built |
 | Settings: 4-group restructure | Medium | Not built (current screen is one card) |
@@ -79,7 +79,7 @@ is the polish around it:
 None of this needs new domain concepts — it is presentation-layer work against data the app
 already has (the active shop, its name and colour), except for the next item.
 
-## 2. Item-name suggestions — one gap, needed by two flows
+## 2. Item-name suggestions — one gap, needed by two flows — ✅ built for the add control, decisions #64
 
 Flow 09's add control shows history chips ("Olive oil", "Olives", "Olive tapenade") once two
 characters are typed, sourced from a flat list of past product names. Flow 06 ("Search &
@@ -218,8 +218,8 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
 
 1. ~~**Add-control polish** (§1)~~ — ✅ built, decisions #62.
 2. ~~**Unify the item sheet** (§3)~~ — ✅ built, decisions #63.
-3. **Item-name suggestions** (§2) — unblocks both the add control's chips and Flow 06's
-   "Recently bought," so one piece of work closes two named gaps.
+3. ~~**Item-name suggestions** (§2)~~ — ✅ built, decisions #64. The add control's chips read
+   from it now; Flow 06's "Recently bought" is unblocked but not itself built yet.
 4. **Drawer enrichment** (§4) — remaining count/avatars, plus the now-decided inline
    New list / Join a list rows.
 5. **Edit profile + stored avatar colour** (§6) — small domain change, self-contained.

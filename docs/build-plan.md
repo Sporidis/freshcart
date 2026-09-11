@@ -36,7 +36,7 @@ Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ block
 | 11 Jaspr marketing site | 🟡 | Pages and components exist; SEO meta and Lighthouse pass not yet verified. No tests, and CI has no job for this package. |
 | 12 Test coverage + CI | 🟡 | CI runs analyze, format and all four suites, and asserts the golden rules by grep (decisions #41). Coverage gaps remain in `freshcart_web` — no `test-web` job exists yet. |
 
-**Suites:** 229 app · 96 domain · 73 server · 8 l10n.
+**Suites:** 242 app · 96 domain · 88 server · 8 l10n.
 
 ## Design flows
 
@@ -53,7 +53,7 @@ everything flows 09–10 add that phases 0–12 did not build yet.
 | 03 Gestures | ✅ | Swipe-delete/undo, multi-select, and drag-to-reorder (fractional `sortOrder`) all built. Deliberately not built: the contextual bar's "Move" action — decisions #52–54. |
 | 04 Editing lists & shops | ✅ | Live colour preview, decisions #45 and #48 |
 | 05 Household & sharing | ✅ | Deliberately omitted: last-active captions (no timestamp), QR toggle, code expiry. See the commit. |
-| 06 Search & suggestions | 🟡 | Search is built, local-only, its own header mode — decisions #55. **"Recently bought" still needs purchase-history tracking** that does not exist — now also wanted by Flow 09's add-control autocomplete, so it is one shared gap, not two. |
+| 06 Search & suggestions | 🟡 | Search is built, local-only, its own header mode — decisions #55. The purchase-history capability "Recently bought" needs is now built (decisions #64, for the add control's own chips) — this row is now just a small UI piece away, not a backend gap. |
 | 07 Offline & sync | ⛔ | Needs a connectivity port in the domain and cached reads. Overlaps the offline-first scope fork below. |
 | 08 Errors | ✅ | Three tiers, decisions #42 |
 | 09 The add control | 🟡 | The core interaction (roll-out FAB, +/× glyph rotation, fast Enter path vs. the detail sheet) is built — decisions #58, #59. **Not yet built:** the shop-tinted placeholder ("Add to Colruyt"), the leading shop-colour dot inside the field, the empty-vs-has-text glyph background state, item-name suggestion chips, and the new-row entrance flash. See `docs/design-gap-plan.md`. |

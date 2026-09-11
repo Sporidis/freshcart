@@ -991,3 +991,45 @@ single-item case no longer has *no* way to do it at all.
 product" / "Edit product" as the sheet's own heading (previously neither sheet had one), "Save"
 rather than "Add item" for the edit path's primary button (matching `ItemEditorDialog`'s own
 correct prior convention, not `AddItemSheet`'s).
+
+## 64. Item-name suggestions: a real backend capability, shared by the add control now and search later
+
+**Decision:** Third item off `docs/design-gap-plan.md`'s build order, and the first that needed
+real server work rather than pure client polish. New `ItemNameHistory` model
+(`freshcart_item_name_history`), one row per distinct name per list (a unique index on
+`(listId, name)`), written to on every successful `ItemService.add` — an upsert (find by
+`listId` + exact `name`, bump `lastUsedAt` or insert fresh), not a fresh row per add, and
+deliberately case-sensitive at the unique-index level even though the read side matches with
+`ILIKE`: "Milk" and "milk" persist as two rows, a simplification stated rather than an oversight.
+**Why a new table rather than deriving suggestions from `ShoppingItem` itself:** checked directly
+against the server code — `ItemService.remove`, `clearChecked` and `removeMany` all call
+`deleteRow`/`deleteWhere` (a hard delete, no `isDeleted` flag) — so a name's history would
+disappear from `ShoppingItem` the moment the item did, which is most items eventually, and exactly
+when a suggestion for it (re-adding something just cleared off a finished list) would be most
+useful.
+
+**The history write must never fail the add it rides along with.** `_recordNameHistory` is wrapped
+in its own `try`/`catch` inside `ItemService.add`, discarding any error — the same reasoning
+`_announce`'s own fire-and-forget push already uses in this file: a person who just successfully
+added "Milk" must never see that fail because a bookkeeping insert for suggestions had a problem.
+
+**Query side:** `ItemService.suggestNames` enforces a two-character floor before touching the
+database at all (matching one letter would surface most of a list's history at once, noise rather
+than a suggestion) — checked both server-side (defence in depth) and client-side, in the new
+`itemSuggestionsProvider`, so a too-short query never even reaches the network. Scoped per-list,
+not household-wide, per the design-gap-plan's own resolved decision, and ordered by `lastUsedAt`
+descending, most recently used first.
+
+**Client-side debouncing, not per-keystroke requests:** `QuickAddBar` (now a
+`ConsumerStatefulWidget`, its first use of Riverpod directly rather than through callbacks its
+parent supplies) holds its own 300&nbsp;ms `Timer`, only advancing `_debouncedQuery` — and only
+then watching `itemSuggestionsProvider` — once typing pauses. A network call fired on every
+keystroke would mean several in-flight requests racing each other for every word typed, and
+answering out of order.
+
+**Scope, named rather than silently expanded:** this pass wires suggestions into the add control's
+own chip row (§09's frame 4 — "Olive oil", "Olives", "Olive tapenade" riding just above the
+field), matching what was actually asked for. Flow 06's "Recently bought" section on the search
+screen wants the exact same underlying capability and is now fully unblocked (`itemSuggestionsProvider`
+and the server endpoint are generic, not add-control-specific) but was not itself built in this
+pass — a small, separate follow-up UI piece, not a backend gap any more.

@@ -23,6 +23,12 @@ class FakeItemRepository implements ItemRepository {
   /// What [removeMany] returns.
   Result<int>? removeManyResult;
 
+  /// What [suggestNames] returns.
+  Result<List<String>> suggestNamesResult = const Ok(<String>[]);
+
+  /// Every (listId, query) pair [suggestNames] was called with, in order.
+  final List<({ListId listId, String query})> suggestNamesCalls = [];
+
   /// Every argument list [add] was called with, in order.
   final List<
     ({
@@ -121,6 +127,15 @@ class FakeItemRepository implements ItemRepository {
 
   /// Closes the live stream. Call from a test teardown.
   Future<void> dispose() => live.close();
+
+  @override
+  Future<Result<List<String>>> suggestNames(
+    ListId listId,
+    String query,
+  ) async {
+    suggestNamesCalls.add((listId: listId, query: query));
+    return suggestNamesResult;
+  }
 }
 
 /// Builds a domain [ShoppingItem] for tests.

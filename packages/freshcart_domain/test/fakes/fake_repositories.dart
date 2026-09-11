@@ -72,6 +72,10 @@ class FakeItemRepository implements ItemRepository {
   @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
       throw UnimplementedError();
+
+  @override
+  Future<Result<List<String>>> suggestNames(ListId listId, String query) =>
+      throw UnimplementedError();
 }
 
 /// A hand-written [ListRepository] stand-in.
