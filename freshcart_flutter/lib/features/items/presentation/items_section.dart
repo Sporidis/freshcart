@@ -17,10 +17,9 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_editor_dialog.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search_results.dart';
@@ -199,23 +198,25 @@ class ItemsSection extends ConsumerWidget {
                     return failure == null;
                   },
                   onOpenDetails: (name) async {
-                    final details = await showModalBottomSheet<AddItemDetails>(
+                    final outcome = await showModalBottomSheet<ItemSheetOutcome>(
                       context: context,
                       isScrollControlled: true,
                       showDragHandle: true,
-                      builder: (_) => AddItemSheet(
+                      builder: (_) => ItemSheet.add(
                         initialName: name,
                         shops: shops,
                         initialShopId: shopFilter,
                         t: t,
                       ),
                     );
-                    if (details == null) return false;
+                    // Only ItemSheetSave is reachable from .add -- there is
+                    // no Remove action to add a not-yet-created item.
+                    if (outcome is! ItemSheetSave) return false;
                     final failure = await controller.add(
-                      name: details.name,
-                      quantity: details.quantity,
-                      shopId: details.shopId,
-                      noteText: details.noteText,
+                      name: outcome.name,
+                      quantity: outcome.quantity,
+                      shopId: outcome.shopId,
+                      noteText: outcome.noteText,
                     );
                     report(failure);
                     return failure == null;
@@ -325,20 +326,28 @@ class _ItemList extends ConsumerWidget {
       },
       onSwipeDelete: () => controller.swipeDelete(item),
       onEdit: () async {
-        final edit = await showDialog<ItemEdit>(
+        final outcome = await showModalBottomSheet<ItemSheetOutcome>(
           context: context,
-          builder: (context) => ItemEditorDialog(item: item, t: t),
+          isScrollControlled: true,
+          showDragHandle: true,
+          builder: (_) => ItemSheet.edit(item: item, shops: shops, t: t),
         );
-        if (edit == null) return;
-        report(
-          await controller.edit(
-            item,
-            name: edit.name,
-            quantity: edit.quantity,
-            shopId: item.shopId,
-            noteText: edit.noteText,
-          ),
-        );
+        switch (outcome) {
+          case null:
+            return;
+          case ItemSheetRemove():
+            report(await controller.remove(item));
+          case ItemSheetSave(:final name, :final quantity, :final shopId, :final noteText):
+            report(
+              await controller.edit(
+                item,
+                name: name,
+                quantity: quantity,
+                shopId: shopId,
+                noteText: noteText,
+              ),
+            );
+        }
       },
     );
 

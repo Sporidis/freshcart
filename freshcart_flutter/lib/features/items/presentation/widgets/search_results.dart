@@ -4,7 +4,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_editor_dialog.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -102,20 +102,28 @@ class SearchResults extends ConsumerWidget {
             onToggle: () async => report(await controller.toggle(item)),
             onSwipeDelete: () => controller.swipeDelete(item),
             onEdit: () async {
-              final edit = await showDialog<ItemEdit>(
+              final outcome = await showModalBottomSheet<ItemSheetOutcome>(
                 context: context,
-                builder: (context) => ItemEditorDialog(item: item, t: t),
+                isScrollControlled: true,
+                showDragHandle: true,
+                builder: (_) => ItemSheet.edit(item: item, shops: shops, t: t),
               );
-              if (edit == null) return;
-              report(
-                await controller.edit(
-                  item,
-                  name: edit.name,
-                  quantity: edit.quantity,
-                  shopId: item.shopId,
-                  noteText: edit.noteText,
-                ),
-              );
+              switch (outcome) {
+                case null:
+                  return;
+                case ItemSheetRemove():
+                  report(await controller.remove(item));
+                case ItemSheetSave(:final name, :final quantity, :final shopId, :final noteText):
+                  report(
+                    await controller.edit(
+                      item,
+                      name: name,
+                      quantity: quantity,
+                      shopId: shopId,
+                      noteText: noteText,
+                    ),
+                  );
+              }
             },
           ),
       ],

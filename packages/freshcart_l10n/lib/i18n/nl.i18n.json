@@ -43,7 +43,10 @@
     },
     "celebrateBody": "Alles op {{list}} is afgevinkt.",
     "keepList": "Lijst bewaren",
-    "addTo": "Toevoegen aan {{shop}}"
+    "addTo": "Toevoegen aan {{shop}}",
+    "newProductTitle": "Nieuw product",
+    "editProductTitle": "Product bewerken",
+    "remove": "Verwijderen"
   },
   "shops": {
     "all": "Alle winkels",

@@ -9,9 +9,9 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/add_item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -377,6 +377,84 @@ void main() {
     );
   });
 
+  group('editing an item (the same sheet adding uses)', () {
+    final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+    final bakery = buildShop(
+      id: '00000000-0000-4000-8000-0000000000c2',
+      name: 'Bakery',
+      color: '#C62828',
+    );
+
+    testWidgets('opens pre-filled, titled Edit product, with a Save button '
+        '-- not the add sheet\'s own title and button', (tester) async {
+      shops.byListResult = Ok([colruyt]);
+      items.byListResult = Ok([
+        buildItem(name: 'Milk', quantity: 3, shopId: colruyt.id),
+      ]);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Edit product'), findsOneWidget);
+      expect(find.text('New product'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Save'), findsOneWidget);
+      final nameField = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .firstWhere((f) => f.controller?.text == 'Milk');
+      expect(nameField.controller?.text, 'Milk');
+      expect(find.text('3'), findsOneWidget);
+    });
+
+    testWidgets('saving can change the shop, not just the name/quantity/note', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      final item = buildItem(name: 'Milk', shopId: colruyt.id);
+      items.byListResult = Ok([item]);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Save'));
+      await tester.pumpAndSettle();
+
+      expect(items.savedItems.single.shopId, bakery.id);
+    });
+
+    testWidgets('Remove takes the item off the list', (tester) async {
+      final item = buildItem(name: 'Milk');
+      items.byListResult = Ok([item]);
+      items.removeResult = const Ok(null);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Remove'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsNothing);
+    });
+
+    testWidgets('the add sheet has no Remove action -- there is nothing '
+        'to remove yet', (tester) async {
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bread');
+      await tester.pump();
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      expect(find.text('New product'), findsOneWidget);
+      expect(find.text('Remove'), findsNothing);
+    });
+  });
+
   group('the quick-add bar follows the active shop tab', () {
     final listId = ListId('00000000-0000-4000-8000-000000000001');
     final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
@@ -632,7 +710,7 @@ void main() {
       // one that should carry "Bread" over from the bar.
       final sheetFields = tester.widgetList<TextField>(
         find.descendant(
-          of: find.byType(AddItemSheet),
+          of: find.byType(ItemSheet),
           matching: find.byType(TextField),
         ),
       );
