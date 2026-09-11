@@ -399,6 +399,20 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
+  /// Product name suggestions for a list, matching [query], most recently
+  /// used first -- the add control's suggestion chips.
+  _i2.Future<List<String>> suggestNames(
+    _i1.UuidValue listId,
+    String query,
+  ) => caller.callServerEndpoint<List<String>>(
+    'item',
+    'suggestNames',
+    {
+      'listId': listId,
+      'query': query,
+    },
+  );
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the

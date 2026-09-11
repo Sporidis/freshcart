@@ -504,6 +504,30 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['itemIds'],
               ),
         ),
+        'suggestNames': _i1.MethodConnector(
+          name: 'suggestNames',
+          params: {
+            'listId': _i1.ParameterDescription(
+              name: 'listId',
+              type: _i1.getType<_i1.UuidValue>(),
+              nullable: false,
+            ),
+            'query': _i1.ParameterDescription(
+              name: 'query',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['item'] as _i6.ItemEndpoint).suggestNames(
+                session,
+                params['listId'],
+                params['query'],
+              ),
+        ),
         'watchList': _i1.MethodStreamConnector(
           name: 'watchList',
           params: {

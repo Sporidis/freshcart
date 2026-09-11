@@ -41,4 +41,9 @@ abstract interface class ItemRepository {
 
   /// Live view of the items on [listId] (Phase 8).
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId);
+
+  /// Product names typed on [listId] before, matching [query], most
+  /// recently used first -- the add control's suggestion chips (decisions
+  /// #64). Scoped to this list only, the same scope shops already use.
+  Future<Result<List<String>>> suggestNames(ListId listId, String query);
 }

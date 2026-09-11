@@ -48,7 +48,7 @@ class SearchResults extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final trimmed = query.trim();
     // Nothing typed yet: a blank canvas, not the whole list -- §16 describes
-    // filtering *as you type*, not a browsable "everything" view with its
+    // filtering *as you type*, not a browseable "everything" view with its
     // own separate purpose (that's the shop tabs).
     if (trimmed.isEmpty) return const SizedBox.shrink();
 
@@ -64,8 +64,7 @@ class SearchResults extends ConsumerWidget {
         title: t.search.noResultsTitle(query: trimmed),
         body: t.search.noResultsBody,
         action: FilledButton(
-          onPressed: () async =>
-              report(await controller.add(name: trimmed)),
+          onPressed: () async => report(await controller.add(name: trimmed)),
           child: Text(t.search.addAction(query: trimmed)),
         ),
       );
@@ -113,7 +112,12 @@ class SearchResults extends ConsumerWidget {
                   return;
                 case ItemSheetRemove():
                   report(await controller.remove(item));
-                case ItemSheetSave(:final name, :final quantity, :final shopId, :final noteText):
+                case ItemSheetSave(
+                  :final name,
+                  :final quantity,
+                  :final shopId,
+                  :final noteText,
+                ):
                   report(
                     await controller.edit(
                       item,

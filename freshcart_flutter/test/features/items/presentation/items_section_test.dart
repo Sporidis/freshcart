@@ -455,6 +455,68 @@ void main() {
     });
   });
 
+  group('suggestion chips', () {
+    testWidgets('appear once two characters settle, and fill the field '
+        'when tapped', (tester) async {
+      items.suggestNamesResult = const Ok(['Olive oil', 'Olives']);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'ol');
+      // Explicit, past the 300 ms debounce -- pumpAndSettle alone only
+      // advances time for as long as something else keeps a frame
+      // scheduled, which nothing does once the FAB's own open animation has
+      // already settled.
+      await tester.pump(const Duration(milliseconds: 350));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Olive oil'), findsOneWidget);
+      expect(find.text('Olives'), findsOneWidget);
+
+      await tester.tap(find.text('Olives'));
+      await tester.pumpAndSettle();
+
+      final barField = tester
+          .widgetList<TextField>(find.byType(TextField))
+          .firstWhere((f) => f.controller?.text == 'Olives');
+      expect(barField.controller?.text, 'Olives');
+    });
+
+    testWidgets('nothing under two characters -- no request, no chips', (
+      tester,
+    ) async {
+      items.suggestNamesResult = const Ok(['Olive oil']);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'o');
+      await tester.pumpAndSettle();
+
+      expect(items.suggestNamesCalls, isEmpty);
+      expect(find.text('Olive oil'), findsNothing);
+    });
+
+    testWidgets('the request waits out the debounce, not fired immediately '
+        'on the keystroke that reaches two characters', (tester) async {
+      items.suggestNamesResult = const Ok(['Olive oil']);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'oli');
+
+      // A single frame, no time advanced: still inside the debounce window.
+      await tester.pump();
+      expect(items.suggestNamesCalls, isEmpty);
+
+      await tester.pump(const Duration(milliseconds: 350));
+      expect(items.suggestNamesCalls, hasLength(1));
+      expect(items.suggestNamesCalls.single.query, 'oli');
+    });
+  });
+
   group('the quick-add bar follows the active shop tab', () {
     final listId = ListId('00000000-0000-4000-8000-000000000001');
     final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');

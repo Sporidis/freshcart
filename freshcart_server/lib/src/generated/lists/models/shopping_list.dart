@@ -17,7 +17,8 @@ import '../../items/models/shopping_item.dart' as _i3;
 import '../../shops/models/shop.dart' as _i4;
 import '../../notifications/models/list_mute.dart' as _i5;
 import '../../notifications/models/pending_item_notification.dart' as _i6;
-import 'package:freshcart_server/src/generated/protocol.dart' as _i7;
+import '../../items/models/item_name_history.dart' as _i7;
+import 'package:freshcart_server/src/generated/protocol.dart' as _i8;
 
 /// A shopping list shared by one or more people.
 abstract class ShoppingList
@@ -33,6 +34,7 @@ abstract class ShoppingList
     this.shops,
     this.mutes,
     this.pendingNotifications,
+    this.itemNameHistory,
   }) : createdAt = createdAt ?? DateTime.now();
 
   factory ShoppingList({
@@ -46,6 +48,7 @@ abstract class ShoppingList
     List<_i4.Shop>? shops,
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
+    List<_i7.ItemNameHistory>? itemNameHistory,
   }) = _ShoppingListImpl;
 
   factory ShoppingList.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -63,28 +66,33 @@ abstract class ShoppingList
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
       members: jsonSerialization['members'] == null
           ? null
-          : _i7.Protocol().deserialize<List<_i2.ListMember>>(
+          : _i8.Protocol().deserialize<List<_i2.ListMember>>(
               jsonSerialization['members'],
             ),
       items: jsonSerialization['items'] == null
           ? null
-          : _i7.Protocol().deserialize<List<_i3.ShoppingItem>>(
+          : _i8.Protocol().deserialize<List<_i3.ShoppingItem>>(
               jsonSerialization['items'],
             ),
       shops: jsonSerialization['shops'] == null
           ? null
-          : _i7.Protocol().deserialize<List<_i4.Shop>>(
+          : _i8.Protocol().deserialize<List<_i4.Shop>>(
               jsonSerialization['shops'],
             ),
       mutes: jsonSerialization['mutes'] == null
           ? null
-          : _i7.Protocol().deserialize<List<_i5.ListMute>>(
+          : _i8.Protocol().deserialize<List<_i5.ListMute>>(
               jsonSerialization['mutes'],
             ),
       pendingNotifications: jsonSerialization['pendingNotifications'] == null
           ? null
-          : _i7.Protocol().deserialize<List<_i6.PendingItemNotification>>(
+          : _i8.Protocol().deserialize<List<_i6.PendingItemNotification>>(
               jsonSerialization['pendingNotifications'],
+            ),
+      itemNameHistory: jsonSerialization['itemNameHistory'] == null
+          ? null
+          : _i8.Protocol().deserialize<List<_i7.ItemNameHistory>>(
+              jsonSerialization['itemNameHistory'],
             ),
     );
   }
@@ -125,6 +133,10 @@ abstract class ShoppingList
   /// Buffered notifications awaiting a flush.
   List<_i6.PendingItemNotification>? pendingNotifications;
 
+  /// Product names typed on this list before, for the add control's
+  /// suggestion chips.
+  List<_i7.ItemNameHistory>? itemNameHistory;
+
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
 
@@ -142,6 +154,7 @@ abstract class ShoppingList
     List<_i4.Shop>? shops,
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
+    List<_i7.ItemNameHistory>? itemNameHistory,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -159,6 +172,10 @@ abstract class ShoppingList
       if (mutes != null) 'mutes': mutes?.toJson(valueToJson: (v) => v.toJson()),
       if (pendingNotifications != null)
         'pendingNotifications': pendingNotifications?.toJson(
+          valueToJson: (v) => v.toJson(),
+        ),
+      if (itemNameHistory != null)
+        'itemNameHistory': itemNameHistory?.toJson(
           valueToJson: (v) => v.toJson(),
         ),
     };
@@ -185,6 +202,10 @@ abstract class ShoppingList
         'pendingNotifications': pendingNotifications?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
         ),
+      if (itemNameHistory != null)
+        'itemNameHistory': itemNameHistory?.toJson(
+          valueToJson: (v) => v.toJsonForProtocol(),
+        ),
     };
   }
 
@@ -194,6 +215,7 @@ abstract class ShoppingList
     _i4.ShopIncludeList? shops,
     _i5.ListMuteIncludeList? mutes,
     _i6.PendingItemNotificationIncludeList? pendingNotifications,
+    _i7.ItemNameHistoryIncludeList? itemNameHistory,
   }) {
     return ShoppingListInclude._(
       members: members,
@@ -201,6 +223,7 @@ abstract class ShoppingList
       shops: shops,
       mutes: mutes,
       pendingNotifications: pendingNotifications,
+      itemNameHistory: itemNameHistory,
     );
   }
 
@@ -244,6 +267,7 @@ class _ShoppingListImpl extends ShoppingList {
     List<_i4.Shop>? shops,
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
+    List<_i7.ItemNameHistory>? itemNameHistory,
   }) : super._(
          id: id,
          name: name,
@@ -255,6 +279,7 @@ class _ShoppingListImpl extends ShoppingList {
          shops: shops,
          mutes: mutes,
          pendingNotifications: pendingNotifications,
+         itemNameHistory: itemNameHistory,
        );
 
   /// Returns a shallow copy of this [ShoppingList]
@@ -272,6 +297,7 @@ class _ShoppingListImpl extends ShoppingList {
     Object? shops = _Undefined,
     Object? mutes = _Undefined,
     Object? pendingNotifications = _Undefined,
+    Object? itemNameHistory = _Undefined,
   }) {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -295,6 +321,9 @@ class _ShoppingListImpl extends ShoppingList {
           pendingNotifications is List<_i6.PendingItemNotification>?
           ? pendingNotifications
           : this.pendingNotifications?.map((e0) => e0.copyWith()).toList(),
+      itemNameHistory: itemNameHistory is List<_i7.ItemNameHistory>?
+          ? itemNameHistory
+          : this.itemNameHistory?.map((e0) => e0.copyWith()).toList(),
     );
   }
 }
@@ -393,6 +422,14 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
   /// Buffered notifications awaiting a flush.
   _i1.ManyRelation<_i6.PendingItemNotificationTable>? _pendingNotifications;
 
+  /// Product names typed on this list before, for the add control's
+  /// suggestion chips.
+  _i7.ItemNameHistoryTable? ___itemNameHistory;
+
+  /// Product names typed on this list before, for the add control's
+  /// suggestion chips.
+  _i1.ManyRelation<_i7.ItemNameHistoryTable>? _itemNameHistory;
+
   _i2.ListMemberTable get __members {
     if (___members != null) return ___members!;
     ___members = _i1.createRelationTable(
@@ -456,6 +493,19 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
           _i6.PendingItemNotificationTable(tableRelation: foreignTableRelation),
     );
     return ___pendingNotifications!;
+  }
+
+  _i7.ItemNameHistoryTable get __itemNameHistory {
+    if (___itemNameHistory != null) return ___itemNameHistory!;
+    ___itemNameHistory = _i1.createRelationTable(
+      relationFieldName: '__itemNameHistory',
+      field: ShoppingList.t.id,
+      foreignField: _i7.ItemNameHistory.t.listId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i7.ItemNameHistoryTable(tableRelation: foreignTableRelation),
+    );
+    return ___itemNameHistory!;
   }
 
   _i1.ManyRelation<_i2.ListMemberTable> get members {
@@ -553,6 +603,25 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     return _pendingNotifications!;
   }
 
+  _i1.ManyRelation<_i7.ItemNameHistoryTable> get itemNameHistory {
+    if (_itemNameHistory != null) return _itemNameHistory!;
+    var relationTable = _i1.createRelationTable(
+      relationFieldName: 'itemNameHistory',
+      field: ShoppingList.t.id,
+      foreignField: _i7.ItemNameHistory.t.listId,
+      tableRelation: tableRelation,
+      createTable: (foreignTableRelation) =>
+          _i7.ItemNameHistoryTable(tableRelation: foreignTableRelation),
+    );
+    _itemNameHistory = _i1.ManyRelation<_i7.ItemNameHistoryTable>(
+      tableWithRelations: relationTable,
+      table: _i7.ItemNameHistoryTable(
+        tableRelation: relationTable.tableRelation!.lastRelation,
+      ),
+    );
+    return _itemNameHistory!;
+  }
+
   @override
   List<_i1.Column> get columns => [
     id,
@@ -579,6 +648,9 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     if (relationField == 'pendingNotifications') {
       return __pendingNotifications;
     }
+    if (relationField == 'itemNameHistory') {
+      return __itemNameHistory;
+    }
     return null;
   }
 }
@@ -590,12 +662,14 @@ class ShoppingListInclude extends _i1.IncludeObject {
     _i4.ShopIncludeList? shops,
     _i5.ListMuteIncludeList? mutes,
     _i6.PendingItemNotificationIncludeList? pendingNotifications,
+    _i7.ItemNameHistoryIncludeList? itemNameHistory,
   }) {
     _members = members;
     _items = items;
     _shops = shops;
     _mutes = mutes;
     _pendingNotifications = pendingNotifications;
+    _itemNameHistory = itemNameHistory;
   }
 
   _i2.ListMemberIncludeList? _members;
@@ -608,6 +682,8 @@ class ShoppingListInclude extends _i1.IncludeObject {
 
   _i6.PendingItemNotificationIncludeList? _pendingNotifications;
 
+  _i7.ItemNameHistoryIncludeList? _itemNameHistory;
+
   @override
   Map<String, _i1.Include?> get includes => {
     'members': _members,
@@ -615,6 +691,7 @@ class ShoppingListInclude extends _i1.IncludeObject {
     'shops': _shops,
     'mutes': _mutes,
     'pendingNotifications': _pendingNotifications,
+    'itemNameHistory': _itemNameHistory,
   };
 
   @override
@@ -1063,6 +1140,31 @@ class ShoppingListAttachRepository {
       transaction: transaction,
     );
   }
+
+  /// Creates a relation between this [ShoppingList] and the given [ItemNameHistory]s
+  /// by setting each [ItemNameHistory]'s foreign key `listId` to refer to this [ShoppingList].
+  Future<void> itemNameHistory(
+    _i1.DatabaseSession session,
+    ShoppingList shoppingList,
+    List<_i7.ItemNameHistory> itemNameHistory, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (itemNameHistory.any((e) => e.id == null)) {
+      throw ArgumentError.notNull('itemNameHistory.id');
+    }
+    if (shoppingList.id == null) {
+      throw ArgumentError.notNull('shoppingList.id');
+    }
+
+    var $itemNameHistory = itemNameHistory
+        .map((e) => e.copyWith(listId: shoppingList.id))
+        .toList();
+    await session.db.update<_i7.ItemNameHistory>(
+      $itemNameHistory,
+      columns: [_i7.ItemNameHistory.t.listId],
+      transaction: transaction,
+    );
+  }
 }
 
 class ShoppingListAttachRowRepository {
@@ -1181,6 +1283,29 @@ class ShoppingListAttachRowRepository {
     await session.db.updateRow<_i6.PendingItemNotification>(
       $pendingItemNotification,
       columns: [_i6.PendingItemNotification.t.listId],
+      transaction: transaction,
+    );
+  }
+
+  /// Creates a relation between this [ShoppingList] and the given [ItemNameHistory]
+  /// by setting the [ItemNameHistory]'s foreign key `listId` to refer to this [ShoppingList].
+  Future<void> itemNameHistory(
+    _i1.DatabaseSession session,
+    ShoppingList shoppingList,
+    _i7.ItemNameHistory itemNameHistory, {
+    _i1.Transaction? transaction,
+  }) async {
+    if (itemNameHistory.id == null) {
+      throw ArgumentError.notNull('itemNameHistory.id');
+    }
+    if (shoppingList.id == null) {
+      throw ArgumentError.notNull('shoppingList.id');
+    }
+
+    var $itemNameHistory = itemNameHistory.copyWith(listId: shoppingList.id);
+    await session.db.updateRow<_i7.ItemNameHistory>(
+      $itemNameHistory,
+      columns: [_i7.ItemNameHistory.t.listId],
       transaction: transaction,
     );
   }

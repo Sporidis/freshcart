@@ -60,6 +60,19 @@ class ItemEndpoint extends Endpoint {
     List<UuidValue> itemIds,
   ) => ItemService.removeMany(session, listId, session.requireUserId, itemIds);
 
+  /// Product name suggestions for a list, matching [query], most recently
+  /// used first -- the add control's suggestion chips.
+  Future<List<String>> suggestNames(
+    Session session,
+    UuidValue listId,
+    String query,
+  ) => ItemService.suggestNames(
+    session,
+    listId,
+    session.requireUserId,
+    query,
+  );
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the

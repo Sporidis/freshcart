@@ -59,6 +59,12 @@ class ItemRepositoryImpl implements ItemRepository {
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
       ItemRealtimeSource(_client).watchByList(listId);
 
+  @override
+  Future<Result<List<String>>> suggestNames(ListId listId, String query) =>
+      _guard(
+        () => _client.item.suggestNames(_uuid(listId.value), query),
+      );
+
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);
 
