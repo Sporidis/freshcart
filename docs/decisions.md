@@ -966,3 +966,28 @@ sync's own separate territory.
 paints its splashes on the nearest `Material` ancestor, and a coloured `DecoratedBox` sitting
 between it and that ancestor would hide them. Fixed by using a `Material` for the tint instead,
 which is also the correct semantic choice, not just a workaround.
+
+## 63. `AddItemSheet` and `ItemEditorDialog` are now one `ItemSheet`
+
+**Decision:** Second item off `docs/design-gap-plan.md`'s build order. The design's own note —
+"the same sheet, titled Edit product and with a Remove action, is what a row tap opens later; one
+component, two entry points" — named a real duplication: `AddItemSheet` and `ItemEditorDialog`
+already did almost the same thing (name, quantity, note), and `ItemEditorDialog` was a centred
+`AlertDialog` while the design draws editing as the same bottom sheet adding uses. Replaced both
+with `ItemSheet`, one widget with two named constructors (`.add`, `.edit`) that decide the mode
+from whether an `item` was given — no separate boolean to drift out of step with it. Its result is
+a small sealed type, `ItemSheetOutcome` (`ItemSheetSave` / `ItemSheetRemove`), rather than a
+nullable-field record: a `switch` on it has to handle both outcomes, with no silent third "neither"
+shape to forget the way an ad hoc boolean-plus-optional-fields shape would allow.
+
+**A real capability gained, not just a merge:** `ItemEditorDialog` never let a shop be changed —
+`onEdit` always passed `shopId: item.shopId` straight through, unchanged. `ItemSheet.edit`
+pre-fills the item's current shop into the same chip picker `.add` already has, so editing can now
+retag an item to a different shop. This is the first piece of decisions #53's deferred "Move"
+action to land — not the whole thing (there is still no bulk multi-select move), but the
+single-item case no longer has *no* way to do it at all.
+
+**New title and button copy, traced from the same frame the unification note comes from:** "New
+product" / "Edit product" as the sheet's own heading (previously neither sheet had one), "Save"
+rather than "Add item" for the edit path's primary button (matching `ItemEditorDialog`'s own
+correct prior convention, not `AddItemSheet`'s).

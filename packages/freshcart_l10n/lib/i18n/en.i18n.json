@@ -43,7 +43,10 @@
     },
     "celebrateBody": "Everything on {{list}} is checked off.",
     "keepList": "Keep list",
-    "addTo": "Add to {{shop}}"
+    "addTo": "Add to {{shop}}",
+    "newProductTitle": "New product",
+    "editProductTitle": "Edit product",
+    "remove": "Remove"
   },
   "shops": {
     "all": "All shops",

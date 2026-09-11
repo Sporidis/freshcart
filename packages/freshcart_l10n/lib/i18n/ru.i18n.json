@@ -47,7 +47,10 @@
     },
     "celebrateBody": "Всё отмечено в списке «{{list}}».",
     "keepList": "Оставить список",
-    "addTo": "Добавить в «{{shop}}»"
+    "addTo": "Добавить в «{{shop}}»",
+    "newProductTitle": "Новый товар",
+    "editProductTitle": "Изменить товар",
+    "remove": "Удалить"
   },
   "shops": {
     "all": "Все магазины",

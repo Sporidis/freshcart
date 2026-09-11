@@ -43,7 +43,10 @@
     },
     "celebrateBody": "Naka-check na lahat sa {{list}}.",
     "keepList": "Panatilihin ang listahan",
-    "addTo": "Idagdag sa {{shop}}"
+    "addTo": "Idagdag sa {{shop}}",
+    "newProductTitle": "Bagong produkto",
+    "editProductTitle": "I-edit ang produkto",
+    "remove": "Alisin"
   },
   "shops": {
     "all": "Lahat ng tindahan",

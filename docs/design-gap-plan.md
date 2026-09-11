@@ -22,7 +22,7 @@ behaviour*, not new visual language.
 | ---- | ---- | ----- |
 | Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | ✅ Built — decisions #62 |
 | Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | Not built — new capability |
-| Unify the add/edit item sheet into one component | Small–Medium | Not built (two components today) |
+| Unify the add/edit item sheet into one component | Small–Medium | ✅ Built — decisions #63 |
 | Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | Not built |
 | Settings: 4-group restructure | Medium | Not built (current screen is one card) |
 | Edit profile: user-chosen avatar colour | Small–Medium | Not built — **domain change** |
@@ -103,7 +103,7 @@ or similar), a server endpoint backing it (a `SELECT DISTINCT name ... ORDER BY 
 query against the new table), and two small UI consumers (the add control's chip row, the search
 screen's "Recently bought" section).
 
-## 3. One item sheet, not two
+## 3. One item sheet, not two — ✅ built, decisions #63
 
 The design's own note: *"The same sheet, titled Edit product and with a Remove action, is what a
 row tap opens later — one component, two entry points."* Today the app has two separate
@@ -217,7 +217,7 @@ Cheapest/most-isolated first. The architectural question (shop-tint toggle) that
 up the Appearance screen is resolved — skipped — so nothing here is still blocked on a decision.
 
 1. ~~**Add-control polish** (§1)~~ — ✅ built, decisions #62.
-2. **Unify the item sheet** (§3) — worth doing before anything else adds fields to either sheet.
+2. ~~**Unify the item sheet** (§3)~~ — ✅ built, decisions #63.
 3. **Item-name suggestions** (§2) — unblocks both the add control's chips and Flow 06's
    "Recently bought," so one piece of work closes two named gaps.
 4. **Drawer enrichment** (§4) — remaining count/avatars, plus the now-decided inline

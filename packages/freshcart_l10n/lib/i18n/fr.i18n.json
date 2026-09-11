@@ -43,7 +43,10 @@
     },
     "celebrateBody": "Tout est coché sur {{list}}.",
     "keepList": "Garder la liste",
-    "addTo": "Ajouter à {{shop}}"
+    "addTo": "Ajouter à {{shop}}",
+    "newProductTitle": "Nouveau produit",
+    "editProductTitle": "Modifier le produit",
+    "remove": "Supprimer"
   },
   "shops": {
     "all": "Tous les magasins",
