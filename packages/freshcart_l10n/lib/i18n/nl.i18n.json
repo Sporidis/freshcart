@@ -123,7 +123,35 @@
     "noResultsBody": "Controleer de spelling, of voeg het toe als nieuw product."
   },
   "settings": {
-    "title": "Instellingen"
+    "title": "Instellingen",
+    "editProfile": "Profiel bewerken",
+    "listsAndShops": "Lijsten & winkels",
+    "manageLists": "Lijsten beheren",
+    "manageShops": "Winkels beheren",
+    "household": "Huishouden",
+    "preferences": "Voorkeuren",
+    "appearance": "Uiterlijk",
+    "currentAppearance": "{{mode}}",
+    "appearanceSystem": "Systeem",
+    "appearanceLight": "Licht",
+    "appearanceDark": "Donker",
+    "language": "Taal",
+    "notifications": "Meldingen",
+    "keepCheckedItems": "Vinkjes bewaren",
+    "keepCheckedItemsBody": "Toon ze onder Klaar in plaats van ze te verwijderen.",
+    "haptics": "Haptische feedback",
+    "helpFeedback": "Help & feedback",
+    "termsOfService": "Voorwaarden",
+    "signOut": "Uitloggen",
+    "appVersion": "Appversie: {{version}}"
+  },
+  "profile": {
+    "title": "Profiel bewerken",
+    "nameLabel": "Weergavenaam",
+    "colorLabel": "Avatarkleur",
+    "photoLabel": "Avatarfoto",
+    "choosePhoto": "Foto kiezen",
+    "removePhoto": "Foto verwijderen"
   },
   "splash": {
     "loading": "FreshCart laden"

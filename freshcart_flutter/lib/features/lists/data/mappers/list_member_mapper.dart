@@ -9,6 +9,10 @@ extension ListMemberDtoX on dto.ListMember {
     displayName: displayName,
     role: role.toDomain(),
     joinedAt: joinedAt,
+    avatarColor: avatarColorArgb == null
+        ? null
+        : HexColor.fromArgb(avatarColorArgb!),
+    avatarPhotoUrl: avatarPhotoUrl,
   );
 }
 

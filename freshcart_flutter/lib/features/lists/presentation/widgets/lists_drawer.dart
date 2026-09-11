@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart'
@@ -311,19 +312,13 @@ class _MemberAvatar extends StatelessWidget {
     final initial = member.displayName.trim().isEmpty
         ? '?'
         : member.displayName.trim()[0].toUpperCase();
-    return Container(
-      width: 22,
-      height: 22,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: AppColors.avatarColorFor(member.userId.value),
-        border: Border.all(color: borderColor, width: 1.5),
-      ),
-      child: Text(
-        initial,
-        style: AppTextStyles.captionStrong.copyWith(color: Colors.white),
-      ),
+    return UserAvatar(
+      seed: member.userId.value,
+      initial: initial,
+      photoUrl: member.avatarPhotoUrl,
+      color: member.avatarColor,
+      radius: 11,
+      border: Border.all(color: borderColor, width: 1.5),
     );
   }
 }

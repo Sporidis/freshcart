@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -43,6 +44,25 @@ class AuthRepositoryImpl implements AuthPort {
       });
 
   @override
+  Future<Result<AuthUser>> setAvatarColor(HexColor color) => _guard(() async {
+    await _client.profile.setAvatarColor(color.argb);
+    return _refresh();
+  });
+
+  @override
+  Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes) =>
+      _guard(() async {
+        await _client.profile.setAvatarPhoto(ByteData.sublistView(bytes));
+        return _refresh();
+      });
+
+  @override
+  Future<Result<AuthUser>> clearAvatarPhoto() => _guard(() async {
+    await _client.profile.clearAvatarPhoto();
+    return _refresh();
+  });
+
+  @override
   Future<Result<AuthUser>> linkEmail({
     required String email,
     required String password,
@@ -80,6 +100,10 @@ class AuthRepositoryImpl implements AuthPort {
       id: UserId(me.userId.uuid),
       displayName: me.displayName,
       isAnonymous: me.isAnonymous,
+      avatarColor: me.avatarColorArgb == null
+          ? null
+          : HexColor.fromArgb(me.avatarColorArgb!),
+      avatarPhotoUrl: me.avatarPhotoUrl,
     );
     _currentUser = user;
     _changes.add(user);
