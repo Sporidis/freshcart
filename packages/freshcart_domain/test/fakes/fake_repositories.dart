@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 
 import 'builders.dart';
@@ -209,6 +211,62 @@ class FakeAuthPort implements AuthPort {
             displayName: displayName,
             isAnonymous: true,
           ),
+        );
+  }
+
+  /// What [setAvatarColor] will return. Defaults to echoing the colour back.
+  Result<AuthUser>? setAvatarColorResult;
+
+  /// Every colour [setAvatarColor] was called with, in order.
+  final List<HexColor> setAvatarColorCalls = [];
+
+  @override
+  Future<Result<AuthUser>> setAvatarColor(HexColor color) async {
+    setAvatarColorCalls.add(color);
+    return setAvatarColorResult ??
+        Ok(
+          AuthUser(
+            id: testUser,
+            displayName: 'Test User',
+            isAnonymous: true,
+            avatarColor: color,
+          ),
+        );
+  }
+
+  /// What [setAvatarPhoto] will return. Defaults to echoing a placeholder
+  /// URL back.
+  Result<AuthUser>? setAvatarPhotoResult;
+
+  /// Every upload [setAvatarPhoto] was called with, in order.
+  final List<Uint8List> setAvatarPhotoCalls = [];
+
+  @override
+  Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes) async {
+    setAvatarPhotoCalls.add(bytes);
+    return setAvatarPhotoResult ??
+        Ok(
+          AuthUser(
+            id: testUser,
+            displayName: 'Test User',
+            isAnonymous: true,
+            avatarPhotoUrl: 'https://example.test/avatars/test-user.jpg',
+          ),
+        );
+  }
+
+  /// What [clearAvatarPhoto] will return. Defaults to a user with no photo.
+  Result<AuthUser>? clearAvatarPhotoResult;
+
+  /// How many times [clearAvatarPhoto] was called.
+  int clearAvatarPhotoCalls = 0;
+
+  @override
+  Future<Result<AuthUser>> clearAvatarPhoto() async {
+    clearAvatarPhotoCalls++;
+    return clearAvatarPhotoResult ??
+        Ok(
+          AuthUser(id: testUser, displayName: 'Test User', isAnonymous: true),
         );
   }
 

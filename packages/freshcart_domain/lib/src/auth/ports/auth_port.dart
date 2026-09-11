@@ -1,5 +1,8 @@
+import 'dart:typed_data';
+
 import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
 /// How the domain observes and changes who is signed in.
 ///
@@ -26,6 +29,22 @@ abstract interface class AuthPort {
   /// Prompted early on purpose: an anonymous member showing as "Someone" makes
   /// a shared list unreadable.
   Future<Result<AuthUser>> setDisplayName(String displayName);
+
+  /// Sets a colour the user picked for their own avatar.
+  ///
+  /// Any [HexColor] is accepted — the domain does not restrict this to a
+  /// preset swatch list, the same choice already made for a shop's own
+  /// colour (`EditShop`); a picker offering only presets is a UI choice, not
+  /// a rule this layer enforces.
+  Future<Result<AuthUser>> setAvatarColor(HexColor color);
+
+  /// Uploads and sets a photo for the user's avatar, overriding
+  /// [AuthUser.avatarColor] wherever an avatar is shown.
+  Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes);
+
+  /// Removes the user's avatar photo, reverting to their stored colour, or
+  /// the automatic hash-based one if they never set either.
+  Future<Result<AuthUser>> clearAvatarPhoto();
 
   /// Attaches a Google provider to the *existing* account.
   ///
