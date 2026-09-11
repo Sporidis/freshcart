@@ -47,7 +47,7 @@ a:hover{color:#1A3E77}
       <div><div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.42)">Personality</div><div style="font:600 12.5px Newsreader,serif;margin-top:3px">Springy &amp; playful</div></div>
       <div><div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.42)">Haptics</div><div style="font:600 12.5px Newsreader,serif;margin-top:3px">Generous</div></div>
       <div><div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.42)">Platform</div><div style="font:600 12.5px Newsreader,serif;margin-top:3px">Flutter · iOS + Android</div></div>
-      <div><div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.42)">Companion files</div><div style="font:600 12.5px Newsreader,serif;margin-top:3px">app_colors.dart · app_theme.dart</div></div>
+      <div><div style="font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.42)">Companion files</div><div style="font:600 12.5px Newsreader,serif;margin-top:3px">app_motion.dart · app_theme.dart</div></div>
     </div>
   </div>
 
@@ -170,7 +170,7 @@ Stack(children: [
         <tr><td class="mspec-td">Pill scale</td><td class="mspec-td">Outgoing pill 1 → .96, incoming .96 → 1, same fraction</td></tr>
         <tr><td class="mspec-td">Pill label weight</td><td class="mspec-td">Cross-fade two <span class="mspec-kbd">Text</span> layers (w400/w600) rather than animating weight</td></tr>
         <tr><td class="mspec-td">Strip scroll</td><td class="mspec-td">Auto-centres the active pill, 260&nbsp;ms <span class="mspec-kbd">easeOutCubic</span></td></tr>
-        <tr><td class="mspec-td">Quick-add bar dot</td><td class="mspec-td">Tints to the incoming shop colour on the same fraction</td></tr>
+        <tr><td class="mspec-td">FAB tint</td><td class="mspec-td">Interpolates to the incoming shop colour on the same fraction, so the corner and the strip agree mid-swipe</td></tr>
         <tr><td class="mspec-td">Settle</td><td class="mspec-td"><span class="mspec-kbd">selectionClick()</span> haptic the moment <span class="mspec-kbd">indexIsChanging</span> resolves</td></tr>
       </tbody>
     </table>
@@ -209,7 +209,21 @@ AnimatedBuilder(
         <tr><td class="mspec-td">340&nbsp;ms</td><td class="mspec-td"><span class="mspec-kbd">lightImpact()</span></td><td class="mspec-td">As the row lands, so it feels like it hit the list</td></tr>
       </tbody>
     </table>
-    <p class="mspec-p"><strong>Adding from the "All" tab</strong> needs a shop first: tapping the quick-add bar there expands it to show a one-row shop chooser above the field, 260&nbsp;ms <span class="mspec-kbd">easeOutCubic</span> height animation. <strong>Rapid entry:</strong> the sheet stays open if the user submits with the keyboard's "next" action — field clears, row lands behind the sheet, so a whole list can be typed in one sitting.</p>
+    <p class="mspec-p"><strong>Adding from the "All" tab</strong> needs a shop: the capsule commits into the list's first shop, and the detail sheet is where that can be changed before committing.</p>
+
+    <h3 class="mspec-h3" style="font-size:17px">The roll-open capsule</h3>
+    <p class="mspec-p">The add control has three depths, and the glyph always states what tapping it will do. Implement as a single <span class="mspec-kbd">AnimatedContainer</span> whose width interpolates while the radius stays pinned at 28 — not a FAB that cross-fades into a different widget.</p>
+    <table class="mspec-tbl">
+      <thead><tr><th class="mspec-th" style="width:20%">State</th><th class="mspec-th" style="width:24%">Geometry</th><th class="mspec-th" style="width:18%">Glyph</th><th class="mspec-th">Transition</th></tr></thead>
+      <tbody>
+        <tr><td class="mspec-td">Resting</td><td class="mspec-td">56×56, right-anchored, shop-tinted, elevation 6</td><td class="mspec-td"><span class="mspec-kbd">+</span>, 0°, white on shop colour</td><td class="mspec-td">—</td></tr>
+        <tr><td class="mspec-td">Rolling open</td><td class="mspec-td">width 56 → full, radius stays 28, elevation drops to 2</td><td class="mspec-td">rotates 0° → 45°</td><td class="mspec-td">260&nbsp;ms width <span class="mspec-kbd">easeOutQuint</span>; glyph <span class="mspec-kbd">easeOutBack</span>; placeholder fades in over the last 40%</td></tr>
+        <tr><td class="mspec-td">Open, empty</td><td class="mspec-td">Full width, white surface, keyboard up</td><td class="mspec-td"><span class="mspec-kbd">×</span> at 45°, grey on 8% ink — not a primary action</td><td class="mspec-td">Tapping it rolls the capsule shut in reverse</td></tr>
+        <tr><td class="mspec-td">Open, has text</td><td class="mspec-td">Unchanged; history chips rise above it after 2 characters</td><td class="mspec-td">rotates back to <span class="mspec-kbd">+</span>, refills with the shop colour</td><td class="mspec-td">180&nbsp;ms <span class="mspec-kbd">easeOutBack</span> on rotation, 120&nbsp;ms colour cross-fade</td></tr>
+      </tbody>
+    </table>
+    <p class="mspec-p"><strong>Two commits, deliberately different.</strong> <span class="mspec-kbd">Enter</span> adds the item and leaves the capsule open with the field cleared — six items is six keystroke-bursts, not six round trips. Tapping <span class="mspec-kbd">+</span> opens the detail sheet (name prefilled, shop pills, amount stepper, optional note) for the rare item that needs more. The same sheet, retitled <em>Edit product</em> with a Remove action, is what a row tap opens later.</p>
+    <p class="mspec-p">The capsule is suppressed entirely in multi-select mode and when the list-complete card is showing — it scales to 0 over 180&nbsp;ms <span class="mspec-kbd">easeInCubic</span> rather than fading, so the corner reads as emptied rather than faded out.</p>
   </section>
 
   <section style="margin-bottom:30px">
@@ -261,7 +275,7 @@ AnimatedBuilder(
       <tbody>
         <tr><td class="mspec-td">0&nbsp;ms</td><td class="mspec-td">Normal check animation runs, but the haptic is upgraded to <span class="mspec-kbd">heavyImpact()</span></td></tr>
         <tr><td class="mspec-td">240&nbsp;ms</td><td class="mspec-td">All checked rows' shop dots pulse outward in sequence, 40&nbsp;ms apart, scale 1 → 1.35 → 1</td></tr>
-        <tr><td class="mspec-td">400&nbsp;ms</td><td class="mspec-td">A card rises from the bottom over the quick-add bar: "All done — 14 items". Spring in (<span class="mspec-kbd">AppMotion.spring</span>), so it settles with one soft bounce</td></tr>
+        <tr><td class="mspec-td">400&nbsp;ms</td><td class="mspec-td">The FAB scales out and a card rises in its place: "All done — 14 items". Spring in (<span class="mspec-kbd">AppMotion.spring</span>), so it settles with one soft bounce</td></tr>
         <tr><td class="mspec-td">400&nbsp;ms</td><td class="mspec-td">Confetti, but restrained: 14–20 particles in the list's shop colours only, gravity fall, 1.4&nbsp;s, no repeat. Skip entirely if reduced-motion is on</td></tr>
         <tr><td class="mspec-td">Idle</td><td class="mspec-td">Card offers "Clear checked items" and "Keep list" — it does <em>not</em> auto-dismiss; tapping anywhere else slides it away over 220&nbsp;ms</td></tr>
       </tbody>
@@ -278,10 +292,11 @@ AnimatedBuilder(
     <p class="mspec-p"><span class="mspec-kbd">Dismissible</span>, <span class="mspec-kbd">direction: endToStart</span> only (left-to-right stays free for a future "move to shop"). Background is <span class="mspec-kbd">AppColors.destructive</span> with a trash icon that scales 0.7&nbsp;→&nbsp;1 as the drag passes 30% width. <span class="mspec-kbd">dismissThresholds: {endToStart: 0.4}</span>. At threshold crossing: <span class="mspec-kbd">mediumImpact()</span> and the icon pops to 1.15 then settles. On release below threshold, the row springs back with <span class="mspec-kbd">AppMotion.spring</span>. On dismiss, height collapses over 220&nbsp;ms and a 4-second undo snackbar appears — the row is only deleted from Firebase when the snackbar expires, so undo is instant and local.</p>
 
     <h3 class="mspec-h3" style="font-size:17px">Long-press to multi-select</h3>
-    <p class="mspec-p">500&nbsp;ms press. At 300&nbsp;ms the row starts scaling to 0.97 as a "keep holding" tell; at fire, <span class="mspec-kbd">mediumImpact()</span> and the row springs back to 1.0. Entering the mode: every row's checkbox slides 8&nbsp;px right and a selection circle fades in on the left (240&nbsp;ms, 25&nbsp;ms stagger down the list), the header cross-fades to a contextual bar ("3 selected · Move · Delete · ✕"), and the quick-add bar slides out. Exiting reverses it. Tapping rows toggles selection with <span class="mspec-kbd">selectionClick()</span> and a 120&nbsp;ms fill.</p>
+    <p class="mspec-p">500&nbsp;ms press. At 300&nbsp;ms the row starts scaling to 0.97 as a "keep holding" tell; at fire, <span class="mspec-kbd">mediumImpact()</span> and the row springs back to 1.0. Entering the mode: every row's checkbox slides 8&nbsp;px right and a selection circle fades in on the left (240&nbsp;ms, 25&nbsp;ms stagger down the list), the header cross-fades to a contextual bar ("3 selected · Move · Delete · ✕"), and the FAB scales out. Exiting reverses it. Tapping rows toggles selection with <span class="mspec-kbd">selectionClick()</span> and a 120&nbsp;ms fill.</p>
+    <p class="mspec-p"><strong>Implementation trap:</strong> the <span class="mspec-kbd">pointerup</span> ending the long-press still fires a <span class="mspec-kbd">tap</span> on the same row, which would immediately deselect the row the press just selected. Set a flag when the timer fires and have the row's tap handler consume it once. In Flutter, <span class="mspec-kbd">GestureDetector</span>'s <span class="mspec-kbd">onLongPress</span> already suppresses the companion <span class="mspec-kbd">onTap</span>, so use those rather than hand-rolling a timer on <span class="mspec-kbd">onTapDown</span>.</p>
 
     <h3 class="mspec-h3" style="font-size:17px">Drag to reorder</h3>
-    <p class="mspec-p"><span class="mspec-kbd">ReorderableListView</span> within a single shop tab (cross-shop reordering is meaningless — moving between shops is a swipe action instead). Pick-up: row lifts to <span class="mspec-kbd">elevation 8</span>, scales to 1.03, opacity 0.95, over 200&nbsp;ms, with <span class="mspec-kbd">selectionClick()</span>. Other rows part with a 200&nbsp;ms <span class="mspec-kbd">easeOutCubic</span> gap. Each crossing fires <span class="mspec-kbd">selectionClick()</span>. Drop: settles with <span class="mspec-kbd">AppMotion.spring</span> and <span class="mspec-kbd">lightImpact()</span>. Checked items are not draggable and sit locked below the "Done" divider.</p>
+    <p class="mspec-p"><span class="mspec-kbd">ReorderableListView</span> within a single shop tab (cross-shop reordering is meaningless — moving between shops is the multi-select <em>Move</em> action instead). Reorder handles appear <strong>only in multi-select mode</strong>: horizontal swipe owns the row otherwise, and a vertical-vs-horizontal gesture race on the same row is the one ambiguity worth designing out. Pick-up: row lifts to <span class="mspec-kbd">elevation 8</span>, scales to 1.03, opacity 0.95, over 200&nbsp;ms, with <span class="mspec-kbd">selectionClick()</span>. Other rows part with a 200&nbsp;ms <span class="mspec-kbd">easeOutCubic</span> gap. Each crossing fires <span class="mspec-kbd">selectionClick()</span>. Drop: settles with <span class="mspec-kbd">AppMotion.spring</span> and <span class="mspec-kbd">lightImpact()</span>. Checked items are not draggable and sit locked below the "Done" divider.</p>
 
     <h3 class="mspec-h3" style="font-size:17px">Pull to refresh</h3>
     <p class="mspec-p"><span class="mspec-kbd">RefreshIndicator</span> tinted to the active shop colour (<span class="mspec-kbd">colorScheme.primary</span>). Since Firestore streams are already live, this is a <em>reassurance</em> gesture: it forces a re-fetch and, on completion, shows a 1.2&nbsp;s "Up to date · just now" caption that fades in under the tab strip. Minimum spinner time 600&nbsp;ms even if the fetch returns instantly — an instantly-vanishing spinner reads as broken.</p>
@@ -295,7 +310,7 @@ AnimatedBuilder(
     <table class="mspec-tbl">
       <thead><tr><th class="mspec-th" style="width:22%">Where</th><th class="mspec-th" style="width:30%">Title</th><th class="mspec-th">Body &amp; action</th></tr></thead>
       <tbody>
-        <tr><td class="mspec-td">Brand-new list</td><td class="mspec-td">"Nothing on the list yet"</td><td class="mspec-td">"Add your first product below." An animated arrow nudges toward the quick-add bar — 3 gentle bounces, then stops for good.</td></tr>
+        <tr><td class="mspec-td">Brand-new list</td><td class="mspec-td">"Nothing on the list yet"</td><td class="mspec-td">"Tap the button to add your first product." The FAB pulses gently three times (scale 1 → 1.06 → 1, 900&nbsp;ms apart), then stops for good — no arrow, no persistent coach mark.</td></tr>
         <tr><td class="mspec-td">Empty shop tab</td><td class="mspec-td">"Nothing for Colruyt"</td><td class="mspec-td">"Items you add here will show on this tab." Action: <em>Add a product</em>. Uses the shop's colour for the illustration tint.</td></tr>
         <tr><td class="mspec-td">All items checked</td><td class="mspec-td">"All done"</td><td class="mspec-td">Not an empty state — see §09. Rows stay visible under the Done divider with a <em>Clear checked</em> action.</td></tr>
         <tr><td class="mspec-td">No lists at all</td><td class="mspec-td">"No lists yet"</td><td class="mspec-td">Only reachable after deleting the last list. Actions: <em>New list</em> and <em>Join a list</em>.</td></tr>
@@ -439,7 +454,7 @@ AnimatedBuilder(
         <tr><td class="mspec-td">Unexpected crash</td><td class="mspec-td">Screen</td><td class="mspec-td">"Something went wrong." <em>Try again</em> + <em>Report</em>. Never a raw exception string.</td></tr>
       </tbody>
     </table>
-    <p class="mspec-p">All snackbars: floating, 12&nbsp;px radius, 16&nbsp;px margins, slide up 240&nbsp;ms <span class="mspec-kbd">easeOutCubic</span>, 4&nbsp;s (5&nbsp;s with an undo), swipe-to-dismiss, and they lift above the quick-add bar rather than covering it.</p>
+    <p class="mspec-p">All snackbars: floating, 12&nbsp;px radius, 16&nbsp;px margins, slide up 240&nbsp;ms <span class="mspec-kbd">easeOutCubic</span>, 4&nbsp;s (5&nbsp;s with an undo), swipe-to-dismiss, and they sit clear of the FAB so Retry and the add button never overlap.</p>
   </section>
 
   <section style="margin-bottom:10px;break-inside:avoid">

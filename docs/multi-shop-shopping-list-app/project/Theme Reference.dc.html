@@ -204,9 +204,12 @@ a:hover{color:#1A3E77}
         <tr><td class="th-td">Swipe to delete</td><td class="th-td"><span class="th-kbd">Dismissible</span></td><td class="th-td">End-to-start only, 0.4 threshold, undo snackbar</td></tr>
         <tr><td class="th-td">Reorder</td><td class="th-td"><span class="th-kbd">ReorderableListView</span></td><td class="th-td">Within one shop tab only</td></tr>
         <tr><td class="th-td">Bottom sheet</td><td class="th-td"><span class="th-kbd">showModalBottomSheet</span></td><td class="th-td">Drag handle comes from the theme — don't hand-build it</td></tr>
-        <tr><td class="th-td">Side nav</td><td class="th-td"><span class="th-kbd">Drawer</span></td><td class="th-td">272&nbsp;px, square edge, no elevation tint</td></tr>
+        <tr><td class="th-td">Side nav</td><td class="th-td"><span class="th-kbd">Drawer</span></td><td class="th-td">288&nbsp;px, square edge, no elevation tint; profile header top, management pinned bottom</td></tr>
         <tr><td class="th-td">Dashed "add" tile</td><td class="th-td"><span class="th-kbd">DottedBorder</span> + <span class="th-kbd">InkWell</span></td><td class="th-td">Only third-party dependency in the system</td></tr>
-        <tr><td class="th-td">Quick-add bar</td><td class="th-td">Custom <span class="th-kbd">FloatingActionButton</span> slot</td><td class="th-td">Full-width pill, <span class="th-kbd">centerFloat</span>, dot tinted to active shop</td></tr>
+        <tr><td class="th-td">Add control</td><td class="th-td"><span class="th-kbd">AnimatedContainer</span> in the FAB slot</td><td class="th-td">56&nbsp;px circle that rolls open to a full-width capsule; radius stays 28. Not a real <span class="th-kbd">FloatingActionButton</span> — it needs to hold a <span class="th-kbd">TextField</span></td></tr>
+        <tr><td class="th-td">Drawer list rows</td><td class="th-td"><span class="th-kbd">InkWell</span> + <span class="th-kbd">Row</span></td><td class="th-td">Name + remaining count + overlapping member avatars; active row filled <span class="th-kbd">selectedRow</span></td></tr>
+        <tr><td class="th-td">Settings row</td><td class="th-td"><span class="th-kbd">InkWell</span> + <span class="th-kbd">Row</span></td><td class="th-td">Title, optional subtitle, trailing value / chevron / <span class="th-kbd">Switch</span></td></tr>
+        <tr><td class="th-td">Multi-select bar</td><td class="th-td"><span class="th-kbd">AnimatedCrossFade</span> over the header</td><td class="th-td">✕ · "n selected" · Move · Delete. Replaces the header in place, not a new route</td></tr>
       </tbody>
     </table>
     <div class="th-card">

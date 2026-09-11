@@ -29,7 +29,7 @@ a:hover{color:#1A3E77}
 .fs-pill{flex:none;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;box-sizing:border-box}
 .fs-tabs{display:flex;gap:8px;padding:16px 20px 12px;overflow:hidden;flex:none}
 .fs-list{padding:4px 20px;flex:1;overflow:hidden}
-.fs-fab{position:absolute;left:20px;right:20px;bottom:26px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.08);box-sizing:border-box}
+.fs-fab{position:absolute;right:20px;bottom:26px;width:56px;height:56px;border-radius:28px;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(0,0,0,.22);box-sizing:border-box}
 .fs-sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;box-sizing:border-box;z-index:8}
 .fs-scrim{position:absolute;inset:0;background:rgba(20,20,18,.35);z-index:7}
 .fs-grab{width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px}
@@ -330,7 +330,7 @@ a:hover{color:#1A3E77}
 
       <div class="fs-item">
         <div class="fs-cap">Brand-new list</div>
-        <div class="fs-sub">Arrow nudges toward the quick-add bar three times, then stops for good.</div>
+        <div class="fs-sub">The FAB pulses gently three times, then stops for good — the only pointer a one-control screen needs.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
@@ -347,13 +347,10 @@ a:hover{color:#1A3E77}
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 9h14l-1.6 10.4A2 2 0 0 1 15.4 21H8.6a2 2 0 0 1-2-1.6L5 9Z" stroke="rgba(26,26,24,.22)" stroke-width="1.5" stroke-linejoin="round"></path><path d="M8.5 9a3.5 3.5 0 0 1 7 0" stroke="rgba(26,26,24,.22)" stroke-width="1.5"></path></svg>
             </div>
             <div class="fs-emp-t">Nothing on the list yet</div>
-            <div class="fs-emp-b">Add your first product below.</div>
-            <svg width="16" height="30" viewBox="0 0 16 30" style="margin-top:8px"><path d="M8 1v24m0 0l-5.5-5.5M8 25l5.5-5.5" stroke="rgba(26,26,24,.28)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            <div class="fs-emp-b">Tap the button to add your first product.</div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -380,10 +377,8 @@ a:hover{color:#1A3E77}
             <div class="fs-emp-b">Items you add here will show on this tab.</div>
             <div style="margin-top:12px;padding:9px 18px;border-radius:100px;background:#E8791A;color:#fff;font-size:14px;font-weight:600">Add a product</div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#E8791A;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#E8791A">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -466,10 +461,8 @@ a:hover{color:#1A3E77}
             <div class="fs-row" style="opacity:.45"><div class="fs-check" style="background:#1A1A18"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name" style="text-decoration:line-through">Butter</div><div class="fs-qty">x1</div></div>
             <div class="fs-row" style="opacity:.45"><div class="fs-check" style="background:#1A1A18"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name" style="text-decoration:line-through">Chocolate spread</div><div class="fs-qty">x1</div></div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -498,17 +491,15 @@ a:hover{color:#1A3E77}
               <div style="font-size:12.5px;font-weight:600;color:#2456A6">Clear checked</div>
             </div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
 
       <div class="fs-item">
         <div class="fs-cap">List complete</div>
-        <div class="fs-sub">Spring-in card over the quick-add bar. Restrained confetti in the list's shop colours only — never auto-dismisses.</div>
+        <div class="fs-sub">Spring-in card that replaces the FAB entirely. Restrained confetti in the list's shop colours only — never auto-dismisses.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
@@ -584,10 +575,8 @@ a:hover{color:#1A3E77}
             <div style="flex:1;font-size:14px;color:#fff">Pasta removed</div>
             <div style="font-size:14px;font-weight:700;color:#F0A868">Undo</div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
         <div class="fs-note">The row is only deleted from Firebase when the snackbar expires — undo is instant and purely local.</div>
@@ -595,7 +584,7 @@ a:hover{color:#1A3E77}
 
       <div class="fs-item">
         <div class="fs-cap">Multi-select mode</div>
-        <div class="fs-sub">Header cross-fades to a contextual bar; the quick-add bar slides out.</div>
+        <div class="fs-sub">Header cross-fades to a contextual bar; the FAB scales to zero and leaves.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr" style="gap:14px">
             <div style="font-size:20px;color:rgba(26,26,24,.55);line-height:1;flex:none">✕</div>
@@ -846,10 +835,8 @@ a:hover{color:#1A3E77}
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#C0392B"></span><div class="fs-name">Ground beef</div><div class="fs-qty">x1</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div><div style="font-size:11.5px;color:rgba(26,26,24,.45);margin-left:8px">Sam set this to 2</div></div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -959,10 +946,8 @@ a:hover{color:#1A3E77}
             <div class="fs-row"><div style="width:22px;height:22px;border-radius:50%;background:rgba(26,26,24,.07);flex:none"></div><span class="fs-dot" style="background:rgba(26,26,24,.07)"></span><div style="height:13px;border-radius:4px;background:rgba(26,26,24,.07);width:66%"></div></div>
             <div class="fs-row"><div style="width:22px;height:22px;border-radius:50%;background:rgba(26,26,24,.07);flex:none"></div><span class="fs-dot" style="background:rgba(26,26,24,.07)"></span><div style="height:13px;border-radius:4px;background:rgba(26,26,24,.07);width:50%"></div></div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -990,10 +975,8 @@ a:hover{color:#1A3E77}
             <div class="fs-row" style="border-left:1.5px dashed rgba(26,26,24,.35);padding-left:10px;margin-left:-11px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#2456A6"></span><div class="fs-name">Yoghurt</div><div class="fs-qty">x4</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#C0392B"></span><div class="fs-name">Ground beef</div><div class="fs-qty">x1</div></div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -1021,10 +1004,8 @@ a:hover{color:#1A3E77}
             <div class="fs-row" style="border-left:1.5px dashed rgba(26,26,24,.35);padding-left:10px;margin-left:-11px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#2456A6"></span><div class="fs-name">Yoghurt</div><div class="fs-qty">x4</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#C0392B"></span><div class="fs-name">Ground beef</div><div class="fs-qty">x1</div></div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -1055,7 +1036,7 @@ a:hover{color:#1A3E77}
 
       <div class="fs-item">
         <div class="fs-cap">Write failed — snackbar</div>
-        <div class="fs-sub">The optimistic row reverts with a 200&nbsp;ms fade; the snackbar lifts above the quick-add bar rather than covering it.</div>
+        <div class="fs-sub">The optimistic row reverts with a 200&nbsp;ms fade; the snackbar sits clear of the FAB so Retry and the add button never overlap.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
@@ -1075,10 +1056,8 @@ a:hover{color:#1A3E77}
             <div style="flex:1;font-size:14px;color:#fff">Couldn't save "Olive oil"</div>
             <div style="font-size:14px;font-weight:700;color:#F0A868">Retry</div>
           </div>
-          <div class="fs-fab">
-            <span style="width:9px;height:9px;border-radius:50%;background:#1A1A18;flex:none"></span>
-            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div class="fs-fab" style="background:#1A1A18">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
           </div>
         </div></div>
       </div>
@@ -1094,6 +1073,439 @@ a:hover{color:#1A3E77}
             <div class="fs-emp-t">This list was deleted</div>
             <div class="fs-emp-b">Alex removed Weekly Groceries for everyone in the household.</div>
             <div class="fs-btn" style="margin-top:14px;padding:13px 26px">Back to your lists</div>
+          </div>
+        </div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="fs-sec">
+    <div class="fs-tag">Flow 09</div>
+    <h2 class="fs-flowh">The add control</h2>
+    <p class="fs-flowd">One control, three depths. It rests as a circle, <strong>rolls open</strong> into a full-width field for the common case (type a name, done), and only escalates to a sheet when the user asks for detail. The glyph carries the state: <span style="font-family:ui-monospace,monospace">+</span> rotates 45° into <span style="font-family:ui-monospace,monospace">×</span> when open and empty, and rotates <em>back</em> to <span style="font-family:ui-monospace,monospace">+</span> the moment there is text — so the button always shows what tapping it will do.</p>
+    <div class="fs-grp">
+
+      <div class="fs-item">
+        <div class="fs-cap">1 · Resting</div>
+        <div class="fs-sub">56&nbsp;px circle, tinted to the active shop. Bottom-right so it never sits under the reading path.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+          </div>
+          <div class="fs-list">
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Butter</div><div class="fs-qty">x1</div></div>
+          </div>
+          <div style="position:absolute;right:20px;bottom:26px;width:56px;height:56px;border-radius:50%;background:#E8791A;box-shadow:0 8px 22px rgba(232,121,26,.35);display:flex;align-items:center;justify-content:center">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+          </div>
+        </div></div>
+        <div class="fs-note">The circle is the FAB's only elevated state — once open it flattens into the sheet-adjacent surface.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">2 · Rolling open</div>
+        <div class="fs-sub">Frame at ~50%. Width interpolates 56&nbsp;→&nbsp;350&nbsp;px anchored to the right edge; radius stays 28 the whole way, so it reads as one capsule unrolling.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+          </div>
+          <div class="fs-list" style="opacity:.55">
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Butter</div><div class="fs-qty">x1</div></div>
+          </div>
+          <div style="position:absolute;right:20px;bottom:26px;width:203px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.10);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box;overflow:hidden">
+            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.18)">Add to Col…</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:#E8791A;display:flex;align-items:center;justify-content:center;flex:none;transform:rotate(22deg)">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+        </div></div>
+        <div class="fs-note">260&nbsp;ms, <span style="font-family:ui-monospace,monospace">easeOutQuint</span> on width, <span style="font-family:ui-monospace,monospace">easeOutBack</span> on the glyph rotation. Placeholder text fades in over the last 40%.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">3 · Open, empty — glyph is ×</div>
+        <div class="fs-sub">Keyboard up, cursor in the field. The × is the only way back, and it rolls the capsule shut in reverse.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+          </div>
+          <div class="fs-list">
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
+          </div>
+          <div style="position:absolute;left:20px;right:20px;bottom:300px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.10);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box">
+            <span style="width:9px;height:9px;border-radius:50%;background:#E8791A;flex:none;margin-right:11px"></span>
+            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.3);display:flex;align-items:center"><span style="width:1.5px;height:19px;background:#E8791A;margin-right:5px"></span>Add to Colruyt</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(26,26,24,.08);display:flex;align-items:center;justify-content:center;flex:none;transform:rotate(45deg)">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="rgba(26,26,24,.55)" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:290px;background:#D6D2CB;border-top:1px solid rgba(0,0,0,.1)"></div>
+        </div></div>
+        <div class="fs-note">Empty state greys the glyph — nothing to commit, so it must not look like a primary action.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">4 · Text entered — × rotates back to +</div>
+        <div class="fs-sub">The moment the field is non-empty the glyph un-rotates and re-fills with the shop colour. Two exits now: <strong>Enter</strong> commits and stays open for the next item; <strong>tapping +</strong> opens the detail sheet.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+          </div>
+          <div class="fs-list">
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
+          </div>
+          <div style="position:absolute;left:20px;right:20px;bottom:364px;display:flex;gap:7px;overflow:hidden">
+            <div style="flex:none;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:7px 13px;font-size:13.5px;color:#1A1A18;box-shadow:0 3px 10px rgba(0,0,0,.05)">Olive oil</div>
+            <div style="flex:none;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:7px 13px;font-size:13.5px;color:#1A1A18;box-shadow:0 3px 10px rgba(0,0,0,.05)">Olives</div>
+            <div style="flex:none;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:7px 13px;font-size:13.5px;color:#1A1A18;box-shadow:0 3px 10px rgba(0,0,0,.05)">Olive tapenade</div>
+          </div>
+          <div style="position:absolute;left:20px;right:20px;bottom:300px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.10);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box">
+            <span style="width:9px;height:9px;border-radius:50%;background:#E8791A;flex:none;margin-right:11px"></span>
+            <div style="flex:1;font-size:15px;color:#1A1A18;display:flex;align-items:center">Olive oil<span style="width:1.5px;height:19px;background:#E8791A;margin-left:3px"></span></div>
+            <div style="width:40px;height:40px;border-radius:50%;background:#E8791A;display:flex;align-items:center;justify-content:center;flex:none">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:290px;background:#D6D2CB;border-top:1px solid rgba(0,0,0,.1)"></div>
+        </div></div>
+        <div class="fs-note">History suggestions ride just above the capsule, so the fastest path is: type two letters, tap a chip, Enter.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">5 · Enter — committed, still open</div>
+        <div class="fs-sub">The row pops in at the top of the shop's group, the field clears, the capsule stays. Adding six things is six keystroke-bursts, never six round trips.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt · 3</div>
+          </div>
+          <div class="fs-list">
+            <div class="fs-row" style="background:rgba(232,121,26,.07);border-radius:8px;margin:0 -6px;padding-left:10px;padding-right:10px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name" style="font-weight:600">Olive oil</div><div class="fs-qty">x1</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
+          </div>
+          <div style="position:absolute;left:20px;right:20px;bottom:300px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.10);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box">
+            <span style="width:9px;height:9px;border-radius:50%;background:#E8791A;flex:none;margin-right:11px"></span>
+            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.3);display:flex;align-items:center"><span style="width:1.5px;height:19px;background:#E8791A;margin-right:5px"></span>Add another…</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(26,26,24,.08);display:flex;align-items:center;justify-content:center;flex:none;transform:rotate(45deg)">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="rgba(26,26,24,.55)" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:290px;background:#D6D2CB;border-top:1px solid rgba(0,0,0,.1)"></div>
+        </div></div>
+        <div class="fs-note">New row: scale 0.94&nbsp;→&nbsp;1 with a tinted flash that fades over 900&nbsp;ms. <span style="font-family:ui-monospace,monospace">lightImpact()</span>.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">6 · Tap + — the detail sheet</div>
+        <div class="fs-sub">Everything the quick path skipped, prefilled from what was typed. This is the only place shop, amount and note are set at creation time.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div class="fs-sh-t" style="margin-bottom:16px">New product</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Name</div>
+            <div class="fs-input" style="border-color:#1A1A18;color:#1A1A18">Olive oil</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 9px">Shop</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B"></span>Delhaize</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08)">
+              <div style="font-size:15px;color:#1A1A18">Amount</div>
+              <div style="display:flex;align-items:center;gap:16px">
+                <div style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:17px;color:rgba(26,26,24,.35)">–</div>
+                <span style="font-size:16px;font-weight:600;width:14px;text-align:center;color:#1A1A18">1</span>
+                <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px">+</div>
+              </div>
+            </div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 7px">Note <span style="color:rgba(26,26,24,.32)">— optional</span></div>
+            <div class="fs-input" style="color:rgba(26,26,24,.35)">Extra virgin, the tall bottle</div>
+            <div class="fs-btn" style="margin-top:20px">Add to list</div>
+          </div>
+        </div></div>
+        <div class="fs-note">The same sheet, titled <em>Edit product</em> and with a Remove action, is what a row tap opens later — one component, two entry points.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="fs-sec">
+    <div class="fs-tag">Flow 10</div>
+    <h2 class="fs-flowh">Drawer, settings &amp; preferences</h2>
+    <p class="fs-flowd">The drawer answers "which list?" and nothing else — switching is one tap from anywhere, and every management task is parked at its bottom edge. Settings stays one screen deep with four short groups; a household shopping app should never grow an admin console.</p>
+    <div class="fs-grp">
+
+      <div class="fs-item">
+        <div class="fs-cap">Drawer</div>
+        <div class="fs-sub">Lists carry a remaining count and the avatars of who else is in them — enough to pick without opening. The active list is the only filled row.</div>
+        <div class="fs-scr">
+          <div class="fs-body" style="opacity:.5">
+            <div class="fs-hdr">
+              <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+              <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            </div>
+            <div class="fs-tabs">
+              <div class="fs-pill" style="background:#1A1A18;color:#fff;font-weight:600">All</div>
+              <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn</div>
+            </div>
+          </div>
+          <div style="position:absolute;inset:0;background:rgba(20,20,18,.42)"></div>
+          <div style="position:absolute;left:0;top:0;bottom:0;width:288px;background:#fff;box-shadow:6px 0 30px rgba(0,0,0,.18);padding:60px 0 0;box-sizing:border-box;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:12px;padding:8px 18px 18px">
+              <div style="width:42px;height:42px;border-radius:50%;background:#1A1A18;color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">A</div>
+              <div style="flex:1">
+                <div style="font-size:16px;font-weight:700;color:#1A1A18">Alex Janssens</div>
+                <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:1px">3 lists · 2 people</div>
+              </div>
+              <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div style="height:1px;background:rgba(0,0,0,.07);margin:0 18px"></div>
+            <div style="padding:16px 12px 0;flex:1;overflow:hidden">
+              <div style="font:700 10.5px ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase;color:rgba(26,26,24,.38);padding:0 6px;margin-bottom:8px">Your lists</div>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px;background:#F1F0EB">
+                <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#1A1A18">Weekly Groceries</div><div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">6 left</div></div>
+                <div style="display:flex;flex:none">
+                  <div style="width:22px;height:22px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #F1F0EB;box-sizing:border-box">S</div>
+                  <div style="width:22px;height:22px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #F1F0EB;box-sizing:border-box;margin-left:-7px">M</div>
+                </div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px">
+                <div style="flex:1"><div style="font-size:15px;color:rgba(26,26,24,.75)">BBQ Party</div><div style="font-size:12px;color:rgba(26,26,24,.4);margin-top:2px">All done</div></div>
+                <div style="width:22px;height:22px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px">
+                <div style="flex:1"><div style="font-size:15px;color:rgba(26,26,24,.75)">Camping Trip</div><div style="font-size:12px;color:rgba(26,26,24,.4);margin-top:2px">12 left</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;padding:11px 10px;margin-top:2px">
+                <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#2456A6" stroke-width="1.9" stroke-linecap="round"></path></svg>
+                <span style="font-size:15px;color:#2456A6;font-weight:600">New list</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:9px;padding:11px 10px">
+                <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="2.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><rect x="11.5" y="2.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><rect x="2.5" y="11.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><path d="M11.5 11.5h6v6" stroke="#2456A6" stroke-width="1.6" stroke-linecap="round"></path></svg>
+                <span style="font-size:15px;color:#2456A6;font-weight:600">Join a list</span>
+              </div>
+            </div>
+            <div style="flex:none;border-top:1px solid rgba(0,0,0,.07);padding:10px 12px 26px">
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 10px">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="6" cy="6" r="3" stroke="rgba(26,26,24,.5)" stroke-width="1.6"></circle><circle cx="14" cy="14" r="3" stroke="rgba(26,26,24,.5)" stroke-width="1.6"></circle><path d="M6 11v3h3M14 9V6h-3" stroke="rgba(26,26,24,.5)" stroke-width="1.6" stroke-linecap="round"></path></svg>
+                <span style="font-size:15px;color:rgba(26,26,24,.72)">Manage shops</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:11px;padding:11px 10px">
+                <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="rgba(26,26,24,.5)" stroke-width="1.6"></circle><path d="M10 1.6v2.2M10 16.2v2.2M18.4 10h-2.2M3.8 10H1.6M15.9 4.1l-1.6 1.6M5.7 14.3l-1.6 1.6M15.9 15.9l-1.6-1.6M5.7 5.7L4.1 4.1" stroke="rgba(26,26,24,.5)" stroke-width="1.6" stroke-linecap="round"></path></svg>
+                <span style="font-size:15px;color:rgba(26,26,24,.72)">Settings</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fs-note">288&nbsp;px, square outer edge, no elevation tint. Slides in 260&nbsp;ms <span style="font-family:ui-monospace,monospace">easeOutCubic</span> with the scrim fading 0&nbsp;→&nbsp;42%.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Settings</div>
+        <div class="fs-sub">Four groups, nothing nested more than one level. Every row either flips in place or opens exactly one screen.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-title">Settings</div>
+          </div>
+          <div style="padding:18px 20px 0;display:flex;align-items:center;gap:14px">
+            <div style="width:52px;height:52px;border-radius:50%;background:#1A1A18;color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">A</div>
+            <div style="flex:1">
+              <div style="font-size:17px;font-weight:700;color:#1A1A18">Alex Janssens</div>
+              <div style="font-size:13.5px;color:rgba(26,26,24,.45);margin-top:1px">Joined March 2026</div>
+            </div>
+            <div style="font-size:13.5px;font-weight:600;color:#2456A6">Edit</div>
+          </div>
+
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Lists &amp; shops</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><div class="fs-name">Manage lists</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row"><div class="fs-name">Manage shops</div><div style="font-size:13.5px;color:rgba(26,26,24,.4);margin-right:8px">3</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row"><div class="fs-name">Household</div><div style="display:flex;flex:none;margin-right:8px"><div style="width:22px;height:22px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #FAFAF8;box-sizing:border-box">S</div><div style="width:22px;height:22px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #FAFAF8;box-sizing:border-box;margin-left:-7px">M</div></div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          </div>
+
+          <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Preferences</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><div class="fs-name">Appearance</div><div style="font-size:13.5px;color:rgba(26,26,24,.4);margin-right:8px">System</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row"><div class="fs-name">Notifications</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Keep checked items</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Show them under Done instead of removing</div></div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><div class="fs-name">Haptics</div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+          </div>
+
+          <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">About</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><div class="fs-name">Help &amp; feedback</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#C0392B">Sign out</div></div>
+          </div>
+          <div style="text-align:center;font-size:12px;color:rgba(26,26,24,.3);padding:14px 0">Basket 1.0.0</div>
+        </div></div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Edit profile</div>
+        <div class="fs-sub">Name and avatar colour, nothing else — there is no account to manage. The colour is how the household recognises you on shared rows.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">Your profile</div>
+            <div style="font-size:14.5px;font-weight:600;color:#2456A6">Save</div>
+          </div>
+          <div style="padding:26px 24px 0;display:flex;flex-direction:column;align-items:center">
+            <div style="width:88px;height:88px;border-radius:50%;background:#8E5CD9;color:#fff;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center">A</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:14px">Your colour on shared lists</div>
+            <div style="display:flex;gap:11px;flex-wrap:wrap;justify-content:center;margin-top:12px">
+              <div style="width:32px;height:32px;border-radius:50%;background:#2456A6"></div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#E8791A"></div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#C0392B"></div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#2E9E5B"></div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#8E5CD9;border:2.5px solid #1A1A18;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:9px;height:9px;border-radius:50%;background:#fff"></div></div>
+              <div style="width:32px;height:32px;border-radius:50%;background:#D9A62E"></div>
+            </div>
+          </div>
+          <div style="padding:30px 24px 0">
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Display name</div>
+            <div class="fs-input" style="border-color:#1A1A18;color:#1A1A18">Alex Janssens</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.42);margin-top:9px">Everyone in your household sees this name.</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Notifications</div>
+        <div class="fs-sub">Only four, and each names a real moment rather than a category. Off by default except the first — nobody installs a list app for alerts.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-title">Notifications</div>
+          </div>
+          <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Push</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Someone adds an item</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Batched — one alert per burst</div></div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Someone joins a list</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">A list is finished</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">When the last item is checked off</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Shopping reminder</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Saturdays at 10:00</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+          </div>
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Per list</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><span class="fs-dot" style="background:#1A1A18"></span><div class="fs-name">Weekly Groceries</div><div style="font-size:13.5px;color:rgba(26,26,24,.4)">On</div></div>
+            <div class="fs-row"><span class="fs-dot" style="background:rgba(26,26,24,.25)"></span><div class="fs-name" style="color:rgba(26,26,24,.55)">BBQ Party</div><div style="font-size:13.5px;color:rgba(26,26,24,.4)">Muted</div></div>
+            <div class="fs-row"><span class="fs-dot" style="background:#1A1A18"></span><div class="fs-name">Camping Trip</div><div style="font-size:13.5px;color:rgba(26,26,24,.4)">On</div></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Appearance</div>
+        <div class="fs-sub">Three real previews rather than a dropdown — the choice is visual, so show it. The second toggle is the one that decides how colourful the app feels.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-title">Appearance</div>
+          </div>
+          <div style="padding:20px 20px 0;display:flex;gap:11px">
+            <div style="flex:1">
+              <div style="height:104px;border-radius:12px;background:#FAFAF8;border:1px solid rgba(0,0,0,.1);padding:9px;box-sizing:border-box">
+                <div style="height:7px;width:60%;border-radius:3px;background:rgba(26,26,24,.75);margin-bottom:8px"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13);margin-bottom:5px"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13);margin-bottom:5px"></div>
+                <div style="height:5px;width:70%;border-radius:3px;background:rgba(26,26,24,.13)"></div>
+              </div>
+              <div style="text-align:center;font-size:13px;color:rgba(26,26,24,.55);margin-top:8px">Light</div>
+            </div>
+            <div style="flex:1">
+              <div style="height:104px;border-radius:12px;background:#151513;border:1px solid rgba(0,0,0,.1);padding:9px;box-sizing:border-box">
+                <div style="height:7px;width:60%;border-radius:3px;background:rgba(255,255,255,.8);margin-bottom:8px"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-bottom:5px"></div>
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-bottom:5px"></div>
+                <div style="height:5px;width:70%;border-radius:3px;background:rgba(255,255,255,.18)"></div>
+              </div>
+              <div style="text-align:center;font-size:13px;color:rgba(26,26,24,.55);margin-top:8px">Dark</div>
+            </div>
+            <div style="flex:1">
+              <div style="height:104px;border-radius:12px;border:2px solid #1A1A18;overflow:hidden;display:flex">
+                <div style="flex:1;background:#FAFAF8;padding:8px 6px;box-sizing:border-box"><div style="height:6px;width:80%;border-radius:3px;background:rgba(26,26,24,.75);margin-bottom:7px"></div><div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13);margin-bottom:5px"></div><div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13)"></div></div>
+                <div style="flex:1;background:#151513;padding:8px 6px;box-sizing:border-box"><div style="height:6px;width:80%;border-radius:3px;background:rgba(255,255,255,.8);margin-bottom:7px"></div><div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-bottom:5px"></div><div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18)"></div></div>
+              </div>
+              <div style="text-align:center;font-size:13px;color:#1A1A18;font-weight:600;margin-top:8px">System</div>
+            </div>
+          </div>
+          <div style="padding:26px 20px 0">
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Tint tabs with shop colours</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Off keeps every tab ink; dots stay coloured</div></div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Larger list text</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Easier to read at arm's length in the aisle</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row" style="border-bottom:none"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Reduce motion</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Follows your system setting</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">List settings</div>
+        <div class="fs-sub">Reached from the list's own header, not from global settings — it belongs to the list. Destructive actions sit alone at the bottom with a rule above them.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
+          </div>
+          <div style="padding:20px 20px 0">
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">List name</div>
+            <div class="fs-input" style="color:#1A1A18">Weekly Groceries</div>
+          </div>
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Members</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">A</div><div class="fs-name">Alex Janssens</div><div style="font-size:11px;font-weight:700;color:rgba(26,26,24,.45);border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:3px 9px">You · Owner</div></div>
+            <div class="fs-row"><div style="width:32px;height:32px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div><div class="fs-name">Sam De Vos</div><div style="font-size:19px;color:rgba(26,26,24,.35);letter-spacing:1px">···</div></div>
+            <div class="fs-row" style="border-bottom:none"><div style="width:32px;height:32px;border-radius:50%;border:1.5px dashed rgba(26,26,24,.25);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.4)" stroke-width="1.8" stroke-linecap="round"></path></svg></div><div class="fs-name" style="color:#2456A6;font-weight:600">Invite someone</div></div>
+          </div>
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Behaviour</div>
+          <div style="padding:0 20px">
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Clear checked after shopping</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Asks once the list is complete</div></div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row" style="border-bottom:none"><div class="fs-name">Shops on this list</div><div style="font-size:13.5px;color:rgba(26,26,24,.4);margin-right:8px">3 of 4</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          </div>
+          <div style="margin:22px 20px 0;border-top:1px solid rgba(0,0,0,.1);padding-top:6px">
+            <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#C0392B">Leave this list</div></div>
+            <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#C0392B">Delete for everyone</div></div>
           </div>
         </div></div>
       </div>

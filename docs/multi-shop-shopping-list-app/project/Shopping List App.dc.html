@@ -209,19 +209,28 @@ a:hover{color:#1A3E77}
     <sc-if value="{{ isMain }}" hint-placeholder-val="{{ false }}">
     <div style="padding-top:60px;height:100%;box-sizing:border-box;display:flex;flex-direction:column">
 
-      <sc-if value="{{ searchClosed }}" hint-placeholder-val="{{ true }}">
+      <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:14px;flex:none">
+        <div onClick="{{ exitSelect }}" style="font-size:20px;color:rgba(26,26,24,.55);line-height:1;flex:none;cursor:pointer">✕</div>
+        <div style="flex:1;font-size:19px;font-weight:700;color:#1A1A18">{{ selectedCount }} selected</div>
+        <div onClick="{{ openMoveSheet }}" style="font-size:14.5px;font-weight:600;color:#2456A6;flex:none;cursor:pointer">Move</div>
+        <div onClick="{{ deleteSelected }}" style="font-size:14.5px;font-weight:600;color:#C0392B;flex:none;cursor:pointer">Delete</div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ showNormalHeader }}" hint-placeholder-val="{{ true }}">
       <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px;flex:none">
         <div onClick="{{ openNav }}" style="width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
           <svg width="18" height="14" viewBox="0 0 18 14"><line x1="0" y1="1" x2="18" y2="1" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line><line x1="0" y1="7" x2="18" y2="7" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line><line x1="0" y1="13" x2="18" y2="13" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line></svg>
         </div>
-        <div style="flex:1">
+        <div onClick="{{ goListSettings }}" style="flex:1;cursor:pointer">
           <div style="font-size:15px;font-weight:600;color:rgba(26,26,24,.5)">Basket</div>
           <div style="font-size:26px;font-weight:700;color:#1A1A18;margin-top:2px;letter-spacing:-.3px">{{ activeListName }}</div>
         </div>
         <div onClick="{{ openSearch }}" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex:none;cursor:pointer">
           <svg width="17" height="17" viewBox="0 0 16 16" fill="none"><circle cx="7" cy="7" r="5" stroke="#1A1A18" stroke-width="1.7"></circle><line x1="10.8" y1="10.8" x2="14.5" y2="14.5" stroke="#1A1A18" stroke-width="1.7" stroke-linecap="round"></line></svg>
         </div>
-        <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">{{ userInitial }}</div>
+        <div style="width:32px;height:32px;border-radius:50%;background:{{ avatarHex }};color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">{{ userInitial }}</div>
       </div>
       </sc-if>
 
@@ -272,8 +281,15 @@ a:hover{color:#1A3E77}
             <div style="position:absolute;inset:0;background:#C0392B;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;border-radius:10px">
               <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
-            <div onPointerDown="{{ item.dragStart }}" onPointerMove="{{ item.dragMove }}" onPointerUp="{{ item.dragEnd }}" onPointerCancel="{{ item.dragEnd }}" onClick="{{ item.open }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;background:#FAFAF8;touch-action:pan-y;transform:translateX({{ item.swipeX }}px)">
-              <div onClick="{{ item.toggleChecked }}" style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{ item.checkBg }};border:{{ item.checkBorder }}"></div>
+            <div onPointerDown="{{ item.dragStart }}" onPointerMove="{{ item.dragMove }}" onPointerUp="{{ item.dragEnd }}" onPointerCancel="{{ item.dragEnd }}" onClick="{{ item.rowTap }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;touch-action:pan-y;background:{{ item.rowBg }};transform:translateX({{ item.swipeX }}px) translateY({{ item.liftY }}px) scale({{ item.liftScale }});box-shadow:{{ item.liftShadow }};border-radius:{{ item.liftRadius }}px;z-index:{{ item.liftZ }};opacity:{{ item.liftOpacity }}">
+              <sc-if value="{{ item.showHandle }}" hint-placeholder-val="{{ false }}">
+                <svg width="16" height="10" viewBox="0 0 16 10" style="flex:none;cursor:grab"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+              </sc-if>
+              <sc-if value="{{ item.showCheck }}" hint-placeholder-val="{{ true }}">
+                <div onClick="{{ item.toggleChecked }}" style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{ item.checkBg }};border:{{ item.checkBorder }}">
+                  <sc-if value="{{ item.selected }}" hint-placeholder-val="{{ false }}"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+                </div>
+              </sc-if>
               <span style="width:7px;height:7px;border-radius:50%;background:{{ item.shopColor }};flex:none"></span>
               <div style="flex:1;font-size:16px;color:#1A1A18">{{ item.name }}</div>
               <div style="font-size:13px;color:rgba(26,26,24,.4)">x{{ item.qty }}</div>
@@ -321,12 +337,43 @@ a:hover{color:#1A3E77}
       </div>
       </sc-if>
 
-      <sc-if value="{{ showFab }}" hint-placeholder-val="{{ true }}">
-      <div onClick="{{ openQuickAdd }}" style="position:absolute;left:20px;right:20px;bottom:26px;display:flex;align-items:center;gap:10px;background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:16px;padding:10px 12px;box-shadow:0 8px 24px rgba(0,0,0,.08);cursor:pointer;box-sizing:border-box">
-        <span style="width:9px;height:9px;border-radius:50%;background:{{ activeTabColor }};flex:none"></span>
-        <div style="flex:1;font-size:15px;color:rgba(26,26,24,.35)">Add a product…</div>
-        <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none">
-          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#fff" stroke-width="1.8" stroke-linecap="round"></path></svg>
+      <sc-if value="{{ moveSheetOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeMoveSheet }}" style="position:absolute;inset:0;background:rgba(20,20,18,.35);z-index:7"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:8">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
+        <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:6px">Move {{ selectedCount }} items</div>
+        <div style="font-size:14px;color:rgba(26,26,24,.55);margin-bottom:16px">Pick the shop they belong to.</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <sc-for list="{{ moveTargets }}" as="shop" hint-placeholder-count="3">
+            <div onClick="{{ shop.move }}" style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:14px;cursor:pointer">
+              <span style="width:14px;height:14px;border-radius:50%;background:{{ shop.color }};flex:none"></span>
+              <span style="flex:1;font-size:16px;font-weight:600;color:#1A1A18">{{ shop.name }}</span>
+              <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ showFabClosed }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ rollOpen }}" style="position:absolute;right:20px;bottom:26px;width:56px;height:56px;border-radius:28px;background:{{ activeTabColor }};box-shadow:0 8px 22px rgba(0,0,0,.22);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:5;transition:width .26s cubic-bezier(.22,1,.36,1)">
+        <svg width="20" height="20" viewBox="0 0 20 20" style="transition:transform .26s cubic-bezier(.34,1.56,.64,1)"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ fabOpen }}" hint-placeholder-val="{{ false }}">
+      <sc-if value="{{ hasSuggestions }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:20px;right:20px;bottom:90px;display:flex;gap:7px;overflow-x:auto;z-index:5">
+        <sc-for list="{{ suggestions }}" as="sug" hint-placeholder-count="2">
+          <div onClick="{{ sug.pick }}" style="flex:none;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:7px 13px;font-size:13.5px;color:#1A1A18;box-shadow:0 3px 10px rgba(0,0,0,.05);cursor:pointer">{{ sug.name }}</div>
+        </sc-for>
+      </div>
+      </sc-if>
+      <div style="position:absolute;left:20px;right:20px;bottom:26px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.12);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box;z-index:5">
+        <span style="width:9px;height:9px;border-radius:50%;background:{{ activeTabColor }};flex:none;margin-right:11px"></span>
+        <input class="bkt-input" style="border:none;padding:0;font-size:15px;flex:1" placeholder="{{ fabPlaceholder }}" value="{{ quickAddText }}" onChange="{{ setQuickAddText }}" onKeyDown="{{ fabKeyDown }}" />
+        <div onClick="{{ fabGlyphTap }}" style="width:40px;height:40px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;cursor:pointer;background:{{ glyphBg }};transform:rotate({{ glyphRotation }}deg);transition:transform .26s cubic-bezier(.34,1.56,.64,1),background .18s ease">
+          <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="{{ glyphStroke }}" stroke-width="2.2" stroke-linecap="round"></path></svg>
         </div>
       </div>
       </sc-if>
@@ -339,28 +386,210 @@ a:hover{color:#1A3E77}
         <div onClick="{{ backToMain }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
         <div style="font-size:26px;font-weight:700;color:#1A1A18">Settings</div>
       </div>
-      <div style="padding:20px 20px 0;display:flex;align-items:center;gap:14px">
-        <div style="width:52px;height:52px;border-radius:50%;background:#1A1A18;color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center">{{ userInitial }}</div>
-        <div>
+      <div onClick="{{ goProfile }}" style="padding:18px 20px 0;display:flex;align-items:center;gap:14px;cursor:pointer">
+        <div style="width:52px;height:52px;border-radius:50%;background:{{ avatarHex }};color:#fff;font-size:19px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ userInitial }}</div>
+        <div style="flex:1">
           <div style="font-size:17px;font-weight:700;color:#1A1A18">{{ displayUsername }}</div>
-          <div style="font-size:14px;color:rgba(26,26,24,.5)">{{ userEmailGuess }}</div>
+          <div style="font-size:13.5px;color:rgba(26,26,24,.45);margin-top:1px">Joined March 2026</div>
         </div>
+        <div style="font-size:13.5px;font-weight:600;color:#2456A6">Edit</div>
       </div>
-      <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Lists</div>
-      <div style="padding:0 20px;display:flex;flex-direction:column">
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer" onClick="{{ goManageLists }}">
-          <span style="font-size:16px;color:#1A1A18">Manage lists</span>
+
+      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Lists &amp; shops</div>
+      <div style="padding:0 20px">
+        <div onClick="{{ goManageLists }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Manage lists</span>
+          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ listCount }}</span>
           <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         </div>
-        <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;cursor:pointer" onClick="{{ goManageShops }}">
-          <span style="font-size:16px;color:#1A1A18">Manage shops &amp; colors</span>
+        <div onClick="{{ goManageShops }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Manage shops</span>
+          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ shopCount }}</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <div onClick="{{ goManageLists }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Household</span>
           <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         </div>
       </div>
-      <div style="padding:22px 20px 8px;font-size:12px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px">Account</div>
-      <div style="padding:0 20px 40px;display:flex;flex-direction:column">
-        <div style="padding:13px 0;border-bottom:1px solid rgba(0,0,0,.07);font-size:16px;color:#1A1A18;cursor:pointer" onClick="{{ goManageLists }}">Invite &amp; sharing</div>
-        <div style="padding:13px 0;font-size:16px;color:#C0392B;cursor:pointer" onClick="{{ signOut }}">Sign out</div>
+
+      <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Preferences</div>
+      <div style="padding:0 20px">
+        <div onClick="{{ goAppearance }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Appearance</span>
+          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ appearanceMode }}</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <div onClick="{{ goNotifications }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Notifications</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <div onClick="{{ toggleKeepChecked }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <div style="flex:1"><div style="font-size:16px;color:#1A1A18">Keep checked items</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Show them under Done instead of removing</div></div>
+          <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ keepCheckedBg }};justify-content:{{ keepCheckedJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+        </div>
+        <div onClick="{{ toggleHaptics }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Haptics</span>
+          <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ hapticsBg }};justify-content:{{ hapticsJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+        </div>
+      </div>
+
+      <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">About</div>
+      <div style="padding:0 20px">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Help &amp; feedback</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <div onClick="{{ signOut }}" style="padding:13px 4px;font-size:16px;color:#C0392B;cursor:pointer">Sign out</div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:rgba(26,26,24,.3);padding:14px 0 30px">Basket 1.0.0</div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isListSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;overflow-y:auto">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToMain }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
+      </div>
+      <div style="padding:20px 20px 0">
+        <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">List name</div>
+        <input class="bkt-input" placeholder="List name" value="{{ activeListName }}" onChange="{{ renameActiveList }}" />
+      </div>
+      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Members</div>
+      <div style="padding:0 20px">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+          <div style="width:32px;height:32px;border-radius:50%;background:{{ avatarHex }};color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">{{ userInitial }}</div>
+          <div style="flex:1;font-size:16px;color:#1A1A18">{{ displayUsername }}</div>
+          <div style="font-size:11px;font-weight:700;color:rgba(26,26,24,.45);border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:3px 9px">You · Owner</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+          <div style="width:32px;height:32px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div>
+          <div style="flex:1;font-size:16px;color:#1A1A18">Sam De Vos</div>
+          <div style="font-size:19px;color:rgba(26,26,24,.35);letter-spacing:1px">···</div>
+        </div>
+        <div onClick="{{ goManageLists }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
+          <div style="width:32px;height:32px;border-radius:50%;border:1.5px dashed rgba(26,26,24,.25);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.4)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+          <div style="flex:1;font-size:16px;color:#2456A6;font-weight:600">Invite someone</div>
+        </div>
+      </div>
+      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Behaviour</div>
+      <div style="padding:0 20px">
+        <div onClick="{{ toggleAutoClear }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <div style="flex:1"><div style="font-size:16px;color:#1A1A18">Clear checked after shopping</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Asks once the list is complete</div></div>
+          <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ autoClearBg }};justify-content:{{ autoClearJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+        </div>
+        <div onClick="{{ goManageShops }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
+          <span style="flex:1;font-size:16px;color:#1A1A18">Shops on this list</span>
+          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ shopsOnList }}</span>
+          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+      </div>
+      <div style="margin:22px 20px 40px;border-top:1px solid rgba(0,0,0,.1);padding-top:6px">
+        <div onClick="{{ leaveList }}" style="padding:13px 4px;font-size:16px;color:#C0392B;cursor:pointer">Leave this list</div>
+        <div onClick="{{ askDeleteList }}" style="padding:13px 4px;font-size:16px;color:#C0392B;cursor:pointer">Delete for everyone</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ deleteListAsk }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ cancelDeleteList }}" style="position:absolute;inset:0;background:rgba(20,20,18,.42);z-index:9"></div>
+    <div style="position:absolute;left:28px;right:28px;top:50%;transform:translateY(-50%);background:#fff;border-radius:16px;padding:22px;box-sizing:border-box;z-index:10;box-shadow:0 18px 40px rgba(0,0,0,.2)">
+      <div style="font-size:18px;font-weight:700;color:#1A1A18;margin-bottom:7px">Delete {{ activeListName }}?</div>
+      <div style="font-size:14px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:20px">This removes the list and its {{ activeItemCount }} products for all 3 members. It can't be undone.</div>
+      <div style="display:flex;flex-direction:column;gap:9px">
+        <div onClick="{{ confirmDeleteList }}" class="bkt-btn" style="background:#C0392B;padding:13px">Delete for everyone</div>
+        <div onClick="{{ cancelDeleteList }}" class="bkt-btn" style="background:transparent;color:#1A1A18;border:1px solid rgba(0,0,0,.15);padding:13px">Cancel</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isProfile }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;overflow-y:auto">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToSettings }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">Your profile</div>
+        <div onClick="{{ backToSettings }}" style="font-size:14.5px;font-weight:600;color:#2456A6;cursor:pointer">Save</div>
+      </div>
+      <div style="padding:26px 24px 0;display:flex;flex-direction:column;align-items:center">
+        <div style="width:88px;height:88px;border-radius:50%;background:{{ avatarHex }};color:#fff;font-size:34px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .3s ease">{{ userInitial }}</div>
+        <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:14px">Your colour on shared lists</div>
+        <div style="display:flex;gap:11px;flex-wrap:wrap;justify-content:center;margin-top:12px">
+          <sc-for list="{{ avatarSwatches }}" as="sw" hint-placeholder-count="6">
+            <div onClick="{{ sw.select }}" style="width:32px;height:32px;border-radius:50%;background:{{ sw.hex }};border:{{ sw.ring }};box-sizing:border-box;display:flex;align-items:center;justify-content:center;cursor:pointer">
+              <sc-if value="{{ sw.isSelected }}" hint-placeholder-val="{{ false }}"><div style="width:9px;height:9px;border-radius:50%;background:#fff"></div></sc-if>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="padding:30px 24px 40px">
+        <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Display name</div>
+        <input class="bkt-input" placeholder="Your name" value="{{ username }}" onChange="{{ setUsername }}" />
+        <div style="font-size:12.5px;color:rgba(26,26,24,.42);margin-top:9px">Everyone in your household sees this name.</div>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isNotifications }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;overflow-y:auto">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToSettings }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="font-size:26px;font-weight:700;color:#1A1A18">Notifications</div>
+      </div>
+      <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Push</div>
+      <div style="padding:0 20px 40px">
+        <sc-for list="{{ notifRows }}" as="row" hint-placeholder-count="4">
+          <div onClick="{{ row.toggle }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+            <div style="flex:1"><div style="font-size:16px;color:#1A1A18">{{ row.title }}</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">{{ row.sub }}</div></div>
+            <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ row.bg }};justify-content:{{ row.justify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <sc-if value="{{ isAppearance }}" hint-placeholder-val="{{ false }}">
+    <div style="padding-top:60px;height:100%;box-sizing:border-box;overflow-y:auto">
+      <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
+        <div onClick="{{ backToSettings }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div style="font-size:26px;font-weight:700;color:#1A1A18">Appearance</div>
+      </div>
+      <div style="padding:20px 20px 0;display:flex;gap:11px">
+        <div onClick="{{ pickLight }}" style="flex:1;cursor:pointer">
+          <div style="height:104px;border-radius:12px;background:#FAFAF8;box-sizing:border-box;padding:9px;border:{{ lightRing }}">
+            <div style="height:7px;width:60%;border-radius:3px;background:rgba(26,26,24,.75);margin-bottom:8px"></div>
+            <div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13);margin-bottom:5px"></div>
+            <div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13);margin-bottom:5px"></div>
+            <div style="height:5px;width:70%;border-radius:3px;background:rgba(26,26,24,.13)"></div>
+          </div>
+          <div style="text-align:center;font-size:13px;margin-top:8px;color:{{ lightLabelColor }};font-weight:{{ lightLabelWeight }}">Light</div>
+        </div>
+        <div onClick="{{ pickDark }}" style="flex:1;cursor:pointer">
+          <div style="height:104px;border-radius:12px;background:#151513;box-sizing:border-box;padding:9px;border:{{ darkRing }}">
+            <div style="height:7px;width:60%;border-radius:3px;background:rgba(255,255,255,.8);margin-bottom:8px"></div>
+            <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-bottom:5px"></div>
+            <div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-bottom:5px"></div>
+            <div style="height:5px;width:70%;border-radius:3px;background:rgba(255,255,255,.18)"></div>
+          </div>
+          <div style="text-align:center;font-size:13px;margin-top:8px;color:{{ darkLabelColor }};font-weight:{{ darkLabelWeight }}">Dark</div>
+        </div>
+        <div onClick="{{ pickSystem }}" style="flex:1;cursor:pointer">
+          <div style="height:104px;border-radius:12px;overflow:hidden;display:flex;box-sizing:border-box;border:{{ systemRing }}">
+            <div style="flex:1;background:#FAFAF8;padding:8px 6px;box-sizing:border-box"><div style="height:6px;width:80%;border-radius:3px;background:rgba(26,26,24,.75);margin-bottom:7px"></div><div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13);margin-bottom:5px"></div><div style="height:5px;border-radius:3px;background:rgba(26,26,24,.13)"></div></div>
+            <div style="flex:1;background:#151513;padding:8px 6px;box-sizing:border-box"><div style="height:6px;width:80%;border-radius:3px;background:rgba(255,255,255,.8);margin-bottom:7px"></div><div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18);margin-bottom:5px"></div><div style="height:5px;border-radius:3px;background:rgba(255,255,255,.18)"></div></div>
+          </div>
+          <div style="text-align:center;font-size:13px;margin-top:8px;color:{{ systemLabelColor }};font-weight:{{ systemLabelWeight }}">System</div>
+        </div>
+      </div>
+      <div style="padding:26px 20px 40px">
+        <div onClick="{{ toggleTint }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+          <div style="flex:1"><div style="font-size:16px;color:#1A1A18">Tint tabs with shop colours</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Off keeps every tab ink; dots stay coloured</div></div>
+          <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ tintBg }};justify-content:{{ tintJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+        </div>
+        <div onClick="{{ toggleLargeText }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
+          <div style="flex:1"><div style="font-size:16px;color:#1A1A18">Larger list text</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Easier to read at arm's length in the aisle</div></div>
+          <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ largeTextBg }};justify-content:{{ largeTextJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+        </div>
       </div>
     </div>
     </sc-if>
@@ -413,23 +642,50 @@ a:hover{color:#1A3E77}
     </sc-if>
 
     <sc-if value="{{ navOpen }}" hint-placeholder-val="{{ false }}">
-    <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.4);z-index:5" onClick="{{ closeNav }}"></div>
-    <div style="position:absolute;left:0;top:60px;bottom:0;width:272px;background:#fff;box-shadow:4px 0 24px rgba(0,0,0,.12);z-index:6;padding:22px 18px;box-sizing:border-box;overflow-y:auto">
-      <div style="font-size:13px;font-weight:700;color:rgba(26,26,24,.4);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Your lists</div>
-      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:20px">
+    <div style="position:absolute;inset:0;background:rgba(20,20,18,.42);z-index:5" onClick="{{ closeNav }}"></div>
+    <div style="position:absolute;left:0;top:0;bottom:0;width:288px;background:#fff;box-shadow:6px 0 30px rgba(0,0,0,.18);z-index:6;padding:60px 0 0;box-sizing:border-box;display:flex;flex-direction:column">
+      <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:12px;padding:8px 18px 18px;cursor:pointer">
+        <div style="width:42px;height:42px;border-radius:50%;background:{{ avatarHex }};color:#fff;font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;flex:none">{{ userInitial }}</div>
+        <div style="flex:1">
+          <div style="font-size:16px;font-weight:700;color:#1A1A18">{{ displayUsername }}</div>
+          <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:1px">{{ householdSummary }}</div>
+        </div>
+        <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+      <div style="height:1px;background:rgba(0,0,0,.07);margin:0 18px"></div>
+      <div style="padding:16px 12px 0;flex:1;overflow-y:auto">
+        <div style="font:700 10.5px ui-monospace,monospace;letter-spacing:1px;text-transform:uppercase;color:rgba(26,26,24,.38);padding:0 6px;margin-bottom:8px">Your lists</div>
         <sc-for list="{{ navLists }}" as="l" hint-placeholder-count="3">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 12px;border-radius:12px;cursor:pointer;background:{{ l.bg }}" onClick="{{ l.select }}">
-            <span style="font-size:15px;color:{{ l.color }};font-weight:{{ l.weight }}">{{ l.name }}</span>
+          <div onClick="{{ l.select }}" style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px;cursor:pointer;background:{{ l.bg }}">
+            <div style="flex:1">
+              <div style="font-size:15px;color:{{ l.color }};font-weight:{{ l.weight }}">{{ l.name }}</div>
+              <div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">{{ l.meta }}</div>
+            </div>
           </div>
         </sc-for>
-        <div style="padding:11px 12px;font-size:15px;color:#2456A6;font-weight:600;cursor:pointer" onClick="{{ startNewList }}">+ New list</div>
+        <div onClick="{{ startNewList }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;margin-top:2px;cursor:pointer">
+          <svg width="14" height="14" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#2456A6" stroke-width="1.9" stroke-linecap="round"></path></svg>
+          <span style="font-size:15px;color:#2456A6;font-weight:600">New list</span>
+        </div>
+        <div onClick="{{ openJoinFromNav }}" style="display:flex;align-items:center;gap:9px;padding:11px 10px;cursor:pointer">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2.5" y="2.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><rect x="11.5" y="2.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><rect x="2.5" y="11.5" width="6" height="6" rx="1.5" stroke="#2456A6" stroke-width="1.6"></rect><path d="M11.5 11.5h6v6" stroke="#2456A6" stroke-width="1.6" stroke-linecap="round"></path></svg>
+          <span style="font-size:15px;color:#2456A6;font-weight:600">Join a list</span>
+        </div>
       </div>
-      <div style="height:1px;background:rgba(0,0,0,.08);margin-bottom:16px"></div>
-      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ goManageShops }}">Manage shops</div>
-      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ goManageLists }}">Invite people</div>
-      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ openJoinFromNav }}">Join a list</div>
-      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ toggleOffline }}">{{ offlineLabel }}</div>
-      <div style="padding:11px 12px;font-size:15px;color:rgba(26,26,24,.7);cursor:pointer" onClick="{{ goSettings }}">Settings</div>
+      <div style="flex:none;border-top:1px solid rgba(0,0,0,.07);padding:10px 12px 26px">
+        <div onClick="{{ goManageShops }}" style="display:flex;align-items:center;gap:11px;padding:11px 10px;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="6" cy="6" r="3" stroke="rgba(26,26,24,.5)" stroke-width="1.6"></circle><circle cx="14" cy="14" r="3" stroke="rgba(26,26,24,.5)" stroke-width="1.6"></circle><path d="M6 11v3h3M14 9V6h-3" stroke="rgba(26,26,24,.5)" stroke-width="1.6" stroke-linecap="round"></path></svg>
+          <span style="font-size:15px;color:rgba(26,26,24,.72)">Manage shops</span>
+        </div>
+        <div onClick="{{ toggleOffline }}" style="display:flex;align-items:center;gap:11px;padding:11px 10px;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 5.5a11 11 0 0 1 14 0M3.5 8.5a7.5 7.5 0 0 1 9 0M6 11.5a3.5 3.5 0 0 1 4 0" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linecap="round"></path></svg>
+          <span style="font-size:15px;color:rgba(26,26,24,.72)">{{ offlineLabel }}</span>
+        </div>
+        <div onClick="{{ goSettings }}" style="display:flex;align-items:center;gap:11px;padding:11px 10px;cursor:pointer">
+          <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.6" stroke="rgba(26,26,24,.5)" stroke-width="1.6"></circle><path d="M10 1.6v2.2M10 16.2v2.2M18.4 10h-2.2M3.8 10H1.6M15.9 4.1l-1.6 1.6M5.7 14.3l-1.6 1.6M15.9 15.9l-1.6-1.6M5.7 5.7L4.1 4.1" stroke="rgba(26,26,24,.5)" stroke-width="1.6" stroke-linecap="round"></path></svg>
+          <span style="font-size:15px;color:rgba(26,26,24,.72)">Settings</span>
+        </div>
+      </div>
     </div>
     </sc-if>
 
@@ -460,11 +716,30 @@ a:hover{color:#1A3E77}
 
     <sc-if value="{{ quickAddOpen }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35);z-index:7" onClick="{{ closeQuickAdd }}"></div>
-    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:14px 20px 30px;z-index:8">
-      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px"></div>
-      <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-bottom:14px">Add a product to {{ quickAddShopName }}</div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:8">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px;cursor:pointer" onClick="{{ closeQuickAdd }}"></div>
+      <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:16px">New product</div>
+      <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Name</div>
       <input class="bkt-input" placeholder="e.g. Bananas" value="{{ quickAddText }}" onChange="{{ setQuickAddText }}" />
-      <div class="bkt-btn" style="margin-top:14px" onClick="{{ submitQuickAdd }}">Add</div>
+      <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 9px">Shop</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ sheetShops }}" as="shop" hint-placeholder-count="3">
+          <div onClick="{{ shop.pick }}" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;cursor:pointer;background:{{ shop.pickBg }};color:{{ shop.pickColor }};border:{{ shop.pickBorder }};font-weight:{{ shop.pickWeight }}">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ shop.pickDot }}"></span>{{ shop.name }}
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08)">
+        <div style="font-size:15px;color:#1A1A18">Amount</div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <div onClick="{{ draftDec }}" style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:17px;color:rgba(26,26,24,.55);cursor:pointer">–</div>
+          <span style="font-size:16px;font-weight:600;width:14px;text-align:center;color:#1A1A18">{{ draftQty }}</span>
+          <div onClick="{{ draftInc }}" style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer">+</div>
+        </div>
+      </div>
+      <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 7px">Note <span style="color:rgba(26,26,24,.32)">— optional</span></div>
+      <input class="bkt-input" placeholder="e.g. the tall bottle" value="{{ draftNote }}" onChange="{{ setDraftNote }}" />
+      <div class="bkt-btn" style="margin-top:20px" onClick="{{ submitQuickAdd }}">Add to list</div>
     </div>
     </sc-if>
 
@@ -508,7 +783,7 @@ a:hover{color:#1A3E77}
 </div>
 
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;welcome&quot;,&quot;options&quot;:[&quot;welcome&quot;,&quot;username&quot;,&quot;name-list&quot;,&quot;pick-shops&quot;,&quot;invite&quot;,&quot;joinCode&quot;,&quot;joined&quot;,&quot;main&quot;,&quot;settings&quot;,&quot;manage-shops&quot;,&quot;lists-overview&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:430,&quot;height&quot;:940},&quot;startScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;welcome&quot;,&quot;options&quot;:[&quot;welcome&quot;,&quot;username&quot;,&quot;name-list&quot;,&quot;pick-shops&quot;,&quot;invite&quot;,&quot;joinCode&quot;,&quot;joined&quot;,&quot;main&quot;,&quot;settings&quot;,&quot;profile&quot;,&quot;notifications&quot;,&quot;appearance&quot;,&quot;list-settings&quot;,&quot;manage-shops&quot;,&quot;lists-overview&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Prototype&quot;}}">
 class Component extends DCLogic {
   state = {
     screen: this.props.startScreen || 'welcome',
@@ -535,6 +810,10 @@ class Component extends DCLogic {
     joinOverlayOpen: false,
     quickAddOpen: false,
     quickAddText: '',
+    fabOpen: false,
+    draftShop: null,
+    draftQty: 1,
+    draftNote: '',
     selectedItemId: null,
     searchOpen: false,
     searchText: '',
@@ -545,6 +824,21 @@ class Component extends DCLogic {
     swipeId: null,
     swipeX: 0,
     dragX: null,
+    avatarHex: '#1A1A18',
+    appearanceMode: 'System',
+    keepChecked: true,
+    haptics: true,
+    tintTabs: true,
+    largeText: false,
+    notifs: { adds: true, joins: false, finished: false, reminder: false },
+    selectMode: false,
+    selectedIds: [],
+    moveSheetOpen: false,
+    liftId: null,
+    liftY: 0,
+    dragY: null,
+    autoClear: true,
+    deleteListAsk: false,
     items: [
       { id: 1, name: 'Bananas', shop: 'ah', qty: 6, checked: false },
       { id: 2, name: 'Pasta', shop: 'colruyt', qty: 2, checked: false },
@@ -572,12 +866,12 @@ class Component extends DCLogic {
   continueUsername = () => {
     if (!this.state.username.trim()) { this.setState({ triedUsername: true }); return; }
     if (this.state.path === 'join') this.setState({ screen: 'joinCode' });
-    else this.setState({ screen: 'name-list', listNameInput: '' });
+    else this.setState({ screen: 'name-list', listNameInput: 'Weekly Groceries' });
   };
   backFromNameList = () => this.setState({ screen: this.state.flowMode === 'newList' ? 'main' : 'username' });
   setListNameInput = (e) => this.setState({ listNameInput: e.target.value });
   continueNameList = () => {
-    const name = this.state.listNameInput.trim() || 'New list';
+    const name = this.state.listNameInput.trim() || 'Untitled list';
     if (this.state.flowMode === 'newList') {
       const lists = [...this.state.lists, name];
       this.setState({ lists, activeListIndex: lists.length - 1, screen: 'main', flowMode: 'onboarding' });
@@ -643,27 +937,130 @@ class Component extends DCLogic {
     if (!s) return;
     this.setState({ items: [...this.state.items, ...s.restore], snack: null, celebrateDismissed: false });
   };
-  dragStart = (id, e) => this.setState({ swipeId: id, dragX: e.clientX, swipeX: 0 });
+  ROW_H = 48;
+
+  dragStart = (id, e) => {
+    if (this.state.selectMode) {
+      // Reorder: no swipe in select mode, so the same gesture lifts the row.
+      this.setState({ liftId: id, dragY: e.clientY, liftY: 0 });
+      return;
+    }
+    this.setState({ swipeId: id, dragX: e.clientX, swipeX: 0 });
+    this._lp = setTimeout(() => this.enterSelect(id), 450);
+  };
   dragMove = (id, e) => {
+    if (this.state.liftId === id && this.state.dragY != null) {
+      this.setState({ liftY: e.clientY - this.state.dragY });
+      return;
+    }
     if (this.state.swipeId !== id || this.state.dragX == null) return;
     const dx = Math.min(0, e.clientX - this.state.dragX);
+    if (Math.abs(dx) > 6) clearTimeout(this._lp);
     this.setState({ swipeX: Math.max(dx, -220) });
   };
   dragEnd = (id) => {
+    clearTimeout(this._lp);
+    if (this.state.liftId === id) { this.commitReorder(id); return; }
     if (this.state.swipeId !== id) return;
     if (this.state.swipeX < -140) this.deleteItem(id);
     else this.setState({ swipeId: null, swipeX: 0, dragX: null });
   };
+  commitReorder = (id) => {
+    const shift = Math.round((this.state.liftY || 0) / this.ROW_H);
+    if (shift !== 0) {
+      const items = [...this.state.items];
+      const from = items.findIndex(i => i.id === id);
+      const to = Math.max(0, Math.min(items.length - 1, from + shift));
+      const [moved] = items.splice(from, 1);
+      items.splice(to, 0, moved);
+      this.setState({ items });
+    }
+    this.setState({ liftId: null, liftY: 0, dragY: null });
+  };
 
-  openQuickAdd = () => this.setState({ quickAddOpen: true, quickAddText: '' });
-  closeQuickAdd = () => this.setState({ quickAddOpen: false });
+  enterSelect = (id) => {
+    // The pointerup that ends the long-press still fires a click; swallow it
+    // so the row we just selected isn't immediately toggled back off.
+    this._fromLongPress = true;
+    this.setState({ selectMode: true, selectedIds: [id], swipeId: null, swipeX: 0, fabOpen: false });
+  };
+  exitSelect = () => this.setState({ selectMode: false, selectedIds: [], moveSheetOpen: false });
+  toggleSelected = (id) => {
+    const has = this.state.selectedIds.includes(id);
+    const selectedIds = has ? this.state.selectedIds.filter(x => x !== id) : [...this.state.selectedIds, id];
+    if (!selectedIds.length) { this.exitSelect(); return; }
+    this.setState({ selectedIds });
+  };
+  deleteSelected = () => {
+    const removed = this.state.items.filter(i => this.state.selectedIds.includes(i.id));
+    this.setState({
+      items: this.state.items.filter(i => !this.state.selectedIds.includes(i.id)),
+      snack: { text: removed.length + ' items removed', restore: removed },
+      selectMode: false, selectedIds: [],
+    });
+  };
+  openMoveSheet = () => this.setState({ moveSheetOpen: true });
+  closeMoveSheet = () => this.setState({ moveSheetOpen: false });
+  moveSelectedTo = (shopId) => this.setState({
+    items: this.state.items.map(i => this.state.selectedIds.includes(i.id) ? { ...i, shop: shopId } : i),
+    moveSheetOpen: false, selectMode: false, selectedIds: [],
+  });
+
+  goListSettings = () => this.setState({ screen: 'list-settings' });
+  renameActiveList = (e) => {
+    const lists = [...this.state.lists];
+    lists[this.state.activeListIndex] = e.target.value;
+    this.setState({ lists });
+  };
+  toggleAutoClear = () => this.setState({ autoClear: !this.state.autoClear });
+  askDeleteList = () => this.setState({ deleteListAsk: true });
+  cancelDeleteList = () => this.setState({ deleteListAsk: false });
+  confirmDeleteList = () => {
+    const lists = this.state.lists.filter((_, i) => i !== this.state.activeListIndex);
+    this.setState({ lists, activeListIndex: 0, deleteListAsk: false, screen: lists.length ? 'main' : 'lists-overview' });
+  };
+  leaveList = () => this.confirmDeleteList();
+
+  defaultShopId = () => this.state.activeTab === 'all'
+    ? (this.state.shops.find(s => s.selected) || this.state.shops[0]).id
+    : this.state.activeTab;
+
+  rollOpen = () => this.setState({ fabOpen: true, quickAddText: '', celebrateDismissed: true });
+  rollClose = () => this.setState({ fabOpen: false, quickAddText: '' });
   setQuickAddText = (e) => this.setState({ quickAddText: e.target.value });
+  pickSuggestion = (name) => this.setState({ quickAddText: name });
+
+  /// Enter = fast add, capsule stays open for the next item.
+  commitQuick = () => {
+    const name = this.state.quickAddText.trim();
+    if (!name) return;
+    const item = { id: this.state.nextId, name, shop: this.defaultShopId(), qty: 1, checked: false };
+    this.setState({ items: [...this.state.items, item], nextId: this.state.nextId + 1, quickAddText: '' });
+  };
+  fabKeyDown = (e) => { if (e.key === 'Enter') { e.preventDefault(); this.commitQuick(); } };
+
+  /// The glyph: × when empty (collapse), + when there is text (open the sheet).
+  fabGlyphTap = () => {
+    if (!this.state.quickAddText.trim()) { this.rollClose(); return; }
+    this.setState({ quickAddOpen: true, fabOpen: false, draftShop: this.defaultShopId(), draftQty: 1, draftNote: '' });
+  };
+
+  closeQuickAdd = () => this.setState({ quickAddOpen: false, quickAddText: '' });
+  pickDraftShop = (id) => this.setState({ draftShop: id });
+  draftInc = () => this.setState({ draftQty: (this.state.draftQty || 1) + 1 });
+  draftDec = () => this.setState({ draftQty: Math.max(1, (this.state.draftQty || 1) - 1) });
+  setDraftNote = (e) => this.setState({ draftNote: e.target.value });
   submitQuickAdd = () => {
     const name = this.state.quickAddText.trim();
     if (!name) { this.setState({ quickAddOpen: false }); return; }
-    const shop = this.state.activeTab === 'all' ? (this.state.shops.find(s => s.selected) || this.state.shops[0]).id : this.state.activeTab;
-    const item = { id: this.state.nextId, name, shop, qty: 1, checked: false };
-    this.setState({ items: [...this.state.items, item], nextId: this.state.nextId + 1, quickAddOpen: false, quickAddText: '' });
+    const item = {
+      id: this.state.nextId, name, shop: this.state.draftShop || this.defaultShopId(),
+      qty: this.state.draftQty || 1, note: (this.state.draftNote || '').trim(), checked: false,
+    };
+    this.setState({
+      items: [...this.state.items, item], nextId: this.state.nextId + 1,
+      quickAddOpen: false, quickAddText: '', draftNote: '', draftQty: 1,
+    });
   };
 
   setNewShopName = (e) => this.setState({ newShopName: e.target.value });
@@ -677,6 +1074,13 @@ class Component extends DCLogic {
     this.setState({ shops, addShopOpen: false, nextId: this.state.nextId + 1 });
   };
 
+  goProfile = () => this.setState({ screen: 'profile', navOpen: false });
+  goNotifications = () => this.setState({ screen: 'notifications' });
+  goAppearance = () => this.setState({ screen: 'appearance' });
+  pickAvatarColor = (hex) => this.setState({ avatarHex: hex });
+  setAppearance = (mode) => this.setState({ appearanceMode: mode });
+  toggleFlag = (key) => this.setState({ [key]: !this.state[key] });
+  toggleNotif = (key) => this.setState({ notifs: { ...this.state.notifs, [key]: !this.state.notifs[key] } });
   goSettings = () => this.setState({ screen: 'settings', navOpen: false });
   backToMain = () => this.setState({ screen: 'main' });
   goManageShops = () => this.setState({ screen: 'manage-shops', navOpen: false });
@@ -706,11 +1110,28 @@ class Component extends DCLogic {
       return {
         ...i,
         shopColor: shop ? shop.color : '#999',
-        checkBg: i.checked ? '#1A1A18' : 'transparent',
-        checkBorder: i.checked ? 'none' : '1.5px solid rgba(0,0,0,.2)',
+        checkBg: (s.selectMode ? s.selectedIds.includes(i.id) : i.checked) ? '#1A1A18' : 'transparent',
+        checkBorder: (s.selectMode ? s.selectedIds.includes(i.id) : i.checked) ? 'none' : '1.5px solid rgba(0,0,0,.2)',
         swipeX: s.swipeId === i.id ? s.swipeX : 0,
+        selected: s.selectedIds.includes(i.id),
+        showHandle: !!s.selectMode,
+        showCheck: true,
+        rowBg: s.selectMode && s.selectedIds.includes(i.id) ? '#F1F0EB' : '#FAFAF8',
+        liftY: s.liftId === i.id ? s.liftY : 0,
+        liftScale: s.liftId === i.id ? 1.03 : 1,
+        liftShadow: s.liftId === i.id ? '0 10px 24px rgba(0,0,0,.16)' : 'none',
+        liftRadius: s.liftId === i.id ? 12 : 0,
+        liftZ: s.liftId === i.id ? 3 : 1,
+        liftOpacity: s.liftId === i.id ? 0.95 : 1,
+        rowTap: () => {
+          if (this._fromLongPress) { this._fromLongPress = false; return; }
+          if (s.selectMode) this.toggleSelected(i.id); else this.openProduct(i.id);
+        },
         open: () => this.openProduct(i.id),
-        toggleChecked: (e) => { e.stopPropagation(); this.toggleChecked(i.id); },
+        toggleChecked: (e) => {
+          e.stopPropagation();
+          if (s.selectMode) this.toggleSelected(i.id); else this.toggleChecked(i.id);
+        },
         dragStart: (e) => this.dragStart(i.id, e),
         dragMove: (e) => this.dragMove(i.id, e),
         dragEnd: () => this.dragEnd(i.id),
@@ -723,6 +1144,12 @@ class Component extends DCLogic {
     const activeShopName = activeShop ? activeShop.name : '';
     const isEmpty = inScope.length === 0;
     const allDone = !s.celebrateDismissed && s.items.length > 0 && s.items.every(i => i.checked);
+    const typed = (s.quickAddText || '').trim().toLowerCase();
+    const history = ['Olive oil', 'Olives', 'Milk', 'Coffee beans', 'Bread', 'Eggs', 'Rice', 'Yoghurt'];
+    const suggestions = typed.length >= 2
+      ? history.filter(n => n.toLowerCase().includes(typed) && n.toLowerCase() !== typed)
+          .slice(0, 3).map(name => ({ name, pick: () => this.pickSuggestion(name) }))
+      : [];
     const selItem = s.items.find(i => i.id === s.selectedItemId) || { name: '', qty: 1, shop: '' };
     const selShop = s.shops.find(sh => sh.id === selItem.shop);
     const remaining = (shopId) => s.items.filter(i => !i.checked && (shopId === 'all' || i.shop === shopId)).length;
@@ -741,6 +1168,9 @@ class Component extends DCLogic {
     });
     const navLists = s.lists.map((name, i) => ({
       name, select: () => this.selectList(i),
+      meta: i === s.activeListIndex
+        ? (remaining('all') > 0 ? remaining('all') + ' left' : 'All done')
+        : (i === 1 ? 'All done' : '12 left'),
       bg: i === s.activeListIndex ? '#F1F0EB' : 'transparent',
       color: i === s.activeListIndex ? '#1A1A18' : 'rgba(26,26,24,.7)',
       weight: i === s.activeListIndex ? 700 : 400,
@@ -777,6 +1207,73 @@ class Component extends DCLogic {
       isSettings: s.screen === 'settings',
       isManageShops: s.screen === 'manage-shops',
       isListsOverview: s.screen === 'lists-overview',
+      isProfile: s.screen === 'profile',
+      isListSettings: s.screen === 'list-settings',
+      goListSettings: this.goListSettings,
+      renameActiveList: this.renameActiveList,
+      autoClearBg: s.autoClear ? '#1A1A18' : 'rgba(26,26,24,.14)',
+      autoClearJustify: s.autoClear ? 'flex-end' : 'flex-start',
+      toggleAutoClear: this.toggleAutoClear,
+      shopsOnList: s.shops.filter(sh => sh.selected).length + ' of ' + s.shops.length,
+      activeItemCount: s.items.length,
+      deleteListAsk: !!s.deleteListAsk,
+      askDeleteList: this.askDeleteList, cancelDeleteList: this.cancelDeleteList,
+      confirmDeleteList: this.confirmDeleteList, leaveList: this.leaveList,
+      selectMode: !!s.selectMode,
+      showNormalHeader: !s.selectMode && !s.searchOpen,
+      selectedCount: s.selectedIds.length,
+      exitSelect: this.exitSelect, deleteSelected: this.deleteSelected,
+      openMoveSheet: this.openMoveSheet, closeMoveSheet: this.closeMoveSheet,
+      moveSheetOpen: !!s.moveSheetOpen,
+      moveTargets: s.shops.filter(sh => sh.selected).map(sh => ({ ...sh, move: () => this.moveSelectedTo(sh.id) })),
+      isNotifications: s.screen === 'notifications',
+      isAppearance: s.screen === 'appearance',
+      goProfile: this.goProfile, goNotifications: this.goNotifications, goAppearance: this.goAppearance,
+      avatarHex: s.avatarHex,
+      householdSummary: s.lists.length + ' lists · ' + s.shops.filter(sh => sh.selected).length + ' shops',
+      listCount: s.lists.length,
+      shopCount: s.shops.length,
+      appearanceMode: s.appearanceMode,
+      avatarSwatches: this.colorPalette.map(hex => ({
+        hex, isSelected: s.avatarHex === hex,
+        ring: s.avatarHex === hex ? '2.5px solid #1A1A18' : 'none',
+        select: () => this.pickAvatarColor(hex),
+      })),
+      keepCheckedBg: s.keepChecked ? '#1A1A18' : 'rgba(26,26,24,.14)',
+      keepCheckedJustify: s.keepChecked ? 'flex-end' : 'flex-start',
+      toggleKeepChecked: () => this.toggleFlag('keepChecked'),
+      hapticsBg: s.haptics ? '#1A1A18' : 'rgba(26,26,24,.14)',
+      hapticsJustify: s.haptics ? 'flex-end' : 'flex-start',
+      toggleHaptics: () => this.toggleFlag('haptics'),
+      tintBg: s.tintTabs ? '#1A1A18' : 'rgba(26,26,24,.14)',
+      tintJustify: s.tintTabs ? 'flex-end' : 'flex-start',
+      toggleTint: () => this.toggleFlag('tintTabs'),
+      largeTextBg: s.largeText ? '#1A1A18' : 'rgba(26,26,24,.14)',
+      largeTextJustify: s.largeText ? 'flex-end' : 'flex-start',
+      toggleLargeText: () => this.toggleFlag('largeText'),
+      pickLight: () => this.setAppearance('Light'),
+      pickDark: () => this.setAppearance('Dark'),
+      pickSystem: () => this.setAppearance('System'),
+      lightRing: s.appearanceMode === 'Light' ? '2px solid #1A1A18' : '1px solid rgba(0,0,0,.1)',
+      darkRing: s.appearanceMode === 'Dark' ? '2px solid #1A1A18' : '1px solid rgba(0,0,0,.1)',
+      systemRing: s.appearanceMode === 'System' ? '2px solid #1A1A18' : '1px solid rgba(0,0,0,.1)',
+      lightLabelColor: s.appearanceMode === 'Light' ? '#1A1A18' : 'rgba(26,26,24,.55)',
+      darkLabelColor: s.appearanceMode === 'Dark' ? '#1A1A18' : 'rgba(26,26,24,.55)',
+      systemLabelColor: s.appearanceMode === 'System' ? '#1A1A18' : 'rgba(26,26,24,.55)',
+      lightLabelWeight: s.appearanceMode === 'Light' ? 600 : 400,
+      darkLabelWeight: s.appearanceMode === 'Dark' ? 600 : 400,
+      systemLabelWeight: s.appearanceMode === 'System' ? 600 : 400,
+      notifRows: [
+        { key: 'adds', title: 'Someone adds an item', sub: 'Batched — one alert per burst' },
+        { key: 'joins', title: 'Someone joins a list', sub: 'Only for lists you own' },
+        { key: 'finished', title: 'A list is finished', sub: 'When the last item is checked off' },
+        { key: 'reminder', title: 'Shopping reminder', sub: 'Saturdays at 10:00' },
+      ].map(r => ({
+        ...r,
+        bg: s.notifs[r.key] ? '#1A1A18' : 'rgba(26,26,24,.14)',
+        justify: s.notifs[r.key] ? 'flex-end' : 'flex-start',
+        toggle: () => this.toggleNotif(r.key),
+      })),
       username: s.username,
       showUsernameError: s.triedUsername && !s.username.trim(),
       usernameBorderColor: s.triedUsername && !s.username.trim() ? '#C0392B' : 'rgba(0,0,0,.15)',
@@ -794,7 +1291,30 @@ class Component extends DCLogic {
       clearChecked: this.clearChecked,
       showList: !isEmpty,
       showEmpty: isEmpty,
-      showFab: !allDone,
+      showFabClosed: !allDone && !s.fabOpen && !s.selectMode,
+      fabOpen: !!s.fabOpen,
+      fabPlaceholder: s.activeTab === 'all' ? 'Add a product…' : 'Add to ' + activeShopName,
+      glyphRotation: s.quickAddText.trim() ? 0 : 45,
+      glyphBg: s.quickAddText.trim() ? activeTabColor : 'rgba(26,26,24,.08)',
+      glyphStroke: s.quickAddText.trim() ? '#fff' : 'rgba(26,26,24,.55)',
+      rollOpen: this.rollOpen, rollClose: this.rollClose,
+      fabKeyDown: this.fabKeyDown, fabGlyphTap: this.fabGlyphTap,
+      hasSuggestions: suggestions.length > 0,
+      suggestions,
+      sheetShops: s.shops.filter(sh => sh.selected).map(sh => {
+        const on = (s.draftShop || this.defaultShopId()) === sh.id;
+        return {
+          ...sh, pick: () => this.pickDraftShop(sh.id),
+          pickBg: on ? sh.color : 'transparent',
+          pickColor: on ? '#fff' : 'rgba(26,26,24,.7)',
+          pickBorder: on ? 'none' : '1px solid rgba(0,0,0,.14)',
+          pickWeight: on ? 600 : 400,
+          pickDot: on ? '#fff' : sh.color,
+        };
+      }),
+      draftQty: s.draftQty || 1,
+      draftNote: s.draftNote || '',
+      draftInc: this.draftInc, draftDec: this.draftDec, setDraftNote: this.setDraftNote,
       emptyTitle: s.searchOpen ? 'No products match “' + (s.searchText || '') + '”'
         : (s.activeTab === 'all' ? 'Nothing on the list yet' : 'Nothing for ' + activeShopName),
       emptyBody: s.searchOpen ? 'Nothing on this list yet — want to add it?'
@@ -802,7 +1322,7 @@ class Component extends DCLogic {
       emptyBtnLabel: s.searchOpen ? 'Add “' + (s.searchText || '') + '” to this list' : 'Add a product',
       emptyBtnBg: s.activeTab === 'all' ? '#1A1A18' : activeTabColor,
       emptyTint: s.activeTab === 'all' ? 'rgba(26,26,24,.2)' : activeTabColor,
-      emptyAction: this.openQuickAdd,
+      emptyAction: this.rollOpen,
       allDone,
       celebrateTitle: 'All done — ' + s.items.length + ' items',
       dismissCelebrate: this.dismissCelebrate,
@@ -810,7 +1330,7 @@ class Component extends DCLogic {
       snackText: s.snack ? s.snack.text : '',
       undoSnack: this.undoSnack,
       searchOpen: !!s.searchOpen,
-      searchClosed: !s.searchOpen,
+      searchClosed: !s.searchOpen && !s.selectMode,
       searchText: s.searchText || '',
       openSearch: this.openSearch, closeSearch: this.closeSearch, setSearchText: this.setSearchText,
       offline: !!s.offline, toggleOffline: this.toggleOffline,
@@ -839,7 +1359,7 @@ class Component extends DCLogic {
       setJoinCode: this.setJoinCode, submitJoinCode: this.submitJoinCode,
       openNav: this.openNav, closeNav: this.closeNav, openAddShopFromMain: this.openAddShopFromMain,
       closeProduct: this.closeProduct, incQty: this.incQty, decQty: this.decQty, removeItem: this.removeItem,
-      openQuickAdd: this.openQuickAdd, closeQuickAdd: this.closeQuickAdd, setQuickAddText: this.setQuickAddText,
+      closeQuickAdd: this.closeQuickAdd, setQuickAddText: this.setQuickAddText,
       submitQuickAdd: this.submitQuickAdd, quickAddText: s.quickAddText,
       setNewShopName: this.setNewShopName, closeAddShop: this.closeAddShop, createShop: this.createShop,
       goSettings: this.goSettings, backToMain: this.backToMain, goManageShops: this.goManageShops,

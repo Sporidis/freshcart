@@ -40,8 +40,10 @@ Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ block
 
 ## Design flows
 
-The Claude Design handoff bundle in `docs/multi-shop-shopping-list-app/` defines nine flows.
-These are built *on top of* the phases above, not instead of them.
+The Claude Design handoff bundle in `docs/multi-shop-shopping-list-app/` defines eleven flows
+(00–10, as of the 2026-09-11 re-export, which added 09 and 10). These are built *on top of* the
+phases above, not instead of them. See `docs/design-gap-plan.md` for the detailed breakdown of
+everything flows 09–10 add that phases 0–12 did not build yet.
 
 | Flow | State | Note |
 | ---- | ----- | ---- |
@@ -51,9 +53,11 @@ These are built *on top of* the phases above, not instead of them.
 | 03 Gestures | ✅ | Swipe-delete/undo, multi-select, and drag-to-reorder (fractional `sortOrder`) all built. Deliberately not built: the contextual bar's "Move" action — decisions #52–54. |
 | 04 Editing lists & shops | ✅ | Live colour preview, decisions #45 and #48 |
 | 05 Household & sharing | ✅ | Deliberately omitted: last-active captions (no timestamp), QR toggle, code expiry. See the commit. |
-| 06 Search & suggestions | 🟡 | Search is built, local-only, its own header mode — decisions #55. **"Recently bought" still needs purchase-history tracking** that does not exist. |
+| 06 Search & suggestions | 🟡 | Search is built, local-only, its own header mode — decisions #55. **"Recently bought" still needs purchase-history tracking** that does not exist — now also wanted by Flow 09's add-control autocomplete, so it is one shared gap, not two. |
 | 07 Offline & sync | ⛔ | Needs a connectivity port in the domain and cached reads. Overlaps the offline-first scope fork below. |
 | 08 Errors | ✅ | Three tiers, decisions #42 |
+| 09 The add control | 🟡 | The core interaction (roll-out FAB, +/× glyph rotation, fast Enter path vs. the detail sheet) is built — decisions #58, #59. **Not yet built:** the shop-tinted placeholder ("Add to Colruyt"), the leading shop-colour dot inside the field, the empty-vs-has-text glyph background state, item-name suggestion chips, and the new-row entrance flash. See `docs/design-gap-plan.md`. |
+| 10 Drawer, settings & preferences | ⛔ | The drawer (decisions #57) and a minimal Settings screen (decisions #56) exist, but this flow's actual scope — remaining-count/member avatars on drawer rows, a 4-group Settings screen, Edit profile with a user-chosen avatar colour, Appearance/Notifications/List-settings as their own screens, and every preference they introduce — is almost entirely new. See `docs/design-gap-plan.md`. |
 
 
 ## ✅ Phase 0 — Workspace scaffold · `BUILD`
