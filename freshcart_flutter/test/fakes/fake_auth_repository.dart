@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 
@@ -15,6 +16,9 @@ class FakeAuthRepository implements AuthPort {
   /// Credentials passed to [linkEmail], in order.
   final List<({String email, String password})> linkCalls = [];
 
+  /// How many times [signOut] was called.
+  int signOutCalls = 0;
+
   final StreamController<AuthUser?> _changes =
       StreamController<AuthUser?>.broadcast();
 
@@ -27,8 +31,58 @@ class FakeAuthRepository implements AuthPort {
   @override
   Future<Result<AuthUser>> signInAnonymously() async => user;
 
+  /// Names passed to [setDisplayName], in order.
+  final List<String> setDisplayNameCalls = [];
+
   @override
-  Future<Result<AuthUser>> setDisplayName(String displayName) async => user;
+  Future<Result<AuthUser>> setDisplayName(String displayName) async {
+    setDisplayNameCalls.add(displayName);
+    final current = user.valueOrNull;
+    if (current != null) {
+      user = Ok(current.copyWith(displayName: displayName));
+    }
+    return user;
+  }
+
+  /// Colours passed to [setAvatarColor], in order.
+  final List<HexColor> setAvatarColorCalls = [];
+
+  @override
+  Future<Result<AuthUser>> setAvatarColor(HexColor color) async {
+    setAvatarColorCalls.add(color);
+    final current = user.valueOrNull;
+    if (current != null) user = Ok(current.copyWith(avatarColor: color));
+    return user;
+  }
+
+  /// Uploads passed to [setAvatarPhoto], in order.
+  final List<Uint8List> setAvatarPhotoCalls = [];
+
+  @override
+  Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes) async {
+    setAvatarPhotoCalls.add(bytes);
+    final current = user.valueOrNull;
+    if (current != null) {
+      user = Ok(
+        current.copyWith(
+          avatarPhotoUrl:
+              'https://example.test/avatars/${current.id.value}.jpg',
+        ),
+      );
+    }
+    return user;
+  }
+
+  /// How many times [clearAvatarPhoto] was called.
+  int clearAvatarPhotoCalls = 0;
+
+  @override
+  Future<Result<AuthUser>> clearAvatarPhoto() async {
+    clearAvatarPhotoCalls++;
+    final current = user.valueOrNull;
+    if (current != null) user = Ok(current.copyWith(avatarPhotoUrl: null));
+    return user;
+  }
 
   @override
   Future<Result<AuthUser>> linkEmail({
@@ -56,7 +110,10 @@ class FakeAuthRepository implements AuthPort {
   );
 
   @override
-  Future<Result<void>> signOut() async => const Ok<void>(null);
+  Future<Result<void>> signOut() async {
+    signOutCalls++;
+    return const Ok<void>(null);
+  }
 
   /// Closes the change stream. Call from a test teardown.
   Future<void> dispose() => _changes.close();

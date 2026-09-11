@@ -123,7 +123,35 @@
     "noResultsBody": "Vérifiez l’orthographe, ou ajoutez-le comme nouveau produit."
   },
   "settings": {
-    "title": "Paramètres"
+    "title": "Paramètres",
+    "editProfile": "Modifier le profil",
+    "listsAndShops": "Listes & magasins",
+    "manageLists": "Gérer les listes",
+    "manageShops": "Gérer les magasins",
+    "household": "Foyer",
+    "preferences": "Préférences",
+    "appearance": "Apparence",
+    "currentAppearance": "{{mode}}",
+    "appearanceSystem": "Système",
+    "appearanceLight": "Clair",
+    "appearanceDark": "Sombre",
+    "language": "Langue",
+    "notifications": "Notifications",
+    "keepCheckedItems": "Conserver les éléments cochés",
+    "keepCheckedItemsBody": "Affichez-les sous Terminé au lieu de les supprimer.",
+    "haptics": "Retour haptique",
+    "helpFeedback": "Aide & commentaires",
+    "termsOfService": "Conditions d'utilisation",
+    "signOut": "Se déconnecter",
+    "appVersion": "Version de l'application : {{version}}"
+  },
+  "profile": {
+    "title": "Modifier le profil",
+    "nameLabel": "Nom affiché",
+    "colorLabel": "Couleur de l’avatar",
+    "photoLabel": "Photo de l’avatar",
+    "choosePhoto": "Choisir une photo",
+    "removePhoto": "Supprimer la photo"
   },
   "splash": {
     "loading": "Chargement de FreshCart"

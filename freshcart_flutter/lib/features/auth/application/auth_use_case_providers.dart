@@ -8,3 +8,12 @@ part 'auth_use_case_providers.g.dart';
 @riverpod
 SetDisplayName setDisplayNameUseCase(Ref ref) =>
     SetDisplayName(ref.watch(authRepositoryProvider));
+
+/// The [SetAvatarPhoto] use case, wired to the auth port.
+///
+/// `setAvatarColor` and `clearAvatarPhoto` have no such wrapper -- nothing to
+/// validate, so they are called on [authRepositoryProvider] directly, the
+/// same way `signOut`/`linkGoogle`/`linkEmail` already are.
+@riverpod
+SetAvatarPhoto setAvatarPhotoUseCase(Ref ref) =>
+    SetAvatarPhoto(ref.watch(authRepositoryProvider));

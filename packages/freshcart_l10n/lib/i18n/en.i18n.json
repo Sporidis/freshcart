@@ -123,7 +123,35 @@
     "noResultsBody": "Check the spelling, or add it as a new product."
   },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "editProfile": "Edit profile",
+    "listsAndShops": "Lists & shops",
+    "manageLists": "Manage lists",
+    "manageShops": "Manage shops",
+    "household": "Household",
+    "preferences": "Preferences",
+    "appearance": "Appearance",
+    "currentAppearance": "{{mode}}",
+    "appearanceSystem": "System",
+    "appearanceLight": "Light",
+    "appearanceDark": "Dark",
+    "language": "Language",
+    "notifications": "Notifications",
+    "keepCheckedItems": "Keep checked items",
+    "keepCheckedItemsBody": "Show them under Done instead of removing them.",
+    "haptics": "Haptics",
+    "helpFeedback": "Help & feedback",
+    "termsOfService": "Terms of Service",
+    "signOut": "Sign out",
+    "appVersion": "App version: {{version}}"
+  },
+  "profile": {
+    "title": "Edit profile",
+    "nameLabel": "Display name",
+    "colorLabel": "Avatar colour",
+    "photoLabel": "Avatar photo",
+    "choosePhoto": "Choose photo",
+    "removePhoto": "Remove photo"
   },
   "splash": {
     "loading": "Loading FreshCart"

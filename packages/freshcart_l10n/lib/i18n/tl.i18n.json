@@ -123,7 +123,35 @@
     "noResultsBody": "Tingnan ang spelling, o idagdag ito bilang bagong produkto."
   },
   "settings": {
-    "title": "Mga Setting"
+    "title": "Mga Setting",
+    "editProfile": "I-edit ang profile",
+    "listsAndShops": "Mga listahan at tindahan",
+    "manageLists": "Pamahalaan ang mga listahan",
+    "manageShops": "Pamahalaan ang mga tindahan",
+    "household": "Sambahayan",
+    "preferences": "Mga Kagustuhan",
+    "appearance": "Hitsura",
+    "currentAppearance": "{{mode}}",
+    "appearanceSystem": "Systema",
+    "appearanceLight": "Maliwanag",
+    "appearanceDark": "Madilim",
+    "language": "Wika",
+    "notifications": "Mga Notipikasyon",
+    "keepCheckedItems": "Panatilihin ang mga naka-check na item",
+    "keepCheckedItemsBody": "Ipakita ang mga ito sa ilalim ng Tapos sa halip na tanggalin ang mga ito.",
+    "haptics": "Haptics",
+    "helpFeedback": "Tulong at feedback",
+    "termsOfService": "Mga Tuntunin ng Serbisyo",
+    "signOut": "Mag-sign out",
+    "appVersion": "Bersyon ng app: {{version}}"
+  },
+  "profile": {
+    "title": "I-edit ang profile",
+    "nameLabel": "Ipinapakitang pangalan",
+    "colorLabel": "Kulay ng avatar",
+    "photoLabel": "Larawan ng avatar",
+    "choosePhoto": "Pumili ng larawan",
+    "removePhoto": "Alisin ang larawan"
   },
   "splash": {
     "loading": "Naglo-load ang FreshCart"

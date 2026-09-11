@@ -59,7 +59,7 @@ void main() {
     await pump(tester);
 
     expect(find.text('Your account is secured.'), findsOneWidget);
-    expect(find.text('n@example.com'), findsOneWidget);
+    expect(find.text('n@example.com'), findsNWidgets(2));
     expect(find.text('Link email'), findsNothing);
   });
 
@@ -77,5 +77,16 @@ void main() {
 
     expect(auth.linkCalls.single.email, 'me@example.com');
     expect(find.text('Your account is secured.'), findsOneWidget);
+  });
+
+  testWidgets('sign out button calls the auth repository', (tester) async {
+    await pump(tester);
+
+    await tester.drag(find.byType(ListView), const Offset(0, -600));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sign out'));
+    await tester.pumpAndSettle();
+
+    expect(auth.signOutCalls, 1);
   });
 }

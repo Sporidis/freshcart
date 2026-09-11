@@ -127,7 +127,35 @@
     "noResultsBody": "Проверьте написание или добавьте это как новый товар."
   },
   "settings": {
-    "title": "Настройки"
+    "title": "Настройки",
+    "editProfile": "Изменить профиль",
+    "listsAndShops": "Списки и магазины",
+    "manageLists": "Управлять списками",
+    "manageShops": "Управлять магазинами",
+    "household": "Дом",
+    "preferences": "Предпочтения",
+    "appearance": "Внешний вид",
+    "currentAppearance": "{{mode}}",
+    "appearanceSystem": "Системная",
+    "appearanceLight": "Светлая",
+    "appearanceDark": "Тёмная",
+    "language": "Язык",
+    "notifications": "Уведомления",
+    "keepCheckedItems": "Сохранять отмеченные пункты",
+    "keepCheckedItemsBody": "Показывать их в разделе Готово вместо удаления.",
+    "haptics": "Тактильная отдача",
+    "helpFeedback": "Помощь и отзывы",
+    "termsOfService": "Условия использования",
+    "signOut": "Выйти",
+    "appVersion": "Версия приложения: {{version}}"
+  },
+  "profile": {
+    "title": "Изменить профиль",
+    "nameLabel": "Отображаемое имя",
+    "colorLabel": "Цвет аватара",
+    "photoLabel": "Фото аватара",
+    "choosePhoto": "Выбрать фото",
+    "removePhoto": "Удалить фото"
   },
   "splash": {
     "loading": "Загрузка FreshCart"

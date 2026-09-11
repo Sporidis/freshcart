@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/auth/presentation/edit_profile_screen.dart';
 import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
@@ -38,6 +39,16 @@ abstract final class Routes {
 
   /// Account-level settings, not scoped to any one list.
   static const String settings = '/settings';
+
+  /// The path pattern for the Edit profile screen, nested under settings.
+  ///
+  /// Temporary: its real home is a profile row on the restructured Settings
+  /// screen (`docs/design-gap-plan.md` §5), which does not exist yet — see
+  /// [EditProfileScreen]'s own doc comment.
+  static const String editProfilePattern = 'profile';
+
+  /// The concrete path to Edit profile.
+  static const String editProfile = '$settings/$editProfilePattern';
 
   /// The splash screen — the app's actual initial route. Shown for exactly
   /// as long as sign-in takes; it redirects itself onward once it knows.
@@ -86,6 +97,12 @@ GoRouter appRouter(Ref ref) => GoRouter(
     GoRoute(
       path: Routes.settings,
       builder: (context, state) => const SettingsScreen(),
+      routes: <RouteBase>[
+        GoRoute(
+          path: Routes.editProfilePattern,
+          builder: (context, state) => const EditProfileScreen(),
+        ),
+      ],
     ),
     GoRoute(
       path: Routes.lists,

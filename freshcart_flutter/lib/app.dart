@@ -4,6 +4,7 @@ import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
 
 /// The FreshCart application root.
 ///
@@ -17,6 +18,7 @@ class FreshCartApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final seed = ref.watch(activeSeedColorProvider);
+    final appearance = ref.watch(appearanceControllerProvider);
     final t = ref.watch(translationsProvider);
 
     return MaterialApp.router(
@@ -24,6 +26,7 @@ class FreshCartApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(seed),
       darkTheme: AppTheme.dark(seed),
+      themeMode: appearance.themeMode,
       routerConfig: ref.watch(appRouterProvider),
       builder: (context, child) => AnimatedTheme(
         data: Theme.of(context),
