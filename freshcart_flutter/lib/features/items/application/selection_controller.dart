@@ -18,9 +18,7 @@ class SelectionController extends _$SelectionController {
 
   /// Adds or removes [id] from the selection.
   void toggle(ItemId id) {
-    state = state.contains(id)
-        ? ({...state}..remove(id))
-        : {...state, id};
+    state = state.contains(id) ? ({...state}..remove(id)) : {...state, id};
   }
 
   /// Leaves selection mode without acting on it.

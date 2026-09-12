@@ -92,18 +92,21 @@ void main() {
       expect(items.map((i) => i.name), ['Bread', 'Milk', 'Eggs']);
     });
 
-    test('add appends past the current end, spaced for future reorders', () async {
-      final list = await aSharedList();
-      final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
-      final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+    test(
+      'add appends past the current end, spaced for future reorders',
+      () async {
+        final list = await aSharedList();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
 
-      expect(bread.sortOrder, greaterThan(milk.sortOrder));
-      expect(
-        bread.sortOrder - milk.sortOrder,
-        greaterThan(1),
-        reason: 'a real gap, not consecutive integers -- see sortOrderGap',
-      );
-    });
+        expect(bread.sortOrder, greaterThan(milk.sortOrder));
+        expect(
+          bread.sortOrder - milk.sortOrder,
+          greaterThan(1),
+          reason: 'a real gap, not consecutive integers -- see sortOrderGap',
+        );
+      },
+    );
 
     test('save persists an edit and moves updatedAt forward', () async {
       final list = await aSharedList();
@@ -362,42 +365,51 @@ void main() {
     });
 
     group('suggestNames', () {
-      test('an added name becomes a suggestion, matched case-insensitively', () async {
-        final list = await aSharedList();
-        await endpoints.item.add(as(aliceId), list.id!, 'Olive oil');
+      test(
+        'an added name becomes a suggestion, matched case-insensitively',
+        () async {
+          final list = await aSharedList();
+          await endpoints.item.add(as(aliceId), list.id!, 'Olive oil');
 
-        final suggestions = await endpoints.item.suggestNames(
-          as(aliceId),
-          list.id!,
-          'oliv',
-        );
+          final suggestions = await endpoints.item.suggestNames(
+            as(aliceId),
+            list.id!,
+            'oliv',
+          );
 
-        expect(suggestions, ['Olive oil']);
-      });
+          expect(suggestions, ['Olive oil']);
+        },
+      );
 
-      test('nothing under two characters -- too broad to be a suggestion', () async {
-        final list = await aSharedList();
-        await endpoints.item.add(as(aliceId), list.id!, 'Olive oil');
+      test(
+        'nothing under two characters -- too broad to be a suggestion',
+        () async {
+          final list = await aSharedList();
+          await endpoints.item.add(as(aliceId), list.id!, 'Olive oil');
 
-        expect(
-          await endpoints.item.suggestNames(as(aliceId), list.id!, 'o'),
-          isEmpty,
-        );
-      });
+          expect(
+            await endpoints.item.suggestNames(as(aliceId), list.id!, 'o'),
+            isEmpty,
+          );
+        },
+      );
 
-      test('adding the same name again does not duplicate the suggestion', () async {
-        final list = await aSharedList();
-        await endpoints.item.add(as(aliceId), list.id!, 'Milk');
-        await endpoints.item.add(as(bobId), list.id!, 'Milk');
+      test(
+        'adding the same name again does not duplicate the suggestion',
+        () async {
+          final list = await aSharedList();
+          await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+          await endpoints.item.add(as(bobId), list.id!, 'Milk');
 
-        final suggestions = await endpoints.item.suggestNames(
-          as(aliceId),
-          list.id!,
-          'milk',
-        );
+          final suggestions = await endpoints.item.suggestNames(
+            as(aliceId),
+            list.id!,
+            'milk',
+          );
 
-        expect(suggestions, ['Milk']);
-      });
+          expect(suggestions, ['Milk']);
+        },
+      );
 
       test('most recently used first', () async {
         final list = await aSharedList();
@@ -415,16 +427,19 @@ void main() {
         expect(suggestions, ['Apple', 'Apricot']);
       });
 
-      test("scoped to the list -- another list's history does not leak in", () async {
-        final list = await aSharedList();
-        final otherList = await endpoints.list.create(as(aliceId), 'Camping');
-        await endpoints.item.add(as(aliceId), otherList.id!, 'Bread');
+      test(
+        "scoped to the list -- another list's history does not leak in",
+        () async {
+          final list = await aSharedList();
+          final otherList = await endpoints.list.create(as(aliceId), 'Camping');
+          await endpoints.item.add(as(aliceId), otherList.id!, 'Bread');
 
-        expect(
-          await endpoints.item.suggestNames(as(aliceId), list.id!, 'bread'),
-          isEmpty,
-        );
-      });
+          expect(
+            await endpoints.item.suggestNames(as(aliceId), list.id!, 'bread'),
+            isEmpty,
+          );
+        },
+      );
 
       test('refuses a non-member', () async {
         final list = await aSharedList();

@@ -54,8 +54,7 @@ void main() {
         itemRepositoryProvider.overrideWithValue(items),
         shopRepositoryProvider.overrideWithValue(shops),
         authBootstrapProvider.overrideWith(
-          (ref) async =>
-              (authenticated: true, isNewIdentity: isNewIdentity),
+          (ref) async => (authenticated: true, isNewIdentity: isNewIdentity),
         ),
       ],
     );
@@ -127,7 +126,10 @@ void main() {
 
         // Step 2: list name.
         expect(find.text('Step 2 of 4'), findsOneWidget);
-        await tester.enterText(find.byType(TextField).first, 'Weekly Groceries');
+        await tester.enterText(
+          find.byType(TextField).first,
+          'Weekly Groceries',
+        );
         await tester.pumpAndSettle();
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();

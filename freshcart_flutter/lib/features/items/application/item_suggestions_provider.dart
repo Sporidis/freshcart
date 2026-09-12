@@ -24,10 +24,12 @@ Future<List<String>> itemSuggestions(
   // noise, not a suggestion. Checked here too so a too-short query never
   // even reaches the network.
   if (query.trim().length < 2) return const [];
-  final result = await ref.watch(itemRepositoryProvider).suggestNames(
-    listId,
-    query,
-  );
+  final result = await ref
+      .watch(itemRepositoryProvider)
+      .suggestNames(
+        listId,
+        query,
+      );
   return switch (result) {
     Ok<List<String>>(:final value) => value,
     // A failed fetch just means no chips this keystroke, not an error worth

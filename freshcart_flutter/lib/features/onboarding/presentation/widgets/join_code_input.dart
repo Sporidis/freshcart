@@ -80,7 +80,10 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
           children: [
             Row(
               children: [
-                for (final index in List.generate(JoinCode.length, (i) => i)) ...[
+                for (final index in List.generate(
+                  JoinCode.length,
+                  (i) => i,
+                )) ...[
                   if (index > 0) const SizedBox(width: 9),
                   Expanded(
                     child: _CodeBox(
@@ -137,7 +140,9 @@ class _CodeBox extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.input),
         border: Border.all(
-          color: active ? theme.colorScheme.primary : theme.colorScheme.outlineVariant,
+          color: active
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outlineVariant,
           width: active ? 2 : 1.5,
         ),
       ),
