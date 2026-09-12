@@ -1,3 +1,4 @@
 {
-    "apiUrl": "http://localhost:8080"
+    "apiUrl": "http://localhost:8080",
+    "_liveApiUrl_forReferenceOnly_useDashDashDartDefineToActuallySwitch": "https://freshcart-nikos.duckdns.org"
 }

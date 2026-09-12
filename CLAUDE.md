@@ -16,7 +16,7 @@ backend.
 
 It is **deliberately over-engineered, for defensible reasons** — it is a portfolio piece.
 Every non-obvious choice must have an interview-ready justification (see `docs/decisions.md`).
-That is *not* a licence to add complexity for its own sake — see the scope rule below.
+That is _not_ a license to add complexity for its own sake — see the scope rule below.
 
 ## The golden rules (non-negotiable)
 
@@ -28,17 +28,17 @@ That is *not* a licence to add complexity for its own sake — see the scope rul
    are mapped to pure domain entities at the `data/` boundary, and never leak upward into
    `application/` or `presentation/`. This mapping is the whole point of the layering; do
    not "save time" by skipping it.
-3. **Feature-first, not layer-first.** Code is organised by feature (`lists`, `items`,
+3. **Feature-first, not layer-first.** Code is organized by feature (`lists`, `items`,
    `shops`, `auth`, `notifications`), and within a feature by layer.
 4. **Plan before you build.** For any phase or non-trivial change, write the plan (files,
-   layering, acceptance check) and confirm it fits these rules *before* generating code.
+   layering, acceptance check) and confirm it fits these rules _before_ generating code.
 5. **Each phase must compile and pass its checks before the next begins.** Run the phase's
    acceptance commands (`docs/build-plan.md`). A phase is not done until they pass. Never
    stack a second phase's work on an unverified first phase.
 6. **Scope discipline.** Before adding anything not in the current phase, say plainly
    whether it is a genuine learning/portfolio win or scope creep, and get a yes. "We could
    also add X" is not a reason to add X.
-7. **KISS inside the rigour.** The *architecture* is strict; the *app* should feel simple.
+7. **KISS inside the rigour.** The _architecture_ is strict; the _app_ should feel simple.
    Prefer the simplest implementation that respects the layering. Reach for a pattern only
    when it earns its keep.
 
@@ -47,7 +47,7 @@ That is *not* a licence to add complexity for its own sake — see the scope rul
 He is a recent SE graduate: strong in Flutter/Dart, new to Serverpod and Jaspr, learning
 clean architecture. The relationship is **mentor, not autopilot**:
 
-- Explain the *why*. When you make an architectural call, give the one-line reason.
+- Explain the _why_. When you make an architectural call, give the one-line reason.
 - Push back in the first sentence if a request heads toward an anti-pattern, then show the
   better path. Honest disagreement beats agreement.
 - Default to guiding; write full code when he is genuinely stuck or when a worked example
@@ -57,19 +57,19 @@ clean architecture. The relationship is **mentor, not autopilot**:
 
 ## Stack (pin exact versions in pubspec; these are the known-good floors)
 
-| Concern            | Choice                              | Floor / note |
-| ------------------ | ----------------------------------- | ------------ |
-| Language           | Dart                                | 3.13+ (Serverpod 3.4 floor is 3.8) |
-| App                | Flutter                             | latest stable |
-| Backend            | Serverpod                           | 3.4.13 (3.5 is beta — opt-in only) |
-| Marketing site     | Jaspr                               | 0.23.x — **not** a workspace member, see decisions #13 |
-| Monorepo           | Pub workspaces (`workspace:`)       | Dart 3.6+ — no Melos; 5 members, `freshcart_web` resolves separately |
-| State + DI         | Riverpod + `riverpod_generator`     | Riverpod 3.x / generator 4.x (needs analyzer 13+) |
-| Routing            | `go_router`                         | latest |
-| Entities / unions  | `freezed` 4.x (domain: **no** `json_serializable`, see decisions #12) | needs analyzer 13+ |
-| i18n               | `slang`                             | locales: `nl` (default), `en`, `fr`, `ru`, `tl` |
-| Push               | Firebase Cloud Messaging **only**   | behind a port; nothing else from Firebase |
-| Lints              | root `analysis_options.yaml`        | strict — see that file |
+| Concern           | Choice                                                                | Floor / note                                                         |
+| ----------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Language          | Dart                                                                  | 3.13+ (Serverpod 3.4 floor is 3.8)                                   |
+| App               | Flutter                                                               | latest stable                                                        |
+| Backend           | Serverpod                                                             | 3.4.13 (3.5 is beta — opt-in only)                                   |
+| Marketing site    | Jaspr                                                                 | 0.23.x — **not** a workspace member, see decisions #13               |
+| Monorepo          | Pub workspaces (`workspace:`)                                         | Dart 3.6+ — no Melos; 5 members, `freshcart_web` resolves separately |
+| State + DI        | Riverpod + `riverpod_generator`                                       | Riverpod 3.x / generator 4.x (needs analyzer 13+)                    |
+| Routing           | `go_router`                                                           | latest                                                               |
+| Entities / unions | `freezed` 4.x (domain: **no** `json_serializable`, see decisions #12) | needs analyzer 13+                                                   |
+| i18n              | `slang`                                                               | locales: `nl` (default), `en`, `fr`, `ru`, `tl`                      |
+| Push              | Firebase Cloud Messaging **only**                                     | behind a port; nothing else from Firebase                            |
+| Lints             | root `analysis_options.yaml`                                          | strict — see that file                                               |
 
 > **Serverpod / Jaspr / Riverpod 3 / freezed 4 knowledge is thin and moves fast.** Riverpod 3
 > and freezed 4 both broke APIs this file previously assumed at 2.x/earlier. Do not recall
@@ -88,7 +88,9 @@ freshcart/
 ├── docs/
 │   ├── architecture.md       ← layering, import matrix, mapping pattern — READ FIRST
 │   ├── build-plan.md         ← phased, verifiable build order
-│   └── decisions.md          ← interview-ready justification for every choice
+│   ├── decisions.md          ← interview-ready justification for every choice
+│   ├── deployment.md         ← where the server runs, how to update it, gotchas
+│   └── dev-guide.md          ← day-to-day commands, testing conventions, widget previews
 ├── packages/
 │   ├── freshcart_domain/     ← PURE Dart: entities, value objects, failures, ports, use cases
 │   └── freshcart_l10n/       ← slang translations, shared by app + web
@@ -146,7 +148,7 @@ flowchart TD
 4. No golden-rule violation (re-check the import matrix in `docs/architecture.md`).
 5. `docs/decisions.md` updated if a new non-obvious choice was made.
 
-## Command cheatsheet
+## Command cheat-sheet
 
 ```bash
 # workspace

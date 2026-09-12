@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge_dismissed.dart';
@@ -28,13 +29,9 @@ class UpgradeNudge extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final dismissed = ref.watch(upgradeNudgeDismissedProvider);
 
-    final isAnonymous = switch (user) {
-      AsyncValue<Result<AuthUser>>(value: Ok<AuthUser>(:final value)) =>
-        value.isAnonymous,
-      // Say nothing until the identity is known: a nudge that flickers in and
-      // out on every rebuild is worse than no nudge.
-      _ => false,
-    };
+    // Say nothing until the identity is known: a nudge that flickers in and
+    // out on every rebuild is worse than no nudge.
+    final isAnonymous = user.dataOrNull?.isAnonymous ?? false;
     // Same discipline for the dismissed flag: assume dismissed while it is
     // still loading from disk, rather than flash the banner for one frame
     // on every cold start before quietly taking it away again.
@@ -50,7 +47,10 @@ class UpgradeNudge extends ConsumerWidget {
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       child: ListTile(
-        leading: Icon(Icons.shield_outlined, color: theme.colorScheme.onSurface),
+        leading: Icon(
+          Icons.shield_outlined,
+          color: theme.colorScheme.onSurface,
+        ),
         title: Text(t.account.title),
         subtitle: Text(t.account.body),
         trailing: Row(

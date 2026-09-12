@@ -20,12 +20,11 @@ import 'package:go_router/go_router.dart';
 // lib/ — the same gap already noted for screen-level previews, not
 // something to improvise as a side effect of this change.
 
-/// Switches between the user's lists without a trip back to the Lists screen.
-///
-/// Deliberately just a switcher: creating and joining lists already have a
-/// home on [ListsScreen][], and duplicating that flow here would be a second
-/// place to keep in sync for no reader benefit — "All lists" at the bottom is
-/// the door back to it, alongside "Settings" for whatever is not list-scoped.
+/// Switches between the user's lists — per the design (Flow 10), the *only*
+/// place that answers "which list?" at all. There is no separate "all lists"
+/// screen to be a door back to any more (decisions.md #68): creating and
+/// joining are inline rows in this same scrollable list (decisions #65), and
+/// "Settings" is the one footer action left for whatever isn't list-scoped.
 class ListsDrawer extends ConsumerWidget {
   /// Creates the drawer, highlighting [currentListId] among the others.
   const ListsDrawer({required this.currentListId, super.key});
@@ -44,10 +43,8 @@ class ListsDrawer extends ConsumerWidget {
     // everyone for the one frame before this resolves, rather than blocking
     // the whole drawer on it; keepAlive means that frame is rare in
     // practice, not just theoretical.
-    final myId = switch (ref.watch(currentUserIdProvider)) {
-      AsyncValue<Result<UserId>>(value: Ok<UserId>(:final value)) => value,
-      _ => null,
-    };
+    final myId = ref.watch(currentUserIdProvider).dataOrNull;
+    final loadedLists = lists.dataOrNull;
 
     void openList(ListId id) {
       Navigator.of(context).pop();
@@ -69,87 +66,77 @@ class ListsDrawer extends ConsumerWidget {
               child: Text(t.lists.title, style: theme.textTheme.headlineSmall),
             ),
             Expanded(
-              child: switch (lists) {
-                AsyncOutcome<List<ShoppingList>>(
-                  value: Ok<List<ShoppingList>>(:final value),
-                ) =>
-                  ListView(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    children: [
-                      for (final list in value)
-                        _ListRow(
-                          list: list,
-                          isCurrent: list.id == currentListId,
-                          memberLabel: t.lists.memberCount(
-                            n: list.members.length,
+              // A load failure here is not worth its own screen tier — the
+              // drawer just falls back to "nothing to switch to", and the
+              // list already open keeps working regardless.
+              child: loadedLists == null
+                  ? const SizedBox.shrink()
+                  : ListView(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      children: [
+                        for (final list in loadedLists)
+                          _ListRow(
+                            list: list,
+                            isCurrent: list.id == currentListId,
+                            memberLabel: t.lists.memberCount(
+                              n: list.members.length,
+                            ),
+                            othersInList: myId == null
+                                ? list.members
+                                : [
+                                    for (final member in list.members)
+                                      if (member.userId != myId) member,
+                                  ],
+                            onTap: () => openList(list.id),
                           ),
-                          othersInList: myId == null
-                              ? list.members
-                              : [
-                                  for (final member in list.members)
-                                    if (member.userId != myId) member,
-                                ],
-                          onTap: () => openList(list.id),
+                        // Inline, not tucked into the footer below: the
+                        // design draws these as part of the scrollable list
+                        // of lists itself, not alongside Settings -- they add
+                        // to *this* collection, so they read as one more
+                        // thing you can do with it, not an unrelated
+                        // app-level action.
+                        _InlineAction(
+                          icon: Icons.add,
+                          label: t.lists.create,
+                          onTap: () async {
+                            // Grabbed before the pop below, not a WidgetRef
+                            // -- popping the drawer unmounts this widget, and
+                            // by the time the dialog's onSubmit actually runs
+                            // (once someone types a name), a ref captured
+                            // from an unmounted widget would already be
+                            // unsafe to read. See showCreateListDialog's own
+                            // doc.
+                            final container = ProviderScope.containerOf(
+                              context,
+                              listen: false,
+                            );
+                            Navigator.of(context).pop();
+                            await showCreateListDialog(context, container, t);
+                          },
                         ),
-                      // Inline, not tucked into the footer below: the design
-                      // draws these as part of the scrollable list of lists
-                      // itself, not alongside Settings -- they add to *this*
-                      // collection, so they read as one more thing you can
-                      // do with it, not an unrelated app-level action.
-                      _InlineAction(
-                        icon: Icons.add,
-                        label: t.lists.create,
-                        onTap: () async {
-                          // Grabbed before the pop below, not a WidgetRef --
-                          // popping the drawer unmounts this widget, and by
-                          // the time the dialog's onSubmit actually runs
-                          // (once someone types a name), a ref captured from
-                          // an unmounted widget would already be unsafe to
-                          // read. See showCreateListDialog's own doc.
-                          final container = ProviderScope.containerOf(
-                            context,
-                            listen: false,
-                          );
-                          Navigator.of(context).pop();
-                          await showCreateListDialog(context, container, t);
-                        },
-                      ),
-                      _InlineAction(
-                        icon: Icons.group_add_outlined,
-                        label: t.lists.join,
-                        onTap: () async {
-                          final container = ProviderScope.containerOf(
-                            context,
-                            listen: false,
-                          );
-                          Navigator.of(context).pop();
-                          await showJoinListDialog(context, container, t);
-                        },
-                      ),
-                    ],
-                  ),
-                // A load failure here is not worth its own screen tier — the
-                // drawer just falls back to "nothing to switch to", and the
-                // list already open keeps working regardless.
-                _ => const SizedBox.shrink(),
-              },
+                        _InlineAction(
+                          icon: Icons.group_add_outlined,
+                          label: t.lists.join,
+                          onTap: () async {
+                            final container = ProviderScope.containerOf(
+                              context,
+                              listen: false,
+                            );
+                            Navigator.of(context).pop();
+                            await showJoinListDialog(context, container, t);
+                          },
+                        ),
+                      ],
+                    ),
             ),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: Column(
                 children: [
-                  _DrawerAction(
-                    icon: Icons.list_alt_outlined,
-                    label: t.lists.allLists,
-                    onTap: () {
-                      Navigator.of(context).pop();
-                      context.go(Routes.lists);
-                    },
-                  ),
                   _DrawerAction(
                     icon: Icons.settings_outlined,
                     label: t.settings.title,

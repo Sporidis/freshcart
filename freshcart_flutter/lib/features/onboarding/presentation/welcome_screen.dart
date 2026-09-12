@@ -6,7 +6,6 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -32,17 +31,7 @@ class WelcomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(20, 8, 20, 0),
-              child: Row(
-                children: [
-                  Hero(
-                    tag: BasketMark.heroTag,
-                    child: BasketMark(size: 24, color: AppColors.ink),
-                  ),
-                ],
-              ),
-            ),
+            const SizedBox(height: 40),
             Expanded(
               child: _ListPreviewScene(t: t, backgroundColor: bg),
             ),
@@ -159,6 +148,8 @@ class _ListPreviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final rows = [
       (t.welcome.sampleItem1, AppColors.info, true),
       (t.welcome.sampleItem2, AppColors.swatchOrange, false),
@@ -170,8 +161,22 @@ class _ListPreviewCard extends StatelessWidget {
       width: 250,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        // theme.colorScheme.surface, not AppColors.surfaceLight -- this
+        // mockup card was hardcoded to the light-mode surface regardless of
+        // the active theme, which is why it stayed bright white in dark
+        // mode instead of following the screen around it.
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(18),
+        // surfaceDark and this screen's own subtleDark background are only
+        // a couple of RGB units apart -- a shadow alone (which barely reads
+        // against a dark background anyway) left the card blending into
+        // whatever was behind it. A hairline border is what the app already
+        // reaches for elsewhere to bound a surface regardless of how close
+        // its fill sits to what's behind it (see OutlinedButton/input
+        // fields in AppTheme._build, same AppColors.border* tokens).
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x21000000),
@@ -186,13 +191,16 @@ class _ListPreviewCard extends StatelessWidget {
           Text(
             t.welcome.sampleListName.toUpperCase(),
             style: AppTextStyles.eyebrow.copyWith(
-              color: AppColors.textFaintLight,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
           const SizedBox(height: 10),
           for (final (index, row) in rows.indexed) ...[
-            if (index > 0)
-              const Divider(height: 1, color: AppColors.dividerLight),
+            // No explicit colour: Divider falls back to the theme's own
+            // DividerThemeData (already correctly light/dark-aware in
+            // AppTheme._build), where a hardcoded AppColors.dividerLight
+            // would not have been.
+            if (index > 0) const Divider(height: 1),
             _PreviewRow(
               name: row.$1,
               dotColor: row.$2,
@@ -218,6 +226,13 @@ class _PreviewRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    // A checked circle's fill and its own checkmark are an on-surface/
+    // surface pair, not a fixed ink/white pair -- in dark mode onSurface is
+    // white, so a hardcoded white checkmark on it would vanish the same way
+    // the activity bubble's text did against a hardcoded-light card.
+    final checkedFill = theme.colorScheme.onSurface;
+    final checkedGlyph = theme.colorScheme.surface;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 9),
       child: Row(
@@ -226,12 +241,12 @@ class _PreviewRow extends StatelessWidget {
             Container(
               width: 19,
               height: 19,
-              decoration: const BoxDecoration(
-                color: AppColors.ink,
+              decoration: BoxDecoration(
+                color: checkedFill,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: const Icon(Icons.check, size: 11, color: Colors.white),
+              child: Icon(Icons.check, size: 11, color: checkedGlyph),
             )
           else
             Container(
@@ -239,7 +254,10 @@ class _PreviewRow extends StatelessWidget {
               height: 19,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: AppColors.borderLight, width: 1.5),
+                border: Border.all(
+                  color: theme.colorScheme.outlineVariant,
+                  width: 1.5,
+                ),
               ),
             ),
           const SizedBox(width: 11),
@@ -252,9 +270,11 @@ class _PreviewRow extends StatelessWidget {
           Text(
             name,
             style: AppTextStyles.body.copyWith(
-              color: checked ? AppColors.textFaintLight : AppColors.ink,
+              color: checked
+                  ? theme.colorScheme.onSurfaceVariant
+                  : theme.colorScheme.onSurface,
               decoration: checked ? TextDecoration.lineThrough : null,
-              decorationColor: AppColors.textFaintLight,
+              decorationColor: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ],
@@ -274,12 +294,29 @@ class _ActivityBubble extends StatelessWidget {
     // real user, so this is the one place in the app a display name is
     // hardcoded rather than read from a session.
     const sampleMemberName = 'koliiin';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        // theme.colorScheme.surface, not AppColors.surfaceLight -- the
+        // actual bug report: this stayed hardcoded light regardless of
+        // theme, while the activity text beside it (no explicit colour,
+        // AppTextStyles.captionStrong) correctly inherited the ambient,
+        // theme-aware text colour -- white in dark mode. A card that never
+        // leaves light mode plus text that correctly follows dark mode is
+        // exactly how "white text on a white card" (the actual symptom
+        // reported) happens: two colours from two different sources that
+        // silently stopped agreeing the moment the theme changed.
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadii.pill),
+        // Same reasoning as _ListPreviewCard's border: surfaceDark sits too
+        // close to this screen's own background to read as "a card" from
+        // fill colour and a barely-visible-on-dark shadow alone.
+        border: Border.all(
+          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+        ),
         boxShadow: const [
           BoxShadow(
             color: Color(0x1F000000),

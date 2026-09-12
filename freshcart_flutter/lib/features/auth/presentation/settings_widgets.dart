@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
@@ -222,7 +223,7 @@ class ListsAndShopsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(currentUserProvider);
-    final displayName = user.value?.valueOrNull?.displayName.trim() ?? '';
+    final displayName = user.dataOrNull?.displayName.trim() ?? '';
     final initial = displayName.isEmpty ? '?' : displayName[0].toUpperCase();
 
     return Column(
@@ -230,11 +231,14 @@ class ListsAndShopsSection extends ConsumerWidget {
       children: [
         SectionLabel(text: t.settings.listsAndShops.toUpperCase()),
         const SizedBox(height: 12),
-        SettingOption(
-          title: t.settings.manageLists,
-          onTap: () => context.push(Routes.lists),
-        ),
         if (firstList != null) ...[
+          // "Manage lists" opens ListSettingsScreen for firstList directly —
+          // no picker in between, matching how the sibling rows below
+          // already treat firstList as "the" list (decisions.md #69).
+          SettingOption(
+            title: t.settings.manageLists,
+            onTap: () => context.push(Routes.listSettings(firstList!.id)),
+          ),
           SettingOption(
             title: t.settings.manageShops,
             onTap: () => context.push(Routes.manageShops(firstList!.id)),
@@ -243,10 +247,10 @@ class ListsAndShopsSection extends ConsumerWidget {
             title: t.settings.household,
             trailingIcons: [
               UserAvatar(
-                seed: user.value?.valueOrNull?.id.value ?? '',
+                seed: user.dataOrNull?.id.value ?? '',
                 initial: initial,
-                photoUrl: user.value?.valueOrNull?.avatarPhotoUrl,
-                color: user.value?.valueOrNull?.avatarColor,
+                photoUrl: user.dataOrNull?.avatarPhotoUrl,
+                color: user.dataOrNull?.avatarColor,
               ),
             ],
             onTap: () => context.push(Routes.household(firstList!.id)),
@@ -320,17 +324,17 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user.value?.valueOrNull?.displayName ?? '';
+    final displayName = user.dataOrNull?.displayName ?? '';
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         UserAvatar(
-          seed: user.value?.valueOrNull?.id.value ?? '',
+          seed: user.dataOrNull?.id.value ?? '',
           initial: displayName.trim().isEmpty
               ? '?'
               : displayName.trim()[0].toUpperCase(),
-          photoUrl: user.value?.valueOrNull?.avatarPhotoUrl,
-          color: user.value?.valueOrNull?.avatarColor,
+          photoUrl: user.dataOrNull?.avatarPhotoUrl,
+          color: user.dataOrNull?.avatarColor,
           radius: 24,
         ),
         const SizedBox(width: 12),
@@ -341,9 +345,9 @@ class ProfileHeader extends StatelessWidget {
             children: [
               Text(displayName, style: Theme.of(context).textTheme.titleMedium),
               const SizedBox(height: 4),
-              if (user.value?.valueOrNull?.email?.isNotEmpty ?? false)
+              if (user.dataOrNull?.email?.isNotEmpty ?? false)
                 Text(
-                  user.value?.valueOrNull?.email ?? '',
+                  user.dataOrNull?.email ?? '',
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
             ],

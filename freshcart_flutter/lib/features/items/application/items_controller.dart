@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/item_use_case_providers.dart';
 import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
@@ -80,13 +81,7 @@ class ItemsController extends _$ItemsController {
   }
 
   /// The items currently on screen, or null if none have loaded yet.
-  List<ShoppingItem>? get _current => switch (state) {
-    AsyncValue<Result<List<ShoppingItem>>>(
-      value: Ok<List<ShoppingItem>>(:final value),
-    ) =>
-      value,
-    _ => null,
-  };
+  List<ShoppingItem>? get _current => state.dataOrNull;
 
   void _show(List<ShoppingItem> items) =>
       state = AsyncData(Ok<List<ShoppingItem>>(items));
@@ -384,9 +379,9 @@ class ItemsController extends _$ItemsController {
         if (!ids.contains(item.id)) item,
     ]);
 
-    final result = await ref
-        .read(itemRepositoryProvider)
-        .removeMany(listId, [for (final item in selected) item.id]);
+    final result = await ref.read(itemRepositoryProvider).removeMany(listId, [
+      for (final item in selected) item.id,
+    ]);
     for (final item in selected) {
       _pending.remove(item.id);
     }

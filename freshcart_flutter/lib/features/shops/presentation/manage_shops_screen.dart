@@ -25,11 +25,7 @@ class ManageShopsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final shops = ref.watch(shopsControllerProvider(listId));
-    final isEmpty = switch (shops) {
-      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
-        value.isEmpty,
-      _ => false,
-    };
+    final isEmpty = shops.dataOrNull?.isEmpty ?? false;
 
     return Scaffold(
       appBar: AppBar(title: Text(t.shops.manage)),
@@ -76,7 +72,7 @@ class ManageShopsScreen extends ConsumerWidget {
                 context,
                 ref,
                 listId,
-                shops.value?.valueOrNull ?? const [],
+                shops.dataOrNull ?? const [],
               ),
               icon: const Icon(Icons.add),
               label: Text(t.shops.add),

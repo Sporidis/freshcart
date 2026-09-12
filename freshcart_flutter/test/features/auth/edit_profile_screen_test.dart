@@ -115,4 +115,15 @@ void main() {
 
     expect(auth.clearAvatarPhotoCalls, 1);
   });
+
+  testWidgets(
+    'a failed load shows the error screen, not a permanent spinner',
+    (tester) async {
+      auth.user = const Err(Failure.unexpected());
+      await pump(tester);
+
+      expect(find.text('Something went wrong'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+    },
+  );
 }

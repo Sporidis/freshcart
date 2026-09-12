@@ -11,7 +11,15 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/name_promp
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The app's home: every list the signed-in user belongs to.
+/// Landed on only long enough to decide where a signed-in user actually
+/// belongs — there is no "all lists" screen in the design (Flow 10: "the
+/// drawer answers 'which list?' and nothing else"), so this route exists
+/// for exactly two real states: briefly, while [listsControllerProvider]
+/// is still loading, and genuinely, for the one case the design *does*
+/// call for — someone with no lists at all (only reachable by deleting
+/// their last one; §11's "No lists yet" empty state). Anyone with at least
+/// one list is sent straight to it and never sees this screen render its
+/// populated case, because there isn't one any more.
 class ListsScreen extends ConsumerWidget {
   /// Creates the lists screen.
   const ListsScreen({super.key});
@@ -20,13 +28,30 @@ class ListsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final lists = ref.watch(listsControllerProvider);
-    final isEmpty = switch (lists) {
-      AsyncValue<Result<List<ShoppingList>>>(
-        value: Ok<List<ShoppingList>>(:final value),
-      ) =>
-        value.isEmpty,
-      _ => false,
-    };
+
+    // The one-shot redirect: as soon as there's at least one list, this is
+    // not where the user is meant to be. Mirrors SplashScreen's own
+    // ref.listen-and-context.go idiom for the same reason — a route that
+    // exists only to decide where to actually go next.
+    ref.listen<AsyncValue<Result<List<ShoppingList>>>>(
+      listsControllerProvider,
+      (
+        previous,
+        next,
+      ) {
+        // Riverpod keeps the *previous* value visible via .value while a
+        // refresh is in flight (ref.invalidateSelf() does this deliberately,
+        // so the old list doesn't flash away during a reload) — acting on
+        // that here would redirect into a list mid-delete, using data that's
+        // about to be superseded. Only a genuinely settled result counts.
+        if (next.isLoading) return;
+        if (next.value case Ok<List<ShoppingList>>(
+          value: final items,
+        ) when items.isNotEmpty) {
+          context.go(Routes.listDetail(items.first.id));
+        }
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -98,31 +123,15 @@ class ListsScreen extends ConsumerWidget {
                 ],
               ),
             ),
-          Ok<List<ShoppingList>>(value: final items) => RefreshIndicator(
-            onRefresh: () =>
-                ref.read(listsControllerProvider.notifier).refresh(),
-            child: ListView.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) =>
-                  _ListTile(list: items[index], t: t),
-            ),
+          // Reachable for at most one frame: the ref.listen above redirects
+          // away the instant items is non-empty, so there is nothing worth
+          // building here beyond the same spinner the loading case shows —
+          // building the actual list would be dead code, visible to no one.
+          Ok<List<ShoppingList>>() => const Center(
+            child: CircularProgressIndicator(),
           ),
         },
       },
-      // Hidden while the empty state is up: that screen already offers New
-      // list as one of its two exits, and the same action twice reads as two
-      // different actions.
-      floatingActionButton: isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () => showCreateListDialog(
-                context,
-                ProviderScope.containerOf(context, listen: false),
-                t,
-              ),
-              icon: const Icon(Icons.add),
-              label: Text(t.lists.create),
-            ),
     );
   }
 }
@@ -181,22 +190,6 @@ Future<void> showJoinListDialog(
         .then((r) => r.map<void>((_) {})),
   ),
 );
-
-class _ListTile extends StatelessWidget {
-  const _ListTile({required this.list, required this.t});
-
-  final ShoppingList list;
-  final Translations t;
-
-  @override
-  Widget build(BuildContext context) => ListTile(
-    leading: const Icon(Icons.shopping_basket_outlined),
-    title: Text(list.name),
-    subtitle: Text(t.lists.memberCount(n: list.members.length)),
-    trailing: const Icon(Icons.chevron_right),
-    onTap: () => context.go(Routes.listDetail(list.id)),
-  );
-}
 
 class _Message extends StatelessWidget {
   const _Message({

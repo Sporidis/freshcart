@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
+import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
 
@@ -30,8 +31,15 @@ class FreshCartApp extends ConsumerWidget {
       routerConfig: ref.watch(appRouterProvider),
       builder: (context, child) => AnimatedTheme(
         data: Theme.of(context),
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+        // The motion spec's own token table assigns "colour tint" to `quick`
+        // (180ms, easeOutCubic) — the same token chip selection and row
+        // strike-through already use. Re-theming the whole app on a shop
+        // switch previously ran at a hardcoded 400ms/easeInOut: more than
+        // twice as long, and a symmetric curve rather than the app's
+        // consistent "fast in" asymmetric one — the one colour-tint moment
+        // that didn't match every other colour-tint moment's rhythm.
+        duration: AppMotion.durationFor(context, AppMotion.quick),
+        curve: AppMotion.enter,
         child: child ?? const SizedBox.shrink(),
       ),
     );
