@@ -3,10 +3,12 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/auth_use_case_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
@@ -156,7 +158,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
     final user = ref.watch(currentUserProvider);
-    final loaded = user.value?.valueOrNull;
+
+    // A failed load is the screen tier here too (see list_settings_screen.dart's
+    // identical guard): without a profile there is no form to show, so this
+    // replaces the screen instead of leaving loaded == null spinning forever.
+    final failure = user.loadFailure;
+    if (failure != null) {
+      return ErrorScreen(
+        failure: failure,
+        t: t,
+        onExit: () => Navigator.of(context).pop(),
+      );
+    }
+
+    final loaded = user.dataOrNull;
     if (loaded != null) _seedNameOnce(loaded.displayName);
 
     return Scaffold(

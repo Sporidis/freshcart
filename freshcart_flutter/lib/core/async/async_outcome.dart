@@ -20,3 +20,35 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 /// `AsyncResult` of its own, and shadowing a framework type would be a trap for
 /// the next reader.
 typedef AsyncOutcome<T> = AsyncValue<Result<T>>;
+
+/// Convenience readers for [AsyncOutcome], so a screen does not have to
+/// hand-roll the same two-level `switch` every time it needs to ask "is
+/// there a value to show?" or "is there a failure to show instead?"
+///
+/// Both are pure data extraction: neither builds a widget or decides how a
+/// failure is presented, because that differs by screen — some replace
+/// themselves entirely with an error screen, others show it inline.
+extension AsyncOutcomeX<T> on AsyncOutcome<T> {
+  /// The value once this has settled as [AsyncData] wrapping an [Ok] — `null`
+  /// for every other state: still loading, an unexpected [AsyncError], or a
+  /// settled [Err].
+  T? get dataOrNull => value?.valueOrNull;
+
+  /// The failure behind a failed *load*, or `null` if there isn't one.
+  ///
+  /// Collapses the two ways a load can fail into one: an [AsyncError] (a
+  /// genuinely unexpected error — a bug) reports as [Failure.unexpected],
+  /// and a settled [Err] (an expected failure a repository returned) reports
+  /// as itself.
+  ///
+  /// `isLoading` is checked first and wins outright, even when a previous
+  /// [Err] is still sitting in [value] (Riverpod carries the last value
+  /// through a reload). A retry in flight means "we don't know yet," not
+  /// "still failing" — so this deliberately goes quiet rather than keep
+  /// reporting a failure a fresh attempt might be about to resolve.
+  Failure? get loadFailure {
+    if (isLoading) return null;
+    if (hasError) return const Failure.unexpected();
+    return value?.failureOrNull;
+  }
+}

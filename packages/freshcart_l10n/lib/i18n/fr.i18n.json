@@ -2,7 +2,6 @@
   "appName": "FreshCart",
   "lists": {
     "title": "Mes listes",
-    "allLists": "Toutes les listes",
     "empty": "Pas encore de listes. Créez-en une pour commencer.",
     "create": "Nouvelle liste",
     "join": "Rejoindre une liste avec un code",
@@ -13,6 +12,8 @@
     },
     "emptyTitle": "Pas encore de listes",
     "emptyBody": "Créez-en une pour votre foyer, ou rejoignez une liste partagée avec vous.",
+    "settingsTitle": "Paramètres de la liste",
+    "nameLabel": "Nom de la liste",
     "rename": "Renommer",
     "leave": "Quitter la liste",
     "leaveConfirmTitle": "Quitter cette liste ?",

@@ -84,26 +84,33 @@ void main() {
       expect(find.byType(FloatingActionButton), findsNothing);
     });
 
-    testWidgets('lists the user\'s lists with a member count', (tester) async {
-      repository.myListsResult = Ok([
-        buildList(name: 'Groceries', members: [buildMember()]),
-        buildList(
+    testWidgets(
+      'redirects straight into the first list, never showing a browser',
+      (tester) async {
+        final groceries = buildList(
+          name: 'Groceries',
+          members: [buildMember()],
+        );
+        final hardware = buildList(
           id: '00000000-0000-4000-8000-000000000002',
           name: 'Hardware',
           members: [
             buildMember(),
             buildMember(userId: 'user-2'),
           ],
-        ),
-      ]);
+        );
+        repository.myListsResult = Ok([groceries, hardware]);
+        repository.byIdResult = Ok(groceries);
 
-      await pump(tester);
+        await pump(tester);
 
-      expect(find.text('Groceries'), findsOneWidget);
-      expect(find.text('Hardware'), findsOneWidget);
-      expect(find.text('1 member'), findsOneWidget);
-      expect(find.text('2 members'), findsOneWidget);
-    });
+        // Landed on Groceries' own detail screen directly -- there is no
+        // separate "all lists" screen to have tapped through first, and
+        // Hardware's own name never renders anywhere on screen.
+        expect(find.widgetWithText(AppBar, 'Groceries'), findsOneWidget);
+        expect(find.text('Hardware'), findsNothing);
+      },
+    );
 
     testWidgets('shows a localized message when the fetch fails', (
       tester,
@@ -216,8 +223,6 @@ void main() {
       repository.byIdResult = Ok(list);
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       // The header title itself became the field -- no sheet, no dialog.
       await tester.tap(find.text('Groceries'));
@@ -246,8 +251,6 @@ void main() {
       );
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Groceries'));
       await tester.pumpAndSettle();
@@ -288,8 +291,6 @@ void main() {
       ]);
 
       await pump(tester, currentUserId: 'user-1');
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       await tester.tap(find.byType(PopupMenuButton<void>));
       await tester.pumpAndSettle();
@@ -306,23 +307,29 @@ void main() {
         reason: 'the count is why a bare "everything on it" is not enough',
       );
 
+      // A real backend's own post-delete refresh would no longer return
+      // this list -- update the fake to match, since ListsController.delete
+      // refreshes its own state as part of a successful delete.
+      repository.myListsResult = const Ok([]);
       await tester.tap(find.text('Delete for everyone'));
       await tester.pumpAndSettle();
 
       expect(repository.deleteCalls.single, list.id);
-      expect(find.text('My lists'), findsOneWidget);
+      // Nothing left to redirect to -- the real empty state, not a screen
+      // that no longer exists.
+      expect(find.text('No lists yet'), findsOneWidget);
     });
   });
 
   group('navigation', () {
-    testWidgets('tapping a list opens its detail screen', (tester) async {
+    testWidgets('the household avatar opens the household screen', (
+      tester,
+    ) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
       repository.myListsResult = Ok([list]);
       repository.byIdResult = Ok(list);
 
       await pump(tester, currentUserId: 'user-1');
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       expect(find.text('Groceries'), findsOneWidget);
 
@@ -350,8 +357,6 @@ void main() {
       repository.byIdResult = Ok(groceries);
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
@@ -378,8 +383,6 @@ void main() {
       repository.byIdResult = Ok(list);
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       await tester.tap(find.byIcon(Icons.menu));
       await tester.pumpAndSettle();
@@ -396,8 +399,6 @@ void main() {
       repository.byIdResult = const Err(Failure.unauthorized());
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       // The screen tier, not a message in the body: without the list there is
       // no screen left to render, so it is replaced outright.
@@ -414,16 +415,19 @@ void main() {
       repository.byIdResult = const Err(Failure.notFound());
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
 
       expect(find.text('This list was deleted'), findsOneWidget);
 
+      // A real backend's refresh (onExit refreshes before navigating, see
+      // list_detail_screen.dart) would no longer return a list that was
+      // just reported deleted -- update the fake to match.
+      repository.myListsResult = const Ok([]);
       await tester.tap(find.text('Back to your lists'));
       await tester.pumpAndSettle();
 
-      // Back on the lists screen, not stranded.
-      expect(find.text('My lists'), findsOneWidget);
+      // Nothing left to redirect to -- the real empty state, not stranded
+      // on a screen that no longer exists.
+      expect(find.text('No lists yet'), findsOneWidget);
     });
 
     testWidgets(
@@ -435,8 +439,6 @@ void main() {
         addTearDown(repository.dispose);
 
         await pump(tester, currentUserId: 'user-1');
-        await tester.tap(find.text('Groceries'));
-        await tester.pumpAndSettle();
         await tester.tap(find.byType(CircleAvatar));
         await tester.pumpAndSettle();
         expect(find.text('Mom'), findsNothing);
@@ -473,8 +475,6 @@ void main() {
       ]);
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
     }
 
     testWidgets(
@@ -570,8 +570,6 @@ void main() {
       ]);
 
       await pump(tester);
-      await tester.tap(find.text('Groceries'));
-      await tester.pumpAndSettle();
     }
 
     testWidgets(

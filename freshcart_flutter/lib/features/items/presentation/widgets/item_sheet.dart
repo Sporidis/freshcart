@@ -143,7 +143,9 @@ class _ItemSheetState extends State<ItemSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.isEditing ? t.items.editProductTitle : t.items.newProductTitle,
+            widget.isEditing
+                ? t.items.editProductTitle
+                : t.items.newProductTitle,
             style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: AppSpacing.gap),

@@ -265,10 +265,17 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
               builder: (context, constraints) => AnimatedBuilder(
                 animation: _reveal,
                 builder: (context, child) {
+                  // "260ms, easeOutQuint on width" (§09) -- _reveal itself
+                  // runs linearly (AnimationController has no curve of its
+                  // own); everything riding its progress curves through
+                  // AppMotion.sheet instead of the raw value, so the roll
+                  // decelerates into place rather than moving at a constant
+                  // rate the whole way.
+                  final openness = AppMotion.sheet.transform(_reveal.value);
                   final width = lerpDouble(
                     _diameter,
                     constraints.maxWidth,
-                    _reveal.value,
+                    openness,
                   )!;
                   // The pill's own fill: shop-coloured at rest, plain surface
                   // once open -- "flattens into the sheet-adjacent surface"
@@ -277,9 +284,9 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
                   final fill = Color.lerp(
                     shopColor,
                     theme.colorScheme.surface,
-                    _reveal.value,
+                    openness,
                   )!;
-                  final borderAlpha = _reveal.value.clamp(0.0, 1.0);
+                  final borderAlpha = openness.clamp(0.0, 1.0);
                   return Align(
                     alignment: Alignment.centerRight,
                     child: SizedBox(
@@ -300,12 +307,13 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
                         ),
                         child: Row(
                           children: [
-                            if (_reveal.value > 0)
+                            if (openness > 0)
                               Expanded(
                                 child: Opacity(
-                                  // Text only fades in past the point the pill
-                                  // has room to show it without clipping.
-                                  opacity: ((_reveal.value - 0.4) / 0.6).clamp(
+                                  // "Placeholder text fades in over the last
+                                  // 40%" (§09) -- the pill needs room to show
+                                  // it without clipping first.
+                                  opacity: ((openness - 0.6) / 0.4).clamp(
                                     0.0,
                                     1.0,
                                   ),
@@ -381,7 +389,14 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
                                   icon: AnimatedRotation(
                                     turns: _showsPlus ? 0 : 0.125,
                                     duration: AppMotion.quick,
-                                    curve: AppMotion.enter,
+                                    // "easeOutBack on the glyph rotation"
+                                    // (§09) -- the same overshoot AppMotion.pop
+                                    // already names for exactly this kind of
+                                    // "settles with a small bounce" motion.
+                                    curve: AppMotion.curveFor(
+                                      context,
+                                      AppMotion.pop,
+                                    ),
                                     child: Icon(Icons.add, color: glyphColor),
                                   ),
                                 ),

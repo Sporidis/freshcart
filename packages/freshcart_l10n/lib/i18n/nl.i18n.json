@@ -2,7 +2,6 @@
   "appName": "FreshCart",
   "lists": {
     "title": "Mijn lijsten",
-    "allLists": "Alle lijsten",
     "empty": "Nog geen lijsten. Maak er een om te beginnen.",
     "create": "Nieuwe lijst",
     "join": "Lijst toevoegen met code",
@@ -13,6 +12,8 @@
     },
     "emptyTitle": "Nog geen lijsten",
     "emptyBody": "Begin er een voor je huishouden, of sluit je aan bij een gedeelde lijst.",
+    "settingsTitle": "Lijstinstellingen",
+    "nameLabel": "Lijstnaam",
     "rename": "Naam wijzigen",
     "leave": "Lijst verlaten",
     "leaveConfirmTitle": "Deze lijst verlaten?",

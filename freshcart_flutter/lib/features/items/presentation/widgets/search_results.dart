@@ -70,10 +70,9 @@ class SearchResults extends ConsumerWidget {
       );
     }
 
-    final shops = switch (ref.watch(shopsControllerProvider(list.id))) {
-      AsyncOutcome<List<Shop>>(value: Ok<List<Shop>>(:final value)) => value,
-      _ => const <Shop>[],
-    };
+    final shops =
+        ref.watch(shopsControllerProvider(list.id)).dataOrNull ??
+        const <Shop>[];
     Color? dotFor(ShopId? shopId) {
       if (shopId == null) return null;
       final shop = shops.where((s) => s.id == shopId).firstOrNull;
