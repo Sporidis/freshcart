@@ -1071,3 +1071,244 @@ pop, at every call site (both of `ListsDrawer`'s new rows, and all four existing
 out on its own: this is exactly the kind of bug `CLAUDE.md`'s "tests live beside the phase that
 adds the feature" rule is for — it would not have been caught by `flutter analyze`, only by
 actually driving the interaction.
+
+## 67. The completion celebration gets its confetti back — #61's "no confetti" was an under-build, not a recorded trade-off
+
+**Decision:** `CompletionCelebrationCard` (decisions #61) shipped as a card with no particle
+effect, and its own doc comment said so — "no confetti or full-screen takeover" — as if that were
+a considered simplification. It wasn't recorded as one here, though, and re-reading the Motion &
+Interaction Spec's §09 ("Signature moment — completing the whole list") directly, it's explicit and
+fairly precise: *"400ms: Confetti, but restrained: 14–20 particles in the list's shop colours
+only, gravity fall, 1.4s, no repeat. Skip entirely if reduced-motion is on."* That's not an
+invitation to interpret loosely — the spec calls this "the one place the app is allowed to be
+theatrical," and then immediately hedges it with exact bounds. Skipping it was a quiet scope cut,
+not a design call, so it's fixed now rather than left as a permanent gap with no justification
+behind it.
+
+**Revised after hands-on testing:** the spec's literal 14–20-particle count, spawning just above
+the screen and gently raining in, read as sparse and flat in practice — not the "one place the app
+is allowed to be theatrical" the spec itself calls it. Two changes, not just "add more": particles
+now spawn already spread across the top ~22% of the screen (a burst that's partly in view the
+instant it fires, not one that has to scroll on from off-screen first) with a stronger initial
+sideways/upward kick, and each one now tumbles — a second, independent rotation (`flip`) drives a
+`canvas.scale(cos(flip), 1)` squash, so a piece reads as flipping end-over-end like a real card
+catching the light, not spinning flat like a coin on a table. The count went up too (roughly
+24–36, from 14–20) but that came second — motion and spawn shape were the bigger lever, and are
+worth understanding before reaching for "more particles" as a first move next time.
+
+**`ConfettiBurst.fire`** is a static, one-shot call, not a widget you mount — it inserts its own
+`OverlayEntry`, drives its own `Ticker`, and removes both when the 1.4s is up. Kept out of the
+widget tree deliberately: nothing about a fire-and-forget visual event should need a
+`StatefulWidget`'s lifecycle wired into `CompletionCelebrationCard` just to clean itself up.
+Physics (`ConfettiParticle.tick`) is a plain, `Canvas`-free method — position and velocity in,
+position and velocity out — kept separate from `_ConfettiPainter` so the "is this actually gravity"
+question never depends on how it's drawn.
+
+**"The list's shop colours only"** is read as `ItemsSection`'s own `shops` for this list, not
+every colour the app knows about — a shopless list (nothing tagged) falls back to
+`AppColors.presetShopColors` rather than the confetti call silently receiving an empty palette
+and rendering nothing. Colours are handed to `CompletionCelebrationCard` as a parameter rather than
+re-derived inside it, so the card never needs its own opinion about that fallback — `ItemsSection`
+already owns it for the rest of the screen (the shop tab strip, the add sheet).
+
+**Reduced motion** is checked once, at the call site inside `CompletionCelebrationCard`'s existing
+`AppMotion.reduced(context)` branch — the same branch that already decides between the spring
+entrance and a static appearance — rather than duplicating that check inside `ConfettiBurst`
+itself. A static utility method deciding motion-preference on its own would be a second source of
+truth for the same question this widget already answers once per build.
+
+**A second real bug, this time a leak, also caught by a test rather than by reading the code:**
+the first version of `ConfettiBurst.fire` started its own `Ticker` with no link back to whatever
+widget triggered it. `flutter test` refused to let a later, unrelated preview test run after the
+completion-celebration one — "An animation is still running even after the widget tree was
+disposed" — because nothing had told the confetti's `Ticker` to stop when
+`CompletionCelebrationCard` (and, in the preview test's case, its whole screen) got disposed
+before the 1.4s naturally finished. Fixed by having `fire` return a `ConfettiBurstHandle`, which
+`_CompletionCelebrationCardState.dispose()` cancels — one shared `finish()` closure serves both
+the natural end-of-burst path and an early cancel, guarded so whichever fires first is the only
+one that actually tears down the `Ticker`/`OverlayEntry`. Same lesson as the `ProviderContainer`
+bug below: this is a runtime lifecycle problem `flutter analyze` has no way to see, only a test
+that actually drives the widget through disposal.
+
+## 68. The "all lists" screen is gone — there was never a browser in the design, only a switcher
+
+**Decision:** `/lists` (`ListsScreen`) rendered a plain `ListTile` per list under a generic
+`AppBar` — early scaffolding, and it showed. Checking the actual design (`Flow Screens.dc.html`,
+Flow 10) rather than assumption: there is no "all lists" screen in it at all. Its own words —
+*"The drawer answers 'which list?' and nothing else — switching is one tap from anywhere"* — and
+its drawer mockup already shows the complete list-switching UI (remaining counts, avatars,
+New list/Join a list/Manage shops/Settings), which decisions #65 had already built. `ListsScreen`
+was never actually part of the intended design; it just predated the drawer taking over its job
+and was never revisited.
+
+**What's left at `/lists`, and why it isn't simply deleted:** the route is still real, because two
+things about it are. First, it's still the parent route for `/lists/:listId` and everything nested
+under it — removing the path would break every list detail URL. Second, one of its states *is* in
+the design: §11's "No lists yet" empty state, reachable only by deleting your last list. So
+`ListsScreen` now does exactly two things: while `listsControllerProvider` is still loading, and
+for that one genuine empty case. The instant there's at least one list, a `ref.listen` — the same
+one-shot listen-and-`context.go` idiom `SplashScreen` already uses for its own "decide where to
+actually go" job — sends the user straight into their first list's detail screen, and the
+populated `ListView` branch this screen used to have is gone; there is no path left to reach it.
+
+**A race worth naming, since it cost a debugging pass:** that `ref.listen` originally read
+`next.value` unconditionally. `ref.invalidateSelf()` (what every mutating method on
+`ListsController` calls after a successful write) deliberately keeps the *previous* value visible
+through `.value` while the refetch is in flight, so a list doesn't flash empty mid-reload. Deleting
+your only list therefore transitions through a loading state that still reports the old,
+now-stale, non-empty list — and an unguarded listener redirects on that stale value, straight back
+into the list that's mid-deletion, before the real (empty) result ever lands. Fixed by skipping the
+check entirely while `next.isLoading` is true; only a genuinely settled value is acted on. Two
+widget tests exercise this directly (deleting your last list, and a list someone else deletes while
+you're viewing it) rather than trusting that "it redirects" is enough — both go through the exact
+refresh-then-navigate sequence a real deletion does.
+
+**The "someone else deleted it while you were looking" case gets the same fix from a different
+angle.** `list_detail_screen.dart`/`household_screen.dart`'s `ErrorScreen.onExit` used to be a bare
+`context.go(Routes.lists)`. With the browser gone, that route now redirects using whatever
+`listsControllerProvider` currently has cached — and nothing had ever told that cache the
+now-inaccessible list should drop out of it, since the detection came from `listByIdProvider`'s own
+live stream, a completely different provider with no automatic link back. Left alone, "Back to
+your lists" would have silently bounced straight back into the same error. Fixed by having
+`onExit` call `listsControllerProvider.notifier.refresh()` (fire-and-forget, wrapped in
+`unawaited` — the navigation itself doesn't need to wait on it) immediately before navigating.
+
+**Two more mismatches removed for the same reason, not just the screen itself:** Settings'
+"Manage lists" row pushed straight to `Routes.lists` — a redundant door to a screen that shouldn't
+be a destination, and not a row the design's own Settings section has (Flow 10: "Settings stays
+one screen deep with four short groups; a household shopping app should never grow an admin
+console"). And the drawer's own "All lists" footer button, which did the same — doubly redundant,
+since the drawer already shows every list inline above it. Both removed; the drawer's own
+now-stale class doc comment (still describing a pre-#65 world where create/join "already have a
+home on `ListsScreen`") corrected to match what's actually true now.
+
+## 69. `ListSettingsScreen` — #68 was wrong to remove Settings' "Manage lists" row outright
+
+**Decision:** #68 concluded there was no "manage lists" concept in the design's Settings screen
+and removed the row entirely. That was incomplete research, not a design call — the actual
+mockup has "Manage lists" as a real row in Settings' "Lists & shops" group, sitting alongside
+"Manage shops" and "Household," and a fully-specified "List settings" screen exists too (name,
+Members, Behaviour, Leave/Delete at the bottom "alone... with a rule above them"). The row is
+restored, now pointing at a real screen rather than the removed browser.
+
+**What the design leaves genuinely unspecified:** it shows the Settings *row* and, separately, the
+destination *screen*, but never mocks up what sits between them when there is more than one list
+to choose from. Rather than invent a picker screen nothing in the design calls for, `ListSettingsScreen`
+is opened directly for `firstList` — the same convention `_ListsAndShopsSection` already uses for
+its sibling "Manage shops" and "Household" rows, both of which already treat "the first list" as
+the implicit current one. Consistent with existing choices beats inventing new UI to fill a gap
+the design never actually asked to be filled.
+
+**Members and shops are rows that open the existing screens, not sections rebuilt inline** (a
+choice made explicitly, not by default — see the human's own steer on this). The mockup draws
+member rows and a shop count directly on the List settings screen, merged into one view. But
+`HouseholdScreen` and `ManageShopsScreen` already exist, already work, and are already reached
+from elsewhere — rebuilding their content a second time here would be exactly the "second copy of
+a flow to keep in sync" this codebase has repeatedly avoided elsewhere (decisions #63, #65). The
+shop row shows a plain count (`shopsControllerProvider(listId).length`) rather than the mockup's
+"3 of 4" (shops actually used vs. total) — that ratio needs both items and shops loaded together
+to compute, a small new piece of derived state that wasn't the actual ask here and is a reasonable
+follow-up, not a silent gap.
+
+**`confirmDeleteList`/`confirmLeaveList` are now shared top-level functions**, extracted out of
+`_ListMenu` (`list_detail_screen.dart`) into `list_danger_zone_actions.dart`, rather than a second
+copy of both dialogs living on the new screen. Both still take a `WidgetRef`, not a
+`ProviderContainer` — unlike the drawer's create/join rows (decisions #65), nothing here pops the
+calling screen before the dialog resolves, so the `WidgetRef`-unmounted hazard that bug was about
+does not apply.
+
+**Deliberately missing: "Clear checked after shopping."** The mockup shows it as a toggle, but
+`ShoppingList` has no field for it, and "after shopping" is not yet a real, defined moment
+anywhere in the domain — it would need an actual decision (all items checked? every shop tab
+clear? something explicit a person taps?) plus a new field and a migration, not just a switch
+wired to a guess. Left out rather than guessed at; a real follow-up, not a silent gap, since the
+screen's own doc comment says so.
+
+## 70. Dark mode's unreadable buttons — a variable-name collision, not a design flaw
+
+**Decision:** `AppTheme._build` had a local `ink` variable meaning "whichever text colour suits
+this brightness" (white in dark mode, near-black in light) — correct for text, but three `on*`
+colour-scheme roles (`onPrimary`, `onSecondary`, `onTertiary`) reused that same local when the
+*neutral* theme (no active shop — the app's default state on most screens, since it only shifts to
+a shop's colour while a shop tab is actually selected) needed the fixed `AppColors.ink` instead.
+In dark mode this made `primary == onPrimary` (both white) and the same for `secondary`/`tertiary`
+— any `FilledButton`, `FloatingActionButton`, or checkbox reading those roles rendered background
+and foreground in the identical colour. Not a seed-colour contrast problem (`AppTheme.forShop`'s
+own `_onColorFor` luminance check, added earlier, already guards that correctly) — a plain
+copy-paste-shaped bug sitting right next to code that had the correct pattern (`buttonBg`/
+`buttonFg`, a few lines up, already computed this same "ink-on-paper, inverted per brightness"
+pairing correctly). Fixed by giving the "on" side its own `onNeutralPrimary` value, computed from
+`AppColors.ink` rather than the brightness-dependent local.
+
+**Never caught by any existing check:** `flutter analyze` has no way to see two `Color`s being
+equal — this is a runtime value bug, not a type or lint issue. Nothing in the test suite asserted
+anything about the theme's own internal contrast before now. Added
+`test/core/theme/app_theme_test.dart` — plain `test()`s (no widget pumping needed, since this is
+pure `ColorScheme` value inspection) asserting `primary != onPrimary` etc. for the neutral theme in
+both brightnesses, and for `AppTheme.forShop` across a spread of real colours including the
+edge cases most likely to break a luminance check (pure black, pure white). Exists specifically so
+this exact class of bug — two theme roles resolving to the same colour — cannot silently return.
+
+## 71. The add control was a docked bottom bar, not a floating one — and the whole-app re-theme ran on the wrong token
+
+**Decision:** Two separate visual mismatches, found by comparing the running app against Flow 09's
+own mockup and the motion spec's token table directly, rather than by screen-hunting.
+
+**The add control (`QuickAddBar`) was laid out as the last child of `ItemsSection`'s own `Column`**
+— a docked row sharing space with the item list, which shrank via `Expanded` to make room for it.
+Flow 09 calls it "the FAB" throughout and is explicit ("Bottom-right so it never sits under the
+reading path") that it floats *over* the list, not beside it. Fixed by restructuring
+`ItemsSection.build` into a `Stack`: the item list (loading/error/empty/search/populated, all of
+it) as a `Positioned.fill` base layer, and the completion celebration + add control as a
+`Positioned` overlay anchored to the bottom. `_ItemList`'s own `ListView` gained
+`padding: EdgeInsets.only(bottom: 84)` so its last rows clear the floating cluster instead of
+rendering underneath it — the inverse of before, where the list was *shrunk* to make room; now it
+fills the space and the floating cluster sits on top with clearance reserved for it.
+
+**Three motion details inside `QuickAddBar` didn't match §09's own frame-by-frame spec**, each
+checked against the design doc directly rather than assumed: the roll-open width animation ran on
+`_reveal`'s raw linear value (`AnimationController` has no curve of its own) where the spec calls
+for "260ms, easeOutQuint on width" — fixed by curving through `AppMotion.sheet` before using the
+value for width, fill colour, and border alpha, which all rode the same progress already. The
+glyph rotation used `AppMotion.enter` (`easeOutCubic`) where the spec calls for "easeOutBack" —
+fixed to `AppMotion.pop`, wrapped in `AppMotion.curveFor` so its overshoot still collapses under
+reduced motion, per the app's own stated rule. The placeholder text's fade-in window was `(x-0.4)
+/0.6` (a 60% window starting at 40% progress) where the spec says "fades in over the last 40%" (a
+40% window starting at 60%) — fixed to `(x-0.6)/0.4`.
+
+**The whole-app re-theme (`AnimatedTheme` in `app.dart`) ran on a hardcoded 400ms/`easeInOut`**,
+not any token from `AppMotion` at all. The motion spec's own duration/curve table assigns
+"colour tint" to `quick` (180ms, `easeOutCubic`) explicitly — the same token chip selection and
+row strike-through already use elsewhere in the app. More than double the duration, and a
+symmetric ease rather than the app's consistent asymmetric "fast in" convention, made the single
+biggest colour-tint moment (switching shop tabs re-themes the entire screen) run at a visibly
+different rhythm than every smaller colour-tint moment around it — the likely source of a
+transition that was hard to fault specifically but "didn't feel quite right." Fixed to
+`AppMotion.durationFor(context, AppMotion.quick)` / `AppMotion.enter`, which also closes a real
+accessibility gap the hardcoded value had: a fixed duration never respected reduced-motion at all,
+contradicting the motion spec's own "every non-essential animation checks this" rule.
+
+## 72. Welcome screen's preview mockup was hardcoded to light mode — the actual "white on white" was two colours from two different sources
+
+**Decision:** `_ListPreviewCard`, `_PreviewRow`, and `_ActivityBubble` (the tilted list mockup and
+"koliiin added pasta" bubble on the Welcome screen) were built entirely against fixed
+`AppColors.*Light` constants — never an `isDark ? ... : ...` branch, never `Theme.of(context)`, in
+any of the three. The reported symptom ("white font colour on white background") wasn't one bug,
+it was two independently-correct-looking pieces of code that stopped agreeing the moment dark mode
+was active: the card's own background stayed hardcoded light (a real, visible bug on its own —
+"bright white" in dark mode, per the human's first report), while the activity text beside it had
+*no* explicit colour and correctly inherited the screen's ambient, theme-aware text colour — white
+in dark mode, exactly like the headline text a few lines up in the same file already does
+correctly. Two things each doing something locally sensible produced white-on-white together.
+Fixed by making the card backgrounds, dividers, borders, and non-inherited text colours in all
+three widgets theme-aware (`theme.colorScheme.surface`/`onSurface`/`onSurfaceVariant`/
+`outlineVariant`), rather than patching the text colour alone — that would have hidden the
+symptom without fixing the actual bug (a card that still never left light mode).
+
+**Checked, not assumed, that this was isolated:** grepped the whole app for the same
+`AppColors.*Light` constants used outside `app_theme.dart` itself. Two other hits, both legitimate
+on inspection: `onboarding_continue_button.dart` already branches on `isDark` correctly, and
+`splash_screen.dart`'s use of `AppColors.bgLight` is against a fixed `AppColors.ink` background —
+a splash screen deliberately keeping the same ink-and-cream brand mark regardless of theme, not a
+missed dark-mode case. This bug's actual scope was exactly the three Welcome-screen mockup
+widgets, not a systemic pattern worth a wider sweep.

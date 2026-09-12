@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -30,25 +32,23 @@ class HouseholdScreen extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
     final list = ref.watch(listByIdProvider(listId));
 
-    final failure = switch (list) {
-      AsyncError<Result<ShoppingList>>() => const Failure.unexpected(),
-      AsyncOutcome<ShoppingList>(value: Err<ShoppingList>(:final failure)) =>
-        failure,
-      _ => null,
-    };
+    final failure = list.loadFailure;
     if (failure != null) {
       return ErrorScreen(
         failure: failure,
         t: t,
-        onExit: () => context.go(Routes.lists),
+        // See list_detail_screen.dart's identical onExit for why this
+        // refreshes first: /lists now redirects straight into whichever
+        // list comes first in the cached collection, so a stale cache
+        // still holding this now-gone list would just bounce back here.
+        onExit: () {
+          unawaited(ref.read(listsControllerProvider.notifier).refresh());
+          context.go(Routes.lists);
+        },
       );
     }
 
-    final loaded = switch (list) {
-      AsyncOutcome<ShoppingList>(value: Ok<ShoppingList>(:final value)) =>
-        value,
-      _ => null,
-    };
+    final loaded = list.dataOrNull;
 
     return Scaffold(
       appBar: AppBar(title: Text(t.household.title)),
@@ -68,10 +68,7 @@ class _Household extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final me = switch (ref.watch(currentUserIdProvider)) {
-      AsyncValue<Result<UserId>>(value: Ok<UserId>(:final value)) => value,
-      _ => null,
-    };
+    final me = ref.watch(currentUserIdProvider).dataOrNull;
     final iAmOwner = me != null && list.isOwnedBy(me);
 
     return ListView(

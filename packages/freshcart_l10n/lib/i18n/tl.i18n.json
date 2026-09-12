@@ -2,7 +2,6 @@
   "appName": "FreshCart",
   "lists": {
     "title": "Mga listahan ko",
-    "allLists": "Lahat ng listahan",
     "empty": "Wala pang listahan. Gumawa ng isa para makapagsimula.",
     "create": "Bagong listahan",
     "join": "Sumali sa listahan gamit ang code",
@@ -13,6 +12,8 @@
     },
     "emptyTitle": "Wala pang listahan",
     "emptyBody": "Magsimula ng isa para sa inyong bahay, o sumali sa listahang ibinahagi sa iyo.",
+    "settingsTitle": "Mga setting ng listahan",
+    "nameLabel": "Pangalan ng listahan",
     "rename": "Palitan ang pangalan",
     "leave": "Umalis sa listahan",
     "leaveConfirmTitle": "Aalis sa listahang ito?",

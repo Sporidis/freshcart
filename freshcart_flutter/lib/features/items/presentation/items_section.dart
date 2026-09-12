@@ -7,6 +7,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
@@ -54,11 +55,9 @@ class ItemsSection extends ConsumerWidget {
     final items = ref.watch(itemsControllerProvider(list.id));
     final controller = ref.read(itemsControllerProvider(list.id).notifier);
     final shopFilter = ref.watch(shopFilterProvider(list.id));
-    final shops = switch (ref.watch(shopsControllerProvider(list.id))) {
-      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
-        value,
-      _ => const <Shop>[],
-    };
+    final shops =
+        ref.watch(shopsControllerProvider(list.id)).dataOrNull ??
+        const <Shop>[];
     final activeShop = shopFilter == null
         ? null
         : shops.where((s) => s.id == shopFilter).firstOrNull;
@@ -70,11 +69,7 @@ class ItemsSection extends ConsumerWidget {
     // The completion celebration looks at *every* item on the list, not
     // just the active shop tab -- "all done" means the whole list, the same
     // way the design's own `allDone` check does.
-    final allItems = switch (items) {
-      AsyncOutcome<List<ShoppingItem>>(value: Ok<List<ShoppingItem>>(:final value)) =>
-        value,
-      _ => const <ShoppingItem>[],
-    };
+    final allItems = items.dataOrNull ?? const <ShoppingItem>[];
     final allDone = allItems.isNotEmpty && allItems.every((i) => i.isChecked);
     final celebrationDismissed = ref.watch(
       celebrationDismissedProvider(list.id),
@@ -85,11 +80,7 @@ class ItemsSection extends ConsumerWidget {
     // ready to show again the next time it actually applies, rather than
     // staying silenced by one long-ago tap.
     ref.listen(itemsControllerProvider(list.id), (previous, next) {
-      final nextItems = switch (next) {
-        AsyncOutcome<List<ShoppingItem>>(value: Ok<List<ShoppingItem>>(:final value)) =>
-          value,
-        _ => null,
-      };
+      final nextItems = next.dataOrNull;
       if (nextItems == null) return;
       final stillAllDone =
           nextItems.isNotEmpty && nextItems.every((i) => i.isChecked);
@@ -115,9 +106,16 @@ class ItemsSection extends ConsumerWidget {
       );
     }
 
-    return Column(
+    // A Stack, not a Column: Flow 09 calls this "the FAB" for a reason -- a
+    // real floating action button overlays scrollable content, it doesn't
+    // sit in its own docked row shrinking the list to make room. The list
+    // fills the whole area; the add control (and, above it, the completion
+    // celebration) floats on top, anchored to the bottom. _ItemList carries
+    // its own bottom padding so its last rows clear the floating cluster
+    // rather than rendering underneath it.
+    return Stack(
       children: [
-        Expanded(
+        Positioned.fill(
           child: switch (items) {
             AsyncLoading<Result<List<ShoppingItem>>>() => const Center(
               child: CircularProgressIndicator(),
@@ -165,64 +163,91 @@ class ItemsSection extends ConsumerWidget {
             },
           },
         ),
-        // Only once nothing else is competing for the bottom of the screen
-        // -- multi-select and search each have their own reason to hide the
-        // quick-add bar just below, and the same reasons apply here.
-        if (allDone && !celebrationDismissed && !selectionMode && !search.active)
-          CompletionCelebrationCard(
-            list: list,
-            itemCount: allItems.length,
-            t: t,
-            report: report,
-          ),
-        // Slides out during multi-select or search (§10, §16): neither
-        // leaves room for adding a fresh item the ordinary way -- search
-        // offers its own "Add to list" inside the no-results state instead.
-        AnimatedSize(
-          duration: AppMotion.durationFor(context, AppMotion.standard),
-          curve: AppMotion.enter,
-          child: selectionMode || search.active
-              ? const SizedBox(width: double.infinity)
-              : QuickAddBar(
-                  listId: list.id,
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: 0,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Only once nothing else is competing for the bottom of the
+              // screen -- multi-select and search each have their own
+              // reason to hide the quick-add bar just below, and the same
+              // reasons apply here.
+              if (allDone &&
+                  !celebrationDismissed &&
+                  !selectionMode &&
+                  !search.active)
+                CompletionCelebrationCard(
+                  list: list,
+                  itemCount: allItems.length,
+                  // "The list's shop colours only" (§09) — a shopless list
+                  // (every item untagged) has no such palette to draw from,
+                  // so the confetti falls back to the app's own preset
+                  // swatches rather than the celebration silently rendering
+                  // zero particles.
+                  shopColors: shops.isEmpty
+                      ? AppColors.presetShopColors
+                      : [for (final shop in shops) Color(shop.color.argb)],
                   t: t,
-                  activeShopName: activeShop?.name,
-                  onQuickAdd: (name) async {
-                    // Tags to whichever shop tab is active, the same as the
-                    // details sheet already does -- "Enter" is meant to be
-                    // the fast path to the same result, not a different one.
-                    final failure = await controller.add(
-                      name: name,
-                      shopId: shopFilter,
-                    );
-                    report(failure);
-                    return failure == null;
-                  },
-                  onOpenDetails: (name) async {
-                    final outcome = await showModalBottomSheet<ItemSheetOutcome>(
-                      context: context,
-                      isScrollControlled: true,
-                      showDragHandle: true,
-                      builder: (_) => ItemSheet.add(
-                        initialName: name,
-                        shops: shops,
-                        initialShopId: shopFilter,
-                        t: t,
-                      ),
-                    );
-                    // Only ItemSheetSave is reachable from .add -- there is
-                    // no Remove action to add a not-yet-created item.
-                    if (outcome is! ItemSheetSave) return false;
-                    final failure = await controller.add(
-                      name: outcome.name,
-                      quantity: outcome.quantity,
-                      shopId: outcome.shopId,
-                      noteText: outcome.noteText,
-                    );
-                    report(failure);
-                    return failure == null;
-                  },
+                  report: report,
                 ),
+              // Slides out during multi-select or search (§10, §16): neither
+              // leaves room for adding a fresh item the ordinary way --
+              // search offers its own "Add to list" inside the no-results
+              // state instead.
+              AnimatedSize(
+                duration: AppMotion.durationFor(context, AppMotion.standard),
+                curve: AppMotion.enter,
+                alignment: Alignment.topCenter,
+                child: selectionMode || search.active
+                    ? const SizedBox(width: double.infinity)
+                    : QuickAddBar(
+                        listId: list.id,
+                        t: t,
+                        activeShopName: activeShop?.name,
+                        onQuickAdd: (name) async {
+                          // Tags to whichever shop tab is active, the same as
+                          // the details sheet already does -- "Enter" is
+                          // meant to be the fast path to the same result, not
+                          // a different one.
+                          final failure = await controller.add(
+                            name: name,
+                            shopId: shopFilter,
+                          );
+                          report(failure);
+                          return failure == null;
+                        },
+                        onOpenDetails: (name) async {
+                          final outcome =
+                              await showModalBottomSheet<ItemSheetOutcome>(
+                                context: context,
+                                isScrollControlled: true,
+                                showDragHandle: true,
+                                builder: (_) => ItemSheet.add(
+                                  initialName: name,
+                                  shops: shops,
+                                  initialShopId: shopFilter,
+                                  t: t,
+                                ),
+                              );
+                          // Only ItemSheetSave is reachable from .add --
+                          // there is no Remove action to add a
+                          // not-yet-created item.
+                          if (outcome is! ItemSheetSave) return false;
+                          final failure = await controller.add(
+                            name: outcome.name,
+                            quantity: outcome.quantity,
+                            shopId: outcome.shopId,
+                            noteText: outcome.noteText,
+                          );
+                          report(failure);
+                          return failure == null;
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ],
     );
@@ -268,11 +293,9 @@ class _ItemList extends ConsumerWidget {
     // The shop dot shows on every row, filtered tab or not -- the design's
     // own reference screens carry it even on a single shop's tab, not just
     // "All" (confirmed against the mockup rather than assumed).
-    final shops = switch (ref.watch(shopsControllerProvider(list.id))) {
-      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
-        value,
-      _ => const <Shop>[],
-    };
+    final shops =
+        ref.watch(shopsControllerProvider(list.id)).dataOrNull ??
+        const <Shop>[];
     Color? dotFor(ShopId? shopId) {
       if (shopId == null) return null;
       final shop = shops.where((s) => s.id == shopId).firstOrNull;
@@ -338,7 +361,12 @@ class _ItemList extends ConsumerWidget {
             return;
           case ItemSheetRemove():
             report(await controller.remove(item));
-          case ItemSheetSave(:final name, :final quantity, :final shopId, :final noteText):
+          case ItemSheetSave(
+            :final name,
+            :final quantity,
+            :final shopId,
+            :final noteText,
+          ):
             report(
               await controller.edit(
                 item,
@@ -415,6 +443,10 @@ class _ItemList extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
+        // Clears the floating add control (56px resting circle + its own
+        // margins) sitting on top of this list -- without it the last rows
+        // render underneath the FAB rather than being reachable above it.
+        padding: const EdgeInsets.only(bottom: 84),
         children: [
           openSection(),
           if (done.isNotEmpty) ...[
@@ -470,14 +502,8 @@ class _ItemsEmptyState extends ConsumerWidget {
       );
     }
 
-    final shop = switch (ref.watch(shopsControllerProvider(listId))) {
-      AsyncOutcome<List<Shop>>(:final value?) => switch (value) {
-        Ok<List<Shop>>(value: final shops) =>
-          shops.where((s) => s.id == shopFilter).firstOrNull,
-        Err<List<Shop>>() => null,
-      },
-      _ => null,
-    };
+    final shops = ref.watch(shopsControllerProvider(listId)).dataOrNull;
+    final shop = shops?.where((s) => s.id == shopFilter).firstOrNull;
     if (shop == null) {
       return EmptyState(
         icon: Icons.shopping_basket_outlined,

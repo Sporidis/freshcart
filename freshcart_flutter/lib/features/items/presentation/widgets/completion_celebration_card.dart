@@ -8,22 +8,25 @@ import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/celebration_dismissed_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/confetti_burst.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// "Everything on this list is checked off" — one raised card, two ways
-/// forward, no confetti or full-screen takeover.
+/// "Everything on this list is checked off" — one raised card, plus the
+/// restrained confetti burst §09 of the motion spec calls for.
 ///
 /// Named `celebrate` in the motion spec (§13, `AppMotion.celebrate`,
 /// `AppMotion.spring`) as the one moment in the app allowed to feel like an
 /// event — everywhere else, motion stays quick and gets out of the way.
 /// Reduced motion (`AppMotion.reduced`) turns the spring pop into a plain,
-/// static appearance, per the spec's own fallback note for this exact card.
+/// static appearance and skips the confetti burst entirely, per the spec's
+/// own fallback note for this exact card.
 class CompletionCelebrationCard extends ConsumerStatefulWidget {
   /// Creates the card for [list], which currently has [itemCount] items, all
   /// checked.
   const CompletionCelebrationCard({
     required this.list,
     required this.itemCount,
+    required this.shopColors,
     required this.t,
     required this.report,
     super.key,
@@ -36,6 +39,13 @@ class CompletionCelebrationCard extends ConsumerStatefulWidget {
   /// hands over the number it already had rather than this card re-deriving
   /// it from a second watch of the same provider.
   final int itemCount;
+
+  /// The palette the confetti burst draws from — "the list's shop colours
+  /// only" per the motion spec, not an app-wide default. Handed in rather
+  /// than re-derived here so this widget never needs its own opinion about
+  /// what a shopless list falls back to; `ItemsSection` already owns that
+  /// call for the rest of the screen.
+  final List<Color> shopColors;
 
   /// Translations for the active locale.
   final Translations t;
@@ -57,6 +67,11 @@ class _CompletionCelebrationCardState
     value: 0,
   );
 
+  // Held so dispose() can cancel a still-running burst -- otherwise its
+  // Ticker has no idea this widget (and the confetti it started) is going
+  // away before the 1.4s finishes on its own.
+  ConfettiBurstHandle? _confetti;
+
   @override
   void initState() {
     super.initState();
@@ -68,12 +83,16 @@ class _CompletionCelebrationCardState
         _entrance.value = 1;
       } else {
         _entrance.animateWith(SpringSimulation(AppMotion.spring, 0, 1, 0));
+        // "Skip entirely if reduced-motion is on" (§09) — the branch above
+        // already means this line is only reached when it isn't.
+        _confetti = ConfettiBurst.fire(context, colors: widget.shopColors);
       }
     });
   }
 
   @override
   void dispose() {
+    _confetti?.cancel();
     _entrance.dispose();
     super.dispose();
   }
@@ -171,6 +190,7 @@ Widget completionCelebrationCardPreview() => previewPiece(
   CompletionCelebrationCard(
     list: buildPreviewList(),
     itemCount: 6,
+    shopColors: const [Colors.orange, Colors.teal, Colors.purple],
     t: previewTranslations,
     report: (_) {},
   ),

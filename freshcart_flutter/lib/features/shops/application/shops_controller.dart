@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_use_case_providers.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -92,11 +93,7 @@ HexColor? activeShopColor(Ref ref, ListId listId) {
   if (filter == null) return null;
 
   final shops = ref.watch(shopsControllerProvider(listId));
-  final loaded = switch (shops) {
-    AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
-      value,
-    _ => const <Shop>[],
-  };
+  final loaded = shops.dataOrNull ?? const <Shop>[];
   for (final shop in loaded) {
     if (shop.id == filter) return shop.color;
   }

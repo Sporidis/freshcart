@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
@@ -25,24 +26,16 @@ class ShopFilterBar extends ConsumerWidget {
     final shops = ref.watch(shopsControllerProvider(listId));
     final selected = ref.watch(shopFilterProvider(listId));
 
-    final loaded = switch (shops) {
-      AsyncValue<Result<List<Shop>>>(value: Ok<List<Shop>>(:final value)) =>
-        value,
-      _ => const <Shop>[],
-    };
+    final loaded = shops.dataOrNull ?? const <Shop>[];
     // Nothing to filter by yet — a single "all shops" chip would be noise.
     if (loaded.isEmpty) return const SizedBox.shrink();
 
     // Remaining, not total: the count answers "how much is left to find in
     // here?", so a checked-off item should make it tick down. It hides at
     // zero rather than showing "0", which would read as a broken badge.
-    final items = switch (ref.watch(itemsControllerProvider(listId))) {
-      AsyncValue<Result<List<ShoppingItem>>>(
-        value: Ok<List<ShoppingItem>>(:final value),
-      ) =>
-        value,
-      _ => const <ShoppingItem>[],
-    };
+    final items =
+        ref.watch(itemsControllerProvider(listId)).dataOrNull ??
+        const <ShoppingItem>[];
     int remainingIn(ShopId? shop) => items
         .where((item) => !item.isChecked && item.matchesShopFilter(shop))
         .length;

@@ -212,13 +212,24 @@ class AppTheme {
     // chip) is the colour itself, matching the dot and chip that show it.
     final primary = isNeutralTheme ? ink : seed;
     final subtleSurface = isDark ? AppColors.subtleDark : AppColors.subtleLight;
+    // Ink-on-paper both modes, matching buttonBg/buttonFg above: light mode
+    // is a near-black primary with white "on" content; dark mode inverts to
+    // a white primary with near-black "on" content. Deliberately
+    // `AppColors.ink` here, not the local `ink` variable a few lines up --
+    // that local is "whichever text colour suits this brightness" (white in
+    // dark mode), so using it for onPrimary/onSecondary/onTertiary made
+    // `primary == onPrimary` (both white) in dark mode with no shop active,
+    // which is the app's default state on most screens. Background and
+    // foreground being the same colour is why a FilledButton/FAB/checkbox
+    // in dark mode read as "unreadable" rather than merely off-brand.
+    final onNeutralPrimary = isDark ? AppColors.ink : Colors.white;
     final scheme = generatedScheme.copyWith(
       primary: primary,
-      onPrimary: isNeutralTheme ? (isDark ? ink : Colors.white) : _onColorFor(primary),
+      onPrimary: isNeutralTheme ? onNeutralPrimary : _onColorFor(primary),
       secondary: isNeutralTheme ? ink : generatedScheme.secondary,
-      onSecondary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
+      onSecondary: isNeutralTheme ? onNeutralPrimary : null,
       tertiary: isNeutralTheme ? ink : generatedScheme.tertiary,
-      onTertiary: isNeutralTheme ? (isDark ? ink : Colors.white) : null,
+      onTertiary: isNeutralTheme ? onNeutralPrimary : null,
       surface: surface,
       onSurface: ink,
       error: AppColors.destructive,

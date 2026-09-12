@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
@@ -17,14 +16,9 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final user = ref.watch(currentUserProvider);
-    final firstList = switch (ref.watch(listsControllerProvider)) {
-      AsyncOutcome<List<ShoppingList>>(
-        value: Ok<List<ShoppingList>>(:final value),
-      )
-          when value.isNotEmpty =>
-        value.first,
-      _ => null,
-    };
+    final account = user.dataOrNull;
+    final lists = ref.watch(listsControllerProvider).dataOrNull ?? const [];
+    final firstList = lists.isEmpty ? null : lists.first;
 
     return Scaffold(
       appBar: AppBar(
@@ -35,11 +29,9 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
           ProfileHeader(user: user, t: t),
-          switch (user) {
-            AsyncValue<Result<AuthUser>>(value: Ok<AuthUser>(:final value)) =>
-              AccountCard(user: value, t: t),
-            _ => const SizedBox.shrink(),
-          },
+          account == null
+              ? const SizedBox.shrink()
+              : AccountCard(user: account, t: t),
           const SizedBox(height: 12),
           ListsAndShopsSection(t: t, firstList: firstList),
           const SizedBox(height: 12),

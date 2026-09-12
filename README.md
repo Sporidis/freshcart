@@ -19,7 +19,9 @@ written justification in [`docs/decisions.md`](docs/decisions.md).
 | `freshcart_web`             | Jaspr marketing site (SSG). Resolves independently — see below.             |
 
 Read [`docs/architecture.md`](docs/architecture.md) before touching `packages/` or any
-feature's `data/` layer, and [`docs/build-plan.md`](docs/build-plan.md) for build order.
+feature's `data/` layer, [`docs/build-plan.md`](docs/build-plan.md) for build order, and
+[`docs/dev-guide.md`](docs/dev-guide.md) for day-to-day commands, testing conventions, and
+how to open the widget preview gallery.
 
 ## First-time setup
 

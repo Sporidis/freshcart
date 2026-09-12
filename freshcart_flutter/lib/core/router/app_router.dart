@@ -3,6 +3,7 @@ import 'package:freshcart_flutter/features/auth/presentation/edit_profile_screen
 import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
+import 'package:freshcart_flutter/features/lists/presentation/list_settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
@@ -36,6 +37,13 @@ abstract final class Routes {
 
   /// The concrete path for [listId]'s shops.
   static String manageShops(ListId listId) => '/lists/${listId.value}/shops';
+
+  /// The path pattern for one list's own settings screen.
+  static const String listSettingsPattern = 'settings';
+
+  /// The concrete path for [listId]'s settings.
+  static String listSettings(ListId listId) =>
+      '/lists/${listId.value}/settings';
 
   /// Account-level settings, not scoped to any one list.
   static const String settings = '/settings';
@@ -125,6 +133,14 @@ GoRouter appRouter(Ref ref) => GoRouter(
                 final raw = state.pathParameters['listId'];
                 if (raw == null || raw.isEmpty) return const ListsScreen();
                 return ManageShopsScreen(listId: ListId(raw));
+              },
+            ),
+            GoRoute(
+              path: Routes.listSettingsPattern,
+              builder: (context, state) {
+                final raw = state.pathParameters['listId'];
+                if (raw == null || raw.isEmpty) return const ListsScreen();
+                return ListSettingsScreen(listId: ListId(raw));
               },
             ),
           ],

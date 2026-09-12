@@ -20,6 +20,7 @@ import 'package:freshcart_flutter/features/items/application/selection_controlle
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
@@ -90,17 +91,23 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     // A failed *load* is the screen tier: the list is what this route is for,
     // so without it there is no screen to decorate with an error message.
     // It replaces the Scaffold rather than sitting inside its body.
-    final loadFailure = switch (list) {
-      AsyncError<Result<ShoppingList>>() => const Failure.unexpected(),
-      AsyncOutcome<ShoppingList>(value: Err<ShoppingList>(:final failure)) =>
-        failure,
-      _ => null,
-    };
+    final loadFailure = list.loadFailure;
     if (loadFailure != null) {
       return ErrorScreen(
         failure: loadFailure,
         t: t,
-        onExit: () => context.go(Routes.lists),
+        // Refreshed before navigating, not just after: /lists now redirects
+        // straight to whichever list comes first in listsControllerProvider
+        // (there is no browser screen to land on any more), so if this
+        // list's own disappearance never made it into that cached
+        // collection, the redirect would just bounce straight back into the
+        // same error — refreshing first is what lets it find a different,
+        // still-valid list instead (or the real empty state, if none are
+        // left).
+        onExit: () {
+          unawaited(ref.read(listsControllerProvider.notifier).refresh());
+          context.go(Routes.lists);
+        },
       );
     }
 
@@ -117,11 +124,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       ref.read(activeSeedColorProvider.notifier).select(next);
     });
 
-    final loaded = switch (list) {
-      AsyncOutcome<ShoppingList>(value: Ok<ShoppingList>(:final value)) =>
-        value,
-      _ => null,
-    };
+    final loaded = list.dataOrNull;
 
     final selection = ref.watch(selectionControllerProvider(listId));
     final selectionMode = selection.isNotEmpty;
@@ -324,10 +327,7 @@ class _MemberAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = switch (ref.watch(currentUserIdProvider)) {
-      AsyncValue<Result<UserId>>(value: Ok<UserId>(:final value)) => value,
-      _ => null,
-    };
+    final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
     final me = currentUser == null
         ? null
         : list.members.where((m) => m.userId == currentUser).firstOrNull;
@@ -370,10 +370,7 @@ class _ListMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = switch (ref.watch(currentUserIdProvider)) {
-      AsyncValue<Result<UserId>>(value: Ok<UserId>(:final value)) => value,
-      _ => null,
-    };
+    final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
     // Until the identity resolves, assume membership rather than ownership:
     // the reversible action is the safe default to offer.
     final isOwner = currentUser != null && list.isOwnedBy(currentUser);
@@ -391,103 +388,15 @@ class _ListMenu extends ConsumerWidget {
         // by somebody who only meant to walk away from it.
         if (isOwner)
           PopupMenuItem<void>(
-            onTap: () => _confirmDelete(context, ref),
+            onTap: () => confirmDeleteList(context, ref, list, t),
             child: Text(t.lists.delete),
           )
         else
           PopupMenuItem<void>(
-            onTap: () => _confirmLeave(context, ref),
+            onTap: () => confirmLeaveList(context, ref, list, t),
             child: Text(t.lists.leave),
           ),
       ],
     );
-  }
-
-  /// Deleting names the list, its member count and its item count, and is
-  /// not undoable.
-  ///
-  /// The item count comes from [itemsControllerProvider], already watched by
-  /// [ItemsSection] on this same screen — reading it here is free, not a
-  /// second fetch. It is a plain read rather than a watch: the dialog is
-  /// built once, when it opens, and does not need to react to a count that
-  /// changes while it is up.
-  ///
-  /// A dialog rather than a snackbar with an undo, because there is nothing to
-  /// undo: this one is genuinely permanent, so it is worth interrupting for.
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final itemCount = switch (ref.read(itemsControllerProvider(list.id))) {
-      AsyncValue<Result<List<ShoppingItem>>>(
-        value: Ok<List<ShoppingItem>>(:final value),
-      ) =>
-        value.length,
-      _ => 0,
-    };
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.lists.deleteConfirmTitle(name: list.name)),
-        content: Text(
-          t.lists.deleteConfirmBody(items: itemCount, n: list.members.length),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.destructive,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(t.lists.deleteForEveryone),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final result = await ref
-        .read(listsControllerProvider.notifier)
-        .delete(list.id);
-    if (!context.mounted) return;
-    switch (result) {
-      case Ok<void>():
-        context.go(Routes.lists);
-      case Err<void>(:final failure):
-        showFailureSnackBar(context, failure: failure, t: t);
-    }
-  }
-
-  Future<void> _confirmLeave(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(t.lists.leaveConfirmTitle),
-        content: Text(t.lists.leaveConfirmBody(name: list.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(t.common.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(t.lists.leave),
-          ),
-        ],
-      ),
-    );
-    if (confirmed != true || !context.mounted) return;
-
-    final result = await ref
-        .read(listsControllerProvider.notifier)
-        .leave(list.id);
-    if (!context.mounted) return;
-    switch (result) {
-      case Ok<void>():
-        context.go(Routes.lists);
-      case Err<void>(:final failure):
-        showFailureSnackBar(context, failure: failure, t: t);
-    }
   }
 }

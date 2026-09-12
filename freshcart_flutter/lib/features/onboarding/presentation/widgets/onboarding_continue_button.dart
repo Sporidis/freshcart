@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
 
@@ -79,8 +79,10 @@ class OnboardingContinueButton extends ConsumerWidget {
                           final result = await controller.submit();
                           if (!context.mounted) return;
                           if (result case Err(:final failure)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text(failure.toMessage(t))),
+                            showFailureSnackBar(
+                              context,
+                              failure: failure,
+                              t: t,
                             );
                           }
                           return;
