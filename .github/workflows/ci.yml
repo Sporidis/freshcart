@@ -49,6 +49,27 @@ jobs:
         working-directory: freshcart_flutter
         run: dart run build_runner build
 
+      # firebase_options.dart is gitignored on purpose (CLAUDE.md: no secrets
+      # in the repo) and is only ever generated locally via `flutterfire
+      # configure`. Analysis needs the symbol to exist, not a real project —
+      # nothing here is ever built or run, so stub values are fine.
+      - name: Stub Firebase config for analysis
+        run: |
+          cat > freshcart_flutter/lib/firebase_options.dart <<'DART'
+          // CI stub — analysis only, never built or run. The real file is
+          // generated locally via `flutterfire configure` and gitignored.
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform => const FirebaseOptions(
+              apiKey: 'stub',
+              appId: 'stub',
+              messagingSenderId: 'stub',
+              projectId: 'stub',
+            );
+          }
+          DART
+
       - name: Analyze
         run: dart analyze
 
@@ -187,6 +208,12 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
       - run: flutter pub get
+      # The site imports freshcart_domain, whose build_runner output is not
+      # committed (docs/decisions.md #14) — missing here the same way it
+      # would be missing for any other job that touches the domain package.
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
       - name: Generate translations
         working-directory: packages/freshcart_l10n
         run: dart run slang
