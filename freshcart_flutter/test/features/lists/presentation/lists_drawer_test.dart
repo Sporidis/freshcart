@@ -19,7 +19,10 @@ void main() {
   setUp(() => repository = FakeListRepository());
   tearDown(() => repository.dispose());
 
-  Future<ProviderContainer> pump(WidgetTester tester, {ListId? currentId}) async {
+  Future<ProviderContainer> pump(
+    WidgetTester tester, {
+    ListId? currentId,
+  }) async {
     final container = ProviderContainer(
       overrides: [
         listRepositoryProvider.overrideWithValue(repository),
@@ -54,7 +57,10 @@ void main() {
 
   testWidgets('lists render with their member count', (tester) async {
     repository.myListsResult = Ok([
-      buildList(name: 'Weekly Groceries', members: [buildMember(userId: me)]),
+      buildList(
+        name: 'Weekly Groceries',
+        members: [buildMember(userId: me)],
+      ),
       buildList(
         id: '00000000-0000-4000-8000-000000000002',
         name: 'Camping Trip',

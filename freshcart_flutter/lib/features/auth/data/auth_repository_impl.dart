@@ -50,11 +50,10 @@ class AuthRepositoryImpl implements AuthPort {
   });
 
   @override
-  Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes) =>
-      _guard(() async {
-        await _client.profile.setAvatarPhoto(ByteData.sublistView(bytes));
-        return _refresh();
-      });
+  Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes) => _guard(() async {
+    await _client.profile.setAvatarPhoto(ByteData.sublistView(bytes));
+    return _refresh();
+  });
 
   @override
   Future<Result<AuthUser>> clearAvatarPhoto() => _guard(() async {

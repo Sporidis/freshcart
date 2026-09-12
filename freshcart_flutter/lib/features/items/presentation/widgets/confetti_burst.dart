@@ -15,25 +15,28 @@ class ConfettiParticle {
   /// with a random sideways drift and fall speed — [random] is threaded
   /// through rather than each particle making its own [Random.new], so a
   /// whole burst can (in principle) be seeded and reproduced.
-  ConfettiParticle({required this.color, required Size bounds, required Random random})
-    : x = random.nextDouble() * bounds.width,
-      // Spread across the top ~22% of the screen, not clustered just above
-      // it — a burst that's already partway into view the instant it fires
-      // reads as an explosion; confetti that all has to scroll in from
-      // off-screen first reads as rain starting up.
-      y = -bounds.height * 0.1 + random.nextDouble() * bounds.height * 0.22,
-      vx = (random.nextDouble() - 0.5) * 260,
-      vy = -40 + random.nextDouble() * 140,
-      rotation = random.nextDouble() * pi * 2,
-      rotationSpeed = (random.nextDouble() - 0.5) * 8,
-      // The in-plane spin (rotation) orients the shape; flip is a second,
-      // independent, faster rotation used only to squash its drawn width
-      // (see _ConfettiPainter) — that's what makes a piece read as a
-      // tumbling card catching the light edge-on, not a flat sticker
-      // spinning in place like a coin on a table.
-      flip = random.nextDouble() * pi * 2,
-      flipSpeed = 10 + random.nextDouble() * 10,
-      size = 7 + random.nextDouble() * 6;
+  ConfettiParticle({
+    required this.color,
+    required Size bounds,
+    required Random random,
+  }) : x = random.nextDouble() * bounds.width,
+       // Spread across the top ~22% of the screen, not clustered just above
+       // it — a burst that's already partway into view the instant it fires
+       // reads as an explosion; confetti that all has to scroll in from
+       // off-screen first reads as rain starting up.
+       y = -bounds.height * 0.1 + random.nextDouble() * bounds.height * 0.22,
+       vx = (random.nextDouble() - 0.5) * 260,
+       vy = -40 + random.nextDouble() * 140,
+       rotation = random.nextDouble() * pi * 2,
+       rotationSpeed = (random.nextDouble() - 0.5) * 8,
+       // The in-plane spin (rotation) orients the shape; flip is a second,
+       // independent, faster rotation used only to squash its drawn width
+       // (see _ConfettiPainter) — that's what makes a piece read as a
+       // tumbling card catching the light edge-on, not a flat sticker
+       // spinning in place like a coin on a table.
+       flip = random.nextDouble() * pi * 2,
+       flipSpeed = 10 + random.nextDouble() * 10,
+       size = 7 + random.nextDouble() * 6;
 
   /// This particle's colour — one of the list's shop colours, chosen by
   /// [ConfettiBurst.fire].
