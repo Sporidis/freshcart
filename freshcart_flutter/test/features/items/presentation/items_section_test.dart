@@ -290,17 +290,20 @@ void main() {
     // screen in this file's pump().
     final listId = ListId('00000000-0000-4000-8000-000000000001');
 
-    testWidgets('no drag handle on the "All" tab -- reordering is scoped to one shop', (
-      tester,
-    ) async {
-      items.byListResult = Ok([
-        buildItem(id: 'a', name: 'Milk', shopId: colruyt),
-        buildItem(id: 'b', name: 'Bread', shopId: colruyt),
-      ]);
-      await pump(tester);
+    testWidgets(
+      'no drag handle on the "All" tab -- reordering is scoped to one shop',
+      (
+        tester,
+      ) async {
+        items.byListResult = Ok([
+          buildItem(id: 'a', name: 'Milk', shopId: colruyt),
+          buildItem(id: 'b', name: 'Bread', shopId: colruyt),
+        ]);
+        await pump(tester);
 
-      expect(find.byIcon(Icons.drag_handle), findsNothing);
-    });
+        expect(find.byIcon(Icons.drag_handle), findsNothing);
+      },
+    );
 
     testWidgets('a handle appears once a shop tab is active', (tester) async {
       items.byListResult = Ok([
@@ -573,9 +576,7 @@ void main() {
         items.addResult = Ok(buildItem(name: 'Pasta'));
         final container = await pump(tester);
 
-        container
-            .read(shopFilterProvider(listId).notifier)
-            .select(colruyt.id);
+        container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
         await tester.pumpAndSettle();
 
         await tester.tap(find.byIcon(Icons.add));
@@ -723,7 +724,11 @@ void main() {
       final container = await pump(tester);
 
       container
-          .read(shopFilterProvider(ListId('00000000-0000-4000-8000-000000000001')).notifier)
+          .read(
+            shopFilterProvider(
+              ListId('00000000-0000-4000-8000-000000000001'),
+            ).notifier,
+          )
           .select(colruyt.id);
       await tester.pumpAndSettle();
 

@@ -192,18 +192,21 @@ void main() {
       expect(container.read(recentlyAddedProvider(listId)), added.id);
     });
 
-    test('does not flag a validation failure -- nothing was actually added', () async {
-      repository.byListResult = const Ok(<ShoppingItem>[]);
+    test(
+      'does not flag a validation failure -- nothing was actually added',
+      () async {
+        repository.byListResult = const Ok(<ShoppingItem>[]);
 
-      final container = makeContainer();
-      await itemsOf(container);
+        final container = makeContainer();
+        await itemsOf(container);
 
-      await container
-          .read(itemsControllerProvider(listId).notifier)
-          .add(name: '   ');
+        await container
+            .read(itemsControllerProvider(listId).notifier)
+            .add(name: '   ');
 
-      expect(container.read(recentlyAddedProvider(listId)), isNull);
-    });
+        expect(container.read(recentlyAddedProvider(listId)), isNull);
+      },
+    );
   });
 
   group('remove', () {
@@ -256,7 +259,10 @@ void main() {
 
       expect(failure, isNull);
       expect((await itemsOf(container)).single.id, eggs.id);
-      expect(repository.removeManyCalls.single, unorderedEquals([milk.id, bread.id]));
+      expect(
+        repository.removeManyCalls.single,
+        unorderedEquals([milk.id, bread.id]),
+      );
     });
 
     test('puts every selected row back when the server refuses', () async {
@@ -293,26 +299,37 @@ void main() {
   });
 
   group('reorder', () {
-    test('applies the new position optimistically before the server answers', () async {
-      final item = buildItem(name: 'Milk', updatedAt: DateTime.utc(2026, 1, 1));
-      final before = buildItem(id: 'b');
-      final after = buildItem(id: 'a');
-      repository.byListResult = Ok([item]);
-      final pause = Completer<void>();
-      repository.savePause = pause.future;
+    test(
+      'applies the new position optimistically before the server answers',
+      () async {
+        final item = buildItem(
+          name: 'Milk',
+          updatedAt: DateTime.utc(2026, 1, 1),
+        );
+        final before = buildItem(id: 'b');
+        final after = buildItem(id: 'a');
+        repository.byListResult = Ok([item]);
+        final pause = Completer<void>();
+        repository.savePause = pause.future;
 
-      final container = makeContainer();
-      await itemsOf(container);
-      final notifier = container.read(itemsControllerProvider(listId).notifier);
+        final container = makeContainer();
+        await itemsOf(container);
+        final notifier = container.read(
+          itemsControllerProvider(listId).notifier,
+        );
 
-      final pending = notifier.reorder(item, before: before, after: after);
+        final pending = notifier.reorder(item, before: before, after: after);
 
-      final optimistic = currentItems(container).single;
-      expect(optimistic.sortOrder, ShoppingItem.sortOrderBetween(before, after));
+        final optimistic = currentItems(container).single;
+        expect(
+          optimistic.sortOrder,
+          ShoppingItem.sortOrderBetween(before, after),
+        );
 
-      pause.complete();
-      expect(await pending, isNull);
-    });
+        pause.complete();
+        expect(await pending, isNull);
+      },
+    );
 
     test('rolls the position back on conflict', () async {
       final item = buildItem(name: 'Milk', sortOrder: 5);
@@ -355,30 +372,35 @@ void main() {
       undo();
     });
 
-    test('undo restores the exact row and cancels the pending removal', () async {
-      final item = buildItem(note: Note(
-        text: 'the oat one',
-        authorId: me,
-        updatedAt: DateTime.utc(2026, 9, 9),
-      ));
-      repository.byListResult = Ok([item]);
+    test(
+      'undo restores the exact row and cancels the pending removal',
+      () async {
+        final item = buildItem(
+          note: Note(
+            text: 'the oat one',
+            authorId: me,
+            updatedAt: DateTime.utc(2026, 9, 9),
+          ),
+        );
+        repository.byListResult = Ok([item]);
 
-      final container = makeContainer();
-      await itemsOf(container);
+        final container = makeContainer();
+        await itemsOf(container);
 
-      final undo = container
-          .read(itemsControllerProvider(listId).notifier)
-          .swipeDelete(item);
-      expect(currentItems(container), isEmpty);
+        final undo = container
+            .read(itemsControllerProvider(listId).notifier)
+            .swipeDelete(item);
+        expect(currentItems(container), isEmpty);
 
-      undo();
+        undo();
 
-      expect(currentItems(container).single, item);
-      // Cancelling means the server is never told, even once the window
-      // that would otherwise have committed the delete has passed.
-      await pumpEventQueue();
-      expect(repository.removedIds, isEmpty);
-    });
+        expect(currentItems(container).single, item);
+        // Cancelling means the server is never told, even once the window
+        // that would otherwise have committed the delete has passed.
+        await pumpEventQueue();
+        expect(repository.removedIds, isEmpty);
+      },
+    );
 
     test('undo is idempotent -- a second tap does nothing odd', () async {
       final item = buildItem();

@@ -56,7 +56,10 @@ void main() {
     addTearDown(container.dispose);
     container.read(activeLocaleProvider.notifier).select(AppLocale.en);
     await tester.pumpWidget(
-      UncontrolledProviderScope(container: container, child: const FreshCartApp()),
+      UncontrolledProviderScope(
+        container: container,
+        child: const FreshCartApp(),
+      ),
     );
     await tester.pumpAndSettle();
 

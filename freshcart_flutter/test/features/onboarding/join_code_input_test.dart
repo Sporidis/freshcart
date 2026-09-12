@@ -7,7 +7,9 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/join_
 /// field's own editing behaviour (backspace, paste, the 5-character cap) is
 /// already covered end to end by `getting_in_flow_test.dart`.
 void main() {
-  Future<void> pump(WidgetTester tester, ValueChanged<String> onChanged, {
+  Future<void> pump(
+    WidgetTester tester,
+    ValueChanged<String> onChanged, {
     String value = '',
   }) async {
     await tester.pumpWidget(

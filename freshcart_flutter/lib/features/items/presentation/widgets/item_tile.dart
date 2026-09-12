@@ -179,11 +179,10 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     vsync: this,
     duration: AppMotion.quick,
   );
-  late final Animation<double> _iconPopOvershoot =
-      TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.15), weight: 1),
-        TweenSequenceItem(tween: Tween(begin: 0.15, end: 0.0), weight: 1),
-      ]).animate(CurvedAnimation(parent: _iconPop, curve: Curves.easeOut));
+  late final Animation<double> _iconPopOvershoot = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.15), weight: 1),
+    TweenSequenceItem(tween: Tween(begin: 0.15, end: 0.0), weight: 1),
+  ]).animate(CurvedAnimation(parent: _iconPop, curve: Curves.easeOut));
 
   /// The delete icon's scale: 0.7 while under 30% of the row's width,
   /// ramping linearly to 1 by the time the row is fully swiped (§10), plus
@@ -377,7 +376,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               child: Material(
                 // Fades to nothing over the same 900 ms the scale settles in
                 // over -- there is no resting tint once it is done.
-                color: tint.withValues(alpha: 0.16 * (1 - _entranceEased.value)),
+                color: tint.withValues(
+                  alpha: 0.16 * (1 - _entranceEased.value),
+                ),
                 child: Opacity(
                   // 45% once checked: present, but plainly already in the trolley.
                   opacity: 1 - (_strike.value * 0.55),
@@ -533,7 +534,9 @@ class _SelectionCircle extends StatelessWidget {
 /// containing the query twice should not read as if only one of them
 /// matched.
 List<InlineSpan> _highlightSpans(String text, String? query, TextStyle? base) {
-  if (query == null || query.isEmpty) return [TextSpan(text: text, style: base)];
+  if (query == null || query.isEmpty) {
+    return [TextSpan(text: text, style: base)];
+  }
 
   final lowerText = text.toLowerCase();
   final lowerQuery = query.toLowerCase();
