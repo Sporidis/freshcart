@@ -14,6 +14,7 @@ import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart'
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
 /// A list's own settings — name, and doors to its members and shops.
@@ -70,6 +71,14 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     super.dispose();
   }
 
+  @override
+  void didUpdateWidget(covariant ListSettingsScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.listId == widget.listId) return;
+    _nameSeeded = false;
+    _name.clear();
+  }
+
   void _seedNameOnce(String name) {
     if (_nameSeeded) return;
     _nameSeeded = true;
@@ -100,6 +109,8 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
     final list = ref.watch(listByIdProvider(widget.listId));
+    final allUserLists =
+        ref.watch(listsControllerProvider).dataOrNull ?? const [];
 
     final loadFailure = list.loadFailure;
     if (loadFailure != null) {
@@ -123,11 +134,6 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     final isOwner =
         loaded != null && currentUser != null && loaded.isOwnedBy(currentUser);
 
-    final shopCount = ref
-        .watch(shopsControllerProvider(widget.listId))
-        .dataOrNull
-        ?.length;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(t.lists.settingsTitle),
@@ -138,6 +144,12 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.screen),
               children: [
+                _ListDropdown(
+                  currentListId: widget.listId,
+                  allUserLists: allUserLists,
+                  t: t,
+                ),
+                const SizedBox(height: 24),
                 Text(
                   t.lists.nameLabel,
                   style: Theme.of(context).textTheme.bodySmall,
@@ -147,24 +159,14 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                   controller: _name,
                   enabled: !_savingName,
                   decoration: InputDecoration(errorText: _nameError),
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _savingName ? null : _saveName,
-                    child: Text(t.common.save),
-                  ),
+                  onSubmitted: (value) async {
+                    await _saveName();
+                  },
                 ),
                 const SizedBox(height: 24),
-                _SettingsRow(
-                  title: t.settings.household,
-                  onTap: () => context.push(Routes.household(widget.listId)),
-                ),
-                _SettingsRow(
-                  title: t.shops.manage,
-                  trailing: shopCount?.toString(),
-                  onTap: () => context.push(Routes.manageShops(widget.listId)),
+                _ShopsSection(
+                  listId: widget.listId,
+                  t: t,
                 ),
                 const SizedBox(height: 24),
                 // "Destructive actions sit alone at the bottom with a rule
@@ -189,17 +191,142 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   }
 }
 
+class _ShopsSection extends ConsumerWidget {
+  const _ShopsSection({required this.listId, required this.t});
+
+  final ListId listId;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final allUserShops =
+        ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
+    if (allUserShops.isNotEmpty) {
+      return Column(
+        children: [
+          Text(
+            'Shops on this list'.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          Text(
+            'Each becomes a tab. Colours are shared across all your lists.',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
+          const SizedBox(height: 6),
+          Column(
+            children: allUserShops.map(
+              (shop) {
+                return _ShopOption(
+                  shop: shop,
+                  listId: listId,
+                  t: t,
+                );
+              },
+            ).toList(),
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () {
+              //TODO: Add logic to add a shop here
+            },
+            child: Text(
+              'Add a shop',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+    return const SizedBox.shrink();
+  }
+}
+
+class _ShopOption extends ConsumerWidget {
+  const _ShopOption({
+    required this.shop,
+    required this.listId,
+    required this.t,
+  });
+
+  final Shop shop;
+  final ListId listId;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SwitchListTile(
+      value: shop.isActive,
+      onChanged: (_) =>
+          ref.read(shopsControllerProvider(listId).notifier).toggleActive(shop),
+      title: Text(shop.name),
+    );
+  }
+}
+
+class _ListDropdown extends StatelessWidget {
+  const _ListDropdown({
+    required this.currentListId,
+    required this.allUserLists,
+    required this.t,
+  });
+
+  final ListId currentListId;
+  final List<ShoppingList> allUserLists;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context) {
+    String? selectedListName;
+    for (final list in allUserLists) {
+      if (list.id == currentListId) {
+        selectedListName = list.name;
+        break;
+      }
+    }
+
+    return DropdownMenu<ListId>(
+      key: ValueKey('${currentListId.value}:$selectedListName'),
+      width: MediaQuery.of(context).size.width * 0.9,
+      initialSelection: currentListId,
+      label: Text(
+        t.lists.title,
+      ),
+      textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
+        fontWeight: FontWeight.bold,
+      ),
+
+      dropdownMenuEntries: allUserLists
+          .map(
+            (list) => DropdownMenuEntry<ListId>(
+              value: list.id,
+              label: list.name,
+            ),
+          )
+          .toList(),
+      onSelected: (selectedListId) {
+        if (selectedListId == null || selectedListId == currentListId) {
+          return;
+        }
+        context.go(Routes.listSettings(selectedListId));
+      },
+    );
+  }
+}
+
 class _SettingsRow extends StatelessWidget {
   const _SettingsRow({
     required this.title,
     required this.onTap,
-    this.trailing,
     this.destructive = false,
   });
 
   final String title;
   final VoidCallback onTap;
-  final String? trailing;
   final bool destructive;
 
   @override
@@ -212,16 +339,7 @@ class _SettingsRow extends StatelessWidget {
         bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
       ),
       title: Text(title, style: color == null ? null : TextStyle(color: color)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          if (trailing != null) ...[
-            Text(trailing!, style: theme.textTheme.bodySmall),
-            const SizedBox(width: 8),
-          ],
-          if (!destructive) const Icon(Icons.chevron_right),
-        ],
-      ),
+      trailing: !destructive ? const Icon(Icons.chevron_right) : null,
       onTap: onTap,
     );
   }

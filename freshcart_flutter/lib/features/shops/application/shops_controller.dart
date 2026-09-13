@@ -41,6 +41,24 @@ class ShopsController extends _$ShopsController {
     return result;
   }
 
+  /// Flips whether [shop] shows as a tab in the shop nav, refreshing the
+  /// collection on success.
+  ///
+  /// Turning off the shop the list is currently filtered to also clears that
+  /// filter back to "All" -- its tab is about to disappear, so staying
+  /// filtered to it would narrow the list to a shop with no visible way back.
+  Future<Result<Shop>> toggleActive(Shop shop) async {
+    final result = await ref.read(toggleShopActiveUseCaseProvider)(shop);
+    if (result.isOk) {
+      _refreshIfAlive();
+      if (result.valueOrNull?.isActive == false &&
+          ref.read(shopFilterProvider(shop.listId)) == shop.id) {
+        ref.read(shopFilterProvider(shop.listId).notifier).select(null);
+      }
+    }
+    return result;
+  }
+
   /// How many items are tagged to [id], for the delete sheet to lead with.
   Future<Result<int>> itemCount(ShopId id) =>
       ref.read(shopRepositoryProvider).itemCount(id);
@@ -95,7 +113,9 @@ HexColor? activeShopColor(Ref ref, ListId listId) {
   final shops = ref.watch(shopsControllerProvider(listId));
   final loaded = shops.dataOrNull ?? const <Shop>[];
   for (final shop in loaded) {
-    if (shop.id == filter) return shop.color;
+    // An inactive shop has no tab to have been selected from, so its
+    // colour should not be able to leak into the theme either.
+    if (shop.id == filter && shop.isActive) return shop.color;
   }
   return null;
 }

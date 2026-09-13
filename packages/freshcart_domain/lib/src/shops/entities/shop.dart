@@ -23,9 +23,21 @@ abstract class Shop with _$Shop {
     required ListId listId,
     required String name,
     required HexColor color,
+    // Defaults true so an existing shop stays visible in the tab strip the
+    // moment this field starts existing, rather than every shop needing a
+    // migration-time opt-in to not vanish.
+    @Default(true) bool isActive,
   }) = _Shop;
 
   const Shop._();
+
+  /// Flips whether this shop shows as a tab in [ShopFilterBar].
+  ///
+  /// Deliberately does not remove or hide the shop anywhere else: the item
+  /// add/edit sheet still offers every shop on the list regardless of
+  /// [isActive], because "not going to Delhaize this week" and "Delhaize no
+  /// longer exists" are different facts. Only the tab strip reads this.
+  Shop toggleActive() => copyWith(isActive: !isActive);
 
   /// The longest a shop name may be.
   ///

@@ -30,6 +30,17 @@ void main() {
     test('rejects a colour that does not fit in 32 bits', () {
       expect(() => wire(colorArgb: -1).toDomain(), throwsArgumentError);
     });
+
+    test('carries isActive through, not just its default', () {
+      final inactive = dto.Shop(
+        id: shopUuid,
+        listId: listUuid,
+        name: 'Colruyt',
+        colorArgb: 0xFF4CAF50,
+        isActive: false,
+      );
+      expect(inactive.toDomain().isActive, isFalse);
+    });
   });
 
   group('ShopX.toDto', () {
