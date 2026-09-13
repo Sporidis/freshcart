@@ -39,6 +39,10 @@ class ListsScreen extends ConsumerWidget {
         previous,
         next,
       ) {
+        // This screen remains mounted underneath list-scoped routes such as
+        // settings. Those routes may refresh the shared lists provider too,
+        // but must not be redirected to list detail from underneath them.
+        if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
         // Riverpod keeps the *previous* value visible via .value while a
         // refresh is in flight (ref.invalidateSelf() does this deliberately,
         // so the old list doesn't flash away during a reload) — acting on
