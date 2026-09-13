@@ -31,6 +31,7 @@ export 'src/items/use_cases/toggle_item_checked.dart';
 export 'src/items/value_objects/item_id.dart';
 // Lists
 export 'src/lists/entities/list_member.dart';
+export 'src/lists/entities/list_summary.dart';
 export 'src/lists/entities/member_role.dart';
 export 'src/lists/entities/shopping_list.dart';
 export 'src/lists/ports/list_repository.dart';

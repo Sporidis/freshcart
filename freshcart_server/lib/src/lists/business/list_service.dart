@@ -290,6 +290,52 @@ abstract final class ListService {
     return _withMembers(session, updated);
   }
 
+  /// Item counts for exactly the lists in [listIds] that [userId] actually
+  /// belongs to -- the drawer's remaining-count row, fetched once per list
+  /// rather than N full item-collection loads.
+  ///
+  /// A foreign id in [listIds] is silently skipped, not an error: a
+  /// legitimate caller only ever asks about its own lists (the drawer's own
+  /// [listsFor] result) anyway, so this exists as a defence against a
+  /// malicious id rather than a normal code path a thrown exception would
+  /// need to surface.
+  static Future<List<ListSummary>> summaries(
+    Session session,
+    List<UuidValue> listIds,
+    UuidValue userId,
+  ) async {
+    if (listIds.isEmpty) return [];
+    final memberships = await ListMember.db.find(
+      session,
+      where: (t) =>
+          t.listId.inSet(listIds.toSet()) & t.userId.equals(userId),
+    );
+    final allowed = memberships.map((m) => m.listId);
+
+    // Two `count` queries per list rather than a row-scanning read: the ORM
+    // has no GROUP BY aggregate escape hatch short of raw SQL (the same
+    // reasoning ShopService.itemCount's own single-list count already
+    // follows). Future.wait keeps every list's pair of counts running in
+    // parallel rather than one list waiting on the last.
+    Future<ListSummary> summaryFor(UuidValue listId) async {
+      final total = await ShoppingItem.db.count(
+        session,
+        where: (t) => t.listId.equals(listId),
+      );
+      final checkedCount = await ShoppingItem.db.count(
+        session,
+        where: (t) => t.listId.equals(listId) & t.isChecked.equals(true),
+      );
+      return ListSummary(
+        listId: listId,
+        total: total,
+        checkedCount: checkedCount,
+      );
+    }
+
+    return Future.wait(allowed.map(summaryFor));
+  }
+
   /// Throws [NotAMemberException] unless [userId] belongs to [listId].
   ///
   /// Every read and write path funnels through this, so authorisation is one

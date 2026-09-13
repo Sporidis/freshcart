@@ -10,6 +10,11 @@
       "one": "{{n}} miyembro",
       "other": "{{n}} na miyembro"
     },
+    "itemsLeft": {
+      "one": "{{n}} natitira",
+      "other": "{{n}} natitira"
+    },
+    "allDone": "Tapos na",
     "emptyTitle": "Wala pang listahan",
     "emptyBody": "Magsimula ng isa para sa inyong bahay, o sumali sa listahang ibinahagi sa iyo.",
     "settingsTitle": "Mga setting ng listahan",

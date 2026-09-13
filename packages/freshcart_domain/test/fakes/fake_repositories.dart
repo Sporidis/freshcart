@@ -125,6 +125,10 @@ class FakeListRepository implements ListRepository {
   Future<Result<ShoppingList>> byId(ListId id) => throw UnimplementedError();
 
   @override
+  Future<Result<List<ListSummary>>> summaries(List<ListId> ids) =>
+      throw UnimplementedError();
+
+  @override
   Future<Result<ShoppingList>> create({required String name}) async {
     createCalls.add(name);
     return createResult;

@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/lists/application/list_summaries_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart'
     show showCreateListDialog, showJoinListDialog;
@@ -45,6 +46,22 @@ class ListsDrawer extends ConsumerWidget {
     // practice, not just theoretical.
     final myId = ref.watch(currentUserIdProvider).dataOrNull;
     final loadedLists = lists.dataOrNull;
+    // Falls back to an empty map while this is still loading or has failed
+    // -- rows simply show without a count for that one frame/load, matching
+    // how the member-avatar fallback right above already handles its own
+    // slower-resolving data.
+    final summaries =
+        ref.watch(listSummariesProvider).value ?? const <ListId, ListSummary>{};
+
+    String subtitleFor(ShoppingList list) {
+      final summary = summaries[list.id];
+      if (summary == null) {
+        return t.lists.memberCount(n: list.members.length);
+      }
+      return summary.allDone
+          ? t.lists.allDone
+          : t.lists.itemsLeft(n: summary.remaining);
+    }
 
     void openList(ListId id) {
       Navigator.of(context).pop();
@@ -81,9 +98,7 @@ class ListsDrawer extends ConsumerWidget {
                           _ListRow(
                             list: list,
                             isCurrent: list.id == currentListId,
-                            memberLabel: t.lists.memberCount(
-                              n: list.members.length,
-                            ),
+                            subtitleLabel: subtitleFor(list),
                             othersInList: myId == null
                                 ? list.members
                                 : [
@@ -163,14 +178,17 @@ class _ListRow extends StatelessWidget {
   const _ListRow({
     required this.list,
     required this.isCurrent,
-    required this.memberLabel,
+    required this.subtitleLabel,
     required this.othersInList,
     required this.onTap,
   });
 
   final ShoppingList list;
   final bool isCurrent;
-  final String memberLabel;
+
+  /// The row's subtitle: a remaining-item count ("6 left" / "All done") once
+  /// its summary has loaded, the member count as a placeholder until then.
+  final String subtitleLabel;
 
   /// Every member of [list] except the viewer -- "the avatars of who else
   /// is in them" (design's own words).
@@ -209,7 +227,7 @@ class _ListRow extends StatelessWidget {
           list.name,
           style: isCurrent ? AppTextStyles.bodyStrong : AppTextStyles.body,
         ),
-        subtitle: Text(memberLabel),
+        subtitle: Text(subtitleLabel),
         trailing: Row(
           mainAxisSize: MainAxisSize.min,
           children: [

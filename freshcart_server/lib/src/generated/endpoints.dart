@@ -632,6 +632,24 @@ class Endpoints extends _i1.EndpointDispatch {
                 params['listId'],
               ),
         ),
+        'summaries': _i1.MethodConnector(
+          name: 'summaries',
+          params: {
+            'listIds': _i1.ParameterDescription(
+              name: 'listIds',
+              type: _i1.getType<List<_i1.UuidValue>>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['list'] as _i7.ListEndpoint).summaries(
+                session,
+                params['listIds'],
+              ),
+        ),
         'create': _i1.MethodConnector(
           name: 'create',
           params: {

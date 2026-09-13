@@ -28,6 +28,7 @@ item:
 list:
   - myLists:
   - byId:
+  - summaries:
   - create:
   - join:
   - rename:

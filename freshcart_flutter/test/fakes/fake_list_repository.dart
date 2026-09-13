@@ -21,6 +21,12 @@ class FakeListRepository implements ListRepository {
   /// What [byId] returns.
   Result<ShoppingList>? byIdResult;
 
+  /// What [summaries] returns.
+  Result<List<ListSummary>> summariesResult = const Ok(<ListSummary>[]);
+
+  /// Every id list [summaries] was called with, in order.
+  final List<List<ListId>> summariesCalls = [];
+
   /// Names passed to [create], in order.
   final List<String> createCalls = [];
 
@@ -57,6 +63,12 @@ class FakeListRepository implements ListRepository {
   @override
   Future<Result<ShoppingList>> byId(ListId id) async =>
       byIdResult ?? const Err(Failure.notFound());
+
+  @override
+  Future<Result<List<ListSummary>>> summaries(List<ListId> ids) async {
+    summariesCalls.add(ids);
+    return summariesResult;
+  }
 
   @override
   Future<Result<ShoppingList>> create({required String name}) async {

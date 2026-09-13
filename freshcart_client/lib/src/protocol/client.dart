@@ -27,19 +27,21 @@ import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
     as _i8;
 import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i9;
-import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
+import 'package:freshcart_client/src/protocol/lists/models/list_summary.dart'
     as _i10;
-import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
+import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
     as _i11;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i12;
+import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
+    as _i12;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i13;
 import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition.dart'
-    as _i13;
-import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i14;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i15;
-import 'dart:typed_data' as _i16;
-import 'protocol.dart' as _i17;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i16;
+import 'dart:typed_data' as _i17;
+import 'protocol.dart' as _i18;
 
 /// Upgrading an anonymous account by attaching credentials to it.
 /// {@category Endpoint}
@@ -485,6 +487,15 @@ class EndpointList extends _i1.EndpointRef {
         {'listId': listId},
       );
 
+  /// Item counts for each of [listIds] the caller belongs to -- the
+  /// drawer's remaining-count row.
+  _i2.Future<List<_i10.ListSummary>> summaries(List<_i1.UuidValue> listIds) =>
+      caller.callServerEndpoint<List<_i10.ListSummary>>(
+        'list',
+        'summaries',
+        {'listIds': listIds},
+      );
+
   /// Creates a list owned by the caller.
   _i2.Future<_i9.ShoppingList> create(String name) =>
       caller.callServerEndpoint<_i9.ShoppingList>(
@@ -587,10 +598,10 @@ class EndpointNotification extends _i1.EndpointRef {
   /// Idempotent: re-registering an existing token re-points it at the caller
   /// rather than inserting a duplicate, so a shared device that changes hands
   /// does not keep notifying the previous user.
-  _i2.Future<_i10.DeviceToken> registerDevice(
+  _i2.Future<_i11.DeviceToken> registerDevice(
     String token,
-    _i11.DevicePlatform platform,
-  ) => caller.callServerEndpoint<_i10.DeviceToken>(
+    _i12.DevicePlatform platform,
+  ) => caller.callServerEndpoint<_i11.DeviceToken>(
     'notification',
     'registerDevice',
     {
@@ -638,19 +649,19 @@ class EndpointShop extends _i1.EndpointRef {
   String get name => 'shop';
 
   /// Every shop on a list the caller belongs to.
-  _i2.Future<List<_i12.Shop>> byList(_i1.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i12.Shop>>(
+  _i2.Future<List<_i13.Shop>> byList(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i13.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list the caller belongs to.
-  _i2.Future<_i12.Shop> create(
+  _i2.Future<_i13.Shop> create(
     _i1.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i12.Shop>(
+  ) => caller.callServerEndpoint<_i13.Shop>(
     'shop',
     'create',
     {
@@ -661,8 +672,8 @@ class EndpointShop extends _i1.EndpointRef {
   );
 
   /// Writes a shop back.
-  _i2.Future<_i12.Shop> save(_i12.Shop shop) =>
-      caller.callServerEndpoint<_i12.Shop>(
+  _i2.Future<_i13.Shop> save(_i13.Shop shop) =>
+      caller.callServerEndpoint<_i13.Shop>(
         'shop',
         'save',
         {'shop': shop},
@@ -684,7 +695,7 @@ class EndpointShop extends _i1.EndpointRef {
   /// products instead of finding out afterwards.
   _i2.Future<void> remove(
     _i1.UuidValue shopId,
-    _i13.ShopItemDisposition disposition,
+    _i14.ShopItemDisposition disposition,
     _i1.UuidValue? moveToShopId,
   ) => caller.callServerEndpoint<void>(
     'shop',
@@ -710,8 +721,8 @@ class EndpointProfile extends _i1.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i2.Future<_i14.CurrentUser> me() =>
-      caller.callServerEndpoint<_i14.CurrentUser>(
+  _i2.Future<_i15.CurrentUser> me() =>
+      caller.callServerEndpoint<_i15.CurrentUser>(
         'profile',
         'me',
         {},
@@ -725,32 +736,32 @@ class EndpointProfile extends _i1.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i2.Future<_i15.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i15.MemberProfile>(
+  _i2.Future<_i16.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i16.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
       );
 
   /// Sets the caller's avatar colour.
-  _i2.Future<_i15.MemberProfile> setAvatarColor(int avatarColorArgb) =>
-      caller.callServerEndpoint<_i15.MemberProfile>(
+  _i2.Future<_i16.MemberProfile> setAvatarColor(int avatarColorArgb) =>
+      caller.callServerEndpoint<_i16.MemberProfile>(
         'profile',
         'setAvatarColor',
         {'avatarColorArgb': avatarColorArgb},
       );
 
   /// Uploads and sets the caller's avatar photo.
-  _i2.Future<_i15.MemberProfile> setAvatarPhoto(_i16.ByteData bytes) =>
-      caller.callServerEndpoint<_i15.MemberProfile>(
+  _i2.Future<_i16.MemberProfile> setAvatarPhoto(_i17.ByteData bytes) =>
+      caller.callServerEndpoint<_i16.MemberProfile>(
         'profile',
         'setAvatarPhoto',
         {'bytes': bytes},
       );
 
   /// Removes the caller's avatar photo, if they have one.
-  _i2.Future<_i15.MemberProfile?> clearAvatarPhoto() =>
-      caller.callServerEndpoint<_i15.MemberProfile?>(
+  _i2.Future<_i16.MemberProfile?> clearAvatarPhoto() =>
+      caller.callServerEndpoint<_i16.MemberProfile?>(
         'profile',
         'clearAvatarPhoto',
         {},
@@ -788,7 +799,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i17.Protocol(),
+         _i18.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

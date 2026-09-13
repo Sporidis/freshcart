@@ -55,23 +55,60 @@ void main() {
     return container;
   }
 
-  testWidgets('lists render with their member count', (tester) async {
-    repository.myListsResult = Ok([
-      buildList(
-        name: 'Weekly Groceries',
-        members: [buildMember(userId: me)],
-      ),
-      buildList(
-        id: '00000000-0000-4000-8000-000000000002',
-        name: 'Camping Trip',
-        members: [buildMember(userId: me)],
-      ),
-    ]);
-    await pump(tester);
+  testWidgets(
+    'falls back to the member count before a summary has loaded',
+    (tester) async {
+      repository.myListsResult = Ok([
+        buildList(
+          name: 'Weekly Groceries',
+          members: [buildMember(userId: me)],
+        ),
+        buildList(
+          id: '00000000-0000-4000-8000-000000000002',
+          name: 'Camping Trip',
+          members: [buildMember(userId: me)],
+        ),
+      ]);
+      // Unset -- FakeListRepository's own default (Ok(<ListSummary>[])) has
+      // no entry for either list id, the same "hasn't resolved yet" shape a
+      // slow real fetch would leave the drawer in for a frame.
+      await pump(tester);
 
-    expect(find.text('Weekly Groceries'), findsOneWidget);
-    expect(find.text('Camping Trip'), findsOneWidget);
-    expect(find.text('1 member'), findsNWidgets(2));
+      expect(find.text('Weekly Groceries'), findsOneWidget);
+      expect(find.text('Camping Trip'), findsOneWidget);
+      expect(find.text('1 member'), findsNWidgets(2));
+    },
+  );
+
+  testWidgets('shows the remaining count once its summary has loaded', (
+    tester,
+  ) async {
+    final listId = ListId('00000000-0000-4000-8000-000000000001');
+    repository.myListsResult = Ok([
+      buildList(id: listId.value, members: [buildMember(userId: me)]),
+    ]);
+    repository.summariesResult = Ok([
+      ListSummary(listId: listId, total: 8, checkedCount: 2),
+    ]);
+    await pump(tester, currentId: listId);
+
+    expect(find.text('6 left'), findsOneWidget);
+    expect(find.text('1 member'), findsNothing);
+  });
+
+  testWidgets('shows All done for a list whose summary has nothing left', (
+    tester,
+  ) async {
+    final listId = ListId('00000000-0000-4000-8000-000000000001');
+    repository.myListsResult = Ok([
+      buildList(id: listId.value, members: [buildMember(userId: me)]),
+    ]);
+    repository.summariesResult = Ok([
+      ListSummary(listId: listId, total: 4, checkedCount: 4),
+    ]);
+    await pump(tester, currentId: listId);
+
+    expect(find.text('All done'), findsOneWidget);
   });
 
   testWidgets(
