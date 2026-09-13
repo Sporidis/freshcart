@@ -32,14 +32,16 @@ import 'package:freshcart_server/src/generated/notifications/models/device_token
     as _i11;
 import 'package:freshcart_server/src/generated/notifications/models/device_platform.dart'
     as _i12;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i13;
+import 'package:freshcart_server/src/generated/notifications/models/notification_preferences.dart'
+    as _i13;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i14;
 import 'package:freshcart_server/src/generated/shops/models/shop_item_disposition.dart'
-    as _i14;
-import 'package:freshcart_server/src/generated/users/models/current_user.dart'
     as _i15;
-import 'package:freshcart_server/src/generated/users/models/member_profile.dart'
+import 'package:freshcart_server/src/generated/users/models/current_user.dart'
     as _i16;
-import 'dart:typed_data' as _i17;
+import 'package:freshcart_server/src/generated/users/models/member_profile.dart'
+    as _i17;
+import 'dart:typed_data' as _i18;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -1541,6 +1543,129 @@ class _NotificationEndpoint {
       }
     });
   }
+
+  _i3.Future<_i13.NotificationPreferences> preferences(
+    _i1.TestSessionBuilder sessionBuilder,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notification',
+            method: 'preferences',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notification',
+          methodName: 'preferences',
+          parameters: _i1.testObjectToJson({}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i13.NotificationPreferences>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i13.NotificationPreferences> setItemAddedEnabled(
+    _i1.TestSessionBuilder sessionBuilder,
+    bool value,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notification',
+            method: 'setItemAddedEnabled',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notification',
+          methodName: 'setItemAddedEnabled',
+          parameters: _i1.testObjectToJson({'value': value}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i13.NotificationPreferences>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i13.NotificationPreferences> setMemberJoinedEnabled(
+    _i1.TestSessionBuilder sessionBuilder,
+    bool value,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notification',
+            method: 'setMemberJoinedEnabled',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notification',
+          methodName: 'setMemberJoinedEnabled',
+          parameters: _i1.testObjectToJson({'value': value}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i13.NotificationPreferences>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Future<_i13.NotificationPreferences> setListFinishedEnabled(
+    _i1.TestSessionBuilder sessionBuilder,
+    bool value,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'notification',
+            method: 'setListFinishedEnabled',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'notification',
+          methodName: 'setListFinishedEnabled',
+          parameters: _i1.testObjectToJson({'value': value}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i13.NotificationPreferences>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
 }
 
 class _ShopEndpoint {
@@ -1553,7 +1678,7 @@ class _ShopEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i13.Shop>> byList(
+  _i3.Future<List<_i14.Shop>> byList(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
   ) async {
@@ -1576,7 +1701,7 @@ class _ShopEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i13.Shop>>);
+                as _i3.Future<List<_i14.Shop>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1584,7 +1709,7 @@ class _ShopEndpoint {
     });
   }
 
-  _i3.Future<_i13.Shop> create(
+  _i3.Future<_i14.Shop> create(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
     String name,
@@ -1613,7 +1738,7 @@ class _ShopEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.Shop>);
+                as _i3.Future<_i14.Shop>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1621,9 +1746,9 @@ class _ShopEndpoint {
     });
   }
 
-  _i3.Future<_i13.Shop> save(
+  _i3.Future<_i14.Shop> save(
     _i1.TestSessionBuilder sessionBuilder,
-    _i13.Shop shop,
+    _i14.Shop shop,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1644,7 +1769,7 @@ class _ShopEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.Shop>);
+                as _i3.Future<_i14.Shop>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1686,7 +1811,7 @@ class _ShopEndpoint {
   _i3.Future<void> remove(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue shopId,
-    _i14.ShopItemDisposition disposition,
+    _i15.ShopItemDisposition disposition,
     _i2.UuidValue? moveToShopId,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1731,7 +1856,7 @@ class _ProfileEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i15.CurrentUser> me(_i1.TestSessionBuilder sessionBuilder) async {
+  _i3.Future<_i16.CurrentUser> me(_i1.TestSessionBuilder sessionBuilder) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
@@ -1751,7 +1876,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i15.CurrentUser>);
+                as _i3.Future<_i16.CurrentUser>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1787,7 +1912,7 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i16.MemberProfile> setDisplayName(
+  _i3.Future<_i17.MemberProfile> setDisplayName(
     _i1.TestSessionBuilder sessionBuilder,
     String displayName,
   ) async {
@@ -1810,7 +1935,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i16.MemberProfile>);
+                as _i3.Future<_i17.MemberProfile>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1818,7 +1943,7 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i16.MemberProfile> setAvatarColor(
+  _i3.Future<_i17.MemberProfile> setAvatarColor(
     _i1.TestSessionBuilder sessionBuilder,
     int avatarColorArgb,
   ) async {
@@ -1843,7 +1968,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i16.MemberProfile>);
+                as _i3.Future<_i17.MemberProfile>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1851,9 +1976,9 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i16.MemberProfile> setAvatarPhoto(
+  _i3.Future<_i17.MemberProfile> setAvatarPhoto(
     _i1.TestSessionBuilder sessionBuilder,
-    _i17.ByteData bytes,
+    _i18.ByteData bytes,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1874,7 +1999,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i16.MemberProfile>);
+                as _i3.Future<_i17.MemberProfile>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1882,7 +2007,7 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i16.MemberProfile?> clearAvatarPhoto(
+  _i3.Future<_i17.MemberProfile?> clearAvatarPhoto(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1904,7 +2029,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i16.MemberProfile?>);
+                as _i3.Future<_i17.MemberProfile?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

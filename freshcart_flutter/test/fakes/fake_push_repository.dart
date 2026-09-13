@@ -46,4 +46,36 @@ class FakePushRepository implements PushPort {
   @override
   Future<Result<bool>> isListMuted(ListId listId) async =>
       Ok(mutedByList[listId] ?? false);
+
+  /// The current in-memory preferences, updated in place by the setters
+  /// below so a test can read what the last write actually produced.
+  NotificationPreferences preferences = const NotificationPreferences();
+
+  @override
+  Future<Result<NotificationPreferences>> notificationPreferences() async =>
+      Ok(preferences);
+
+  @override
+  Future<Result<NotificationPreferences>> setItemAddedNotificationsEnabled(
+    bool value,
+  ) async {
+    preferences = preferences.copyWith(itemAdded: value);
+    return Ok(preferences);
+  }
+
+  @override
+  Future<Result<NotificationPreferences>> setMemberJoinedNotificationsEnabled(
+    bool value,
+  ) async {
+    preferences = preferences.copyWith(memberJoined: value);
+    return Ok(preferences);
+  }
+
+  @override
+  Future<Result<NotificationPreferences>> setListFinishedNotificationsEnabled(
+    bool value,
+  ) async {
+    preferences = preferences.copyWith(listFinished: value);
+    return Ok(preferences);
+  }
 }

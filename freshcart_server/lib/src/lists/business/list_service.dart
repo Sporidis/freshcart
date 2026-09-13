@@ -1,6 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/common/business/join_code_generator.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Business operations on shopping lists.
@@ -157,8 +158,16 @@ abstract final class ListService {
         ),
       );
       // Only announce a genuine join: a re-tap must not wake every other
-      // open client with a no-op notification.
+      // open client with a no-op notification. Same reasoning for the push
+      // (decisions #80, phase 2) -- a re-tap is not "someone joined."
       await _announce(session, list.id!);
+      await NotificationService.notifyMemberJoined(
+        session,
+        list.id!,
+        newMemberId: userId,
+        newMemberName: displayName,
+        listName: list.name,
+      );
     }
     return _withMembers(session, list);
   }

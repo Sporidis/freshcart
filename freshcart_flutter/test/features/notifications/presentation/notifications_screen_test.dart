@@ -91,4 +91,64 @@ void main() {
     expect(find.text('On'), findsOneWidget);
     expect(push.setListMutedCalls.single, (listId: weekly.id, muted: false));
   });
+
+  group('Push', () {
+    testWidgets(
+      'item-added is on by default -- the design\'s own "off by default '
+      'except the first" -- the other two are off',
+      (tester) async {
+        await pump(tester);
+
+        expect(
+          tester
+              .widget<SwitchListTile>(
+                find.widgetWithText(
+                  SwitchListTile,
+                  'Someone adds an item',
+                ),
+              )
+              .value,
+          isTrue,
+        );
+        expect(
+          tester
+              .widget<SwitchListTile>(
+                find.widgetWithText(SwitchListTile, 'Someone joins a list'),
+              )
+              .value,
+          isFalse,
+        );
+        expect(
+          tester
+              .widget<SwitchListTile>(
+                find.widgetWithText(SwitchListTile, 'A list is finished'),
+              )
+              .value,
+          isFalse,
+        );
+      },
+    );
+
+    testWidgets('each toggle calls through to its own setter', (
+      tester,
+    ) async {
+      await pump(tester);
+
+      await tester.tap(find.text('Someone joins a list'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('A list is finished'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Someone adds an item'));
+      await tester.pumpAndSettle();
+
+      expect(
+        push.preferences,
+        const NotificationPreferences(
+          itemAdded: false,
+          memberJoined: true,
+          listFinished: true,
+        ),
+      );
+    });
+  });
 }

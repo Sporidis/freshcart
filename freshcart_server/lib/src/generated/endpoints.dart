@@ -935,6 +935,73 @@ class Endpoints extends _i1.EndpointDispatch {
                     params['listId'],
                   ),
         ),
+        'preferences': _i1.MethodConnector(
+          name: 'preferences',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .preferences(session),
+        ),
+        'setItemAddedEnabled': _i1.MethodConnector(
+          name: 'setItemAddedEnabled',
+          params: {
+            'value': _i1.ParameterDescription(
+              name: 'value',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .setItemAddedEnabled(
+                    session,
+                    params['value'],
+                  ),
+        ),
+        'setMemberJoinedEnabled': _i1.MethodConnector(
+          name: 'setMemberJoinedEnabled',
+          params: {
+            'value': _i1.ParameterDescription(
+              name: 'value',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .setMemberJoinedEnabled(
+                    session,
+                    params['value'],
+                  ),
+        ),
+        'setListFinishedEnabled': _i1.MethodConnector(
+          name: 'setListFinishedEnabled',
+          params: {
+            'value': _i1.ParameterDescription(
+              name: 'value',
+              type: _i1.getType<bool>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['notification'] as _i8.NotificationEndpoint)
+                  .setListFinishedEnabled(
+                    session,
+                    params['value'],
+                  ),
+        ),
       },
     );
     connectors['shop'] = _i1.EndpointConnector(

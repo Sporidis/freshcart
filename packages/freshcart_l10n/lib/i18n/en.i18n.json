@@ -224,6 +224,12 @@
   },
   "notifications": {
     "title": "Notifications",
+    "push": "Push",
+    "itemAdded": "Someone adds an item",
+    "itemAddedBody": "Batched — one alert per burst",
+    "memberJoined": "Someone joins a list",
+    "listFinished": "A list is finished",
+    "listFinishedBody": "When the last item is checked off",
     "perList": "Per list",
     "on": "On",
     "muted": "Muted"

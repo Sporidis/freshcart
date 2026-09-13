@@ -1,0 +1,30 @@
+### A user's own choices about which push notifications they receive
+### (decisions #80, phase 2). Global, not per-list -- ListMute is "not from
+### this list, regardless of kind," this is "which kinds of thing do I want
+### to hear about at all, from any list."
+###
+### No row exists until a user changes something from its default --
+### NotificationPreferencesService.forUser returns an in-memory default
+### rather than inserting one on first read, so the table doesn't grow one
+### row per signed-up user who never opens this screen.
+class: NotificationPreferences
+table: freshcart_notification_preferences
+fields:
+  id: UuidValue?, defaultPersist=random_v7
+  userId: UuidValue
+
+  ### "Someone adds an item" -- on by default; the design's own words:
+  ### "Off by default except the first -- nobody installs a list app for
+  ### alerts."
+  itemAdded: bool, defaultModel=true, defaultPersist=true
+
+  ### "Someone joins a list."
+  memberJoined: bool, defaultModel=false, defaultPersist=false
+
+  ### "A list is finished" -- when the last item is checked off.
+  listFinished: bool, defaultModel=false, defaultPersist=false
+
+indexes:
+  freshcart_notification_preferences_user_idx:
+    fields: userId
+    unique: true

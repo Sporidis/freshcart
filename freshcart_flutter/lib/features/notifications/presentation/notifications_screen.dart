@@ -5,21 +5,21 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/notifications/application/list_mute_controller.dart';
+import 'package:freshcart_flutter/features/notifications/application/notification_preferences_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Push preferences: the four named moments, and per-list mute (Flow 10,
-/// decisions #80).
+/// Push preferences: the three server-gated moments, and per-list mute
+/// (Flow 10, decisions #80).
 ///
-/// Phase 1 of `docs/decisions.md` #80: only the "Per list" section, which
-/// reuses a mute mechanism the server has carried since decisions #37 --
-/// `setListMuted`/`isListMuted` already worked, nothing above the transport
-/// layer could read the second one back. The "Push" section (the four
-/// toggles: item added, someone joins, list finished, shopping reminder)
-/// is a later phase of the same decision, deliberately not stubbed here in
-/// the meantime -- a toggle wired to nothing is worse than a toggle not
-/// there yet (see decisions #76's own Haptics finding).
+/// The fourth named moment in the design, "Shopping reminder," is a
+/// scheduled *local* notification rather than server push -- a later phase
+/// of the same decision, needing its own dependency
+/// (`flutter_local_notifications`), deliberately not stubbed here in the
+/// meantime (a toggle wired to nothing is worse than a toggle not there
+/// yet, decisions #76's own Haptics finding).
 class NotificationsScreen extends ConsumerWidget {
   /// Creates the screen.
   const NotificationsScreen({super.key});
@@ -29,6 +29,10 @@ class NotificationsScreen extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
     final lists =
         ref.watch(listsControllerProvider).dataOrNull ?? const <ShoppingList>[];
+    final preferences =
+        ref.watch(notificationPreferencesControllerProvider).value ??
+        const NotificationPreferences();
+    final notifier = ref.read(notificationPreferencesControllerProvider.notifier);
 
     return Scaffold(
       appBar: AppBar(
@@ -38,6 +42,31 @@ class NotificationsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
+          Text(
+            t.notifications.push.toUpperCase(),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SettingToggleOption(
+            title: t.notifications.itemAdded,
+            description: t.notifications.itemAddedBody,
+            value: preferences.itemAdded,
+            onChanged: notifier.setItemAdded,
+          ),
+          SettingToggleOption(
+            title: t.notifications.memberJoined,
+            value: preferences.memberJoined,
+            onChanged: notifier.setMemberJoined,
+          ),
+          SettingToggleOption(
+            title: t.notifications.listFinished,
+            description: t.notifications.listFinishedBody,
+            value: preferences.listFinished,
+            onChanged: notifier.setListFinished,
+          ),
+          const SizedBox(height: 24),
           Text(
             t.notifications.perList.toUpperCase(),
             style: Theme.of(context).textTheme.labelSmall?.copyWith(

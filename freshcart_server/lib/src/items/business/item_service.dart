@@ -218,7 +218,7 @@ abstract final class ItemService {
     ShoppingItem incoming,
     UuidValue userId,
   ) async {
-    return session.db.transaction((transaction) async {
+    final result = await session.db.transaction((transaction) async {
       final stored = await ShoppingItem.db.findById(
         session,
         incoming.id!,
@@ -274,8 +274,20 @@ abstract final class ItemService {
         ),
         itemName: saved.name,
       );
-      return saved;
+      return (saved: saved, becameChecked: becameChecked);
     });
+
+    // Outside the transaction and best-effort, same reasoning as enqueue's
+    // own fire-and-forget push: whether this item happened to complete the
+    // list must never fail the save that got it there.
+    if (result.becameChecked) {
+      await NotificationService.maybeNotifyListFinished(
+        session,
+        result.saved.listId,
+        actorId: userId,
+      );
+    }
+    return result.saved;
   }
 
   /// Deletes an item, if the caller belongs to its list.

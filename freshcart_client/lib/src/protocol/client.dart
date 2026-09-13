@@ -33,15 +33,17 @@ import 'package:freshcart_client/src/protocol/notifications/models/device_token.
     as _i11;
 import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
     as _i12;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i13;
+import 'package:freshcart_client/src/protocol/notifications/models/notification_preferences.dart'
+    as _i13;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i14;
 import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition.dart'
-    as _i14;
-import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i15;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i16;
-import 'dart:typed_data' as _i17;
-import 'protocol.dart' as _i18;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i17;
+import 'dart:typed_data' as _i18;
+import 'protocol.dart' as _i19;
 
 /// Upgrading an anonymous account by attaching credentials to it.
 /// {@category Endpoint}
@@ -652,6 +654,38 @@ class EndpointNotification extends _i1.EndpointRef {
         'isListMuted',
         {'listId': listId},
       );
+
+  /// The caller's own notification preferences (decisions #80, phase 2).
+  _i2.Future<_i13.NotificationPreferences> preferences() =>
+      caller.callServerEndpoint<_i13.NotificationPreferences>(
+        'notification',
+        'preferences',
+        {},
+      );
+
+  /// Sets whether the caller is notified when someone adds an item.
+  _i2.Future<_i13.NotificationPreferences> setItemAddedEnabled(bool value) =>
+      caller.callServerEndpoint<_i13.NotificationPreferences>(
+        'notification',
+        'setItemAddedEnabled',
+        {'value': value},
+      );
+
+  /// Sets whether the caller is notified when someone joins a list.
+  _i2.Future<_i13.NotificationPreferences> setMemberJoinedEnabled(bool value) =>
+      caller.callServerEndpoint<_i13.NotificationPreferences>(
+        'notification',
+        'setMemberJoinedEnabled',
+        {'value': value},
+      );
+
+  /// Sets whether the caller is notified when a list is finished.
+  _i2.Future<_i13.NotificationPreferences> setListFinishedEnabled(bool value) =>
+      caller.callServerEndpoint<_i13.NotificationPreferences>(
+        'notification',
+        'setListFinishedEnabled',
+        {'value': value},
+      );
 }
 
 /// The shops belonging to a list.
@@ -663,19 +697,19 @@ class EndpointShop extends _i1.EndpointRef {
   String get name => 'shop';
 
   /// Every shop on a list the caller belongs to.
-  _i2.Future<List<_i13.Shop>> byList(_i1.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i13.Shop>>(
+  _i2.Future<List<_i14.Shop>> byList(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i14.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list the caller belongs to.
-  _i2.Future<_i13.Shop> create(
+  _i2.Future<_i14.Shop> create(
     _i1.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i13.Shop>(
+  ) => caller.callServerEndpoint<_i14.Shop>(
     'shop',
     'create',
     {
@@ -686,8 +720,8 @@ class EndpointShop extends _i1.EndpointRef {
   );
 
   /// Writes a shop back.
-  _i2.Future<_i13.Shop> save(_i13.Shop shop) =>
-      caller.callServerEndpoint<_i13.Shop>(
+  _i2.Future<_i14.Shop> save(_i14.Shop shop) =>
+      caller.callServerEndpoint<_i14.Shop>(
         'shop',
         'save',
         {'shop': shop},
@@ -709,7 +743,7 @@ class EndpointShop extends _i1.EndpointRef {
   /// products instead of finding out afterwards.
   _i2.Future<void> remove(
     _i1.UuidValue shopId,
-    _i14.ShopItemDisposition disposition,
+    _i15.ShopItemDisposition disposition,
     _i1.UuidValue? moveToShopId,
   ) => caller.callServerEndpoint<void>(
     'shop',
@@ -735,8 +769,8 @@ class EndpointProfile extends _i1.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i2.Future<_i15.CurrentUser> me() =>
-      caller.callServerEndpoint<_i15.CurrentUser>(
+  _i2.Future<_i16.CurrentUser> me() =>
+      caller.callServerEndpoint<_i16.CurrentUser>(
         'profile',
         'me',
         {},
@@ -750,32 +784,32 @@ class EndpointProfile extends _i1.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i2.Future<_i16.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i16.MemberProfile>(
+  _i2.Future<_i17.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i17.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
       );
 
   /// Sets the caller's avatar colour.
-  _i2.Future<_i16.MemberProfile> setAvatarColor(int avatarColorArgb) =>
-      caller.callServerEndpoint<_i16.MemberProfile>(
+  _i2.Future<_i17.MemberProfile> setAvatarColor(int avatarColorArgb) =>
+      caller.callServerEndpoint<_i17.MemberProfile>(
         'profile',
         'setAvatarColor',
         {'avatarColorArgb': avatarColorArgb},
       );
 
   /// Uploads and sets the caller's avatar photo.
-  _i2.Future<_i16.MemberProfile> setAvatarPhoto(_i17.ByteData bytes) =>
-      caller.callServerEndpoint<_i16.MemberProfile>(
+  _i2.Future<_i17.MemberProfile> setAvatarPhoto(_i18.ByteData bytes) =>
+      caller.callServerEndpoint<_i17.MemberProfile>(
         'profile',
         'setAvatarPhoto',
         {'bytes': bytes},
       );
 
   /// Removes the caller's avatar photo, if they have one.
-  _i2.Future<_i16.MemberProfile?> clearAvatarPhoto() =>
-      caller.callServerEndpoint<_i16.MemberProfile?>(
+  _i2.Future<_i17.MemberProfile?> clearAvatarPhoto() =>
+      caller.callServerEndpoint<_i17.MemberProfile?>(
         'profile',
         'clearAvatarPhoto',
         {},
@@ -813,7 +847,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i18.Protocol(),
+         _i19.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

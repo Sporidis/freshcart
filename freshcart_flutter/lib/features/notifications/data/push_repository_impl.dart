@@ -1,6 +1,7 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/features/notifications/data/mappers/notification_preferences_mapper.dart';
 import 'package:freshcart_flutter/features/notifications/data/push_token_source.dart';
 
 /// The Serverpod-backed [PushPort].
@@ -54,6 +55,35 @@ class PushRepositoryImpl implements PushPort {
     () => _client.notification.isListMuted(
       dto.UuidValue.withValidation(listId.value),
     ),
+  );
+
+  @override
+  Future<Result<NotificationPreferences>> notificationPreferences() => _guard(
+    () async => (await _client.notification.preferences()).toDomain(),
+  );
+
+  @override
+  Future<Result<NotificationPreferences>> setItemAddedNotificationsEnabled(
+    bool value,
+  ) => _guard(
+    () async =>
+        (await _client.notification.setItemAddedEnabled(value)).toDomain(),
+  );
+
+  @override
+  Future<Result<NotificationPreferences>> setMemberJoinedNotificationsEnabled(
+    bool value,
+  ) => _guard(
+    () async =>
+        (await _client.notification.setMemberJoinedEnabled(value)).toDomain(),
+  );
+
+  @override
+  Future<Result<NotificationPreferences>> setListFinishedNotificationsEnabled(
+    bool value,
+  ) => _guard(
+    () async =>
+        (await _client.notification.setListFinishedEnabled(value)).toDomain(),
   );
 
   static Future<Result<T>> _guard<T>(Future<T> Function() body) async {
