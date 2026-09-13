@@ -12,6 +12,7 @@ import 'package:freshcart_flutter/features/items/presentation/items_section.dart
 import 'package:freshcart_flutter/features/items/presentation/widgets/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -92,7 +93,7 @@ void main() {
 
     final milkRow = find.ancestor(
       of: find.text('Milk'),
-      matching: find.byType(ListTile),
+      matching: find.byType(ItemTile),
     );
     final milkDot = tester.widget<Container>(
       find.descendant(
@@ -108,7 +109,7 @@ void main() {
     // Untagged: no dot, nothing to disambiguate.
     final breadRow = find.ancestor(
       of: find.text('Bread'),
-      matching: find.byType(ListTile),
+      matching: find.byType(ItemTile),
     );
     expect(
       find.descendant(
@@ -129,12 +130,12 @@ void main() {
     items.byListResult = Ok([buildItem(name: 'Milk')]);
     await pump(tester);
 
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+    expect(tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked, isFalse);
 
-    await tester.tap(find.byType(Checkbox));
+    await tester.tap(find.byKey(ItemTile.checkKey));
     await tester.pump();
 
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
+    expect(tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked, isTrue);
 
     // Let the 600 ms hold expire so no timer outlives the test.
     await tester.pump(RecentlyChecked.holdDuration);
@@ -150,7 +151,7 @@ void main() {
     ]);
     await pump(tester);
 
-    await tester.tap(find.byType(Checkbox).first);
+    await tester.tap(find.byKey(ItemTile.checkKey).first);
     await tester.pump();
 
     // Still holding its place: no divider yet.
@@ -215,16 +216,9 @@ void main() {
     expect(find.text('Milk'), findsOneWidget);
     final milkTile = find.ancestor(
       of: find.text('Milk'),
-      matching: find.byType(ListTile),
+      matching: find.byType(ItemTile),
     );
-    expect(
-      tester
-          .widget<Checkbox>(
-            find.descendant(of: milkTile, matching: find.byType(Checkbox)),
-          )
-          .value,
-      isTrue,
-    );
+    expect(tester.widget<ItemTile>(milkTile).item.isChecked, isTrue);
   });
 
   testWidgets('nothing checked means no clear action to tap', (tester) async {
@@ -367,12 +361,12 @@ void main() {
     items.saveResult = const Err(Failure.conflict());
     await pump(tester);
 
-    await tester.tap(find.byType(Checkbox));
+    await tester.tap(find.byKey(ItemTile.checkKey));
     await tester.pump(RecentlyChecked.holdDuration);
     await tester.pumpAndSettle();
 
     // Rolled back...
-    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+    expect(tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked, isFalse);
     // ...and explained, so the revert does not look like a bug.
     expect(
       find.text('Someone else just changed this. Try again.'),
@@ -396,7 +390,10 @@ void main() {
       ]);
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.edit_outlined));
+      // The row itself opens editing now -- there is no permanent edit icon
+      // any more (upgrade guide §1's Reference: "The row opens editing when
+      // tapped").
+      await tester.tap(find.text('Milk'));
       await tester.pumpAndSettle();
 
       expect(find.text('Edit product'), findsOneWidget);
@@ -417,7 +414,7 @@ void main() {
       items.byListResult = Ok([item]);
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.tap(find.text('Milk'));
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
@@ -434,7 +431,7 @@ void main() {
       items.removeResult = const Ok(null);
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.edit_outlined));
+      await tester.tap(find.text('Milk'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Remove'));
       await tester.pumpAndSettle();

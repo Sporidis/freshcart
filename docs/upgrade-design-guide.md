@@ -180,28 +180,31 @@ dispose-time reset dance it needed. Covered by `list_detail_screen_test.dart`:
 the body tints on selecting a shop, the drawer stays neutral once opened, and
 returning to "All" returns the body to neutral.
 
-### 3. Rebuild `ItemTile` as the reference `ProductRow`
+### 3. Rebuild `ItemTile` as the reference `ProductRow` — ✅ done
 
-**Current:** [`item_tile.dart`](../freshcart_flutter/lib/features/items/presentation/widgets/item_tile.dart)
-still uses stock `ListTile` geometry and exposes an edit button and drag handle
-as regular row controls.
+`ItemTile` is now `InkWell` + `Row`, not `ListTile`. The row itself opens
+editing when tapped; the leading circle is its own, independent tap target
+that toggles checked (or selection, while selecting) -- a real behaviour
+swap, not just a visual one, since checking used to be the row's own tap.
+The permanent edit icon and note glyph are both gone; quantity always shows
+(`x1` included, not just `>1`); the note is one truncated subtitle line.
+Selected rows get the reference's `#F1F0EB`/dark-equivalent background and
+8px radius; lifted (reordering) was already handled correctly at the
+`ReorderableListView` level in `items_section.dart` and needed no change.
 
-**Reference:** `ProductRow` is a bespoke `InkWell` + `Row`: checkbox, optional
-shop dot, flexible name/subtitle, and quantity. The row opens editing when tapped;
-the drag handle appears only during selection/reordering.
+The checkbox itself is a new small widget, `_CheckCircle` -- replacing the
+stock Material `Checkbox` (a rounded square, not the reference's 22px
+circle) -- with the Component Library's own named "CheckCircle" states: a
+340ms `easeOutBack` fill overshoot on checking, a plain reverse on
+unchecking (same asymmetry `_strike`'s strike-through already used), tick
+fading in behind the fill. Filled from `colorScheme.primary`, not the row's
+own shop dot -- decisions #73's tint scoping is what makes that the correct,
+context-aware colour to read.
 
-**Work:**
-
-- Replace the `ListTile` layout with explicit row geometry.
-- Remove the permanent edit icon.
-- Show `x1` as well as larger quantities.
-- Render a note as one truncated subtitle line, without a permanent note icon.
-- Keep the existing swipe, selection, checked-state, and entrance animations.
-- Match the reference's selected/lifted spacing and elevation states.
-
-**Acceptance check:** default, checked, noted, selected, lifted, and swiping rows
-match the seven `ProductRow` states in the component library without regressing
-the existing item widget tests.
+Not built: the remote-edit/offline-pending row states from the same
+component-library section. Those need real actor/outbox data the app
+doesn't have yet -- Priority 1 item #7 below, deliberately not guessed at
+here.
 
 ## Priority 1: visible flow gaps
 
@@ -262,8 +265,8 @@ work here.
    still item 3 below.
 2. ~~Move shop tint into the list subtree and verify navigation/chrome
    boundaries.~~ — ✅ done, decisions #73.
-3. Rebuild `ItemTile` geometry while retaining its existing gesture/animation
-   controllers.
+3. ~~Rebuild `ItemTile` geometry while retaining its existing gesture/animation
+   controllers.~~ — ✅ done.
 4. Add Move, update search presentation, and relocate the upgrade nudge.
 5. Implement drawer counts and the secondary settings/list-settings flows from
    [`design-gap-plan.md`](design-gap-plan.md).

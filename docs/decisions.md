@@ -1353,3 +1353,56 @@ separately from inside `ListsDrawer` after opening it, so the "does not leak sid
 checked against an actual element in each subtree rather than inferred from the FAB or a chip's
 own colour (both of which take their colour from `effectiveShopColorProvider` directly and would
 have passed even before this fix, telling this specific regression nothing).
+
+## 74. `ItemTile` rebuilt as `ProductRow` — the row now opens editing, the leading circle checks
+
+**Decision:** Priority 0 item #3. `ItemTile` was `ListTile` + a permanent edit `IconButton`;
+Component Library §01 draws `ProductRow` as `InkWell` + `Row`, with the row itself opening editing
+and no permanent edit affordance at all. Matching that is a real interaction change, not a
+re-skin: checking an item used to be a tap anywhere on the row, and is now the leading circle's
+job specifically, freeing the row's own tap for editing. The leading circle got its own
+independent `GestureDetector` (`ItemTile.checkKey`, a shared key across rows the way
+`find.byType(Checkbox)` used to be type-based rather than id-based) nested inside the row's outer
+`InkWell` — the same "child tap wins over parent" composition `Checkbox` inside `ListTile.leading`
+already relied on, just built by hand once `ListTile` was gone.
+
+**`_CheckCircle` replaces the stock `Checkbox`, not just restyles it.** The reference's own
+22px-circle "CheckCircle" is a named component with its own states (§02): unchecked outline,
+checked-and-filled, and a 340ms `easeOutBack` fill overshoot specifically on *checking* — "because
+the user did it" — with a plain reverse on unchecking, no overshoot. That asymmetry already existed
+in this file for the strike-through (`_strike.forward()` vs `.reverse()`, "the intent is
+unambiguous"); `_checkFill` is the same shape, a second `AnimationController` rather than folding
+into `_strike`, because the two animate different things (a scale-in disc vs. a wipe) on
+overlapping but not identical triggers. The tick's own "fades in 80ms behind the fill" is
+approximated from the same fill progress (`(fill-0.3)/0.7`) rather than a third controller for 80ms
+of motion — a deliberate simplification, not an oversight.
+
+**The fill colour is `colorScheme.primary`, deliberately not `ItemTile.shopDotColor`.** The
+reference is explicit that CheckCircle's fill is "free when the tab's subtree is wrapped in
+`AppTheme.forShop`" — i.e. it is the *active tab's* colour, while the dot beside an item's name is
+that *item's own* shop, and the two can differ (search results span every shop, with the All tab's
+neutral theme active throughout). Decision #73's tint scoping, from earlier the same session, is
+what makes reading `Theme.of(context).colorScheme.primary` directly the correct thing to do here —
+this rebuild would have inherited the old bug (every check circle either always shop-tinted or
+never) had #73 not already landed first.
+
+**Quantity always shows now** (`x1` included, not just `item.quantity > 1`), and the note glyph is
+gone — the note itself is the subtitle line, which already existed; only the redundant icon needed
+removing. **Selected rows** get the reference's `#F1F0EB`/dark-equivalent background, matched to
+the existing `AppColors.selectedRowLight`/`Dark` tokens (already named for exactly this, unused
+until now) with an 8px radius. **Lifted (reordering)** rows needed no change at all — elevation 8,
+scale 1.03, 95% opacity were already exactly right, in `items_section.dart`'s `proxyDecorator`, not
+`ItemTile` itself.
+
+**Deliberately not built:** the reference's remote-edit (coloured edge + avatar chip) and
+offline-pending (dashed edge) row states. Both need domain/application data the app does not carry
+yet — a preserved realtime `actorId`, and a local outbox for offline writes — matching Priority 1
+item #7's own note not to fake either from local timestamps. Left for that item, not guessed at
+here.
+
+**Test fallout, not a regression:** eight `items_section_test.dart` cases broke on this change,
+all for the same two reasons — `find.byType(Checkbox)`/`find.byType(ListTile)` no longer resolve to
+anything, and tapping `Icons.edit_outlined` no longer opens the edit sheet. Fixed by scoping to
+`find.byType(ItemTile)` (reading `.item.isChecked` off the widget directly, which is a more honest
+assertion than reading a stock `Checkbox`'s `.value` ever was) and tapping the row's own name text
+where a test used to reach for the edit icon.
