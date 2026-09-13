@@ -24,11 +24,11 @@ behaviour*, not new visual language.
 | Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | ✅ Built for the add control — decisions #64. Search's own "Recently bought" UI still to come. |
 | Unify the add/edit item sheet into one component | Small–Medium | ✅ Built — decisions #63 |
 | Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | ✅ Avatars + inline rows built — decisions #65. Remaining count still deferred (needs a per-list summary endpoint). |
-| Settings: 4-group restructure | Medium | Not built (current screen is one card) |
-| Edit profile: user-chosen avatar colour | Small–Medium | Not built — **domain change** |
-| Appearance screen (theme mode, larger text, reduce-motion status) | Medium | Not built — no shop-tint toggle, see decisions |
+| Settings: 4-group restructure | Medium | ✅ Built — Profile, Lists & shops, Preferences, About |
+| Edit profile: user-chosen avatar colour | Small–Medium | ✅ Built — domain field, `ProfileService`, swatch picker on `EditProfileScreen` |
+| Appearance screen (theme mode, larger text, reduce-motion status) | Medium | ✅ Built (inline in Preferences, not a separate screen — nothing in the design requires one). Theme mode is also now persisted; it wasn't before. |
 | Notifications preferences (4 push toggles + per-list mute) | Large | Not built — one item needs local scheduled notifications, a new dependency |
-| List settings screen (replaces Household; rename, members, per-list behaviour, shops, leave/delete) | Medium | Mostly relocating what exists, plus one new toggle |
+| List settings screen (replaces Household; rename, members, per-list behaviour, shops, leave/delete) | Medium | ✅ Built, decision #69. "Clear checked after shopping" deliberately still missing, see §9. |
 
 ## Decisions
 
@@ -126,10 +126,10 @@ add them.
   ideally without each drawer open triggering N item-list fetches for N lists. Deferred as its own
   future backend piece rather than folded into the avatar/inline-rows pass.
 
-## 5. Settings restructure
+## 5. Settings restructure — ✅ built
 
-The current `SettingsScreen` is one card (anonymous vs. linked account, decisions #56). The
-design wants four groups under one screen:
+The design's four groups all exist on `SettingsScreen` now. Kept for the record of what each one
+resolved to:
 
 - **Profile row** at the top (avatar, name, "Joined \<date\>", Edit → a new Edit profile screen).
 - **Lists & shops**: Manage lists (→ `ListsScreen`, decided above), Manage shops (with a count),
@@ -145,34 +145,35 @@ design wants four groups under one screen:
 The upgrade nudge (decisions #56) still belongs somewhere in here too, most naturally folded into
 the profile row's area rather than kept as its own separate section.
 
-## 6. Edit profile: a user-chosen avatar colour
+## 6. Edit profile: a user-chosen avatar colour — ✅ built
 
-Today a user's avatar colour is deterministic — `AppColors.avatarColorFor(userId)`, a hash into
-the preset swatch list, so the same person is reliably the same colour everywhere without being
-stored anywhere. The design's Edit profile screen lets a user *pick* their colour from the same
-preset swatches shops use. **This is a real domain change, not styling:** `AuthUser` would need
-a persisted colour field, a `SetAvatarColor`-shaped use case (mirroring `SetDisplayName`), a
-server column/migration, and `avatarColorFor` would become "look up the stored colour, falling
-back to the hash for anyone who has not set one" rather than always hashing. Every place that
-currently calls `AppColors.avatarColorFor` (member rows, drawer, item "checked by" chips) would
-read the stored value once it exists.
+`AuthUser.avatarColor`/`avatarPhotoUrl`, the server's `ProfileService` and `profile_endpoint.dart`,
+and `EditProfileScreen`'s swatch picker + photo upload all exist. `avatarColorFor` reads the
+stored value once set, falling back to the deterministic hash otherwise, exactly as originally
+scoped below.
 
-## 7. Appearance screen
+## 7. Appearance screen — ✅ built (inline in Preferences, decisions #76)
 
-Two things now, not three — the shop-tint toggle is not being built (decisions above):
+Both pieces exist, plus the read-only status row:
 
-- **Explicit theme-mode choice (Light/Dark/System).** `MaterialApp.router` already supplies both
-  `theme` and `darkTheme`, so the app already *follows the system* by default — there is no
-  current way for a user to pin Light or Dark regardless of the system, which is what this screen
-  adds. Small: a persisted enum preference (`shared_preferences`, same tool as decisions #56) read
-  into `MaterialApp.router`'s `themeMode`.
-- **"Larger list text"** — a text-scale preference, most simply a `MediaQuery` `TextScaler`
-  override applied at the app root, scoped conservatively (the design's own note is "easier to
-  read at arm's length," not a full accessibility text-scale system).
+- **Explicit theme-mode choice (Light/Dark/System)** — a `SettingDropdownOption` inside
+  `PreferencesSection`, not a separate screen; nothing in the design requires one, and the app
+  already had a `SettingDropdownOption` component that fits this exactly. Persisted with
+  `shared_preferences` via `AppearanceController` — this was originally built in-memory only
+  (picking Dark and relaunching silently reverted to System) and was fixed alongside this work,
+  not a new gap.
+- **"Larger list text"** — a persisted `shared_preferences` bool (`LargeTextController`) applied
+  as a `MediaQuery` `TextScaler.linear(1.15)` override at the app root, only when on; off leaves
+  the ambient (OS-level) scaler untouched rather than stacking on top of it.
+- **"Reduce motion"** — a genuinely read-only row (`SettingStatusOption`, no `Switch` anywhere in
+  it), reporting `AppMotion.reduced(context)` as "On"/"Off" text, per decisions above.
 
-Plus **"Reduce motion"** as a read-only status row (decisions above) — rendered without the
-interactive switch styling the design mockup gives it, since there is no independent state behind
-it to toggle; it just reports what `AppMotion.reduced` already knows.
+**Found, not planned, while building this:** the "Haptics" toggle already on `PreferencesSection`
+was decorative — `value: true, onChanged: (_) {}` — while 7 real `HapticFeedback` call sites across
+4 files fired unconditionally, gated by nothing. Unlike the two dead controls decisions #64/#69
+removed outright, the capability here already existed and worked, so the fix was to wire the
+toggle for real (a new `HapticsController`, default on to match every site's existing behaviour,
+read at each call site) rather than delete it. See decisions #76.
 
 ## 8. Notifications preferences
 
@@ -193,24 +194,22 @@ Four named push toggles plus per-list mute:
   membership (`ListMember`), or a lightweight preferences table keyed by user+list — needs
   a small domain/server addition either way, not just client-side state.
 
-## 9. List settings screen
+## 9. List settings screen — ✅ built, decisions #69
 
-Reached from a list's own header, and — per the decisions above — **replaces Household**
-entirely rather than coexisting with it:
+Reached from a list's own header; **replaces Household** as the entry point (decision #69 kept
+`HouseholdScreen` itself alive underneath — see its own "not a second copy" reasoning — rather
+than rebuilding member management inline):
 
 - Rename → already possible (`EditableListTitle`).
-- Members, "You · Owner" badge, remove/transfer, "Invite someone" → move here from
-  `HouseholdScreen`, which is retired once this ships (its logic is not rebuilt, just relocated —
-  the existing controller/use cases behind member management stay as they are).
-- "Shops on this list" (count, opens shop management) → already exists as `ManageShopsScreen`,
-  just needs a launch point here.
-- Leave / Delete for everyone → already exist as actions on `ListsScreen`'s list menu; List
-  settings becomes a second, list-scoped place to reach them (both stay, since `ListsScreen`'s
-  own per-row menu is still how you act on a list you are not currently inside).
-- **New:** "Clear checked after shopping" — a per-list toggle that, once on, asks to clear
-  checked items once the list is complete rather than only ever clearing on an explicit tap. This
-  is the one preference from the "keep checked / clear checked" overlap (decisions above) that
-  actually ships.
+- Members row → opens the existing `HouseholdScreen`, not rebuilt inline.
+- "Shops on this list" row → opens the existing `ManageShopsScreen`.
+- Leave / Delete for everyone → both here and on `ListsScreen`'s own per-row menu, deliberately
+  (that menu is still how you act on a list you are not currently inside).
+- **Still deliberately missing:** "Clear checked after shopping" — the mockup's toggle, left out
+  because "after shopping" isn't yet a real, defined moment in the domain (all items checked?
+  every shop tab clear? something explicit a person taps?), and `ShoppingList` has no field for it.
+  Needs an actual domain decision plus a migration, not a switch wired to a guess — see decision
+  #69's own note. This is the one piece of §9 not yet built.
 
 ## Suggested build order
 
@@ -223,13 +222,17 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
    from it now; Flow 06's "Recently bought" is unblocked but not itself built yet.
 4. ~~**Drawer enrichment** (§4)~~ — ✅ member avatars + inline New list / Join a list built,
    decisions #65. Remaining count still deferred, needs its own summary endpoint.
-5. **Edit profile + stored avatar colour** (§6) — small domain change, self-contained.
-6. **List settings screen** (§9) — retiring Household as part of the same change, since nothing
-   downstream should keep pointing at a screen that is going away.
-7. **Settings restructure** (§5) — once List settings exists, so its "Household" row has
-   somewhere real to point (or is dropped, per §5's own note).
-8. **Appearance screen** (§7) — theme-mode, larger-text and the reduce-motion status row; no
-   longer has a held-back piece.
-9. **Notifications preferences** (§8) — largest single piece, and the only one needing a new
-   dependency (local scheduled notifications) — do this last, and possibly split "list finished"
-   push + per-list mute from the local-notification scheduler as two separate phases.
+5. ~~**Edit profile + stored avatar colour** (§6)~~ — ✅ built.
+6. ~~**List settings screen** (§9)~~ — ✅ built, decision #69. "Clear checked after shopping"
+   still deliberately missing, needs its own domain decision.
+7. ~~**Settings restructure** (§5)~~ — ✅ built.
+8. ~~**Appearance screen** (§7)~~ — ✅ built, decisions #76 (inline in Preferences, plus a
+   pre-existing persistence bug and a decorative Haptics toggle found and fixed alongside it).
+9. **Notifications preferences** (§8) — the largest remaining piece, and the only one needing a
+   new dependency (local scheduled notifications) — do this last, and possibly split "list
+   finished" push + per-list mute from the local-notification scheduler as two separate phases.
+
+Three smaller items are still open, each deliberately deferred rather than forgotten: the
+drawer's remaining count (§4, needs a summary endpoint), "Clear checked after shopping" (§9,
+needs a real domain decision), and Flow 06's "Recently bought" search UI (§2, unblocked by the
+suggestions backend but not itself built).

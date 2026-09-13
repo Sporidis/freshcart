@@ -1455,3 +1455,57 @@ Settings (decisions #56) shows the same prompt permanently while an account is a
 `EditProfileScreen` renders `UpgradeNudge` itself already. Removing it from `list_detail_screen.dart`
 is confirmed safe by grep, not assumption: nothing outside those two files, plus its own dedicated
 test file, referenced the widget.
+
+## 76. Appearance's remaining pieces close out `docs/design-gap-plan.md` §7 — plus two bugs the plan never named
+
+**Decision:** Starting into Priority 2, reading the actual code against `design-gap-plan.md`
+first (per its own "written before any of it is built" framing, now stale in several places)
+turned up that §5 (Settings restructure), §6 (Edit profile + avatar colour), and §9 (List
+settings) were already fully built in earlier sessions, despite the doc still marking them "Not
+built." Corrected in the doc directly rather than left to rot further. The one piece of §7
+(Appearance) genuinely still open was the persisted theme-mode choice, larger list text, and the
+reduce-motion status row — all three built now, inline in `PreferencesSection` rather than a
+separate screen, since nothing in the design mockup requires a dedicated destination and the app
+already had `SettingDropdownOption` for exactly this shape of row. A new `SettingStatusOption`
+was added for reduce motion specifically *because* it must not look tappable (decisions above,
+§ Decisions #3) — reusing `SettingToggleOption` for a state with nothing behind it to toggle would
+have been the wrong component wearing the right label.
+
+**Two bugs found while doing this, neither named in the plan:**
+
+`AppearanceController` was never persisted — a plain in-memory `Notifier`, so picking Dark and
+relaunching silently reverted to System. `UpgradeNudgeDismissed`, in the same feature, already
+showed the correct `shared_preferences` pattern; `AppearanceController` just hadn't followed it.
+Fixed by converting `build()` to the async, prefs-backed shape (`Appearance.values.byName`-style
+lookup, stored by name rather than index so adding a value later can't silently shift what an
+already-stored index meant) — which turns the provider's type from `Appearance` to
+`AsyncValue<Appearance>`, so both read sites (`app.dart`'s `themeMode`, `PreferencesSection`'s
+dropdown) now fall back to a sensible default while the persisted value is still loading rather
+than assume it has already resolved.
+
+The Settings "Haptics" toggle was decorative: `value: true, onChanged: (_) {}`, wired to nothing.
+Meanwhile `HapticFeedback` fires unconditionally from 7 real call sites across 4 files (checking
+an item, long-press-to-select, swipe-to-delete's threshold pop, drag-to-reorder start/end, the
+invite-code copy confirmation, a shake on error) — the capability the toggle claims to control
+already fully exists and works, unlike decisions #64/#69's two *actually* dead controls
+(notifications, global "keep checked items"), which had no capability behind them at all and were
+removed outright rather than wired. That distinction is why this one was fixed, not deleted: a
+toggle promising to gate something real, doing nothing, is a worse state than not having the
+toggle. Wiring it meant converting three plain `State` classes (`ShakeOnError`, `InviteCard`,
+`_ItemTileState`) to `ConsumerState` so each call site can read the new `HapticsController`
+(`shared_preferences`-backed, same pattern as `AppearanceController`, default **on** — an unset
+preference has to mean "keep doing what every site already does," not silently go quiet for
+everyone who has never opened Settings) — `items_section.dart`'s own two call sites needed no such
+conversion, already living inside a `ConsumerWidget`.
+
+**Larger list text** is a `MediaQuery` `TextScaler.linear(1.15)` override at the app root, applied
+only when the preference is on; off leaves the ambient scaler untouched rather than stacking on
+top of whatever OS-level accessibility scaling is already active — deliberately not a general
+accessibility text-scale system, matching the design's own "easier to read at arm's length" framing
+for this row.
+
+**Test coverage:** four new cases in `settings_screen_test.dart` (`SharedPreferences` was already
+mocked there for the account-linking tests) — the Appearance dialog's choice persists to the
+correct key, larger text defaults off and persists once toggled, haptics defaults on and persists
+once turned off, and reduce motion renders as plain text with no `Switch` descendant anywhere in
+its row, not just no visible thumb.

@@ -249,21 +249,32 @@ these states from local timestamps.
 
 These are already described in [`design-gap-plan.md`](design-gap-plan.md); keep
 that file as the detailed feature plan rather than duplicating all architecture
-work here.
+work here. Most of this list turned out to already be built by the time work on
+it actually started — corrected below rather than left stale.
 
-- **Drawer:** add each list's remaining count (`N left` / `All done`). This needs
-  a summary endpoint; do not fetch every list's complete item collection just to
-  render the drawer.
-- **List settings:** move member management out of Household, expose shop
-  management and list actions, and add the per-list clear-checked preference.
-- **Settings:** implement the four groups from the reference: Profile, Lists &
-  shops, Preferences, and About.
-- **Profile:** verify stored avatar colour is used consistently, with the
-  deterministic colour retained only as a fallback.
-- **Appearance:** add explicit Light/Dark/System selection and larger list text;
-  keep reduced motion as a read-only OS status.
-- **Notifications:** add push preferences, per-list mute, and scheduled local
-  reminders as a separately scoped dependency/permission task.
+- **List settings** — ✅ built, decision #69. Member management opens the
+  existing Household screen rather than being rebuilt inline; shop management
+  and Leave/Delete are all reachable from here. Still missing: the per-list
+  "Clear checked after shopping" preference, deliberately, since it needs a real
+  domain decision "after shopping" doesn't have yet.
+- **Settings** — ✅ built. All four groups (Profile, Lists & shops, Preferences,
+  About) exist on `SettingsScreen`.
+- **Profile** — ✅ built. Stored avatar colour and photo both exist end to end
+  (domain, server, `EditProfileScreen`'s picker), with the deterministic hash as
+  the fallback for anyone who hasn't set one.
+- **Appearance** — ✅ built, decisions #76. Theme mode, larger list text, and the
+  read-only reduce-motion status row all live inline in Settings' Preferences
+  group (no separate screen — nothing in the design requires one). Two bugs
+  found and fixed alongside this, neither previously named anywhere: theme mode
+  wasn't actually persisted, and the "Haptics" toggle was decorative (wired to
+  nothing, while 7 real `HapticFeedback` call sites fired unconditionally) — now
+  wired for real.
+- **Drawer:** still not built — add each list's remaining count (`N left` /
+  `All done`). This needs a summary endpoint; do not fetch every list's complete
+  item collection just to render the drawer.
+- **Notifications:** still not built — add push preferences, per-list mute, and
+  scheduled local reminders as a separately scoped dependency/permission task.
+  The largest remaining piece of Priority 2.
 
 ## Suggested implementation order
 
