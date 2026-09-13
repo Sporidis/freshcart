@@ -1686,3 +1686,60 @@ still `UnconfiguredPushTokenSource` -- a real FCM-backed implementation needs Ni
 Firebase project config files, which correctly never touch this repo. Phase 1's mute mechanism is
 fully real and testable regardless (it rides the existing server endpoints, not a new push path),
 but nothing here proves a phone actually buzzes.
+
+**Correction, found minutes later while building phase 2:** the claim above is wrong.
+`main.dart` already overrides `pushTokenSourceProvider` with a real `FirebaseMessagingTokenSource`
+for every non-web platform, and `lib/firebase_options.dart` is a genuinely populated
+FlutterFire-generated file, not a stub -- Nikolaos's Firebase project already exists and is wired
+in. `UnconfiguredPushTokenSource` is only ever constructed for web (decisions #8's own EU-PWA
+limitation) or as `main.dart`'s explicit fallback. None of this was itself documented in an
+earlier decision, so it read as unbuilt from decisions.md alone; the actual code said otherwise.
+Corrected here rather than left standing, the same as any other stale claim this session caught.
+
+## 81. Notifications preferences, phase 2 -- the three gateable toggles and their triggers
+
+**Decision:** builds on decision #80's plan. Adds the piece design-gap-plan.md §8 named as
+needing real work: a new per-user, non-list-scoped `NotificationPreferences` (item-added on by
+default -- "off by default except the first," memberJoined and listFinished off), plus the one
+trigger that genuinely didn't exist before this pass -- "someone joins a list" (`ListService.join`
+previously only ever called `_announce`, the live in-app stream, never `NotificationService.enqueue`)
+-- and a new one, "a list is finished," detected server-side the instant `ItemService.save`
+transitions an item into checked and nothing else on the list is still open.
+
+**`recipientTokens` grew an `isEnabled` filter with a default that ignores it entirely**
+(`_alwaysNotified`), rather than becoming a required parameter every existing call site had to
+learn about. The four pre-existing tests in `notification_test.dart` that call it directly are
+testing actor/mute exclusion, not preference gating -- giving the new parameter a default kept
+all four valid unmodified, and only `flush`'s own single call site needed to actually pass one
+(`isEnabled: (p) => p.itemAdded`).
+
+**Immediate, not batched, for both new triggers** -- matching the design's own copy, which calls
+out only "Someone adds an item" as "Batched — one alert per burst"; "joins" and "list finished"
+read as ordinary one-off pushes. `_deliver`, a small shared helper, replaced the copy-pasted
+"skip if no tokens, else send" tail `flush` already had, once two more call sites needed the same
+shape.
+
+**The completion trigger reuses `ItemService.save`'s own `becameChecked` flag** -- the same
+transition-detection idea decisions #79 built client-side, just server-side this time, and for
+the identical reason: firing on every save that happens to leave an item checked (rather than
+only the save that just checked it) would re-notify on an unrelated edit to an already-done row.
+`save` had to restructure slightly to run the completion check _after_ its own transaction
+commits, matching `enqueue`'s existing "a push must never fail the write that caused it"
+reasoning -- a record `(saved, becameChecked)` comes back out of the transaction instead of the
+bare item, and the post-transaction check reads from it.
+
+**A genuine surprise mid-build, not planned:** the sandbox that could not reach Postgres all
+session suddenly could -- `dart test test/integration/` (98 tests, every existing file plus this
+session's new notification tests) ran and passed for real, and `dart run bin/main.dart
+--apply-migrations` applied both this decision's new table and decision #79's still-pending
+`clearCheckedAfterShopping` column. Whatever local/network state made Postgres unreachable
+earlier in this session resolved itself; every migration from this session is now applied and
+every server-side claim in decisions #78/#79/#80/#81 that previously said "cannot verify here" is
+now actually verified, not just written correctly on faith.
+
+**Nine new integration tests**, covering: preference defaults and independent persistence;
+item-added gating (an opted-out recipient is skipped, others still get it); member-joined's
+off-by-default silence, an opted-in recipient receiving it, the joiner never receiving it, and a
+re-tapped invite link not double-sending; list-finished notifying an opted-in member and never the
+actor who completed it, staying silent while any item is still open, and not re-firing when an
+already-checked item is edited afterwards.

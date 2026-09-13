@@ -274,11 +274,15 @@ it actually started — corrected below rather than left stale.
   wired for real.
 - **Drawer — ✅ built, decisions #65, #78.** Remaining count, member avatars,
   and inline New list / Join a list rows all ship.
-- **Notifications — 🟡 phase 1 of 4 built, decision #80.** Per-list mute UI
-  ships (`NotificationsScreen`, reached from a new Settings row). Remaining:
-  the three gateable push toggles and their triggers, the permission-rationale
-  sheet, and scheduled local reminders — the last needs a new dependency
-  (`flutter_local_notifications`) and its own permission flow.
+- **Notifications — 🟡 phases 1–2 of 4 built, decisions #80–#81.** Per-list
+  mute and the three gateable push toggles (item-added, someone-joins,
+  list-finished) all ship, with real server-side triggers for the latter two.
+  Remaining: the permission-rationale sheet, and the scheduled local reminder
+  — the last needs a new dependency (`flutter_local_notifications`) and its
+  own permission flow. Also corrected here: the app's Firebase project
+  already exists and is wired in (`main.dart`'s real
+  `FirebaseMessagingTokenSource`), not still pending as earlier phases of
+  this doc assumed.
 
 ## Suggested implementation order
 
