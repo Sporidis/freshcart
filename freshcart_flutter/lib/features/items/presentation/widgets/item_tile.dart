@@ -169,7 +169,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     }
   }
 
-  /// How far the current swipe has travelled, 0 to 1 of the row's width.
+  /// How far the current swipe has traveled, 0 to 1 of the row's width.
   /// Feeds [_iconScale]; set from [_handleSwipeUpdate].
   double _swipeProgress = 0;
 
@@ -319,11 +319,6 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final item = widget.item;
-    final subtitle = _subtitle();
-    final muted = theme.colorScheme.onSurfaceVariant;
-
     return Listener(
       // Raw pointer events, not a second gesture recognizer: a `Listener`
       // sits outside Flutter's gesture arena entirely, so timing the 300 ms
@@ -333,7 +328,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       onPointerUp: _handlePressEnd,
       onPointerCancel: _handlePressEnd,
       child: Dismissible(
-        key: ValueKey(item.id.value),
+        key: ValueKey(widget.item.id.value),
         // Selection mode owns the gesture instead: a swipe mid-select would
         // be ambiguous between "delete this one" and "drag to select".
         direction: widget.selectionMode
@@ -345,143 +340,183 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
         // 220 ms per the Motion spec (§10) -- the default resize is slower.
         resizeDuration: const Duration(milliseconds: 220),
         onUpdate: _handleSwipeUpdate,
-        background: ColoredBox(
-          color: AppColors.destructive,
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 24),
-              child: AnimatedBuilder(
-                animation: _iconPop,
-                builder: (context, child) =>
-                    Transform.scale(scale: _iconScale, child: child),
-                child: const Icon(Icons.delete_outline, color: Colors.white),
-              ),
-            ),
-          ),
-        ),
+        background: _buildSwipeBackground(),
         onDismissed: (_) => _handleDismissed(context),
-        child: AnimatedBuilder(
-          animation: Listenable.merge([_strike, _pressScale, _entrance]),
-          builder: (context, child) {
-            final tint = widget.shopDotColor ?? theme.colorScheme.primary;
-            return Transform.scale(
-              scale:
-                  _pressScale.value *
-                  lerpDouble(0.94, 1, _entranceEased.value)!,
-              // Material, not a plain DecoratedBox: ListTile paints its own
-              // splashes on the nearest Material ancestor, and a coloured
-              // DecoratedBox sitting between it and that ancestor would hide
-              // them (a real, debug-mode-flagged issue, not a style choice).
-              child: Material(
-                // Fades to nothing over the same 900 ms the scale settles in
-                // over -- there is no resting tint once it is done.
-                color: tint.withValues(
-                  alpha: 0.16 * (1 - _entranceEased.value),
-                ),
-                child: Opacity(
-                  // 45% once checked: present, but plainly already in the trolley.
-                  opacity: 1 - (_strike.value * 0.55),
-                  child: child,
-                ),
-              ),
-            );
-          },
-          child: ListTile(
-            onTap: _activateRow,
-            onLongPress: _handleLongPressFire,
-            leading: AnimatedBuilder(
-              animation: _selectionReveal,
-              builder: (context, child) => SizedBox(
-                width: 48,
-                child: Stack(
-                  alignment: Alignment.centerLeft,
-                  children: [
-                    Opacity(
-                      opacity: _selectionReveal.value,
-                      child: _SelectionCircle(selected: widget.selected),
-                    ),
-                    Transform.translate(
-                      offset: Offset(
-                        _checkboxSlide * _selectionReveal.value,
-                        0,
-                      ),
-                      child: Checkbox(
-                        value: item.isChecked,
-                        onChanged: (_) => _activateRow(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            title: Row(
-              children: [
-                if (widget.shopDotColor != null) ...[
-                  Container(
-                    key: const ValueKey('shop-dot'),
-                    width: 7,
-                    height: 7,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: widget.shopDotColor,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                ],
-                Expanded(
-                  child: _StrikeThrough(
-                    progress: _strike,
-                    color: muted,
-                    child: Text.rich(
-                      TextSpan(
-                        children: _highlightSpans(
-                          item.name,
-                          widget.highlightQuery,
-                          theme.textTheme.bodyLarge,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                if (item.quantity > 1) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    'x${item.quantity}',
-                    style: AppTextStyles.caption.copyWith(color: muted),
-                  ),
-                ],
-                if (item.hasNote) ...[
-                  const SizedBox(width: 6),
-                  Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
-                ],
-              ],
-            ),
-            subtitle: subtitle == null ? null : Text(subtitle),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  onPressed: widget.onEdit,
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: widget.t.common.save,
-                ),
-                if (widget.canReorder)
-                  ReorderableDragStartListener(
-                    index: widget.index,
-                    child: Padding(
-                      padding: const EdgeInsets.only(left: 4, right: 4),
-                      child: Icon(
-                        Icons.drag_handle,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
+        child: _buildAnimatedRow(context, child: _buildRow(context)),
+      ),
+    );
+  }
+
+  /// The delete icon revealed behind a swipe: tracks the drag via
+  /// [_iconScale] and plays [_iconPop]'s overshoot the instant the swipe
+  /// crosses the dismiss threshold (Motion spec §10).
+  Widget _buildSwipeBackground() {
+    return ColoredBox(
+      color: AppColors.destructive,
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Padding(
+          padding: const EdgeInsets.only(right: 24),
+          child: AnimatedBuilder(
+            animation: _iconPop,
+            builder: (context, child) =>
+                Transform.scale(scale: _iconScale, child: child),
+            child: const Icon(Icons.delete_outline, color: Colors.white),
           ),
         ),
       ),
+    );
+  }
+
+  /// Wraps [child] (the row itself) in the row-level animation: the
+  /// press-scale tell, the new-row entrance scale + tint flash, and the
+  /// checked-off fade. `child` is passed through to [AnimatedBuilder]
+  /// rather than rebuilt on every tick, since none of those animations
+  /// change the row's own content.
+  Widget _buildAnimatedRow(BuildContext context, {required Widget child}) {
+    final theme = Theme.of(context);
+    return AnimatedBuilder(
+      animation: Listenable.merge([_strike, _pressScale, _entrance]),
+      builder: (context, child) {
+        final tint = widget.shopDotColor ?? theme.colorScheme.primary;
+        return Transform.scale(
+          scale: _pressScale.value * lerpDouble(0.94, 1, _entranceEased.value)!,
+          // Material, not a plain DecoratedBox: ListTile paints its own
+          // splashes on the nearest Material ancestor, and a coloured
+          // DecoratedBox sitting between it and that ancestor would hide
+          // them (a real, debug-mode-flagged issue, not a style choice).
+          child: Material(
+            // Fades to nothing over the same 900 ms the scale settles in
+            // over -- there is no resting tint once it is done.
+            color: tint.withValues(alpha: 0.16 * (1 - _entranceEased.value)),
+            child: Opacity(
+              // 45% once checked: present, but plainly already in the trolley.
+              opacity: 1 - (_strike.value * 0.55),
+              child: child,
+            ),
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+
+  /// The row's actual content: checkbox/selection leading slot, name +
+  /// quantity + note title, note/checked-by subtitle, and the edit/reorder
+  /// trailing slot.
+  Widget _buildRow(BuildContext context) {
+    final theme = Theme.of(context);
+    final subtitle = _subtitle();
+    return ListTile(
+      onTap: _activateRow,
+      onLongPress: _handleLongPressFire,
+      leading: _buildLeadingSlot(),
+      title: _buildTitleRow(
+        theme: theme,
+        muted: theme.colorScheme.onSurfaceVariant,
+      ),
+      subtitle: subtitle == null ? null : Text(subtitle),
+      trailing: _buildTrailingSlot(context),
+    );
+  }
+
+  /// The checkbox, cross-faded with the selection circle as
+  /// [_selectionReveal] runs (§10: 240 ms, staggered by [ItemTile.index]).
+  Widget _buildLeadingSlot() {
+    return AnimatedBuilder(
+      animation: _selectionReveal,
+      builder: (context, child) => SizedBox(
+        width: 48,
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            Opacity(
+              opacity: _selectionReveal.value,
+              child: _SelectionCircle(selected: widget.selected),
+            ),
+            Transform.translate(
+              offset: Offset(_checkboxSlide * _selectionReveal.value, 0),
+              child: Checkbox(
+                value: widget.item.isChecked,
+                onChanged: (_) => _activateRow(),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// The item's name (struck through and search-highlighted as needed),
+  /// plus the shop dot, quantity, and note glyph that share its line.
+  Widget _buildTitleRow({required ThemeData theme, required Color muted}) {
+    final item = widget.item;
+    return Row(
+      children: [
+        if (widget.shopDotColor != null) ...[
+          Container(
+            key: const ValueKey('shop-dot'),
+            width: 7,
+            height: 7,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: widget.shopDotColor,
+            ),
+          ),
+          const SizedBox(width: 8),
+        ],
+        Expanded(
+          child: _StrikeThrough(
+            progress: _strike,
+            color: muted,
+            child: Text.rich(
+              TextSpan(
+                children: _highlightSpans(
+                  item.name,
+                  widget.highlightQuery,
+                  theme.textTheme.bodyLarge,
+                ),
+              ),
+            ),
+          ),
+        ),
+        if (item.quantity > 1) ...[
+          const SizedBox(width: 6),
+          Text(
+            'x${item.quantity}',
+            style: AppTextStyles.caption.copyWith(color: muted),
+          ),
+        ],
+        if (item.hasNote) ...[
+          const SizedBox(width: 6),
+          Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
+        ],
+      ],
+    );
+  }
+
+  /// The edit button, plus the drag handle when [ItemTile.canReorder].
+  Widget _buildTrailingSlot(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          onPressed: widget.onEdit,
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: widget.t.common.save,
+        ),
+        if (widget.canReorder)
+          ReorderableDragStartListener(
+            index: widget.index,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4, right: 4),
+              child: Icon(
+                Icons.drag_handle,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
