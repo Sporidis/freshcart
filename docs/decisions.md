@@ -1312,3 +1312,44 @@ on inspection: `onboarding_continue_button.dart` already branches on `isDark` co
 a splash screen deliberately keeping the same ink-and-cream brand mark regardless of theme, not a
 missed dark-mode case. This bug's actual scope was exactly the three Welcome-screen mockup
 widgets, not a systemic pattern worth a wider sweep.
+
+## 73. Shop tint is scoped to the list-detail subtree — `activeSeedColorProvider` is gone
+
+**Decision:** First item off `docs/upgrade-design-guide.md`'s Priority 0. Since decision #32,
+selecting a shop wrote into `activeSeedColorProvider`, a single global piece of state `app.dart`
+read to re-theme the *entire* `MaterialApp` — chrome included. The design's own rule is that shop
+colour reaches selected tabs, checks, focused inputs, the quick-add control and empty-state tint,
+while the surrounding chrome (drawer, settings, dialogs, navigation transitions) stays neutral.
+The global mechanism could not express that distinction; it re-themed everything or nothing.
+
+**Fix:** `app.dart` is now permanently seeded from `AppTheme.brandSeed` — nothing in it varies with
+the active shop any more. `ListDetailScreen` wraps only its own `body:` (not the `Scaffold`, so the
+`AppBar` and `drawer:` stay siblings of it, on the ambient neutral theme) in a local
+`AnimatedTheme`, seeded from `ref.watch(activeShopColorProvider(listId))` directly. This is the
+`AppTheme.forShop` pattern the theme file's own class doc already documented as the intended
+per-subtree usage, but nothing had actually called it that way until now.
+
+**What this deleted, not just changed:** `ListDetailScreen` used to push the shop colour into the
+global provider via `ref.listen`, and had to carefully reset it on `dispose()` with a
+`scheduleMicrotask` + `selectIfAlive` guard (so a fast pop-then-navigate-away didn't write to a
+provider that had already torn itself down) so the lists screen wasn't left wearing a shop's
+colour after leaving it. None of that exists any more: a locally-scoped `Theme` cannot leak past
+its own subtree's lifetime, so there is nothing to reset on the way out. `activeSeedColorProvider`
+itself (`core/theme/active_seed_color_provider.dart` + its `.g.dart`) is deleted outright, not
+deprecated — nothing else in the app ever read it.
+
+**Motion carries over unchanged:** decision #71's tuned token (`AppMotion.quick`, 180ms
+`easeOutCubic` — the motion spec's own "colour tint" entry) moved with the mechanism to
+`ListDetailScreen`'s new local `AnimatedTheme`, rather than being retuned. `app.dart` keeps its own
+`AnimatedTheme` too, but now purely for smoothing a light/dark `Appearance` change — it no longer
+has a shop colour to glide between.
+
+**Test coverage moved, not just updated:** `app_shell_test.dart`'s "theming" group used to prove
+selecting a shop re-themed the app root; that premise is gone, so those two tests are deleted
+rather than patched, leaving one narrower test that the root is *always* neutral. The real
+coverage — a shop tinting the body, and that tint stopping at the drawer — is new, in
+`list_detail_screen_test.dart`, which resolves `Theme.of(context)` from inside `ItemsSection` and
+separately from inside `ListsDrawer` after opening it, so the "does not leak sideways" claim is
+checked against an actual element in each subtree rather than inferred from the FAB or a chip's
+own colour (both of which take their colour from `effectiveShopColorProvider` directly and would
+have passed even before this fix, telling this specific regression nothing).
