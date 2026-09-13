@@ -4,7 +4,11 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
-import 'package:freshcart_flutter/features/auth/presentation/settings_widgets.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/about_section.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/account_card.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/lists_and_shops_section.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/preferences_section.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/profile_header.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 
 /// Account-level settings, reached from the drawer.
@@ -18,7 +22,6 @@ class SettingsScreen extends ConsumerWidget {
     final user = ref.watch(currentUserProvider);
     final account = user.dataOrNull;
     final lists = ref.watch(listsControllerProvider).dataOrNull ?? const [];
-    final firstList = lists.isEmpty ? null : lists.first;
 
     return Scaffold(
       appBar: AppBar(
@@ -33,7 +36,7 @@ class SettingsScreen extends ConsumerWidget {
               ? const SizedBox.shrink()
               : AccountCard(user: account, t: t),
           const SizedBox(height: 12),
-          ListsAndShopsSection(t: t, firstList: firstList),
+          ListsAndShopsSection(t: t, allUserLists: lists),
           const SizedBox(height: 12),
           PreferencesSection(t: t),
           const SizedBox(height: 12),
