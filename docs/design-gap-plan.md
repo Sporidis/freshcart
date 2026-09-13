@@ -21,7 +21,7 @@ behaviour*, not new visual language.
 | Area | Size | State |
 | ---- | ---- | ----- |
 | Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | ✅ Built — decisions #62 |
-| Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | ✅ Built for the add control — decisions #64. Search's own "Recently bought" UI still to come. |
+| Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | ✅ Fully built — decisions #64, #77. |
 | Unify the add/edit item sheet into one component | Small–Medium | ✅ Built — decisions #63 |
 | Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | ✅ Avatars + inline rows built — decisions #65. Remaining count still deferred (needs a per-list summary endpoint). |
 | Settings: 4-group restructure | Medium | ✅ Built — Profile, Lists & shops, Preferences, About |
@@ -79,7 +79,7 @@ is the polish around it:
 None of this needs new domain concepts — it is presentation-layer work against data the app
 already has (the active shop, its name and colour), except for the next item.
 
-## 2. Item-name suggestions — one gap, needed by two flows — ✅ built for the add control, decisions #64
+## 2. Item-name suggestions — one gap, needed by two flows — ✅ fully built, decisions #64, #77
 
 Flow 09's add control shows history chips ("Olive oil", "Olives", "Olive tapenade") once two
 characters are typed, sourced from a flat list of past product names. Flow 06 ("Search &
@@ -102,6 +102,17 @@ consequences for every existing query).
 or similar), a server endpoint backing it (a `SELECT DISTINCT name ... ORDER BY last used`-style
 query against the new table), and two small UI consumers (the add control's chip row, the search
 screen's "Recently bought" section).
+
+**"Recently bought" — ✅ built, decision #77.** Turned out to need a second, sibling read path
+rather than reusing `suggestNames` as-is: that method is a filtered, floored search (two-character
+minimum, matches partial text), while "Recently bought" is an unfiltered browse that also needs
+each name's `lastUsedAt` to bucket rows into "This week"/"Last week"/"Earlier" — data
+`suggestNames` never returned. `ItemService.recentNames` (new), its endpoint, and a
+`NameHistoryEntry` domain entity close that gap; no migration, since `item_name_history` already
+had everything this new query needed. Rendered inline in the search screen's own empty-query state
+rather than as a separate pushed screen — the interactive prototype never models one or names how
+it would be reached. Deliberately no shop-colour dot per row (the underlying data doesn't carry
+one); see decision #77 for the full reasoning.
 
 ## 3. One item sheet, not two — ✅ built, decisions #63
 
@@ -218,8 +229,8 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
 
 1. ~~**Add-control polish** (§1)~~ — ✅ built, decisions #62.
 2. ~~**Unify the item sheet** (§3)~~ — ✅ built, decisions #63.
-3. ~~**Item-name suggestions** (§2)~~ — ✅ built, decisions #64. The add control's chips read
-   from it now; Flow 06's "Recently bought" is unblocked but not itself built yet.
+3. ~~**Item-name suggestions** (§2)~~ — ✅ fully built, decisions #64, #77. The add control's
+   chips and Flow 06's "Recently bought" (inline in search's empty-query state) both ship.
 4. ~~**Drawer enrichment** (§4)~~ — ✅ member avatars + inline New list / Join a list built,
    decisions #65. Remaining count still deferred, needs its own summary endpoint.
 5. ~~**Edit profile + stored avatar colour** (§6)~~ — ✅ built.
@@ -232,7 +243,6 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
    new dependency (local scheduled notifications) — do this last, and possibly split "list
    finished" push + per-list mute from the local-notification scheduler as two separate phases.
 
-Three smaller items are still open, each deliberately deferred rather than forgotten: the
-drawer's remaining count (§4, needs a summary endpoint), "Clear checked after shopping" (§9,
-needs a real domain decision), and Flow 06's "Recently bought" search UI (§2, unblocked by the
-suggestions backend but not itself built).
+Two smaller items are still open, each deliberately deferred rather than forgotten: the drawer's
+remaining count (§4, needs a summary endpoint) and "Clear checked after shopping" (§9, needs a
+real domain decision). Everything else in this plan is built.

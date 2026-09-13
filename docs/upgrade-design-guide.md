@@ -119,8 +119,10 @@ disable/sign-out.
 
 - **Drawer counts:** add one batched list-summary query returning remaining,
   checked, total, and `allDone`; do not load every list's full item collection.
-- **Recently bought search:** reuse the existing name-history provider in the
-  search results; no new persistence is needed.
+- **Recently bought search — ✅ built, decisions #77.** Needed a new,
+  unfiltered `recentNames` read path alongside the existing (filtered, floored)
+  `suggestNames` one, not a reuse of it as-is — no new persistence, per the
+  original call here, but the query shape was underestimated.
 - **List-finished notifications:** detect the transition from incomplete to
   complete once, rather than notifying on every edit to an already-complete list.
 

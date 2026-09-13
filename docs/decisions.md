@@ -1509,3 +1509,50 @@ mocked there for the account-linking tests) — the Appearance dialog's choice p
 correct key, larger text defaults off and persists once toggled, haptics defaults on and persists
 once turned off, and reduce motion renders as plain text with no `Switch` descendant anywhere in
 its row, not just no visible thumb.
+
+## 77. Search's "Recently bought" (§06) — rendered inline, not as its own screen; no shop dot
+
+**Decision:** decisions #64 called this "fully unblocked... but not itself built" on the strength
+of `itemSuggestionsProvider` and `ItemService.suggestNames` already existing. Reading both before
+building this showed that framing was only half right: `suggestNames` is a filtered, floored
+search (`query.length >= 2`, matching text), while "Recently bought" is a browse -- no query, no
+floor, and it needs `lastUsedAt` per name to bucket rows into "This week"/"Last week"/"Earlier",
+which `suggestNames` never returned (just `List<String>`). A new read path was needed regardless:
+`ItemService.recentNames` (unfiltered, `ItemNameHistory.db.find` ordered by `lastUsedAt` descending,
+capped at 40), a new `ItemEndpoint.recentNames`, a `NameHistoryEntry` domain entity, a
+`ItemRepository.recentNames` port method, and `recentNamesProvider`. No migration: the table
+(`freshcart_item_name_history`, decisions #64) already had everything this query needed.
+
+**Rendered inline in `SearchResults` when the query is empty, not as a separate destination.** The
+design's own mockup (`Flow Screens v2.dc.html`) draws "Recently bought" with a back-chevron header,
+implying its own screen, but the interactive prototype's state machine never models it or names how
+it would be reached -- there is no canonical answer here, so a screen worth inventing has to earn
+that against "the search header is already open, with a Cancel action, right where the empty state
+used to render nothing." Reusing it is the smaller, more reversible choice; moving this to a real
+pushed screen later, if the human disagrees, changes nothing about the data layer underneath it.
+
+**Deliberately no shop-colour dot per row, unlike every other item row in the app.** The mockup
+shows one per row, but `ItemNameHistory` has no shop column -- it is a browse of *names*, and a
+name is not stable to one shop (someone might buy "Milk" at Colruyt one week and Delhaize the
+next; the table records only the single most recent add, not a history per shop). Deriving a dot
+from whichever `ShoppingItem` currently holds that name would silently be wrong for the exact rows
+this feature is for -- ones already bought and removed, which is most of what makes "recently
+bought" useful in the first place. Capturing a `lastShopId` on `ItemNameHistory` (mirroring how
+`Shop.isActive` was added this session: a small additive column, `defaultPersist` for existing
+rows) is a real, named follow-up, not a silent gap -- consistent with `docs/design-gap-plan.md`'s
+repeated rule against faking collaboration state from data that isn't actually there.
+
+**Bucketing uses rolling 7-day windows from "now," not calendar weeks.** The app ships five locales
+with different week-start conventions (Monday vs. Sunday); a rolling window means "This week" means
+the same thing regardless of which day a calendar week is considered to start on, at the cost of a
+label that doesn't reset exactly at midnight Monday -- judged the smaller cost. `bucketByRecency` is
+a pure, exported function specifically so this arithmetic has its own direct unit tests, not just
+inference from what a pumped widget happens to render.
+
+**The re-add "+" plays the same overshoot-then-settle pop `ItemTile`'s own `_iconPop` already uses**
+for its swipe-to-delete icon (§06: "Each + re-adds with a pop") -- reused as a pattern, not shared
+code, since the two live in different widgets with different trigger shapes. Tapping it calls
+`ItemsController.add` directly, the same optimistic-free path the quick-add control's own
+suggestion chips use (decisions #64) -- re-adding a name already open on the list is allowed to
+create a second row, matching that existing precedent rather than inventing de-duplication the
+design never asked for.
