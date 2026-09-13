@@ -131,6 +131,20 @@
     "title": "Настройки",
     "editProfile": "Изменить профиль",
     "listsAndShops": "Списки и магазины",
+    "listsAndShopsSubtitle": "Магазины и домочадцы относятся к списку. Выберите список для управления.",
+    "openNow": "Открыт сейчас",
+    "shopCount": {
+      "one": "{{n}} магазин",
+      "few": "{{n}} магазина",
+      "many": "{{n}} магазинов",
+      "other": "{{n}} магазина"
+    },
+    "memberCount": {
+      "one": "{{n}} участник",
+      "few": "{{n}} участника",
+      "many": "{{n}} участников",
+      "other": "{{n}} участника"
+    },
     "manageLists": "Управлять списками",
     "manageShops": "Управлять магазинами",
     "household": "Дом",
@@ -141,9 +155,6 @@
     "appearanceLight": "Светлая",
     "appearanceDark": "Тёмная",
     "language": "Язык",
-    "notifications": "Уведомления",
-    "keepCheckedItems": "Сохранять отмеченные пункты",
-    "keepCheckedItemsBody": "Показывать их в разделе Готово вместо удаления.",
     "haptics": "Тактильная отдача",
     "helpFeedback": "Помощь и отзывы",
     "termsOfService": "Условия использования",
