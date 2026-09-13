@@ -123,7 +123,12 @@
     "hint": "Search products",
     "noResultsTitle": "No products match ‘{{query}}’",
     "addAction": "Add \"{{query}}\" to this list",
-    "noResultsBody": "Check the spelling, or add it as a new product."
+    "noResultsBody": "Check the spelling, or add it as a new product.",
+    "recentlyBought": "Recently bought",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "earlier": "Earlier",
+    "addAgain": "Add again"
   },
   "settings": {
     "title": "Settings",

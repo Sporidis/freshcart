@@ -21,23 +21,25 @@ import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i5;
 import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i6;
-import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
+import 'package:freshcart_client/src/protocol/items/models/item_name_history.dart'
     as _i7;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+import 'package:freshcart_client/src/protocol/items/models/item_change.dart'
     as _i8;
-import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
     as _i9;
-import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
+import 'package:freshcart_client/src/protocol/notifications/models/device_token.dart'
     as _i10;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i11;
+import 'package:freshcart_client/src/protocol/notifications/models/device_platform.dart'
+    as _i11;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i12;
 import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition.dart'
-    as _i12;
-import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i13;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
     as _i14;
-import 'dart:typed_data' as _i15;
-import 'protocol.dart' as _i16;
+import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
+    as _i15;
+import 'dart:typed_data' as _i16;
+import 'protocol.dart' as _i17;
 
 /// Upgrading an anonymous account by attaching credentials to it.
 /// {@category Endpoint}
@@ -430,6 +432,15 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
+  /// Every distinct product name typed on a list before, most recently used
+  /// first -- the "Recently bought" shortcut.
+  _i2.Future<List<_i7.ItemNameHistory>> recentNames(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i7.ItemNameHistory>>(
+        'item',
+        'recentNames',
+        {'listId': listId},
+      );
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the
@@ -438,8 +449,8 @@ class EndpointItem extends _i1.EndpointRef {
   ///
   /// This is the in-app half of the two-layer story: it keeps open clients live
   /// and is unrelated to FCM background push, which covers closed apps.
-  _i2.Stream<_i7.ItemChange> watchList(_i1.UuidValue listId) => caller
-      .callStreamingServerEndpoint<_i2.Stream<_i7.ItemChange>, _i7.ItemChange>(
+  _i2.Stream<_i8.ItemChange> watchList(_i1.UuidValue listId) => caller
+      .callStreamingServerEndpoint<_i2.Stream<_i8.ItemChange>, _i8.ItemChange>(
         'item',
         'watchList',
         {'listId': listId},
@@ -459,42 +470,42 @@ class EndpointList extends _i1.EndpointRef {
   String get name => 'list';
 
   /// Every list the caller belongs to.
-  _i2.Future<List<_i8.ShoppingList>> myLists() =>
-      caller.callServerEndpoint<List<_i8.ShoppingList>>(
+  _i2.Future<List<_i9.ShoppingList>> myLists() =>
+      caller.callServerEndpoint<List<_i9.ShoppingList>>(
         'list',
         'myLists',
         {},
       );
 
   /// One list the caller belongs to.
-  _i2.Future<_i8.ShoppingList> byId(_i1.UuidValue listId) =>
-      caller.callServerEndpoint<_i8.ShoppingList>(
+  _i2.Future<_i9.ShoppingList> byId(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<_i9.ShoppingList>(
         'list',
         'byId',
         {'listId': listId},
       );
 
   /// Creates a list owned by the caller.
-  _i2.Future<_i8.ShoppingList> create(String name) =>
-      caller.callServerEndpoint<_i8.ShoppingList>(
+  _i2.Future<_i9.ShoppingList> create(String name) =>
+      caller.callServerEndpoint<_i9.ShoppingList>(
         'list',
         'create',
         {'name': name},
       );
 
   /// Joins the list matching [joinCode].
-  _i2.Future<_i8.ShoppingList> join(String joinCode) =>
-      caller.callServerEndpoint<_i8.ShoppingList>(
+  _i2.Future<_i9.ShoppingList> join(String joinCode) =>
+      caller.callServerEndpoint<_i9.ShoppingList>(
         'list',
         'join',
         {'joinCode': joinCode},
       );
 
   /// Renames a list the caller owns.
-  _i2.Future<_i8.ShoppingList> rename(
+  _i2.Future<_i9.ShoppingList> rename(
     _i1.UuidValue listId,
     String name,
-  ) => caller.callServerEndpoint<_i8.ShoppingList>(
+  ) => caller.callServerEndpoint<_i9.ShoppingList>(
     'list',
     'rename',
     {
@@ -533,10 +544,10 @@ class EndpointList extends _i1.EndpointRef {
   );
 
   /// Hands ownership of a list the caller owns to another member.
-  _i2.Future<_i8.ShoppingList> transferOwnership(
+  _i2.Future<_i9.ShoppingList> transferOwnership(
     _i1.UuidValue listId,
     _i1.UuidValue userId,
-  ) => caller.callServerEndpoint<_i8.ShoppingList>(
+  ) => caller.callServerEndpoint<_i9.ShoppingList>(
     'list',
     'transferOwnership',
     {
@@ -551,10 +562,10 @@ class EndpointList extends _i1.EndpointRef {
   /// single row, so there is nothing to merge. This is the in-app half of the
   /// two-layer story, same as [ItemEndpoint.watchList] — it keeps open clients
   /// live and is unrelated to FCM background push.
-  _i2.Stream<_i8.ShoppingList> watchList(_i1.UuidValue listId) =>
+  _i2.Stream<_i9.ShoppingList> watchList(_i1.UuidValue listId) =>
       caller.callStreamingServerEndpoint<
-        _i2.Stream<_i8.ShoppingList>,
-        _i8.ShoppingList
+        _i2.Stream<_i9.ShoppingList>,
+        _i9.ShoppingList
       >(
         'list',
         'watchList',
@@ -576,10 +587,10 @@ class EndpointNotification extends _i1.EndpointRef {
   /// Idempotent: re-registering an existing token re-points it at the caller
   /// rather than inserting a duplicate, so a shared device that changes hands
   /// does not keep notifying the previous user.
-  _i2.Future<_i9.DeviceToken> registerDevice(
+  _i2.Future<_i10.DeviceToken> registerDevice(
     String token,
-    _i10.DevicePlatform platform,
-  ) => caller.callServerEndpoint<_i9.DeviceToken>(
+    _i11.DevicePlatform platform,
+  ) => caller.callServerEndpoint<_i10.DeviceToken>(
     'notification',
     'registerDevice',
     {
@@ -627,19 +638,19 @@ class EndpointShop extends _i1.EndpointRef {
   String get name => 'shop';
 
   /// Every shop on a list the caller belongs to.
-  _i2.Future<List<_i11.Shop>> byList(_i1.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i11.Shop>>(
+  _i2.Future<List<_i12.Shop>> byList(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i12.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list the caller belongs to.
-  _i2.Future<_i11.Shop> create(
+  _i2.Future<_i12.Shop> create(
     _i1.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i11.Shop>(
+  ) => caller.callServerEndpoint<_i12.Shop>(
     'shop',
     'create',
     {
@@ -650,8 +661,8 @@ class EndpointShop extends _i1.EndpointRef {
   );
 
   /// Writes a shop back.
-  _i2.Future<_i11.Shop> save(_i11.Shop shop) =>
-      caller.callServerEndpoint<_i11.Shop>(
+  _i2.Future<_i12.Shop> save(_i12.Shop shop) =>
+      caller.callServerEndpoint<_i12.Shop>(
         'shop',
         'save',
         {'shop': shop},
@@ -673,7 +684,7 @@ class EndpointShop extends _i1.EndpointRef {
   /// products instead of finding out afterwards.
   _i2.Future<void> remove(
     _i1.UuidValue shopId,
-    _i12.ShopItemDisposition disposition,
+    _i13.ShopItemDisposition disposition,
     _i1.UuidValue? moveToShopId,
   ) => caller.callServerEndpoint<void>(
     'shop',
@@ -699,8 +710,8 @@ class EndpointProfile extends _i1.EndpointRef {
   /// The client cannot know its own auth user id any other way — it is minted
   /// server-side — and needs it to render optimistic updates that attribute a
   /// change to the right person.
-  _i2.Future<_i13.CurrentUser> me() =>
-      caller.callServerEndpoint<_i13.CurrentUser>(
+  _i2.Future<_i14.CurrentUser> me() =>
+      caller.callServerEndpoint<_i14.CurrentUser>(
         'profile',
         'me',
         {},
@@ -714,32 +725,32 @@ class EndpointProfile extends _i1.EndpointRef {
   );
 
   /// Sets the caller's display name.
-  _i2.Future<_i14.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i14.MemberProfile>(
+  _i2.Future<_i15.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i15.MemberProfile>(
         'profile',
         'setDisplayName',
         {'displayName': displayName},
       );
 
   /// Sets the caller's avatar colour.
-  _i2.Future<_i14.MemberProfile> setAvatarColor(int avatarColorArgb) =>
-      caller.callServerEndpoint<_i14.MemberProfile>(
+  _i2.Future<_i15.MemberProfile> setAvatarColor(int avatarColorArgb) =>
+      caller.callServerEndpoint<_i15.MemberProfile>(
         'profile',
         'setAvatarColor',
         {'avatarColorArgb': avatarColorArgb},
       );
 
   /// Uploads and sets the caller's avatar photo.
-  _i2.Future<_i14.MemberProfile> setAvatarPhoto(_i15.ByteData bytes) =>
-      caller.callServerEndpoint<_i14.MemberProfile>(
+  _i2.Future<_i15.MemberProfile> setAvatarPhoto(_i16.ByteData bytes) =>
+      caller.callServerEndpoint<_i15.MemberProfile>(
         'profile',
         'setAvatarPhoto',
         {'bytes': bytes},
       );
 
   /// Removes the caller's avatar photo, if they have one.
-  _i2.Future<_i14.MemberProfile?> clearAvatarPhoto() =>
-      caller.callServerEndpoint<_i14.MemberProfile?>(
+  _i2.Future<_i15.MemberProfile?> clearAvatarPhoto() =>
+      caller.callServerEndpoint<_i15.MemberProfile?>(
         'profile',
         'clearAvatarPhoto',
         {},
@@ -777,7 +788,7 @@ class Client extends _i1.ServerpodClientShared {
     bool? disconnectStreamsOnLostInternetConnection,
   }) : super(
          host,
-         _i16.Protocol(),
+         _i17.Protocol(),
          securityContext: securityContext,
          streamingConnectionTimeout: streamingConnectionTimeout,
          connectionTimeout: connectionTimeout,

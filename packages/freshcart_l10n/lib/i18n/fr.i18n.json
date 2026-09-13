@@ -123,7 +123,12 @@
     "hint": "Rechercher des produits",
     "noResultsTitle": "Aucun produit ne correspond à ‘{{query}}’",
     "addAction": "Ajouter \"{{query}}\" à cette liste",
-    "noResultsBody": "Vérifiez l’orthographe, ou ajoutez-le comme nouveau produit."
+    "noResultsBody": "Vérifiez l’orthographe, ou ajoutez-le comme nouveau produit.",
+    "recentlyBought": "Achetés récemment",
+    "thisWeek": "Cette semaine",
+    "lastWeek": "La semaine dernière",
+    "earlier": "Plus tôt",
+    "addAgain": "Ajouter à nouveau"
   },
   "settings": {
     "title": "Paramètres",

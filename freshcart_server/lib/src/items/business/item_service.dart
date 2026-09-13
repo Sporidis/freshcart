@@ -182,6 +182,29 @@ abstract final class ItemService {
     return [for (final row in rows) row.name];
   }
 
+  /// Every distinct product name typed on [listId] before, most recently
+  /// used first -- "Recently bought" (§06: "the weekly-staples shortcut
+  /// without building a template feature").
+  ///
+  /// Unlike [suggestNames], a browse rather than a filtered search: no
+  /// query text, and no two-character floor to defend against, since there
+  /// is no per-keystroke request here.
+  static Future<List<ItemNameHistory>> recentNames(
+    Session session,
+    UuidValue listId,
+    UuidValue userId, {
+    int limit = 40,
+  }) async {
+    await ListService.requireMembership(session, listId, userId);
+    return ItemNameHistory.db.find(
+      session,
+      where: (t) => t.listId.equals(listId),
+      orderBy: (t) => t.lastUsedAt,
+      orderDescending: true,
+      limit: limit,
+    );
+  }
+
   /// Writes [incoming] back, refusing the write if someone else got there
   /// first.
   ///

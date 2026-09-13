@@ -85,6 +85,10 @@ class FakeItemRepository implements ItemRepository {
   @override
   Future<Result<List<String>>> suggestNames(ListId listId, String query) =>
       throw UnimplementedError();
+
+  @override
+  Future<Result<List<NameHistoryEntry>>> recentNames(ListId listId) =>
+      throw UnimplementedError();
 }
 
 /// A hand-written [ListRepository] stand-in.

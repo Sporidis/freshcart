@@ -88,6 +88,11 @@ class ItemEndpoint extends Endpoint {
     query,
   );
 
+  /// Every distinct product name typed on a list before, most recently used
+  /// first -- the "Recently bought" shortcut.
+  Future<List<ItemNameHistory>> recentNames(Session session, UuidValue listId) =>
+      ItemService.recentNames(session, listId, session.requireUserId);
+
   /// Live changes to a list's items.
   ///
   /// Emits a delta per change rather than the whole list — subscribers keep the

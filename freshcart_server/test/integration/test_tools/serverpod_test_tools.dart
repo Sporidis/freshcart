@@ -20,22 +20,24 @@ import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
     as _i5;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
     as _i6;
-import 'package:freshcart_server/src/generated/items/models/item_change.dart'
+import 'package:freshcart_server/src/generated/items/models/item_name_history.dart'
     as _i7;
-import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
+import 'package:freshcart_server/src/generated/items/models/item_change.dart'
     as _i8;
-import 'package:freshcart_server/src/generated/notifications/models/device_token.dart'
+import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
     as _i9;
-import 'package:freshcart_server/src/generated/notifications/models/device_platform.dart'
+import 'package:freshcart_server/src/generated/notifications/models/device_token.dart'
     as _i10;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i11;
+import 'package:freshcart_server/src/generated/notifications/models/device_platform.dart'
+    as _i11;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i12;
 import 'package:freshcart_server/src/generated/shops/models/shop_item_disposition.dart'
-    as _i12;
-import 'package:freshcart_server/src/generated/users/models/current_user.dart'
     as _i13;
-import 'package:freshcart_server/src/generated/users/models/member_profile.dart'
+import 'package:freshcart_server/src/generated/users/models/current_user.dart'
     as _i14;
-import 'dart:typed_data' as _i15;
+import 'package:freshcart_server/src/generated/users/models/member_profile.dart'
+    as _i15;
+import 'dart:typed_data' as _i16;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -933,11 +935,42 @@ class _ItemEndpoint {
     });
   }
 
-  _i3.Stream<_i7.ItemChange> watchList(
+  _i3.Future<List<_i7.ItemNameHistory>> recentNames(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i2.UuidValue listId,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'item',
+            method: 'recentNames',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'item',
+          methodName: 'recentNames',
+          parameters: _i1.testObjectToJson({'listId': listId}),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<List<_i7.ItemNameHistory>>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
+  _i3.Stream<_i8.ItemChange> watchList(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
   ) {
-    var _localTestStreamManager = _i1.TestStreamManager<_i7.ItemChange>();
+    var _localTestStreamManager = _i1.TestStreamManager<_i8.ItemChange>();
     _i1.callStreamFunctionAndHandleExceptions(
       () async {
         var _localUniqueSession =
@@ -976,7 +1009,7 @@ class _ListEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i8.ShoppingList>> myLists(
+  _i3.Future<List<_i9.ShoppingList>> myLists(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -998,7 +1031,7 @@ class _ListEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i8.ShoppingList>>);
+                as _i3.Future<List<_i9.ShoppingList>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1006,7 +1039,7 @@ class _ListEndpoint {
     });
   }
 
-  _i3.Future<_i8.ShoppingList> byId(
+  _i3.Future<_i9.ShoppingList> byId(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
   ) async {
@@ -1029,7 +1062,7 @@ class _ListEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i8.ShoppingList>);
+                as _i3.Future<_i9.ShoppingList>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1037,7 +1070,7 @@ class _ListEndpoint {
     });
   }
 
-  _i3.Future<_i8.ShoppingList> create(
+  _i3.Future<_i9.ShoppingList> create(
     _i1.TestSessionBuilder sessionBuilder,
     String name,
   ) async {
@@ -1060,7 +1093,7 @@ class _ListEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i8.ShoppingList>);
+                as _i3.Future<_i9.ShoppingList>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1068,7 +1101,7 @@ class _ListEndpoint {
     });
   }
 
-  _i3.Future<_i8.ShoppingList> join(
+  _i3.Future<_i9.ShoppingList> join(
     _i1.TestSessionBuilder sessionBuilder,
     String joinCode,
   ) async {
@@ -1091,7 +1124,7 @@ class _ListEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i8.ShoppingList>);
+                as _i3.Future<_i9.ShoppingList>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1099,7 +1132,7 @@ class _ListEndpoint {
     });
   }
 
-  _i3.Future<_i8.ShoppingList> rename(
+  _i3.Future<_i9.ShoppingList> rename(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
     String name,
@@ -1126,7 +1159,7 @@ class _ListEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i8.ShoppingList>);
+                as _i3.Future<_i9.ShoppingList>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1231,7 +1264,7 @@ class _ListEndpoint {
     });
   }
 
-  _i3.Future<_i8.ShoppingList> transferOwnership(
+  _i3.Future<_i9.ShoppingList> transferOwnership(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
     _i2.UuidValue userId,
@@ -1258,7 +1291,7 @@ class _ListEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i8.ShoppingList>);
+                as _i3.Future<_i9.ShoppingList>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1266,11 +1299,11 @@ class _ListEndpoint {
     });
   }
 
-  _i3.Stream<_i8.ShoppingList> watchList(
+  _i3.Stream<_i9.ShoppingList> watchList(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
   ) {
-    var _localTestStreamManager = _i1.TestStreamManager<_i8.ShoppingList>();
+    var _localTestStreamManager = _i1.TestStreamManager<_i9.ShoppingList>();
     _i1.callStreamFunctionAndHandleExceptions(
       () async {
         var _localUniqueSession =
@@ -1309,10 +1342,10 @@ class _NotificationEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i9.DeviceToken> registerDevice(
+  _i3.Future<_i10.DeviceToken> registerDevice(
     _i1.TestSessionBuilder sessionBuilder,
     String token,
-    _i10.DevicePlatform platform,
+    _i11.DevicePlatform platform,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1336,7 +1369,7 @@ class _NotificationEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i9.DeviceToken>);
+                as _i3.Future<_i10.DeviceToken>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1452,7 +1485,7 @@ class _ShopEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<List<_i11.Shop>> byList(
+  _i3.Future<List<_i12.Shop>> byList(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
   ) async {
@@ -1475,7 +1508,7 @@ class _ShopEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<List<_i11.Shop>>);
+                as _i3.Future<List<_i12.Shop>>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1483,7 +1516,7 @@ class _ShopEndpoint {
     });
   }
 
-  _i3.Future<_i11.Shop> create(
+  _i3.Future<_i12.Shop> create(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,
     String name,
@@ -1512,7 +1545,7 @@ class _ShopEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Shop>);
+                as _i3.Future<_i12.Shop>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1520,9 +1553,9 @@ class _ShopEndpoint {
     });
   }
 
-  _i3.Future<_i11.Shop> save(
+  _i3.Future<_i12.Shop> save(
     _i1.TestSessionBuilder sessionBuilder,
-    _i11.Shop shop,
+    _i12.Shop shop,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1543,7 +1576,7 @@ class _ShopEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i11.Shop>);
+                as _i3.Future<_i12.Shop>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1585,7 +1618,7 @@ class _ShopEndpoint {
   _i3.Future<void> remove(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue shopId,
-    _i12.ShopItemDisposition disposition,
+    _i13.ShopItemDisposition disposition,
     _i2.UuidValue? moveToShopId,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1630,7 +1663,7 @@ class _ProfileEndpoint {
 
   final _i2.SerializationManager _serializationManager;
 
-  _i3.Future<_i13.CurrentUser> me(_i1.TestSessionBuilder sessionBuilder) async {
+  _i3.Future<_i14.CurrentUser> me(_i1.TestSessionBuilder sessionBuilder) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
@@ -1650,7 +1683,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i13.CurrentUser>);
+                as _i3.Future<_i14.CurrentUser>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1686,7 +1719,7 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i14.MemberProfile> setDisplayName(
+  _i3.Future<_i15.MemberProfile> setDisplayName(
     _i1.TestSessionBuilder sessionBuilder,
     String displayName,
   ) async {
@@ -1709,7 +1742,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i14.MemberProfile>);
+                as _i3.Future<_i15.MemberProfile>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1717,7 +1750,7 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i14.MemberProfile> setAvatarColor(
+  _i3.Future<_i15.MemberProfile> setAvatarColor(
     _i1.TestSessionBuilder sessionBuilder,
     int avatarColorArgb,
   ) async {
@@ -1742,7 +1775,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i14.MemberProfile>);
+                as _i3.Future<_i15.MemberProfile>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1750,9 +1783,9 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i14.MemberProfile> setAvatarPhoto(
+  _i3.Future<_i15.MemberProfile> setAvatarPhoto(
     _i1.TestSessionBuilder sessionBuilder,
-    _i15.ByteData bytes,
+    _i16.ByteData bytes,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
@@ -1773,7 +1806,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i14.MemberProfile>);
+                as _i3.Future<_i15.MemberProfile>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();
@@ -1781,7 +1814,7 @@ class _ProfileEndpoint {
     });
   }
 
-  _i3.Future<_i14.MemberProfile?> clearAvatarPhoto(
+  _i3.Future<_i15.MemberProfile?> clearAvatarPhoto(
     _i1.TestSessionBuilder sessionBuilder,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
@@ -1803,7 +1836,7 @@ class _ProfileEndpoint {
                   _localUniqueSession,
                   _localCallContext.arguments,
                 )
-                as _i3.Future<_i14.MemberProfile?>);
+                as _i3.Future<_i15.MemberProfile?>);
         return _localReturnValue;
       } finally {
         await _localUniqueSession.close();

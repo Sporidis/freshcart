@@ -43,13 +43,15 @@ import 'package:freshcart_client/src/protocol/auth/models/linked_provider.dart'
     as _i29;
 import 'package:freshcart_client/src/protocol/items/models/shopping_item.dart'
     as _i30;
-import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+import 'package:freshcart_client/src/protocol/items/models/item_name_history.dart'
     as _i31;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i32;
+import 'package:freshcart_client/src/protocol/lists/models/shopping_list.dart'
+    as _i32;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i33;
 import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
-    as _i33;
-import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
     as _i34;
+import 'package:serverpod_auth_core_client/serverpod_auth_core_client.dart'
+    as _i35;
 export 'auth/models/linked_provider.dart';
 export 'common/models/account_already_linked_exception.dart';
 export 'common/models/avatar_photo_too_large_exception.dart';
@@ -386,20 +388,26 @@ class Protocol extends _i1.SerializationManager {
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i31.ShoppingList>) {
+    if (t == List<_i31.ItemNameHistory>) {
       return (data as List)
-              .map((e) => deserialize<_i31.ShoppingList>(e))
+              .map((e) => deserialize<_i31.ItemNameHistory>(e))
               .toList()
           as T;
     }
-    if (t == List<_i32.Shop>) {
-      return (data as List).map((e) => deserialize<_i32.Shop>(e)).toList() as T;
+    if (t == List<_i32.ShoppingList>) {
+      return (data as List)
+              .map((e) => deserialize<_i32.ShoppingList>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i33.Shop>) {
+      return (data as List).map((e) => deserialize<_i33.Shop>(e)).toList() as T;
     }
     try {
-      return _i33.Protocol().deserialize<T>(data, t);
+      return _i34.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     try {
-      return _i34.Protocol().deserialize<T>(data, t);
+      return _i35.Protocol().deserialize<T>(data, t);
     } on _i1.DeserializationTypeNotFoundException catch (_) {}
     return super.deserialize<T>(data, t);
   }
@@ -502,11 +510,11 @@ class Protocol extends _i1.SerializationManager {
       case _i28.MemberProfile():
         return 'MemberProfile';
     }
-    className = _i33.Protocol().getClassNameForObject(data);
+    className = _i34.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_idp.$className';
     }
-    className = _i34.Protocol().getClassNameForObject(data);
+    className = _i35.Protocol().getClassNameForObject(data);
     if (className != null) {
       return 'serverpod_auth_core.$className';
     }
@@ -602,11 +610,11 @@ class Protocol extends _i1.SerializationManager {
     }
     if (dataClassName.startsWith('serverpod_auth_idp.')) {
       data['className'] = dataClassName.substring(19);
-      return _i33.Protocol().deserializeByClassName(data);
+      return _i34.Protocol().deserializeByClassName(data);
     }
     if (dataClassName.startsWith('serverpod_auth_core.')) {
       data['className'] = dataClassName.substring(20);
-      return _i34.Protocol().deserializeByClassName(data);
+      return _i35.Protocol().deserializeByClassName(data);
     }
     return super.deserializeByClassName(data);
   }
@@ -621,10 +629,10 @@ class Protocol extends _i1.SerializationManager {
       return null;
     }
     try {
-      return _i33.Protocol().mapRecordToJson(record);
+      return _i34.Protocol().mapRecordToJson(record);
     } catch (_) {}
     try {
-      return _i34.Protocol().mapRecordToJson(record);
+      return _i35.Protocol().mapRecordToJson(record);
     } catch (_) {}
     throw Exception('Unsupported record type ${record.runtimeType}');
   }
