@@ -21,6 +21,17 @@ fields:
   ### Items tagged to this shop.
   items: List<ShoppingItem>?, relation(name=shop_items)
 
+  ### Whether this shop shows as a tab in the shop nav. Does not affect
+  ### whether items can still be tagged to it -- "not shopping there this
+  ### week" and "this shop no longer exists" are different facts, so only
+  ### the tab strip reads this.
+  ###
+  ### defaultPersist, not just defaultModel -- same reasoning as
+  ### ShoppingItem.sortOrder above: a database-level default is what lets
+  ### this column be added to the existing table in place, backfilling every
+  ### shop already in it as active rather than leaving them with no value.
+  isActive: bool, defaultModel=true, defaultPersist=true
+
 indexes:
   freshcart_shop_list_idx:
     fields: listId

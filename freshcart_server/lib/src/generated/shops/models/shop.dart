@@ -28,7 +28,8 @@ abstract class Shop
     required this.name,
     required this.colorArgb,
     this.items,
-  });
+    bool? isActive,
+  }) : isActive = isActive ?? true;
 
   factory Shop({
     _i1.UuidValue? id,
@@ -36,6 +37,7 @@ abstract class Shop
     required String name,
     required int colorArgb,
     List<_i2.ShoppingItem>? items,
+    bool? isActive,
   }) = _ShopImpl;
 
   factory Shop.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -51,6 +53,9 @@ abstract class Shop
           : _i3.Protocol().deserialize<List<_i2.ShoppingItem>>(
               jsonSerialization['items'],
             ),
+      isActive: jsonSerialization['isActive'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(jsonSerialization['isActive']),
     );
   }
 
@@ -74,6 +79,17 @@ abstract class Shop
   /// Items tagged to this shop.
   List<_i2.ShoppingItem>? items;
 
+  /// Whether this shop shows as a tab in the shop nav. Does not affect
+  /// whether items can still be tagged to it -- "not shopping there this
+  /// week" and "this shop no longer exists" are different facts, so only
+  /// the tab strip reads this.
+  ///
+  /// defaultPersist, not just defaultModel -- same reasoning as
+  /// ShoppingItem.sortOrder above: a database-level default is what lets
+  /// this column be added to the existing table in place, backfilling every
+  /// shop already in it as active rather than leaving them with no value.
+  bool isActive;
+
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
 
@@ -86,6 +102,7 @@ abstract class Shop
     String? name,
     int? colorArgb,
     List<_i2.ShoppingItem>? items,
+    bool? isActive,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -96,6 +113,7 @@ abstract class Shop
       'name': name,
       'colorArgb': colorArgb,
       if (items != null) 'items': items?.toJson(valueToJson: (v) => v.toJson()),
+      'isActive': isActive,
     };
   }
 
@@ -109,6 +127,7 @@ abstract class Shop
       'colorArgb': colorArgb,
       if (items != null)
         'items': items?.toJson(valueToJson: (v) => v.toJsonForProtocol()),
+      'isActive': isActive,
     };
   }
 
@@ -151,12 +170,14 @@ class _ShopImpl extends Shop {
     required String name,
     required int colorArgb,
     List<_i2.ShoppingItem>? items,
+    bool? isActive,
   }) : super._(
          id: id,
          listId: listId,
          name: name,
          colorArgb: colorArgb,
          items: items,
+         isActive: isActive,
        );
 
   /// Returns a shallow copy of this [Shop]
@@ -169,6 +190,7 @@ class _ShopImpl extends Shop {
     String? name,
     int? colorArgb,
     Object? items = _Undefined,
+    bool? isActive,
   }) {
     return Shop(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -178,6 +200,7 @@ class _ShopImpl extends Shop {
       items: items is List<_i2.ShoppingItem>?
           ? items
           : this.items?.map((e0) => e0.copyWith()).toList(),
+      isActive: isActive ?? this.isActive,
     );
   }
 }
@@ -200,6 +223,11 @@ class ShopUpdateTable extends _i1.UpdateTable<ShopTable> {
     table.colorArgb,
     value,
   );
+
+  _i1.ColumnValue<bool, bool> isActive(bool value) => _i1.ColumnValue(
+    table.isActive,
+    value,
+  );
 }
 
 class ShopTable extends _i1.Table<_i1.UuidValue?> {
@@ -216,6 +244,11 @@ class ShopTable extends _i1.Table<_i1.UuidValue?> {
     colorArgb = _i1.ColumnInt(
       'colorArgb',
       this,
+    );
+    isActive = _i1.ColumnBool(
+      'isActive',
+      this,
+      hasDefault: true,
     );
   }
 
@@ -236,6 +269,17 @@ class ShopTable extends _i1.Table<_i1.UuidValue?> {
 
   /// Items tagged to this shop.
   _i1.ManyRelation<_i2.ShoppingItemTable>? _items;
+
+  /// Whether this shop shows as a tab in the shop nav. Does not affect
+  /// whether items can still be tagged to it -- "not shopping there this
+  /// week" and "this shop no longer exists" are different facts, so only
+  /// the tab strip reads this.
+  ///
+  /// defaultPersist, not just defaultModel -- same reasoning as
+  /// ShoppingItem.sortOrder above: a database-level default is what lets
+  /// this column be added to the existing table in place, backfilling every
+  /// shop already in it as active rather than leaving them with no value.
+  late final _i1.ColumnBool isActive;
 
   _i2.ShoppingItemTable get __items {
     if (___items != null) return ___items!;
@@ -275,6 +319,7 @@ class ShopTable extends _i1.Table<_i1.UuidValue?> {
     listId,
     name,
     colorArgb,
+    isActive,
   ];
 
   @override

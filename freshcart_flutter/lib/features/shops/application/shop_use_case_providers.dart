@@ -13,3 +13,8 @@ CreateShop createShopUseCase(Ref ref) =>
 @riverpod
 EditShop editShopUseCase(Ref ref) =>
     EditShop(ref.watch(shopRepositoryProvider));
+
+/// The [ToggleShopActive] use case, wired to the shop repository.
+@riverpod
+ToggleShopActive toggleShopActiveUseCase(Ref ref) =>
+    ToggleShopActive(ref.watch(shopRepositoryProvider));

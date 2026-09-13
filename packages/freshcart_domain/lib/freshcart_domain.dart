@@ -46,5 +46,6 @@ export 'src/shops/entities/shop_item_disposition.dart';
 export 'src/shops/ports/shop_repository.dart';
 export 'src/shops/use_cases/create_shop.dart';
 export 'src/shops/use_cases/edit_shop.dart';
+export 'src/shops/use_cases/toggle_shop_active.dart';
 export 'src/shops/value_objects/hex_color.dart';
 export 'src/shops/value_objects/shop_id.dart';

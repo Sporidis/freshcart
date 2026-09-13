@@ -83,6 +83,27 @@ void main() {
       expect(saved.listId, list.id, reason: 'listId is server-owned');
     });
 
+    test('a new shop is active by default, and save persists toggling it '
+        'off', () async {
+      final list = await aSharedList();
+      final shop = await endpoints.shop.create(
+        as(aliceId),
+        list.id!,
+        'Colruyt',
+        colruytGreen,
+      );
+      expect(shop.isActive, isTrue);
+
+      final saved = await endpoints.shop.save(
+        as(aliceId),
+        shop.copyWith(isActive: false),
+      );
+      expect(saved.isActive, isFalse);
+
+      final reloaded = await endpoints.shop.byList(as(aliceId), list.id!);
+      expect(reloaded.single.isActive, isFalse);
+    });
+
     test(
       'deleting a shop untags its items rather than deleting them',
       () async {

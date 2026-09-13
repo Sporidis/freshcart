@@ -19,6 +19,7 @@ extension ShopDtoX on dto.Shop {
       listId: ListId(listId.uuid),
       name: name,
       color: HexColor.fromArgb(colorArgb),
+      isActive: isActive,
     );
   }
 }
@@ -31,6 +32,7 @@ extension ShopX on Shop {
     listId: dto.UuidValue.withValidation(listId.value),
     name: name,
     colorArgb: color.argb,
+    isActive: isActive,
   );
 }
 
