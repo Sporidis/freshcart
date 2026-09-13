@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
 import 'package:freshcart_flutter/core/theme/large_text_provider.dart';
@@ -9,6 +10,7 @@ import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_dro
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_status_option.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_toggle_option.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+import 'package:go_router/go_router.dart';
 
 /// The Settings screen's "Preferences" group: appearance, language,
 /// notifications, and the local-only toggles.
@@ -73,12 +75,18 @@ class PreferencesSection extends ConsumerWidget {
           title: t.settings.reduceMotion,
           status: AppMotion.reduced(context) ? t.settings.on : t.settings.off,
         ),
-        // Notifications: not a row here yet. The design wants four push
-        // toggles plus per-list mute, one of which needs a scheduled local
-        // notification and its own new dependency — real work, not styling,
-        // so it stays off the screen until it exists rather than pointing
-        // at nothing. See docs/design-gap-plan.md §8.
-        //
+        ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          shape: Border(
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+              width: 1,
+            ),
+          ),
+          title: Text(t.settings.notifications),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => context.push(Routes.notifications),
+        ),
         // "Keep checked items" (global): dropped, not just left dead. Decision
         // #64/#69 replaced it with a per-list "Clear checked after
         // shopping" toggle, which itself isn't built yet (needs a real

@@ -155,6 +155,7 @@
     "appearanceLight": "Maliwanag",
     "appearanceDark": "Madilim",
     "language": "Wika",
+    "notifications": "Mga Notification",
     "haptics": "Haptics",
     "largerListText": "Mas malaking teksto ng listahan",
     "reduceMotion": "Bawasan ang animation",
@@ -220,5 +221,11 @@
     "submit": "Sumali sa listahan",
     "confirmTitle": "Nasali ka na",
     "confirmBody": "Sumali sa {{list}}."
+  },
+  "notifications": {
+    "title": "Mga Notification",
+    "perList": "Bawat listahan",
+    "on": "Naka-on",
+    "muted": "Naka-mute"
   }
 }

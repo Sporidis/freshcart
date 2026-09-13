@@ -155,6 +155,7 @@
     "appearanceLight": "Light",
     "appearanceDark": "Dark",
     "language": "Language",
+    "notifications": "Notifications",
     "haptics": "Haptics",
     "largerListText": "Larger list text",
     "reduceMotion": "Reduce motion",
@@ -220,5 +221,11 @@
     "submit": "Join list",
     "confirmTitle": "You're in",
     "confirmBody": "Joined {{list}}."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "perList": "Per list",
+    "on": "On",
+    "muted": "Muted"
   }
 }

@@ -171,6 +171,7 @@
     "appearanceLight": "Светлая",
     "appearanceDark": "Тёмная",
     "language": "Язык",
+    "notifications": "Уведомления",
     "haptics": "Тактильная отдача",
     "largerListText": "Крупный текст списка",
     "reduceMotion": "Меньше анимации",
@@ -236,5 +237,11 @@
     "submit": "Присоединиться",
     "confirmTitle": "Вы в списке",
     "confirmBody": "Вы присоединились к «{{list}}»."
+  },
+  "notifications": {
+    "title": "Уведомления",
+    "perList": "По спискам",
+    "on": "Вкл",
+    "muted": "Без звука"
   }
 }
