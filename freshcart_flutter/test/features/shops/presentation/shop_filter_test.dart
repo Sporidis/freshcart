@@ -15,6 +15,14 @@ import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
 import '../../../fakes/fake_shop_repository.dart';
 
+/// `Icons.add` also appears on the quick-add bar's glyph, pumped alongside
+/// `ShopFilterBar` in every test here -- scope to the bar so the finder
+/// stays unambiguous.
+final Finder _addPillIcon = find.descendant(
+  of: find.byType(ShopFilterBar),
+  matching: find.byIcon(Icons.add),
+);
+
 void main() {
   setUpAll(configurePluralResolvers);
 
@@ -65,10 +73,17 @@ void main() {
   }
 
   group('ShopFilterBar', () {
-    testWidgets('is hidden when the list has no shops', (tester) async {
-      await pump(tester);
-      expect(find.byType(FilterChip), findsNothing);
-    });
+    testWidgets(
+      'still shows "All" and the add pill when the list has no shops',
+      (tester) async {
+        // Component Library §02: "All" and the dashed "+" are permanent
+        // furniture on every list, not conditional on having shops yet --
+        // the strip no longer disappears the way the old FilterChip row did.
+        await pump(tester);
+        expect(find.text('All shops'), findsOneWidget);
+        expect(_addPillIcon, findsOneWidget);
+      },
+    );
 
     testWidgets('offers every shop plus an "all shops" chip', (tester) async {
       shops.byListResult = Ok([colruyt, bakery]);
@@ -77,6 +92,51 @@ void main() {
       expect(find.text('All shops'), findsOneWidget);
       expect(find.text('Colruyt'), findsOneWidget);
       expect(find.text('Bakery'), findsOneWidget);
+    });
+
+    testWidgets('the dashed + pill opens the create-shop sheet', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([colruyt]);
+      final container = await pump(tester);
+
+      await tester.tap(_addPillIcon);
+      await tester.pumpAndSettle();
+
+      // The sheet itself, not just the tooltip -- "Shop name" only exists
+      // once EditShopSheet is actually open.
+      expect(find.text(container.read(translationsProvider).shops.nameLabel), findsOneWidget);
+    });
+
+    testWidgets('a leftward flick steps to the next tab, same as a tap', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([colruyt, bakery]);
+      items.byListResult = Ok([
+        buildItem(name: 'Milk').copyWith(shopId: colruyt.id),
+        buildItem(
+          id: '00000000-0000-4000-8000-0000000000b3',
+          name: 'Cake',
+        ).copyWith(shopId: bakery.id),
+      ]);
+      final container = await pump(tester);
+      expect(container.read(shopFilterProvider(listId)), isNull);
+
+      // All -> Colruyt.
+      await tester.fling(find.byType(ShopFilterBar), const Offset(-400, 0), 1000);
+      await tester.pumpAndSettle();
+      expect(container.read(shopFilterProvider(listId)), colruyt.id);
+      expect(find.text('Cake'), findsNothing);
+
+      // Colruyt -> Bakery.
+      await tester.fling(find.byType(ShopFilterBar), const Offset(-400, 0), 1000);
+      await tester.pumpAndSettle();
+      expect(container.read(shopFilterProvider(listId)), bakery.id);
+
+      // A rightward flick steps back.
+      await tester.fling(find.byType(ShopFilterBar), const Offset(400, 0), 1000);
+      await tester.pumpAndSettle();
+      expect(container.read(shopFilterProvider(listId)), colruyt.id);
     });
   });
 
@@ -130,13 +190,14 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Cake'), findsNothing);
 
-      // Tapping the already-selected chip deselects it (FilterChip's own
-      // toggle semantics) rather than leaving the list stuck on one shop.
+      // ShopTabPill is a tab, not a toggle chip: tapping the already-active
+      // tab again is a no-op, not a deselect -- "All" is the one way back,
+      // matching how a real TabBar behaves.
       await tester.tap(find.textContaining('Colruyt'));
       await tester.pumpAndSettle();
-      expect(find.text('Cake'), findsOneWidget);
+      expect(find.text('Cake'), findsNothing);
 
-      // "All shops" is always the way back too, from any shop's tab.
+      // "All shops" is the way back, from any shop's tab.
       await tester.tap(find.textContaining('Bakery'));
       await tester.pumpAndSettle();
       expect(find.text('Milk'), findsNothing);

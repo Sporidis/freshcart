@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 
@@ -49,7 +50,8 @@ class ManageShopsScreen extends ConsumerWidget {
             action: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () => _addShop(context, ref, listId, const []),
+                onPressed: () =>
+                    addShop(context, ref, listId, const <Shop>[]),
                 child: Text(t.shops.add),
               ),
             ),
@@ -68,7 +70,7 @@ class ManageShopsScreen extends ConsumerWidget {
       floatingActionButton: isEmpty
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => _addShop(
+              onPressed: () => addShop(
                 context,
                 ref,
                 listId,
@@ -77,34 +79,6 @@ class ManageShopsScreen extends ConsumerWidget {
               icon: const Icon(Icons.add),
               label: Text(t.shops.add),
             ),
-    );
-  }
-
-  /// Opens the create-mode sheet and commits through [ShopsController.create].
-  static Future<void> _addShop(
-    BuildContext context,
-    WidgetRef ref,
-    ListId listId,
-    List<Shop> siblings,
-  ) async {
-    final controller = ref.read(shopsControllerProvider(listId).notifier);
-    final t = ref.read(translationsProvider);
-
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (_) => EditShopSheet(
-        shop: null,
-        siblings: siblings,
-        onSave: ({required name, required color}) async {
-          final result = await controller.create(name: name, color: color);
-          return switch (result) {
-            Ok<Shop>() => null,
-            Err<Shop>(:final failure) => failure.toMessage(t),
-          };
-        },
-      ),
     );
   }
 }

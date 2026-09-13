@@ -22,6 +22,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboa
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Renders every `@Preview` in the app.
@@ -67,6 +68,8 @@ void main() {
     'add shop sheet': editShopSheetCreatePreview,
     'delete shop · holds': deleteShopSheetPreview,
     'delete shop · empty': deleteShopSheetEmptyPreview,
+    'shop tab pill · all': shopTabPillAllActivePreview,
+    'shop tab pill · shop': shopTabPillShopPreview,
   };
 
   for (final MapEntry(key: name, value: build) in previews.entries) {
