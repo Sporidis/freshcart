@@ -224,6 +224,12 @@
   },
   "notifications": {
     "title": "Meldingen",
+    "push": "Push",
+    "itemAdded": "Iemand voegt een product toe",
+    "itemAddedBody": "Gebundeld — één melding per reeks",
+    "memberJoined": "Iemand sluit zich aan bij een lijst",
+    "listFinished": "Een lijst is klaar",
+    "listFinishedBody": "Zodra het laatste product is afgevinkt",
     "perList": "Per lijst",
     "on": "Aan",
     "muted": "Gedempt"

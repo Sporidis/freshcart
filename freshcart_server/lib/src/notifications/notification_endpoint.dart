@@ -1,6 +1,7 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/notifications/business/notification_preferences_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Device registration and per-list notification settings.
@@ -80,4 +81,38 @@ class NotificationEndpoint extends Endpoint {
     );
     return existing != null;
   }
+
+  /// The caller's own notification preferences (decisions #80, phase 2).
+  Future<NotificationPreferences> preferences(Session session) =>
+      NotificationPreferencesService.forUser(session, session.requireUserId);
+
+  /// Sets whether the caller is notified when someone adds an item.
+  Future<NotificationPreferences> setItemAddedEnabled(
+    Session session,
+    bool value,
+  ) => NotificationPreferencesService.setItemAdded(
+    session,
+    session.requireUserId,
+    value,
+  );
+
+  /// Sets whether the caller is notified when someone joins a list.
+  Future<NotificationPreferences> setMemberJoinedEnabled(
+    Session session,
+    bool value,
+  ) => NotificationPreferencesService.setMemberJoined(
+    session,
+    session.requireUserId,
+    value,
+  );
+
+  /// Sets whether the caller is notified when a list is finished.
+  Future<NotificationPreferences> setListFinishedEnabled(
+    Session session,
+    bool value,
+  ) => NotificationPreferencesService.setListFinished(
+    session,
+    session.requireUserId,
+    value,
+  );
 }

@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
+import 'package:freshcart_domain/src/notifications/entities/notification_preferences.dart';
 
 /// How the domain asks for background push, without naming a vendor.
 ///
@@ -37,4 +38,23 @@ abstract interface class PushPort {
   /// decisions #37, but nothing above the transport layer could read it back
   /// to initialise a settings row until now (decisions #80).
   Future<Result<bool>> isListMuted(ListId listId);
+
+  /// The signed-in user's own choices about which push notifications they
+  /// receive (decisions #80, phase 2) -- global, not per-list.
+  Future<Result<NotificationPreferences>> notificationPreferences();
+
+  /// Sets whether the signed-in user is notified when someone adds an item.
+  Future<Result<NotificationPreferences>> setItemAddedNotificationsEnabled(
+    bool value,
+  );
+
+  /// Sets whether the signed-in user is notified when someone joins a list.
+  Future<Result<NotificationPreferences>> setMemberJoinedNotificationsEnabled(
+    bool value,
+  );
+
+  /// Sets whether the signed-in user is notified when a list is finished.
+  Future<Result<NotificationPreferences>> setListFinishedNotificationsEnabled(
+    bool value,
+  );
 }

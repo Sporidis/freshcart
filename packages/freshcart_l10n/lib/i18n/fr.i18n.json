@@ -224,6 +224,12 @@
   },
   "notifications": {
     "title": "Notifications",
+    "push": "Push",
+    "itemAdded": "Quelqu'un ajoute un produit",
+    "itemAddedBody": "Groupées — une alerte par rafale",
+    "memberJoined": "Quelqu'un rejoint une liste",
+    "listFinished": "Une liste est terminée",
+    "listFinishedBody": "Quand le dernier produit est coché",
     "perList": "Par liste",
     "on": "Actives",
     "muted": "Muette"

@@ -224,6 +224,12 @@
   },
   "notifications": {
     "title": "Mga Notification",
+    "push": "Push",
+    "itemAdded": "May nagdadagdag ng item",
+    "itemAddedBody": "Pinagsama — isang alerto bawat sunod-sunod na pagdagdag",
+    "memberJoined": "May sumasali sa isang listahan",
+    "listFinished": "Tapos na ang isang listahan",
+    "listFinishedBody": "Kapag nacheck na ang huling item",
     "perList": "Bawat listahan",
     "on": "Naka-on",
     "muted": "Naka-mute"

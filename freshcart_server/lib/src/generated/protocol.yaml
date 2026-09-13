@@ -43,6 +43,10 @@ notification:
   - unregisterDevice:
   - setListMuted:
   - isListMuted:
+  - preferences:
+  - setItemAddedEnabled:
+  - setMemberJoinedEnabled:
+  - setListFinishedEnabled:
 shop:
   - byList:
   - create:

@@ -207,6 +207,42 @@ void main() {
       );
     });
 
+    group('NotificationPreferences (decisions #80, phase 2)', () {
+      test(
+        'defaults to item-added on, joins/finished off, with no row written',
+        () async {
+          final prefs = await endpoints.notification.preferences(
+            as(aliceId),
+          );
+
+          expect(prefs.itemAdded, isTrue);
+          expect(prefs.memberJoined, isFalse);
+          expect(prefs.listFinished, isFalse);
+
+          final session = sessionBuilder.build();
+          final rows = await NotificationPreferences.db.find(
+            session,
+            where: (t) => t.userId.equals(UuidValue.withValidation(aliceId)),
+          );
+          expect(rows, isEmpty);
+        },
+      );
+
+      test('each setter persists and reads back independently', () async {
+        await endpoints.notification.setItemAddedEnabled(as(aliceId), false);
+        await endpoints.notification.setMemberJoinedEnabled(
+          as(aliceId),
+          true,
+        );
+
+        final prefs = await endpoints.notification.preferences(as(aliceId));
+        expect(prefs.itemAdded, isFalse);
+        expect(prefs.memberJoined, isTrue);
+        // Untouched setting keeps its default.
+        expect(prefs.listFinished, isFalse);
+      });
+    });
+
     test('adding items buffers one push, not one per item', () async {
       final recorder = RecordingPushSender();
       NotificationService.sender = recorder;
@@ -272,5 +308,209 @@ void main() {
 
       expect(recorder.sent, isEmpty);
     });
+
+    test(
+      'a recipient who turned off item-added is skipped, others still get it',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
+
+        final list = await aSharedList();
+        await endpoints.notification.registerDevice(
+          as(bobId),
+          'token-b4',
+          DevicePlatform.android,
+        );
+        await endpoints.notification.registerDevice(
+          as(carolId),
+          'token-c4',
+          DevicePlatform.android,
+        );
+        await endpoints.notification.setItemAddedEnabled(as(bobId), false);
+
+        await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final session = sessionBuilder.build();
+        await NotificationService.flush(session, list.id!);
+
+        expect(recorder.sent, hasLength(1));
+        expect(recorder.sent.single.tokens, ['token-c4']);
+      },
+    );
+
+    test(
+      'someone joining sends nothing by default -- member-joined is off '
+      'unless a recipient opts in',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
+
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.notification.registerDevice(
+          as(aliceId),
+          'token-a5',
+          DevicePlatform.android,
+        );
+
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        expect(recorder.sent, isEmpty);
+      },
+    );
+
+    test(
+      'someone joining notifies an opted-in member, never the joiner',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
+
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.notification.setMemberJoinedEnabled(
+          as(aliceId),
+          true,
+        );
+        await endpoints.notification.registerDevice(
+          as(aliceId),
+          'token-a6',
+          DevicePlatform.android,
+        );
+        // The joiner's own device -- must never receive "you joined."
+        await endpoints.notification.registerDevice(
+          as(bobId),
+          'token-b6',
+          DevicePlatform.android,
+        );
+
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        expect(recorder.sent, hasLength(1));
+        expect(recorder.sent.single.tokens, ['token-a6']);
+      },
+    );
+
+    test('re-tapping an already-valid invite link does not notify again', () async {
+      final recorder = RecordingPushSender();
+      NotificationService.sender = recorder;
+      addTearDown(() => NotificationService.sender = const LoggingPushSender());
+
+      final list = await endpoints.list.create(as(aliceId), 'Groceries');
+      await endpoints.notification.setMemberJoinedEnabled(as(aliceId), true);
+      await endpoints.notification.registerDevice(
+        as(aliceId),
+        'token-a7',
+        DevicePlatform.android,
+      );
+
+      await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(as(bobId), list.joinCode); // re-tap
+
+      expect(recorder.sent, hasLength(1));
+    });
+
+    test(
+      'checking the last open item notifies an opted-in member, never the '
+      'one who checked it',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
+
+        final list = await aSharedList();
+        await endpoints.notification.setListFinishedEnabled(
+          as(bobId),
+          true,
+        );
+        await endpoints.notification.registerDevice(
+          as(bobId),
+          'token-b8',
+          DevicePlatform.android,
+        );
+        // Alice both adds and checks the item -- must never receive "your
+        // own list finished."
+        await endpoints.notification.registerDevice(
+          as(aliceId),
+          'token-a8',
+          DevicePlatform.android,
+        );
+
+        final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        await endpoints.item.save(
+          as(aliceId),
+          item.copyWith(isChecked: true),
+        );
+
+        expect(recorder.sent, hasLength(1));
+        expect(recorder.sent.single.tokens, ['token-b8']);
+        expect(recorder.sent.single.body, contains('All done'));
+      },
+    );
+
+    test('checking one item of several open ones sends nothing', () async {
+      final recorder = RecordingPushSender();
+      NotificationService.sender = recorder;
+      addTearDown(() => NotificationService.sender = const LoggingPushSender());
+
+      final list = await aSharedList();
+      await endpoints.notification.setListFinishedEnabled(as(bobId), true);
+      await endpoints.notification.registerDevice(
+        as(bobId),
+        'token-b9',
+        DevicePlatform.android,
+      );
+
+      final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+      await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+      await endpoints.item.save(as(aliceId), milk.copyWith(isChecked: true));
+
+      expect(recorder.sent, isEmpty);
+    });
+
+    test(
+      'editing an already-checked item once the list is done does not '
+      're-notify',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
+
+        final list = await aSharedList();
+        await endpoints.notification.setListFinishedEnabled(
+          as(bobId),
+          true,
+        );
+        await endpoints.notification.registerDevice(
+          as(bobId),
+          'token-b10',
+          DevicePlatform.android,
+        );
+
+        final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final checked = await endpoints.item.save(
+          as(aliceId),
+          item.copyWith(isChecked: true),
+        );
+        expect(recorder.sent, hasLength(1));
+
+        // Renaming the already-checked item is not a fresh completion.
+        await endpoints.item.save(
+          as(aliceId),
+          checked.copyWith(name: 'Whole milk'),
+        );
+
+        expect(recorder.sent, hasLength(1));
+      },
+    );
   });
 }

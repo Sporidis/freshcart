@@ -1,5 +1,6 @@
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/notifications/business/notification_digest.dart';
+import 'package:freshcart_server/src/notifications/business/notification_preferences_service.dart';
 import 'package:freshcart_server/src/notifications/business/push_sender.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -58,12 +59,18 @@ abstract final class NotificationService {
   /// The device tokens that should receive news about [listId].
   ///
   /// Excludes the actor — nobody wants a phone buzzing about their own edit —
-  /// and anyone who has muted the list.
+  /// and anyone who has muted the list. [isEnabled] adds a second, independent
+  /// silencing knob on top of that: "not this list" (mute) and "not this kind
+  /// of thing" (a [NotificationPreferences] field) both apply, checked after
+  /// mute since it is the cheaper exclusion. Defaults to notifying everyone
+  /// left after mute, for callers that only ever cared about actor/mute
+  /// exclusion before this parameter existed (decisions #80, phase 2).
   static Future<List<DeviceToken>> recipientTokens(
     Session session,
     UuidValue listId,
-    Set<UuidValue> actorIds,
-  ) async {
+    Set<UuidValue> actorIds, {
+    bool Function(NotificationPreferences) isEnabled = _alwaysNotified,
+  }) async {
     final members = await ListMember.db.find(
       session,
       where: (t) => t.listId.equals(listId),
@@ -74,11 +81,20 @@ abstract final class NotificationService {
     );
     final mutedIds = muted.map((m) => m.userId).toSet();
 
-    final recipients = <UuidValue>{
+    final candidates = <UuidValue>[
       for (final member in members)
         if (!actorIds.contains(member.userId) &&
             !mutedIds.contains(member.userId))
           member.userId,
+    ];
+    if (candidates.isEmpty) return [];
+
+    final preferences = await Future.wait(
+      candidates.map((id) => NotificationPreferencesService.forUser(session, id)),
+    );
+    final recipients = <UuidValue>{
+      for (var i = 0; i < candidates.length; i++)
+        if (isEnabled(preferences[i])) candidates[i],
     };
     if (recipients.isEmpty) return [];
 
@@ -87,6 +103,8 @@ abstract final class NotificationService {
       where: (t) => t.ownerId.inSet(recipients),
     );
   }
+
+  static bool _alwaysNotified(NotificationPreferences _) => true;
 
   /// Summarises and sends everything buffered for [listId], then clears it.
   static Future<void> flush(Session session, UuidValue listId) async {
@@ -113,15 +131,82 @@ abstract final class NotificationService {
       session,
       listId,
       pending.map((p) => p.actorId).toSet(),
+      isEnabled: (p) => p.itemAdded,
     );
-    if (tokens.isEmpty) return;
+    await _deliver(session, listId, digest, tokens);
+  }
 
+  /// Sends "Someone joins a list" the instant [newMemberId] actually joins --
+  /// not a re-tap of an already-valid invite link (`ListService.join`'s own
+  /// `existing == null` guard decides when this is called at all). Immediate,
+  /// not batched: a join is always exactly one event, unlike item adds
+  /// (decisions #80, phase 2).
+  static Future<void> notifyMemberJoined(
+    Session session,
+    UuidValue listId, {
+    required UuidValue newMemberId,
+    required String newMemberName,
+    required String listName,
+  }) async {
+    final copy = NotificationDigest.memberJoined(listName, newMemberName);
+    final tokens = await recipientTokens(
+      session,
+      listId,
+      {newMemberId},
+      isEnabled: (p) => p.memberJoined,
+    );
+    await _deliver(session, listId, copy, tokens);
+  }
+
+  /// Sends "A list is finished" once, the instant its last open item gets
+  /// checked. Called only when `ItemService.save` just transitioned one item
+  /// into checked, never when a save leaves an already-checked item checked
+  /// -- so editing something else about a done row never re-fires this
+  /// (decisions #80, phase 2).
+  static Future<void> maybeNotifyListFinished(
+    Session session,
+    UuidValue listId, {
+    required UuidValue actorId,
+  }) async {
+    final stillOpen = await ShoppingItem.db.count(
+      session,
+      where: (t) => t.listId.equals(listId) & t.isChecked.equals(false),
+    );
+    if (stillOpen > 0) return;
+
+    final total = await ShoppingItem.db.count(
+      session,
+      where: (t) => t.listId.equals(listId),
+    );
+    // An empty list isn't "finished" -- there was nothing to finish.
+    if (total == 0) return;
+
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list == null) return;
+
+    final copy = NotificationDigest.listFinished(list.name, total);
+    final tokens = await recipientTokens(
+      session,
+      listId,
+      {actorId},
+      isEnabled: (p) => p.listFinished,
+    );
+    await _deliver(session, listId, copy, tokens);
+  }
+
+  static Future<void> _deliver(
+    Session session,
+    UuidValue listId,
+    ({String title, String body}) copy,
+    List<DeviceToken> tokens,
+  ) async {
+    if (tokens.isEmpty) return;
     await sender.send(
       session,
       PushMessage(
         tokens: tokens.map((t) => t.token).toList(),
-        title: digest.title,
-        body: digest.body,
+        title: copy.title,
+        body: copy.body,
         listId: listId,
       ),
     );
