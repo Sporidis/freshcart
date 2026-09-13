@@ -1556,3 +1556,45 @@ code, since the two live in different widgets with different trigger shapes. Tap
 suggestion chips use (decisions #64) -- re-adding a name already open on the list is allowed to
 create a second row, matching that existing precedent rather than inventing de-duplication the
 design never asked for.
+
+## 78. Drawer remaining count -- the last piece of decisions #65's own §4, plus a real `meta.checked` collision
+
+**Decision:** decisions #65 built the drawer's avatar stack and inline create/join rows but
+deliberately left "6 left" / "All done" for its own future piece, needing a per-list summary the
+drawer could call without N item-collection fetches for N lists. That summary now exists:
+`ListService.summaries` (new), backed by two `ShoppingItem.db.count` calls per list run in
+parallel via `Future.wait` -- the same single-list-count shape `ShopService.itemCount` already
+uses, just batched, since the ORM has no GROUP BY aggregate escape hatch short of raw SQL. A
+foreign listId is silently skipped rather than erroring the whole batch: a legitimate caller only
+ever asks about its own lists (`ListService.listsFor`'s own result) anyway, so this is a defence
+against a malicious id, not a normal path. A new, non-persisted `ListSummary` DTO (mirroring
+`ItemChange`'s own no-`table:` shape) carries `total`/`checkedCount` back; `ListRepository.summaries`
+and `listSummariesProvider` complete the stack, the latter deriving its list of ids from
+`listsControllerProvider` directly rather than taking one as a family argument (a plain `List<T>`
+has no value equality in Dart, so a `List`-keyed family would rebuild a fresh provider instance on
+every call regardless of content, defeating its own caching).
+
+**The drawer's subtitle is the remaining count when a summary has loaded, the member count while
+it hasn't** -- not both together, matching the mockup exactly (`Flow Screens v2.dc.html`'s drawer
+item shows only one line under each list's name, never member count and remaining count stacked).
+Member information moved entirely to the avatar stack decisions #65 already built; the fallback to
+member count during the one frame before `listSummariesProvider` resolves is presentation
+convenience, not a design requirement -- better than a blank subtitle, and gone the instant the
+summary loads.
+
+**A real, if obscure, compile-time bug found while naming the field, not a hypothetical one.**
+`ListSummary(..., checked: int)` failed to compile with `int - Object` type errors inside its own
+`remaining` getter, despite `checked` being declared correctly as an `int` field by the generated
+freezed mixin. Cause, confirmed by inspection of `package:meta`'s source: `meta.dart` declares
+`const Object checked = _Checked();` (the old, deprecated `@checked` annotation, superseded by the
+`covariant` keyword), and `freezed_annotation.dart` re-exports the whole of `package:meta`
+unqualified -- so any file importing `freezed_annotation` has `checked` sitting in its library
+scope as a top-level `Object` constant. An unqualified reference inside an instance getter should
+still prefer the instance member over an imported top-level under ordinary Dart scoping, but the
+combination of an *abstract* mixin-provided getter (freezed's `_$ListSummary`) with that exact
+colliding name did not resolve that way in practice, regardless of the reason being a genuine
+analyzer/CFE edge case or a subtlety in how freezed 4's generated mixins expose abstract members.
+Fixed by renaming the field to `checkedCount` end-to-end (domain entity, server model, mapper) --
+sidestepping the collision rather than arguing with the compiler about whose `checked` should win.
+Worth naming for the next person who reaches for this exact word: `checked` is not a safe field
+name anywhere `freezed_annotation` is imported, which in this codebase is everywhere.

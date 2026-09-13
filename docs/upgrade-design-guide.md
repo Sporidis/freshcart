@@ -117,8 +117,9 @@ disable/sign-out.
 
 ### Missing query or derived data
 
-- **Drawer counts:** add one batched list-summary query returning remaining,
-  checked, total, and `allDone`; do not load every list's full item collection.
+- **Drawer counts — ✅ built, decisions #78.** One batched list-summary query
+  (`ListService.summaries`), not a per-list item-collection fetch, exactly as
+  scoped here.
 - **Recently bought search — ✅ built, decisions #77.** Needed a new,
   unfiltered `recentNames` read path alongside the existing (filtered, floored)
   `suggestNames` one, not a reuse of it as-is — no new persistence, per the
@@ -271,12 +272,12 @@ it actually started — corrected below rather than left stale.
   wasn't actually persisted, and the "Haptics" toggle was decorative (wired to
   nothing, while 7 real `HapticFeedback` call sites fired unconditionally) — now
   wired for real.
-- **Drawer:** still not built — add each list's remaining count (`N left` /
-  `All done`). This needs a summary endpoint; do not fetch every list's complete
-  item collection just to render the drawer.
+- **Drawer — ✅ built, decisions #65, #78.** Remaining count, member avatars,
+  and inline New list / Join a list rows all ship.
 - **Notifications:** still not built — add push preferences, per-list mute, and
   scheduled local reminders as a separately scoped dependency/permission task.
-  The largest remaining piece of Priority 2.
+  The only piece of Priority 2 left, and the only one needing a new
+  dependency.
 
 ## Suggested implementation order
 

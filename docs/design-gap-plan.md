@@ -23,7 +23,7 @@ behaviour*, not new visual language.
 | Add control polish (shop-tinted placeholder, leading dot, glyph state, entrance flash) | Small | ✅ Built — decisions #62 |
 | Item-name suggestions (shared by the add control and Flow 06 search), per-list | Medium | ✅ Fully built — decisions #64, #77. |
 | Unify the add/edit item sheet into one component | Small–Medium | ✅ Built — decisions #63 |
-| Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | ✅ Avatars + inline rows built — decisions #65. Remaining count still deferred (needs a per-list summary endpoint). |
+| Drawer: remaining count + member avatars per row, plus inline New list / Join a list | Small–Medium | ✅ Fully built — decisions #65, #78. |
 | Settings: 4-group restructure | Medium | ✅ Built — Profile, Lists & shops, Preferences, About |
 | Edit profile: user-chosen avatar colour | Small–Medium | ✅ Built — domain field, `ProfileService`, swatch picker on `EditProfileScreen` |
 | Appearance screen (theme mode, larger text, reduce-motion status) | Medium | ✅ Built (inline in Preferences, not a separate screen — nothing in the design requires one). Theme mode is also now persisted; it wasn't before. |
@@ -125,17 +125,17 @@ action, pre-filled fields) removes a duplicate surface rather than adding one. W
 the add control grows more fields (the suggestion chips, for one), so there is only one place to
 add them.
 
-## 4. Drawer
+## 4. Drawer — ✅ fully built
 
 - ~~**Member avatars per row**~~ — ✅ built, decisions #65. A small overlapping stack of who else
   is on that list (capped at three, "+N" for the rest), from data the drawer's list-switcher
   already had (`ListsController`'s collection already carries `members`).
 - ~~**Inline "New list" / "Join a list" rows**~~ — ✅ built, decisions #65. Reuse the same dialogs
   `ListsScreen` already opens, not a second copy.
-- **Remaining count** ("6 left" / "All done") — still **not built**. Needs each list's own item
-  counts, which the drawer does not currently fetch — a lighter per-list summary endpoint,
-  ideally without each drawer open triggering N item-list fetches for N lists. Deferred as its own
-  future backend piece rather than folded into the avatar/inline-rows pass.
+- ~~**Remaining count**~~ ("6 left" / "All done") — ✅ built, decision #78. `ListService.summaries`
+  (new, two `count` queries per list run in parallel, not a full item-collection fetch) backs
+  `listSummariesProvider`, which each row's subtitle reads — the member count is the row's fallback
+  only for the one frame before a summary has loaded, not shown alongside the count.
 
 ## 5. Settings restructure — ✅ built
 
@@ -231,8 +231,7 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
 2. ~~**Unify the item sheet** (§3)~~ — ✅ built, decisions #63.
 3. ~~**Item-name suggestions** (§2)~~ — ✅ fully built, decisions #64, #77. The add control's
    chips and Flow 06's "Recently bought" (inline in search's empty-query state) both ship.
-4. ~~**Drawer enrichment** (§4)~~ — ✅ member avatars + inline New list / Join a list built,
-   decisions #65. Remaining count still deferred, needs its own summary endpoint.
+4. ~~**Drawer enrichment** (§4)~~ — ✅ fully built, decisions #65, #78.
 5. ~~**Edit profile + stored avatar colour** (§6)~~ — ✅ built.
 6. ~~**List settings screen** (§9)~~ — ✅ built, decision #69. "Clear checked after shopping"
    still deliberately missing, needs its own domain decision.
@@ -243,6 +242,6 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
    new dependency (local scheduled notifications) — do this last, and possibly split "list
    finished" push + per-list mute from the local-notification scheduler as two separate phases.
 
-Two smaller items are still open, each deliberately deferred rather than forgotten: the drawer's
-remaining count (§4, needs a summary endpoint) and "Clear checked after shopping" (§9, needs a
-real domain decision). Everything else in this plan is built.
+One item is still open, deliberately deferred rather than forgotten: "Clear checked after
+shopping" (§9, needs a real domain decision on what "after shopping" means). Everything else in
+this plan is built.
