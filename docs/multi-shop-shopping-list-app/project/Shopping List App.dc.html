@@ -395,22 +395,19 @@ a:hover{color:#1A3E77}
         <div style="font-size:13.5px;font-weight:600;color:#2456A6">Edit</div>
       </div>
 
-      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Lists &amp; shops</div>
-      <div style="padding:0 20px">
-        <div onClick="{{ goManageLists }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
-          <span style="flex:1;font-size:16px;color:#1A1A18">Manage lists</span>
-          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ listCount }}</span>
-          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </div>
-        <div onClick="{{ goManageShops }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
-          <span style="flex:1;font-size:16px;color:#1A1A18">Manage shops</span>
-          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ shopCount }}</span>
-          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </div>
-        <div onClick="{{ goManageLists }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
-          <span style="flex:1;font-size:16px;color:#1A1A18">Household</span>
-          <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        </div>
+      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Your lists</div>
+      <div style="padding:0 20px 2px;font-size:12.5px;color:rgba(26,26,24,.45);line-height:1.45">Shops and household belong to a list. Pick one to manage it.</div>
+      <div style="padding:8px 20px 0">
+        <sc-for list="{{ settingsLists }}" as="l" hint-placeholder-count="3">
+          <div onClick="{{ l.openSettings }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+            <div style="flex:1">
+              <div style="font-size:16px;color:#1A1A18">{{ l.name }}</div>
+              <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">{{ l.meta }}</div>
+            </div>
+            <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
+        </sc-for>
+        <div onClick="{{ startNewList }}" style="padding:13px 4px;font-size:16px;color:#2456A6;font-weight:600;cursor:pointer">New list</div>
       </div>
 
       <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Preferences</div>
@@ -449,14 +446,54 @@ a:hover{color:#1A3E77}
     <sc-if value="{{ isListSettings }}" hint-placeholder-val="{{ false }}">
     <div style="padding-top:60px;height:100%;box-sizing:border-box;overflow-y:auto">
       <div style="padding:6px 20px 0;display:flex;align-items:center;gap:10px">
-        <div onClick="{{ backToMain }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div onClick="{{ leaveListSettings }}" style="width:32px;height:32px;display:flex;align-items:center;cursor:pointer"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
         <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
       </div>
-      <div style="padding:20px 20px 0">
-        <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">List name</div>
-        <input class="bkt-input" placeholder="List name" value="{{ activeListName }}" onChange="{{ renameActiveList }}" />
+
+      <div style="padding:16px 20px 0">
+        <div onClick="{{ toggleListPicker }}" style="display:flex;align-items:center;gap:10px;border:1.5px solid rgba(0,0,0,.15);border-radius:12px;padding:12px 14px;cursor:pointer;background:{{ listPickerBg }}">
+          <div style="flex:1">
+            <div style="font:700 10px ui-monospace,monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.4)">Managing</div>
+            <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-top:3px">{{ settingsListName }}</div>
+          </div>
+          <svg width="11" height="7" viewBox="0 0 10 7" style="flex:none;transform:rotate({{ listPickerChevron }}deg);transition:transform .2s ease"><path d="M1 1l4 4 4-4" stroke="rgba(26,26,24,.5)" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </div>
+        <sc-if value="{{ listPickerOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="border:1px solid rgba(0,0,0,.1);border-radius:12px;margin-top:6px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.09)">
+          <sc-for list="{{ settingsLists }}" as="l" hint-placeholder-count="3">
+            <div onClick="{{ l.openSettings }}" style="display:flex;align-items:center;gap:10px;padding:13px 14px;cursor:pointer;background:{{ l.pickBg }};border-bottom:1px solid rgba(0,0,0,.06)">
+              <div style="flex:1">
+                <div style="font-size:15.5px;color:#1A1A18;font-weight:{{ l.pickWeight }}">{{ l.name }}</div>
+                <div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">{{ l.meta }}</div>
+              </div>
+              <sc-if value="{{ l.isManaged }}" hint-placeholder-val="{{ false }}">
+                <svg width="13" height="10" viewBox="0 0 12 10" style="flex:none"><path d="M1 5l3.5 3.5L11 1" stroke="#1A1A18" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </sc-if>
+            </div>
+          </sc-for>
+        </div>
+        </sc-if>
       </div>
-      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Members</div>
+
+      <div style="padding:22px 20px 0">
+        <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">List name</div>
+        <input class="bkt-input" placeholder="List name" value="{{ settingsListName }}" onChange="{{ renameSettingsList }}" />
+      </div>
+
+      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Shops on this list</div>
+      <div style="padding:0 20px 2px;font-size:12.5px;color:rgba(26,26,24,.45);line-height:1.45">Each becomes a tab. Colours are shared across all your lists.</div>
+      <div style="padding:8px 20px 0">
+        <sc-for list="{{ listShopRows }}" as="shop" hint-placeholder-count="3">
+          <div onClick="{{ shop.toggle }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer">
+            <span style="width:14px;height:14px;border-radius:50%;background:{{ shop.color }};flex:none"></span>
+            <span style="flex:1;font-size:16px;color:#1A1A18">{{ shop.name }}</span>
+            <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ shop.switchBg }};justify-content:{{ shop.switchJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
+          </div>
+        </sc-for>
+        <div onClick="{{ openAddShopFromListSettings }}" style="padding:13px 4px;font-size:16px;color:#2456A6;font-weight:600;cursor:pointer">Add a shop</div>
+      </div>
+
+      <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Household</div>
       <div style="padding:0 20px">
         <div style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
           <div style="width:32px;height:32px;border-radius:50%;background:{{ avatarHex }};color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">{{ userInitial }}</div>
@@ -480,8 +517,7 @@ a:hover{color:#1A3E77}
           <div style="width:44px;height:26px;border-radius:13px;padding:3px;box-sizing:border-box;display:flex;flex:none;background:{{ autoClearBg }};justify-content:{{ autoClearJustify }};transition:background .18s ease"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div>
         </div>
         <div onClick="{{ goManageShops }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;cursor:pointer">
-          <span style="flex:1;font-size:16px;color:#1A1A18">Shops on this list</span>
-          <span style="font-size:13.5px;color:rgba(26,26,24,.4)">{{ shopsOnList }}</span>
+          <span style="flex:1;font-size:16px;color:#1A1A18">Rename shops &amp; colours</span>
           <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
         </div>
       </div>
@@ -495,7 +531,7 @@ a:hover{color:#1A3E77}
     <sc-if value="{{ deleteListAsk }}" hint-placeholder-val="{{ false }}">
     <div onClick="{{ cancelDeleteList }}" style="position:absolute;inset:0;background:rgba(20,20,18,.42);z-index:9"></div>
     <div style="position:absolute;left:28px;right:28px;top:50%;transform:translateY(-50%);background:#fff;border-radius:16px;padding:22px;box-sizing:border-box;z-index:10;box-shadow:0 18px 40px rgba(0,0,0,.2)">
-      <div style="font-size:18px;font-weight:700;color:#1A1A18;margin-bottom:7px">Delete {{ activeListName }}?</div>
+      <div style="font-size:18px;font-weight:700;color:#1A1A18;margin-bottom:7px">Delete {{ settingsListName }}?</div>
       <div style="font-size:14px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:20px">This removes the list and its {{ activeItemCount }} products for all 3 members. It can't be undone.</div>
       <div style="display:flex;flex-direction:column;gap:9px">
         <div onClick="{{ confirmDeleteList }}" class="bkt-btn" style="background:#C0392B;padding:13px">Delete for everyone</div>
@@ -743,6 +779,31 @@ a:hover{color:#1A3E77}
     </div>
     </sc-if>
 
+    <sc-if value="{{ newListOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNewList }}" style="position:absolute;inset:0;background:rgba(20,20,18,.35);z-index:7"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:8">
+      <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 16px;cursor:pointer" onClick="{{ closeNewList }}"></div>
+      <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:16px">New list</div>
+      <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Name</div>
+      <input class="bkt-input" placeholder="e.g. BBQ Saturday" value="{{ newListName }}" onChange="{{ setNewListName }}" />
+      <div style="display:flex;align-items:baseline;gap:8px;margin:18px 0 9px">
+        <div style="flex:1;font-size:12.5px;color:rgba(26,26,24,.5)">Shops</div>
+        <div style="font-size:12px;color:rgba(26,26,24,.4)">{{ newListHint }}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <sc-for list="{{ newListShopChips }}" as="shop" hint-placeholder-count="3">
+          <div onClick="{{ shop.toggle }}" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;cursor:pointer;background:{{ shop.chipBg }};color:{{ shop.chipColor }};border:{{ shop.chipBorder }};font-weight:{{ shop.chipWeight }}">
+            <span style="width:8px;height:8px;border-radius:50%;background:{{ shop.chipDot }}"></span>{{ shop.name }}
+          </div>
+        </sc-for>
+        <div onClick="{{ openAddShopFromNewList }}" style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px dashed rgba(0,0,0,.25);color:#2456A6;font-weight:600;cursor:pointer">
+          <svg width="11" height="11" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#2456A6" stroke-width="2" stroke-linecap="round"></path></svg>New shop
+        </div>
+      </div>
+      <div class="bkt-btn" style="margin-top:22px;background:{{ newListBtnBg }}" onClick="{{ createNewList }}">Create list</div>
+    </div>
+    </sc-if>
+
     <sc-if value="{{ addShopOpen }}" hint-placeholder-val="{{ false }}">
     <div style="position:absolute;inset:0;top:60px;background:rgba(20,20,18,.35);z-index:9" onClick="{{ closeAddShop }}"></div>
     <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.15);padding:12px 20px 30px;z-index:10">
@@ -793,11 +854,14 @@ class Component extends DCLogic {
     triedUsername: false,
     listNameInput: '',
     joinCode: '',
+    /// Catalogue: name + colour are global (one Colruyt, one orange).
     shops: [
-      { id: 'ah', name: 'Albert Heijn', color: '#2456A6', selected: true },
-      { id: 'colruyt', name: 'Colruyt', color: '#E8791A', selected: true },
-      { id: 'delhaize', name: 'Delhaize', color: '#C0392B', selected: false },
+      { id: 'ah', name: 'Albert Heijn', color: '#2456A6' },
+      { id: 'colruyt', name: 'Colruyt', color: '#E8791A' },
+      { id: 'delhaize', name: 'Delhaize', color: '#C0392B' },
     ],
+    /// WHICH shops are on a list is per-list — keyed by list index.
+    listShops: { 0: ['ah', 'colruyt'], 1: ['colruyt'], 2: ['ah', 'delhaize'] },
     newShopName: '',
     newShopColor: '#2456A6',
     addShopReturn: 'main',
@@ -839,6 +903,13 @@ class Component extends DCLogic {
     dragY: null,
     autoClear: true,
     deleteListAsk: false,
+    settingsListIndex: 0,
+    listSettingsFrom: 'main',
+    listPickerOpen: false,
+    subFrom: 'settings',
+    newListOpen: false,
+    newListName: '',
+    newListShops: [],
     items: [
       { id: 1, name: 'Bananas', shop: 'ah', qty: 6, checked: false },
       { id: 2, name: 'Pasta', shop: 'colruyt', qty: 2, checked: false },
@@ -857,6 +928,8 @@ class Component extends DCLogic {
     listNameInput: '', joinCode: '', navOpen: false, productOpen: false, addShopOpen: false,
     joinOverlayOpen: false, quickAddOpen: false, activeTab: 'all', activeListIndex: 0,
     lists: ['Weekly Groceries', 'BBQ Party', 'Camping Trip'], triedJoin: false,
+    listShops: { 0: ['ah', 'colruyt'], 1: ['colruyt'], 2: ['ah', 'delhaize'] },
+    settingsListIndex: 0, listPickerOpen: false, subFrom: 'settings',
   });
 
   goCreatePath = () => this.setState({ path: 'create', screen: 'username' });
@@ -874,14 +947,24 @@ class Component extends DCLogic {
     const name = this.state.listNameInput.trim() || 'Untitled list';
     if (this.state.flowMode === 'newList') {
       const lists = [...this.state.lists, name];
-      this.setState({ lists, activeListIndex: lists.length - 1, screen: 'main', flowMode: 'onboarding' });
+      const i = lists.length - 1;
+      this.setState({
+        lists, activeListIndex: i, settingsListIndex: i, screen: 'main', flowMode: 'onboarding',
+        listShops: { ...this.state.listShops, [i]: [...this.shopsFor(this.state.activeListIndex)] },
+      });
     } else {
       const lists = [...this.state.lists]; lists[0] = name;
       this.setState({ lists, screen: 'pick-shops' });
     }
   };
   backToNameListFromPick = () => this.setState({ screen: 'name-list' });
-  toggleShop = (id) => this.setState({ shops: this.state.shops.map(s => s.id === id ? { ...s, selected: !s.selected } : s) });
+  shopsFor = (listIndex) => this.state.listShops[listIndex] || [];
+  toggleShopForList = (listIndex, id) => {
+    const on = this.shopsFor(listIndex);
+    const next = on.includes(id) ? on.filter(x => x !== id) : [...on, id];
+    this.setState({ listShops: { ...this.state.listShops, [listIndex]: next } });
+  };
+  toggleShop = (id) => this.toggleShopForList(this.state.activeListIndex, id);
   openAddShopFromPick = () => this.setState({ addShopOpen: true, addShopReturn: 'pick-shops', newShopName: '', newShopColor: '#2456A6' });
   continuePickShops = () => this.setState({ screen: 'invite' });
   backToPickShopsFromInvite = () => this.setState({ screen: 'pick-shops' });
@@ -892,7 +975,11 @@ class Component extends DCLogic {
     const code = (this.state.joinCode || '').trim();
     if (code !== '8F3K2') { this.setState({ triedJoin: true }); return; }
     const lists = [...this.state.lists, 'Shared List (joined)'];
-    this.setState({ lists, activeListIndex: lists.length - 1, screen: 'joined', joinCode: '', triedJoin: false });
+    const i = lists.length - 1;
+    this.setState({
+      lists, activeListIndex: i, settingsListIndex: i, screen: 'joined', joinCode: '', triedJoin: false,
+      listShops: { ...this.state.listShops, [i]: ['ah', 'colruyt'] },
+    });
   };
   pickListName = (label) => this.setState({ listNameInput: label });
 
@@ -1006,23 +1093,48 @@ class Component extends DCLogic {
     moveSheetOpen: false, selectMode: false, selectedIds: [],
   });
 
-  goListSettings = () => this.setState({ screen: 'list-settings' });
-  renameActiveList = (e) => {
+  /// List settings is always scoped to ONE list, chosen by the switcher at the
+  /// top. Opening it from the list header scopes it to the open list; opening
+  /// it from global settings scopes it to whichever list was tapped there.
+  goListSettings = () => this.setState({
+    screen: 'list-settings', settingsListIndex: this.state.activeListIndex,
+    listSettingsFrom: 'main', listPickerOpen: false,
+  });
+  openListSettingsFor = (i) => this.setState({
+    screen: 'list-settings', settingsListIndex: i,
+    listSettingsFrom: this.state.screen === 'list-settings' ? this.state.listSettingsFrom : 'settings',
+    listPickerOpen: false,
+  });
+  leaveListSettings = () => this.setState({
+    screen: this.state.listSettingsFrom === 'settings' ? 'settings' : 'main',
+    listPickerOpen: false,
+  });
+  toggleListPicker = () => this.setState({ listPickerOpen: !this.state.listPickerOpen });
+  renameSettingsList = (e) => {
     const lists = [...this.state.lists];
-    lists[this.state.activeListIndex] = e.target.value;
+    lists[this.state.settingsListIndex] = e.target.value;
     this.setState({ lists });
   };
+  openAddShopFromListSettings = () => this.setState({
+    addShopOpen: true, addShopReturn: 'list-settings', newShopName: '', newShopColor: '#2456A6',
+  });
   toggleAutoClear = () => this.setState({ autoClear: !this.state.autoClear });
   askDeleteList = () => this.setState({ deleteListAsk: true });
   cancelDeleteList = () => this.setState({ deleteListAsk: false });
   confirmDeleteList = () => {
-    const lists = this.state.lists.filter((_, i) => i !== this.state.activeListIndex);
-    this.setState({ lists, activeListIndex: 0, deleteListAsk: false, screen: lists.length ? 'main' : 'lists-overview' });
+    const gone = this.state.settingsListIndex;
+    const lists = this.state.lists.filter((_, i) => i !== gone);
+    const listShops = {};
+    lists.forEach((_, i) => { listShops[i] = this.shopsFor(i < gone ? i : i + 1); });
+    this.setState({
+      lists, listShops, activeListIndex: 0, settingsListIndex: 0, deleteListAsk: false,
+      screen: lists.length ? 'main' : 'lists-overview',
+    });
   };
   leaveList = () => this.confirmDeleteList();
 
   defaultShopId = () => this.state.activeTab === 'all'
-    ? (this.state.shops.find(s => s.selected) || this.state.shops[0]).id
+    ? (this.shopsFor(this.state.activeListIndex)[0] || this.state.shops[0].id)
     : this.state.activeTab;
 
   rollOpen = () => this.setState({ fabOpen: true, quickAddText: '', celebrateDismissed: true });
@@ -1065,13 +1177,35 @@ class Component extends DCLogic {
 
   setNewShopName = (e) => this.setState({ newShopName: e.target.value });
   selectShopColor = (hex) => this.setState({ newShopColor: hex });
-  closeAddShop = () => this.setState({ addShopOpen: false });
+  closeAddShop = () => this.setState({
+    addShopOpen: false,
+    newListOpen: this.state.addShopReturn === 'new-list',
+  });
   createShop = () => {
     const name = this.state.newShopName.trim();
     if (!name) { this.setState({ addShopOpen: false }); return; }
     const id = 'shop' + this.state.nextId;
-    const shops = [...this.state.shops, { id, name, color: this.state.newShopColor, selected: true }];
-    this.setState({ shops, addShopOpen: false, nextId: this.state.nextId + 1 });
+    const shops = [...this.state.shops, { id, name, color: this.state.newShopColor }];
+    const from = this.state.addShopReturn;
+
+    // Created mid-way through the New list sheet: it joins the draft, and the
+    // sheet comes back so the user never loses what they had typed.
+    if (from === 'new-list') {
+      this.setState({
+        shops, addShopOpen: false, nextId: this.state.nextId + 1,
+        newListShops: [...this.state.newListShops, id], newListOpen: true,
+      });
+      return;
+    }
+
+    // Otherwise it joins whichever list the user was looking at.
+    const target = from === 'list-settings' ? this.state.settingsListIndex : this.state.activeListIndex;
+    const listShops = { ...this.state.listShops, [target]: [...this.shopsFor(target), id] };
+    this.setState({
+      shops, listShops, addShopOpen: false, nextId: this.state.nextId + 1,
+      activeTab: from === 'main' ? id : this.state.activeTab,
+      screen: from === 'pick-shops' ? 'pick-shops' : this.state.screen,
+    });
   };
 
   goProfile = () => this.setState({ screen: 'profile', navOpen: false });
@@ -1083,17 +1217,54 @@ class Component extends DCLogic {
   toggleNotif = (key) => this.setState({ notifs: { ...this.state.notifs, [key]: !this.state.notifs[key] } });
   goSettings = () => this.setState({ screen: 'settings', navOpen: false });
   backToMain = () => this.setState({ screen: 'main' });
-  goManageShops = () => this.setState({ screen: 'manage-shops', navOpen: false });
-  backToSettings = () => this.setState({ screen: 'settings' });
-  goManageLists = () => this.setState({ screen: 'lists-overview', navOpen: false });
+  /// manage-shops and lists-overview are reachable from the drawer, global
+  /// settings AND list settings — remember which, so back never strands the
+  /// user on a screen they didn't come from.
+  goManageShops = () => this.setState({
+    screen: 'manage-shops', navOpen: false, subFrom: this.state.screen === 'list-settings' ? 'list-settings' : 'settings',
+  });
+  goManageLists = () => this.setState({
+    screen: 'lists-overview', navOpen: false, subFrom: this.state.screen === 'list-settings' ? 'list-settings' : 'settings',
+  });
+  backToSettings = () => this.setState({ screen: this.state.subFrom === 'list-settings' ? 'list-settings' : 'settings' });
   openAddShopFromManage = () => this.setState({ addShopOpen: true, addShopReturn: 'manage-shops', newShopName: '', newShopColor: '#2456A6' });
-  startNewList = () => this.setState({ flowMode: 'newList', listNameInput: '', screen: 'name-list', navOpen: false });
+  /// An existing user creating a list gets ONE sheet, not the onboarding
+  /// wizard — name and shops in the same place, because a list without shops
+  /// has no tabs and is useless.
+  startNewList = () => this.setState({
+    newListOpen: true, newListName: '', navOpen: false,
+    newListShops: [...this.shopsFor(this.state.activeListIndex)],
+  });
+  closeNewList = () => this.setState({ newListOpen: false });
+  setNewListName = (e) => this.setState({ newListName: e.target.value });
+  toggleNewListShop = (id) => {
+    const on = this.state.newListShops;
+    this.setState({ newListShops: on.includes(id) ? on.filter(x => x !== id) : [...on, id] });
+  };
+  openAddShopFromNewList = () => this.setState({
+    addShopOpen: true, addShopReturn: 'new-list', newShopName: '', newShopColor: '#2456A6',
+  });
+  createNewList = () => {
+    if (!this.state.newListShops.length) return; // a list with no tabs is unusable
+    const name = this.state.newListName.trim() || 'Untitled list';
+    const lists = [...this.state.lists, name];
+    const i = lists.length - 1;
+    this.setState({
+      lists, activeListIndex: i, settingsListIndex: i,
+      listShops: { ...this.state.listShops, [i]: [...this.state.newListShops] },
+      newListOpen: false, newListName: '', activeTab: 'all', screen: 'main',
+    });
+  };
   signOut = () => this.resetAll();
   openJoinFromNav = () => this.setState({ joinOverlayOpen: true, navOpen: false, joinCode: '' });
   closeJoinOverlay = () => this.setState({ joinOverlayOpen: false });
   submitJoinOverlay = () => {
     const lists = [...this.state.lists, 'Shared List (joined)'];
-    this.setState({ lists, activeListIndex: lists.length - 1, joinOverlayOpen: false, joinCode: '', screen: 'main' });
+    const i = lists.length - 1;
+    this.setState({
+      lists, activeListIndex: i, settingsListIndex: i, joinOverlayOpen: false, joinCode: '', screen: 'main',
+      listShops: { ...this.state.listShops, [i]: ['ah', 'colruyt'] },
+    });
   };
 
   renderVals() {
@@ -1153,7 +1324,9 @@ class Component extends DCLogic {
     const selItem = s.items.find(i => i.id === s.selectedItemId) || { name: '', qty: 1, shop: '' };
     const selShop = s.shops.find(sh => sh.id === selItem.shop);
     const remaining = (shopId) => s.items.filter(i => !i.checked && (shopId === 'all' || i.shop === shopId)).length;
-    const tabShops = s.shops.filter(sh => sh.selected).map(sh => {
+    const activeShopIds = this.shopsFor(s.activeListIndex);
+    const onActiveList = s.shops.filter(sh => activeShopIds.includes(sh.id));
+    const tabShops = onActiveList.map(sh => {
       const n = remaining(sh.id);
       return {
         ...sh,
@@ -1194,7 +1367,7 @@ class Component extends DCLogic {
       avatarColor: '#fff',
       avatarBorder: s.username.trim() ? 'none' : '1.5px dashed rgba(26,26,24,.25)',
       listNameSuggestions: ['Household', 'Big shop', 'BBQ'].map(label => ({ label, pick: () => this.pickListName(label) })),
-      previewTabs: s.shops.filter(sh => sh.selected),
+      previewTabs: onActiveList,
       showJoinError: !!s.triedJoin,
       joinBoxes: [0, 1, 2, 3, 4].map(i => {
         const code = s.joinCode || '';
@@ -1210,11 +1383,58 @@ class Component extends DCLogic {
       isProfile: s.screen === 'profile',
       isListSettings: s.screen === 'list-settings',
       goListSettings: this.goListSettings,
-      renameActiveList: this.renameActiveList,
+      leaveListSettings: this.leaveListSettings,
+      renameSettingsList: this.renameSettingsList,
+      settingsListName: s.lists[s.settingsListIndex] || '',
+      listPickerOpen: !!s.listPickerOpen,
+      toggleListPicker: this.toggleListPicker,
+      listPickerChevron: s.listPickerOpen ? 180 : 0,
+      listPickerBg: s.listPickerOpen ? '#F5F3ED' : 'transparent',
+      settingsLists: s.lists.map((name, i) => ({
+        name,
+        meta: (i === s.activeListIndex ? 'Open now · ' : '')
+          + this.shopsFor(i).length + ' shops · 2 people',
+        isManaged: i === s.settingsListIndex,
+        pickBg: i === s.settingsListIndex ? '#F5F3ED' : '#fff',
+        pickWeight: i === s.settingsListIndex ? 700 : 400,
+        openSettings: () => this.openListSettingsFor(i),
+      })),
+      listShopRows: s.shops.map(sh => {
+        const on = this.shopsFor(s.settingsListIndex).includes(sh.id);
+        return {
+          ...sh,
+          switchBg: on ? '#1A1A18' : 'rgba(26,26,24,.14)',
+          switchJustify: on ? 'flex-end' : 'flex-start',
+          toggle: () => this.toggleShopForList(s.settingsListIndex, sh.id),
+        };
+      }),
+      openAddShopFromListSettings: this.openAddShopFromListSettings,
+      newListOpen: !!s.newListOpen,
+      newListName: s.newListName,
+      closeNewList: this.closeNewList, setNewListName: this.setNewListName,
+      createNewList: this.createNewList, openAddShopFromNewList: this.openAddShopFromNewList,
+      newListShopChips: s.shops.map(sh => {
+        const on = s.newListShops.includes(sh.id);
+        return {
+          ...sh,
+          chipBg: on ? sh.color : 'transparent',
+          chipColor: on ? '#fff' : 'rgba(26,26,24,.7)',
+          chipBorder: on ? 'none' : '1px solid rgba(0,0,0,.14)',
+          chipWeight: on ? 600 : 400,
+          chipDot: on ? '#fff' : sh.color,
+          toggle: () => this.toggleNewListShop(sh.id),
+        };
+      }),
+      newListShopCount: s.newListShops.length,
+      newListReady: s.newListShops.length > 0,
+      newListHint: s.newListShops.length > 0
+        ? s.newListShops.length + ' tabs on this list'
+        : 'Pick at least one shop — each becomes a tab.',
+      newListBtnBg: s.newListShops.length > 0 ? '#1A1A18' : 'rgba(26,26,24,.25)',
       autoClearBg: s.autoClear ? '#1A1A18' : 'rgba(26,26,24,.14)',
       autoClearJustify: s.autoClear ? 'flex-end' : 'flex-start',
       toggleAutoClear: this.toggleAutoClear,
-      shopsOnList: s.shops.filter(sh => sh.selected).length + ' of ' + s.shops.length,
+      shopsOnList: this.shopsFor(s.settingsListIndex).length + ' of ' + s.shops.length,
       activeItemCount: s.items.length,
       deleteListAsk: !!s.deleteListAsk,
       askDeleteList: this.askDeleteList, cancelDeleteList: this.cancelDeleteList,
@@ -1225,12 +1445,12 @@ class Component extends DCLogic {
       exitSelect: this.exitSelect, deleteSelected: this.deleteSelected,
       openMoveSheet: this.openMoveSheet, closeMoveSheet: this.closeMoveSheet,
       moveSheetOpen: !!s.moveSheetOpen,
-      moveTargets: s.shops.filter(sh => sh.selected).map(sh => ({ ...sh, move: () => this.moveSelectedTo(sh.id) })),
+      moveTargets: onActiveList.map(sh => ({ ...sh, move: () => this.moveSelectedTo(sh.id) })),
       isNotifications: s.screen === 'notifications',
       isAppearance: s.screen === 'appearance',
       goProfile: this.goProfile, goNotifications: this.goNotifications, goAppearance: this.goAppearance,
       avatarHex: s.avatarHex,
-      householdSummary: s.lists.length + ' lists · ' + s.shops.filter(sh => sh.selected).length + ' shops',
+      householdSummary: s.lists.length + ' lists · ' + activeShopIds.length + ' shops',
       listCount: s.lists.length,
       shopCount: s.shops.length,
       appearanceMode: s.appearanceMode,
@@ -1281,7 +1501,12 @@ class Component extends DCLogic {
       nameListStepLabel: s.flowMode === 'newList' ? 'New list' : 'Step 2 of 3',
       nameListTitle: s.flowMode === 'newList' ? 'Name your new list' : 'Name your first list',
       joinCode: s.joinCode,
-      shops: s.shops.map(sh => ({ ...sh, notSelected: !sh.selected, toggle: () => this.toggleShop(sh.id) })),
+      shops: s.shops.map(sh => ({
+        ...sh,
+        selected: activeShopIds.includes(sh.id),
+        notSelected: !activeShopIds.includes(sh.id),
+        toggle: () => this.toggleShop(sh.id),
+      })),
       tabShops, filteredItems, navLists, allLists, colorSwatches,
       openItems, doneItems,
       hasDone: checkedInScope.length > 0,
@@ -1301,7 +1526,7 @@ class Component extends DCLogic {
       fabKeyDown: this.fabKeyDown, fabGlyphTap: this.fabGlyphTap,
       hasSuggestions: suggestions.length > 0,
       suggestions,
-      sheetShops: s.shops.filter(sh => sh.selected).map(sh => {
+      sheetShops: onActiveList.map(sh => {
         const on = (s.draftShop || this.defaultShopId()) === sh.id;
         return {
           ...sh, pick: () => this.pickDraftShop(sh.id),

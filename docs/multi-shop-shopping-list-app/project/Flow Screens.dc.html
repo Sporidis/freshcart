@@ -689,7 +689,7 @@ a:hover{color:#1A3E77}
 
       <div class="fs-item">
         <div class="fs-cap">Edit shop — live colour preview</div>
-        <div class="fs-sub">Picking a swatch retints the tab pill and every dot behind the sheet over 300&nbsp;ms. The best moment in the flow.</div>
+        <div class="fs-sub">Name and colour are global, so this sheet edits every list at once — hence "Used on 2 lists". Picking a swatch retints the tab pill and every dot behind the sheet over 300&nbsp;ms.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
@@ -1275,7 +1275,7 @@ a:hover{color:#1A3E77}
   <div class="fs-sec">
     <div class="fs-tag">Flow 10</div>
     <h2 class="fs-flowh">Drawer, settings &amp; preferences</h2>
-    <p class="fs-flowd">The drawer answers "which list?" and nothing else — switching is one tap from anywhere, and every management task is parked at its bottom edge. Settings stays one screen deep with four short groups; a household shopping app should never grow an admin console.</p>
+    <p class="fs-flowd">The drawer answers "which list?" and nothing else — switching is one tap from anywhere, and every management task is parked at its bottom edge. The split that makes settings work: <strong>global settings holds only what is genuinely global</strong> (you, appearance, notifications), while shops and household are properties of a list and live in list settings, scoped by a switcher at the top. A household shopping app should never grow an admin console.</p>
     <div class="fs-grp">
 
       <div class="fs-item">
@@ -1345,7 +1345,7 @@ a:hover{color:#1A3E77}
 
       <div class="fs-item">
         <div class="fs-cap">Settings</div>
-        <div class="fs-sub">Four groups, nothing nested more than one level. Every row either flips in place or opens exactly one screen.</div>
+        <div class="fs-sub">Only genuinely global things live here. Shops and household are properties of a <em>list</em>, so the Lists group hands off to list settings rather than pretending they're app-wide.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
@@ -1360,11 +1360,13 @@ a:hover{color:#1A3E77}
             <div style="font-size:13.5px;font-weight:600;color:#2456A6">Edit</div>
           </div>
 
-          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Lists &amp; shops</div>
-          <div style="padding:0 20px">
-            <div class="fs-row"><div class="fs-name">Manage lists</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-            <div class="fs-row"><div class="fs-name">Manage shops</div><div style="font-size:13.5px;color:rgba(26,26,24,.4);margin-right:8px">3</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-            <div class="fs-row"><div class="fs-name">Household</div><div style="display:flex;flex:none;margin-right:8px"><div style="width:22px;height:22px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #FAFAF8;box-sizing:border-box">S</div><div style="width:22px;height:22px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #FAFAF8;box-sizing:border-box;margin-left:-7px">M</div></div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Your lists</div>
+          <div style="padding:0 20px 2px;font-size:12.5px;color:rgba(26,26,24,.45);line-height:1.45">Shops and household belong to a list. Pick one to manage it.</div>
+          <div style="padding:8px 20px 0">
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Weekly Groceries</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Open now · 2 shops · 2 people</div></div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">BBQ Party</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">1 shop · 2 people</div></div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Camping Trip</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">2 shops · 1 person</div></div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#2456A6;font-weight:600">New list</div></div>
           </div>
 
           <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Preferences</div>
@@ -1378,9 +1380,8 @@ a:hover{color:#1A3E77}
           <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">About</div>
           <div style="padding:0 20px">
             <div class="fs-row"><div class="fs-name">Help &amp; feedback</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
-            <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#C0392B">Sign out</div></div>
+            <div class="fs-row" style="border-bottom:none"><div style="flex:1;font-size:16px;color:#C0392B">Sign out</div><div style="font-size:12px;color:rgba(26,26,24,.3)">Basket 1.0.0</div></div>
           </div>
-          <div style="text-align:center;font-size:12px;color:rgba(26,26,24,.3);padding:14px 0">Basket 1.0.0</div>
         </div></div>
       </div>
 
@@ -1482,17 +1483,34 @@ a:hover{color:#1A3E77}
 
       <div class="fs-item">
         <div class="fs-cap">List settings</div>
-        <div class="fs-sub">Reached from the list's own header, not from global settings — it belongs to the list. Destructive actions sit alone at the bottom with a rule above them.</div>
-        <div class="fs-scr"><div class="fs-body">
+        <div class="fs-sub">The single home for everything list-scoped, reached from the list header <em>or</em> from a list row in global settings. The <strong>Managing</strong> control at the top is what makes that work — it re-scopes the whole screen, so you never go back to switch lists. One scrolling screen — drawn full height here, so the frame is taller than the 844&nbsp;px device.</div>
+        <div class="fs-scr" style="height:1040px"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
             <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
           </div>
-          <div style="padding:20px 20px 0">
+          <div style="padding:16px 20px 0">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid rgba(0,0,0,.15);border-radius:12px;padding:12px 14px">
+              <div style="flex:1">
+                <div style="font:700 10px ui-monospace,monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.4)">Managing</div>
+                <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-top:3px">Weekly Groceries</div>
+              </div>
+              <svg width="11" height="7" viewBox="0 0 10 7" style="flex:none"><path d="M1 1l4 4 4-4" stroke="rgba(26,26,24,.5)" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+          </div>
+          <div style="padding:22px 20px 0">
             <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">List name</div>
             <div class="fs-input" style="color:#1A1A18">Weekly Groceries</div>
           </div>
-          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Members</div>
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Shops on this list</div>
+          <div style="padding:0 20px 2px;font-size:12.5px;color:rgba(26,26,24,.45);line-height:1.45">Each becomes a tab. Colours are shared across all your lists.</div>
+          <div style="padding:8px 20px 0">
+            <div class="fs-row"><span style="width:14px;height:14px;border-radius:50%;background:#2456A6;flex:none"></span><div class="fs-name">Albert Heijn</div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><span style="width:14px;height:14px;border-radius:50%;background:#E8791A;flex:none"></span><div class="fs-name">Colruyt</div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><span style="width:14px;height:14px;border-radius:50%;background:#C0392B;flex:none"></span><div class="fs-name">Delhaize</div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#2456A6;font-weight:600">Add a shop</div></div>
+          </div>
+          <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Household</div>
           <div style="padding:0 20px">
             <div class="fs-row"><div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">A</div><div class="fs-name">Alex Janssens</div><div style="font-size:11px;font-weight:700;color:rgba(26,26,24,.45);border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:3px 9px">You · Owner</div></div>
             <div class="fs-row"><div style="width:32px;height:32px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div><div class="fs-name">Sam De Vos</div><div style="font-size:19px;color:rgba(26,26,24,.35);letter-spacing:1px">···</div></div>
@@ -1501,13 +1519,446 @@ a:hover{color:#1A3E77}
           <div style="padding:22px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38)">Behaviour</div>
           <div style="padding:0 20px">
             <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Clear checked after shopping</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Asks once the list is complete</div></div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
-            <div class="fs-row" style="border-bottom:none"><div class="fs-name">Shops on this list</div><div style="font-size:13.5px;color:rgba(26,26,24,.4);margin-right:8px">3 of 4</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-row" style="border-bottom:none"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Rename shops &amp; colours</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Shared by every list</div></div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
           </div>
           <div style="margin:22px 20px 0;border-top:1px solid rgba(0,0,0,.1);padding-top:6px">
             <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#C0392B">Leave this list</div></div>
             <div class="fs-row" style="border-bottom:none"><div class="fs-name" style="color:#C0392B">Delete for everyone</div></div>
           </div>
+          <div style="height:30px"></div>
         </div></div>
+        <div class="fs-note">"Leave" and "Delete for everyone" are different actions with different blast radii — never collapse them into one row. Delete always confirms (Flow 04); leaving does not.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Managing — switcher open</div>
+        <div class="fs-sub">Expands in place, no sheet, no route change. Each row carries that list's own shop and member counts, which is what proves the scoping is real.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
+          </div>
+          <div style="padding:16px 20px 0">
+            <div style="display:flex;align-items:center;gap:10px;border:1.5px solid rgba(0,0,0,.15);border-radius:12px;padding:12px 14px;background:#F5F3ED">
+              <div style="flex:1">
+                <div style="font:700 10px ui-monospace,monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.4)">Managing</div>
+                <div style="font-size:17px;font-weight:700;color:#1A1A18;margin-top:3px">Weekly Groceries</div>
+              </div>
+              <svg width="11" height="7" viewBox="0 0 10 7" style="flex:none;transform:rotate(180deg)"><path d="M1 1l4 4 4-4" stroke="rgba(26,26,24,.5)" stroke-width="1.7" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </div>
+            <div style="border:1px solid rgba(0,0,0,.1);border-radius:12px;margin-top:6px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.09)">
+              <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;background:#F5F3ED;border-bottom:1px solid rgba(0,0,0,.06)">
+                <div style="flex:1"><div style="font-size:15.5px;font-weight:700;color:#1A1A18">Weekly Groceries</div><div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">Open now · 2 shops · 2 people</div></div>
+                <svg width="13" height="10" viewBox="0 0 12 10" style="flex:none"><path d="M1 5l3.5 3.5L11 1" stroke="#1A1A18" stroke-width="1.9" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;background:#fff;border-bottom:1px solid rgba(0,0,0,.06)">
+                <div style="flex:1"><div style="font-size:15.5px;color:#1A1A18">BBQ Party</div><div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">1 shop · 2 people</div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;padding:13px 14px;background:#fff">
+                <div style="flex:1"><div style="font-size:15.5px;color:#1A1A18">Camping Trip</div><div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">2 shops · 1 person</div></div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:22px 20px 0;opacity:.4">
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">List name</div>
+            <div class="fs-input" style="color:#1A1A18">Weekly Groceries</div>
+          </div>
+        </div></div>
+        <div class="fs-note"><strong>Data model:</strong> a shop's name and colour are global — one Colruyt, one orange, shared everywhere. Which shops are <em>on</em> a list is per-list. Two tables, not one.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="fs-sec">
+    <div class="fs-tag">Flow 11</div>
+    <h2 class="fs-flowh">Products, notes &amp; duplicates</h2>
+    <p class="fs-flowd">We designed the <em>creating</em> half of the product sheet but never the editing half, never how a note surfaces once it exists, and never the most common real-world collision: adding something that is already on the list. Three gaps, closed here.</p>
+    <div class="fs-grp">
+
+      <div class="fs-item">
+        <div class="fs-cap">Edit product</div>
+        <div class="fs-sub">The same sheet as New product, retitled, with a Remove action and provenance. One component, two entry points — never two sheets to keep in sync.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div style="display:flex;align-items:baseline;gap:9px;margin-bottom:16px">
+              <div class="fs-sh-t" style="margin:0;flex:1">Edit product</div>
+              <div style="font-size:12px;color:rgba(26,26,24,.42)">Added by Sam · 2 days ago</div>
+            </div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Name</div>
+            <div class="fs-input" style="color:#1A1A18">Olive oil</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 9px">Shop</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:18px;padding-top:16px;border-top:1px solid rgba(0,0,0,.08)">
+              <div style="font-size:15px;color:#1A1A18">Amount</div>
+              <div style="display:flex;align-items:center;gap:16px">
+                <div style="width:32px;height:32px;border-radius:50%;border:1px solid rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:17px;color:rgba(26,26,24,.55)">–</div>
+                <span style="font-size:16px;font-weight:600;width:14px;text-align:center;color:#1A1A18">2</span>
+                <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px">+</div>
+              </div>
+            </div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 7px">Note</div>
+            <div class="fs-input" style="color:#1A1A18">Extra virgin, the tall bottle</div>
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <div class="fs-btn fs-btn-o" style="flex:none;padding:15px 18px;color:#C0392B;border-color:rgba(192,57,43,.3)">Remove</div>
+              <div class="fs-btn" style="flex:1">Save</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="fs-note">Remove is an outlined button, not a text row — it sits beside Save because at this depth the user came here <em>to act</em>, and hiding deletion in a list row would cost a second tap for the commonest edit after quantity.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Notes in the list</div>
+        <div class="fs-sub">A note is only useful in the aisle, so it shows on the row itself — second line, muted, truncated to one line. No icon: the text <em>is</em> the affordance.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt · 4</div>
+          </div>
+          <div class="fs-list">
+            <div class="fs-row">
+              <div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:16px;color:#1A1A18">Olive oil</div>
+                <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Extra virgin, the tall bottle</div>
+              </div>
+              <div class="fs-qty">x2</div>
+            </div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row">
+              <div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span>
+              <div style="flex:1;min-width:0">
+                <div style="font-size:16px;color:#1A1A18">Bread</div>
+                <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Sourdough if they have it, otherwise the seeded one</div>
+              </div>
+              <div class="fs-qty">x1</div>
+            </div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Butter</div><div class="fs-qty">x1</div></div>
+          </div>
+          <div class="fs-fab" style="background:#E8791A">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+          </div>
+        </div></div>
+        <div class="fs-note">Rows with a note are 20&nbsp;px taller. Checked rows fade the note with the row — it never survives at full contrast under a struck-through name.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Already on the list</div>
+        <div class="fs-sub">The commonest collision in a shared list: two people add Milk. Rather than silently creating a duplicate or refusing, the capsule offers the thing they almost certainly meant.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
+            <div class="fs-pill" style="background:#2456A6;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Albert Heijn · 2</div>
+          </div>
+          <div class="fs-list">
+            <div class="fs-row" style="background:rgba(36,86,166,.07);border-radius:8px;margin:0 -6px;padding-left:10px;padding-right:10px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#2456A6"></span><div class="fs-name" style="font-weight:600">Milk</div><div class="fs-qty">x2</div></div>
+            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#2456A6"></span><div class="fs-name">Bananas</div><div class="fs-qty">x6</div></div>
+          </div>
+          <div style="position:absolute;left:20px;right:20px;bottom:364px;background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;box-shadow:0 8px 22px rgba(0,0,0,.10);padding:13px 15px;box-sizing:border-box">
+            <div style="font-size:14px;color:#1A1A18;line-height:1.4"><strong style="font-weight:600">Milk</strong> is already on Albert Heijn, x2.</div>
+            <div style="display:flex;gap:9px;margin-top:12px">
+              <div style="flex:1;text-align:center;padding:10px;border-radius:10px;background:#1A1A18;color:#fff;font-size:14px;font-weight:600">Make it x3</div>
+              <div style="flex:none;text-align:center;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,0,0,.14);color:#1A1A18;font-size:14px;font-weight:600">Add anyway</div>
+            </div>
+          </div>
+          <div style="position:absolute;left:20px;right:20px;bottom:300px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.10);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box">
+            <span style="width:9px;height:9px;border-radius:50%;background:#2456A6;flex:none;margin-right:11px"></span>
+            <div style="flex:1;font-size:15px;color:#1A1A18;display:flex;align-items:center">Milk<span style="width:1.5px;height:19px;background:#2456A6;margin-left:3px"></span></div>
+            <div style="width:40px;height:40px;border-radius:50%;background:#2456A6;display:flex;align-items:center;justify-content:center;flex:none">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+          <div style="position:absolute;left:0;right:0;bottom:0;height:290px;background:#D6D2CB;border-top:1px solid rgba(0,0,0,.1)"></div>
+        </div></div>
+        <div class="fs-note">Appears on exact name match within the target shop, case-insensitive, while typing — never as a blocking dialog after commit. Enter takes the primary option (bump), so the fast path stays keyboard-only. A match in a <em>different</em> shop is not a duplicate and says nothing.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="fs-sec">
+    <div class="fs-tag">Flow 12</div>
+    <h2 class="fs-flowh">Creating lists &amp; shops</h2>
+    <p class="fs-flowd">An existing user making their second list should not walk the onboarding wizard again — so creation is <strong>one sheet</strong>, name and shops together, because a list with no shops has no tabs and cannot be used. Shops can be picked, added or dropped right there, and a brand-new shop can be created without ever visiting Manage shops.</p>
+    <div class="fs-grp">
+
+      <div class="fs-item">
+        <div class="fs-cap">New list</div>
+        <div class="fs-sub">Pre-seeded with the shops from the list you were just on — the overwhelmingly likely answer. Chips toggle; the dashed one creates a shop inline.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div class="fs-sh-t" style="margin-bottom:16px">New list</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Name</div>
+            <div class="fs-input" style="border-color:#1A1A18;color:#1A1A18">BBQ Saturday<span style="display:inline-block;width:1.5px;height:18px;background:#1A1A18;vertical-align:-3px;margin-left:2px"></span></div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin:18px 0 9px">
+              <div style="flex:1;font-size:12.5px;color:rgba(26,26,24,.5)">Shops</div>
+              <div style="font-size:12px;color:rgba(26,26,24,.4)">2 tabs on this list</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;background:#2456A6;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Albert Heijn</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B"></span>Delhaize</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px dashed rgba(0,0,0,.25);color:#2456A6;font-weight:600">
+                <svg width="11" height="11" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#2456A6" stroke-width="2" stroke-linecap="round"></path></svg>New shop
+              </div>
+            </div>
+            <div class="fs-btn" style="margin-top:22px">Create list</div>
+          </div>
+        </div></div>
+        <div class="fs-note">Reached from the drawer, the lists overview and global settings — all three route to this one sheet. The onboarding wizard exists only for the very first list, where the steps are also teaching the model.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">New list — nothing picked</div>
+        <div class="fs-sub">Create is disabled rather than hidden, with the reason stated where the count would be. The only disabled button in the app.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div class="fs-sh-t" style="margin-bottom:16px">New list</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Name</div>
+            <div class="fs-input">e.g. BBQ Saturday</div>
+            <div style="display:flex;align-items:baseline;gap:8px;margin:18px 0 9px">
+              <div style="flex:1;font-size:12.5px;color:rgba(26,26,24,.5)">Shops</div>
+              <div style="font-size:12px;color:rgba(26,26,24,.4)">Pick at least one shop — each becomes a tab.</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#E8791A"></span>Colruyt</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B"></span>Delhaize</div>
+              <div style="display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;border:1px dashed rgba(0,0,0,.25);color:#2456A6;font-weight:600">
+                <svg width="11" height="11" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#2456A6" stroke-width="2" stroke-linecap="round"></path></svg>New shop
+              </div>
+            </div>
+            <div class="fs-btn" style="margin-top:22px;background:rgba(26,26,24,.25)">Create list</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">New shop — stacked over New list</div>
+        <div class="fs-sub">Created inline, so the sheet stacks rather than replaces: the half-typed list name is still there underneath, and the new shop comes back selected.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div style="position:absolute;left:8px;right:8px;bottom:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,.12);height:210px;z-index:7;opacity:.5"></div>
+          <div class="fs-sheet" style="z-index:8">
+            <div class="fs-grab"></div>
+            <div class="fs-sh-t">New shop</div>
+            <div class="fs-sh-b">It joins this list, and becomes available to your other lists too.</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin-bottom:7px">Shop name</div>
+            <div class="fs-input" style="border-color:#1A1A18;color:#1A1A18">Lidl</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.5);margin:16px 0 10px">Tab colour</div>
+            <div style="display:flex;gap:11px;flex-wrap:wrap;margin-bottom:4px">
+              <div style="width:34px;height:34px;border-radius:50%;background:#2456A6"></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#E8791A"></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#C0392B"></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#2E9E5B;border:2.5px solid #1A1A18;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:50%;background:#fff"></div></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#8E5CD9"></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#D9A62E"></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#1F9AA0"></div>
+              <div style="width:34px;height:34px;border-radius:50%;background:#CB5B9E"></div>
+            </div>
+            <div class="fs-btn" style="margin-top:18px">Create shop</div>
+          </div>
+        </div></div>
+        <div class="fs-note">Colours already taken by another shop are still offered but marked — two shops the same colour defeats the dots, though forbidding it outright would be worse when a household really does shop at two blue supermarkets.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">The + pill</div>
+        <div class="fs-sub">The fast path: a dashed <span style="font-family:ui-monospace,monospace">+</span> pill always sits at the end of the tab strip. It opens the same New shop sheet and drops you straight onto the new tab.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
+            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
+            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          </div>
+          <div class="fs-tabs">
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All · 4</div>
+            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn · 2</div>
+            <div class="fs-pill" style="background:#2E9E5B;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Lidl</div>
+            <div class="fs-pill" style="border:1px dashed rgba(0,0,0,.3);color:rgba(26,26,24,.45);padding:8px 13px">
+              <svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+          <div class="fs-empty">
+            <div style="width:48px;height:48px;border-radius:12px;border:1.5px solid rgba(46,158,91,.35);display:flex;align-items:center;justify-content:center;margin-bottom:5px">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M5 9h14l-1.6 10.4A2 2 0 0 1 15.4 21H8.6a2 2 0 0 1-2-1.6L5 9Z" stroke="rgba(46,158,91,.5)" stroke-width="1.5" stroke-linejoin="round"></path><path d="M8.5 9a3.5 3.5 0 0 1 7 0" stroke="rgba(46,158,91,.5)" stroke-width="1.5"></path></svg>
+            </div>
+            <div class="fs-emp-t">Nothing for Lidl</div>
+            <div class="fs-emp-b">Items you add here will show on this tab.</div>
+            <div style="margin-top:12px;padding:10px 18px;border-radius:100px;background:#2E9E5B;color:#fff;font-size:14px;font-weight:600">Add a product</div>
+          </div>
+          <div class="fs-fab" style="background:#2E9E5B">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+          </div>
+        </div></div>
+        <div class="fs-note">Landing on the new, empty tab is the point — creating a shop is nearly always followed by adding something to it, and the empty state already carries that action.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="fs-sec">
+    <div class="fs-tag">Flow 13</div>
+    <h2 class="fs-flowh">Permissions &amp; irreversible actions</h2>
+    <p class="fs-flowd">Four moments that had rows pointing at them but no design. The rule: anything with no undo earns a dialog that <em>names what will happen</em>, and the OS permission prompt is never the first thing a user sees.</p>
+    <div class="fs-grp">
+
+      <div class="fs-item">
+        <div class="fs-cap">Notification rationale</div>
+        <div class="fs-sub">Shown before the OS prompt, and only when the user switches the first push toggle on — so the one system dialog we get is asked at the moment they've said yes.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-title">Notifications</div>
+          </div>
+          <div style="padding:20px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38);opacity:.5">Push</div>
+          <div style="padding:0 20px;opacity:.5">
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Someone adds an item</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+            <div class="fs-row"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Someone joins a list</div></div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div class="fs-sh-t">Turn on notifications?</div>
+            <div class="fs-sh-b">We'll only ping you when someone in your household changes a list you're on — batched, so a big shop is one alert, not twenty. Nothing promotional, ever.</div>
+            <div class="fs-btn">Continue</div>
+            <div style="text-align:center;font-size:14.5px;font-weight:600;color:rgba(26,26,24,.45);padding:15px 0 0">Not now</div>
+          </div>
+        </div></div>
+        <div class="fs-note">If the OS permission was already denied, this sheet's button says <em>Open Settings</em> instead and deep-links — never leave a toggle that silently refuses to move.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Member menu</div>
+        <div class="fs-sub">What the <span style="font-family:ui-monospace,monospace">···</span> on a member row opens. Owner-only; other members see just "Message" — there is no role system to administer.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
+          </div>
+          <div style="padding:18px 20px 6px;font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38);opacity:.5">Household</div>
+          <div style="padding:0 20px;opacity:.5">
+            <div class="fs-row"><div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">A</div><div class="fs-name">Alex Janssens</div><div style="font-size:11px;font-weight:700;color:rgba(26,26,24,.45);border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:3px 9px">You · Owner</div></div>
+            <div class="fs-row"><div style="width:32px;height:32px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div><div class="fs-name">Sam De Vos</div><div style="font-size:19px;color:rgba(26,26,24,.35);letter-spacing:1px">···</div></div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div style="display:flex;align-items:center;gap:13px;padding-bottom:16px;border-bottom:1px solid rgba(0,0,0,.08)">
+              <div style="width:44px;height:44px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 16px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div>
+              <div style="flex:1">
+                <div style="font-size:17px;font-weight:700;color:#1A1A18">Sam De Vos</div>
+                <div style="font-size:13px;color:rgba(26,26,24,.45);margin-top:1px">On 2 of your lists · added 41 items</div>
+              </div>
+            </div>
+            <div style="padding:6px 0 0">
+              <div class="fs-row" style="padding:14px 0"><div class="fs-name">Make owner of this list</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+              <div class="fs-row" style="padding:14px 0;border-bottom:none"><div class="fs-name" style="color:#C0392B">Remove from this list</div></div>
+            </div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.42);line-height:1.45;padding-top:10px">Removing Sam keeps the items they added. They lose access immediately.</div>
+          </div>
+        </div></div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Leaving a list you own</div>
+        <div class="fs-sub">The case the original "Leave this list" row quietly ignored. An owner can't just vanish, so leaving is a hand-over — and the picker is the dialog, not a separate screen.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div style="flex:1;font-size:20px;font-weight:700;color:#1A1A18">List settings</div>
+          </div>
+          <div class="fs-scrim"></div>
+          <div class="fs-sheet">
+            <div class="fs-grab"></div>
+            <div class="fs-sh-t">Leave Weekly Groceries?</div>
+            <div class="fs-sh-b">You own this list, so someone else has to take it over. Pick who.</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <div style="display:flex;align-items:center;gap:12px;border:1.5px solid #1A1A18;border-radius:14px;padding:13px 14px">
+                <div style="width:34px;height:34px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 13px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div>
+                <div style="flex:1"><div style="font-size:15.5px;font-weight:600;color:#1A1A18">Sam De Vos</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:1px">Active 4 min ago</div></div>
+                <div style="width:20px;height:20px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;flex:none"><div style="width:7px;height:7px;border-radius:50%;background:#fff"></div></div>
+              </div>
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid rgba(0,0,0,.12);border-radius:14px;padding:13px 14px">
+                <div style="width:34px;height:34px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 13px system-ui;display:flex;align-items:center;justify-content:center;flex:none">M</div>
+                <div style="flex:1"><div style="font-size:15.5px;font-weight:600;color:#1A1A18">Mira Peeters</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:1px">Active yesterday</div></div>
+                <div style="width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(0,0,0,.2);box-sizing:border-box;flex:none"></div>
+              </div>
+            </div>
+            <div class="fs-btn" style="margin-top:18px">Hand over &amp; leave</div>
+            <div style="text-align:center;font-size:14.5px;font-weight:600;color:rgba(26,26,24,.45);padding:15px 0 0">Cancel</div>
+          </div>
+        </div></div>
+        <div class="fs-note">Sole member? The row reads <em>Delete this list</em> instead and routes to the Flow 04 confirm — leaving a list nobody else is on is deletion, and pretending otherwise strands data.</div>
+      </div>
+
+      <div class="fs-item">
+        <div class="fs-cap">Sign out &amp; new invite code</div>
+        <div class="fs-sub">Two small confirms that were missing. Both name the consequence rather than asking "are you sure" — the question nobody can answer.</div>
+        <div class="fs-scr"><div class="fs-body">
+          <div class="fs-hdr">
+            <div style="width:9px;height:16px;flex:none"><svg width="9" height="16" viewBox="0 0 9 16"><path d="M8 1L1 8l7 7" stroke="#1A1A18" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="fs-title">Settings</div>
+          </div>
+          <div style="padding:20px 20px 0">
+            <div style="border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px;background:#fff">
+              <div style="font-size:16px;font-weight:700;color:#1A1A18;margin-bottom:6px">Sign out of Basket?</div>
+              <div style="font-size:13.5px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:16px">Your lists stay shared with your household. You'll need an invite link to get back in on this device.</div>
+              <div style="display:flex;gap:9px">
+                <div style="flex:1;text-align:center;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);font-size:15px;font-weight:600;color:#1A1A18">Cancel</div>
+                <div style="flex:1;text-align:center;padding:12px;border-radius:12px;background:#C0392B;color:#fff;font-size:15px;font-weight:600">Sign out</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:22px 20px 0">
+            <div style="border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px;background:#fff">
+              <div style="font-size:16px;font-weight:700;color:#1A1A18;margin-bottom:6px">Generate a new code?</div>
+              <div style="font-size:13.5px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:16px">The old link stops working straight away. Anyone you already sent it to and who hasn't joined yet will need the new one.</div>
+              <div style="display:flex;gap:9px">
+                <div style="flex:1;text-align:center;padding:12px;border-radius:12px;border:1px solid rgba(0,0,0,.15);font-size:15px;font-weight:600;color:#1A1A18">Keep current</div>
+                <div style="flex:1;text-align:center;padding:12px;border-radius:12px;background:#1A1A18;color:#fff;font-size:15px;font-weight:600">Generate</div>
+              </div>
+            </div>
+          </div>
+          <div style="padding:22px 20px 0;font:400 12.5px/1.5 system-ui,sans-serif;color:rgba(26,26,24,.4)">Both drawn together for comparison — they are separate dialogs, each shown over the screen that triggered it.</div>
+        </div></div>
+        <div class="fs-note">Sign out is red because the device loses access; generating a code is ink because nothing is destroyed, only rotated. That colour distinction is the whole reason to draw them side by side.</div>
       </div>
 
     </div>

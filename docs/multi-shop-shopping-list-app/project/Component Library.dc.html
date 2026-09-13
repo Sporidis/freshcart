@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+<meta name="design_doc_mode" content="canvas" />
+<style>
+body{margin:0;background:#E9E7E1;font-family:-apple-system,'Helvetica Neue',Helvetica,Arial,sans-serif}
+a{color:#2456A6;text-decoration:none}
+a:hover{color:#1A3E77}
+.cl-sec{padding:40px 52px;border-top:1px solid rgba(0,0,0,.11)}
+.cl-tag{font:600 9.5px/1 ui-monospace,monospace;letter-spacing:1.2px;text-transform:uppercase;color:#A8622E;margin-bottom:8px}
+.cl-h{font:700 26px/1.1 system-ui,sans-serif;color:#1A1A18;letter-spacing:-.5px;margin:0 0 4px}
+.cl-d{font:400 13.5px/1.5 system-ui,sans-serif;color:rgba(26,26,24,.55);max-width:660px;margin:0 0 22px;text-wrap:pretty}
+.cl-w{font:700 15px/1.2 ui-monospace,monospace;color:#1A1A18;margin:0 0 3px}
+.cl-ws{font:400 12.5px/1.45 system-ui,sans-serif;color:rgba(26,26,24,.5);margin:0 0 14px;max-width:430px;text-wrap:pretty}
+.cl-grid{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start}
+.cl-card{background:#FAFAF8;border:1px solid rgba(0,0,0,.1);border-radius:12px;padding:14px;box-sizing:border-box}
+.cl-st{font:600 9.5px/1 ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.42);margin-bottom:10px}
+.cl-note{font:400 11.5px/1.45 system-ui,sans-serif;color:rgba(26,26,24,.45);margin-top:9px;max-width:340px;text-wrap:pretty}
+.cl-block{margin-bottom:34px}
+.cl-row{display:flex;align-items:center;gap:12px;padding:13px 4px}
+.cl-name{flex:1;font-size:16px;color:#1A1A18}
+.cl-qty{font-size:13px;color:rgba(26,26,24,.4)}
+.cl-dot{width:7px;height:7px;border-radius:50%;flex:none}
+.cl-check{width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;box-sizing:border-box}
+.cl-pill{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:100px;font-size:14px;box-sizing:border-box;flex:none}
+.cl-input{border:1.5px solid rgba(0,0,0,.15);border-radius:12px;padding:14px;font-size:16px;color:#1A1A18;box-sizing:border-box;width:100%;background:transparent}
+.cl-btn{text-align:center;padding:15px;border-radius:14px;font-size:16px;font-weight:600;box-sizing:border-box}
+.cl-th{font:600 9.5px/1 ui-monospace,monospace;letter-spacing:.9px;text-transform:uppercase;color:rgba(26,26,24,.45);text-align:left;padding:0 12px 8px 0;border-bottom:1px solid rgba(0,0,0,.16)}
+.cl-td{font:400 12.5px/1.45 system-ui,sans-serif;color:#3A3A36;padding:9px 12px 9px 0;border-bottom:1px solid rgba(0,0,0,.07);vertical-align:top}
+.cl-tbl{border-collapse:collapse;width:100%;max-width:900px;margin:2px 0 0}
+.cl-kbd{font:500 11.5px ui-monospace,monospace;color:#A8622E}
+</style>
+</helmet>
+
+<div style="padding:0 0 60px">
+
+  <div style="padding:52px 52px 34px">
+    <div class="cl-tag">Basket · Component library</div>
+    <h1 style="font:700 42px/1.05 system-ui,sans-serif;letter-spacing:-1.2px;margin:0 0 10px;color:#1A1A18">Widgets &amp; states</h1>
+    <p style="font:400 15px/1.55 system-ui,sans-serif;color:#57564F;max-width:660px;margin:0 0 16px;text-wrap:pretty">Fifty-eight frames is a lot of screens for what is, underneath, about fourteen widgets. This file inverts the board: instead of screens in flow order, every recurring piece is shown once with all the states it can be in — the unit a Flutter implementation actually builds.</p>
+    <div style="background:#FAFAF8;border:1px solid rgba(0,0,0,.11);border-radius:12px;padding:16px 18px;max-width:660px">
+      <div class="cl-st" style="margin-bottom:8px">What earns its own widget</div>
+      <p style="font:400 13px/1.55 system-ui,sans-serif;color:#3A3A36;margin:0;text-wrap:pretty">It appears on three or more screens, <em>or</em> it has more than two states worth naming. Everything else is markup inside a screen. A "Shops on this list" row is not a widget — it is a <span class="cl-kbd">SettingsRow</span> with a switch. Resist inventing a widget per section; the list below is deliberately short.</p>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">01</div>
+    <h2 class="cl-h">ProductRow</h2>
+    <p class="cl-d">The most-seen widget in the app and the one with the most states. Built as <span class="cl-kbd">InkWell</span> + <span class="cl-kbd">Row</span>, never <span class="cl-kbd">ListTile</span> — the circle, dot and quantity don't fit its slots. Seven states, and they compose: a checked row can also be swiping.</p>
+
+    <div class="cl-grid">
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Default</div>
+        <div class="cl-row"><div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="cl-dot" style="background:#E8791A"></span><div class="cl-name">Pasta</div><div class="cl-qty">x2</div></div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Checked</div>
+        <div class="cl-row" style="opacity:.45"><div class="cl-check" style="background:#1A1A18"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><span class="cl-dot" style="background:#E8791A"></span><div class="cl-name" style="text-decoration:line-through">Butter</div><div class="cl-qty">x1</div></div>
+        <div class="cl-note">Whole row drops to 45% — one property to animate, and the dot desaturates with it.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">With note</div>
+        <div class="cl-row">
+          <div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="cl-dot" style="background:#E8791A"></span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:16px;color:#1A1A18">Olive oil</div>
+            <div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Extra virgin, the tall bottle</div>
+          </div>
+          <div class="cl-qty">x2</div>
+        </div>
+        <div class="cl-note">+20 px height. One line, truncated.</div>
+      </div>
+      <div class="cl-card" style="width:300px;padding-left:0;padding-right:0">
+        <div class="cl-st" style="padding:0 14px">Swiping past threshold</div>
+        <div class="cl-row" style="padding-left:14px;padding-right:14px;border-bottom:1px solid rgba(0,0,0,.07)"><div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="cl-dot" style="background:#E8791A"></span><div class="cl-name">Bananas</div><div class="cl-qty">x6</div></div>
+        <div style="position:relative;overflow:hidden;height:48px">
+          <div class="cl-row" style="position:absolute;left:-10px;right:0;top:0;background:#FAFAF8;padding-left:14px;padding-right:14px"><div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="cl-dot" style="background:#E8791A"></span><div class="cl-name">Pasta</div></div>
+          <div style="position:absolute;right:0;top:0;bottom:0;width:104px;background:#C0392B;display:flex;align-items:center;justify-content:flex-end;padding-right:18px;box-sizing:border-box">
+            <svg width="21" height="21" viewBox="0 0 24 24" fill="none" style="transform:scale(1.15)"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </div>
+        </div>
+        <div class="cl-note" style="padding:0 14px">Drawn with the row held in place so it stays identifiable; in the app the <em>row</em> slides left and the panel is what stays put. Threshold is 40% of the row width (≈156&nbsp;px at 390), where the icon pops to 1.15 and <span class="cl-kbd">mediumImpact()</span> fires — before commit.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Selected (multi-select)</div>
+        <div class="cl-row" style="background:#F1F0EB;border-radius:8px;padding-left:10px;padding-right:10px">
+          <svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+          <div class="cl-check" style="background:#1A1A18"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          <span class="cl-dot" style="background:#E8791A"></span><div class="cl-name">Pasta</div>
+        </div>
+        <div class="cl-note">Gains a drag handle, loses the quantity. The circle now means <em>selected</em>, not <em>bought</em>.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Lifted (reordering)</div>
+        <div class="cl-row" style="background:#fff;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.16);transform:scale(1.03);padding:14px 12px;opacity:.95">
+          <svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg>
+          <span class="cl-dot" style="background:#E8791A"></span><div class="cl-name" style="font-weight:600">Butter</div><div class="cl-qty">x1</div>
+        </div>
+        <div class="cl-note">Elevation 8, scale 1.03, 95% opacity.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Remote edit · offline pending</div>
+        <div class="cl-row" style="border-left:1.5px solid #2E9E5B;padding-left:10px;background:rgba(46,158,91,.05)">
+          <div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="cl-dot" style="background:#E8791A"></span>
+          <div class="cl-name">Olive oil</div>
+          <div style="display:flex;align-items:center;gap:5px;background:rgba(46,158,91,.12);border-radius:100px;padding:3px 8px 3px 3px">
+            <div style="width:17px;height:17px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center">S</div>
+            <span style="font-size:11.5px;font-weight:600;color:#2E9E5B">Sam</span>
+          </div>
+        </div>
+        <div class="cl-row" style="border-left:1.5px dashed rgba(26,26,24,.35);padding-left:10px"><div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="cl-dot" style="background:#2456A6"></span><div class="cl-name">Yoghurt</div><div class="cl-qty">x4</div></div>
+        <div class="cl-note">Solid coloured edge + chip for 3 s = someone else. Dashed edge = written offline, not yet confirmed.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Skeleton</div>
+        <div class="cl-row"><div style="width:22px;height:22px;border-radius:50%;background:rgba(26,26,24,.07);flex:none"></div><span class="cl-dot" style="background:rgba(26,26,24,.07)"></span><div style="height:13px;border-radius:4px;background:rgba(26,26,24,.07);width:58%"></div></div>
+        <div class="cl-row"><div style="width:22px;height:22px;border-radius:50%;background:rgba(26,26,24,.07);flex:none"></div><span class="cl-dot" style="background:rgba(26,26,24,.07)"></span><div style="height:13px;border-radius:4px;background:rgba(26,26,24,.07);width:42%"></div></div>
+        <div class="cl-note">Same geometry as the real row. Only after 300 ms.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">02</div>
+    <h2 class="cl-h">ShopTabPill &amp; CheckCircle</h2>
+    <p class="cl-d">Two small widgets that carry the app's whole colour logic: the shop's colour fills the pill when it is the active tab, and tints the check circle for rows inside that tab. Everything else stays ink.</p>
+
+    <div class="cl-block">
+      <div class="cl-w">ShopTabPill</div>
+      <p class="cl-ws">Inside a <span class="cl-kbd">TabBar</span> with a blank indicator — each tab draws its own pill. The trailing + is a sibling, never a tab.</p>
+      <div class="cl-grid">
+        <div class="cl-card">
+          <div class="cl-st">All · active / inactive</div>
+          <div style="display:flex;gap:8px">
+            <div class="cl-pill" style="background:#1A1A18;color:#fff;font-weight:600">All · 3</div>
+            <div class="cl-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All · 3</div>
+          </div>
+          <div class="cl-note">The All tab is always ink — it has no shop.</div>
+        </div>
+        <div class="cl-card">
+          <div class="cl-st">Shop · active / inactive</div>
+          <div style="display:flex;gap:8px">
+            <div class="cl-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt · 4</div>
+            <div class="cl-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#E8791A"></span>Colruyt · 4</div>
+          </div>
+          <div class="cl-note">Active: dot turns white, weight 600. Inactive: dot keeps the shop colour.</div>
+        </div>
+        <div class="cl-card">
+          <div class="cl-st">No count / skeleton / add</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div class="cl-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn</div>
+            <div class="cl-pill" style="background:rgba(26,26,24,.06);width:86px;height:34px"></div>
+            <div class="cl-pill" style="border:1px dashed rgba(0,0,0,.3);padding:8px 13px"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg></div>
+          </div>
+          <div class="cl-note">Count disappears at zero rather than showing "· 0". The + is permanent furniture on every list.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cl-block" style="margin-bottom:0">
+      <div class="cl-w">CheckCircle</div>
+      <p class="cl-ws">22 px, always circular. Its fill colour is the one place the shop accent reaches the list body.</p>
+      <div class="cl-grid">
+        <div class="cl-card">
+          <div class="cl-st">Unchecked / checked (neutral)</div>
+          <div style="display:flex;gap:14px;align-items:center;padding:4px 0">
+            <div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div>
+            <div class="cl-check" style="background:#1A1A18"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          </div>
+        </div>
+        <div class="cl-card">
+          <div class="cl-st">Checked inside a shop tab</div>
+          <div style="display:flex;gap:14px;align-items:center;padding:4px 0">
+            <div class="cl-check" style="background:#E8791A"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="cl-check" style="background:#2456A6"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+            <div class="cl-check" style="background:#2E9E5B"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          </div>
+          <div class="cl-note">From <span class="cl-kbd">colorScheme.primary</span> — free when the tab's subtree is wrapped in <span class="cl-kbd">AppTheme.forShop</span>. On the All tab it is ink.</div>
+        </div>
+        <div class="cl-card">
+          <div class="cl-st">Fill animation</div>
+          <div style="display:flex;gap:12px;align-items:center;padding:4px 0">
+            <div class="cl-check" style="border:1.5px solid rgba(0,0,0,.2)"></div>
+            <div class="cl-check" style="background:#1A1A18;transform:scale(.45)"></div>
+            <div class="cl-check" style="background:#1A1A18;transform:scale(1.12)"></div>
+            <div class="cl-check" style="background:#1A1A18"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+          </div>
+          <div class="cl-note">340 ms <span class="cl-kbd">easeOutBack</span> — overshoots because the user did it. The tick fades in 80 ms behind the fill.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">03</div>
+    <h2 class="cl-h">AddControl</h2>
+    <p class="cl-d">One <span class="cl-kbd">AnimatedContainer</span> in the FAB slot, not a <span class="cl-kbd">FloatingActionButton</span> — it has to hold a <span class="cl-kbd">TextField</span>. Radius stays 28 through every state; only width, surface and the glyph change.</p>
+    <div class="cl-grid">
+      <div class="cl-card" style="width:250px">
+        <div class="cl-st">Resting</div>
+        <div style="display:flex;justify-content:flex-end;padding:6px 0">
+          <div style="width:56px;height:56px;border-radius:28px;background:#E8791A;box-shadow:0 8px 22px rgba(232,121,26,.35);display:flex;align-items:center;justify-content:center">
+            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+          </div>
+        </div>
+        <div class="cl-note">Shop-tinted, elevation 6. The only elevated state.</div>
+      </div>
+      <div class="cl-card" style="width:250px">
+        <div class="cl-st">Rolling · 50%</div>
+        <div style="display:flex;justify-content:flex-end;padding:6px 0">
+          <div style="width:150px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 6px 18px rgba(0,0,0,.08);display:flex;align-items:center;padding:0 8px 0 16px;box-sizing:border-box;overflow:hidden">
+            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.18)">Add to…</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:#E8791A;display:flex;align-items:center;justify-content:center;flex:none;transform:rotate(22deg)">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div class="cl-note">260 ms width <span class="cl-kbd">easeOutQuint</span>, glyph <span class="cl-kbd">easeOutBack</span>.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Open · empty → glyph is ×</div>
+        <div style="padding:6px 0">
+          <div style="height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 6px 18px rgba(0,0,0,.08);display:flex;align-items:center;padding:0 8px 0 16px;box-sizing:border-box">
+            <span style="width:9px;height:9px;border-radius:50%;background:#E8791A;flex:none;margin-right:10px"></span>
+            <div style="flex:1;font-size:15px;color:rgba(26,26,24,.3);display:flex;align-items:center"><span style="width:1.5px;height:19px;background:#E8791A;margin-right:5px"></span>Add to Colruyt</div>
+            <div style="width:40px;height:40px;border-radius:50%;background:rgba(26,26,24,.08);display:flex;align-items:center;justify-content:center;flex:none;transform:rotate(45deg)">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="rgba(26,26,24,.55)" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div class="cl-note">Grey, because there is nothing to commit — tapping it closes.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Open · has text → glyph is +</div>
+        <div style="padding:6px 0">
+          <div style="height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 6px 18px rgba(0,0,0,.08);display:flex;align-items:center;padding:0 8px 0 16px;box-sizing:border-box">
+            <span style="width:9px;height:9px;border-radius:50%;background:#E8791A;flex:none;margin-right:10px"></span>
+            <div style="flex:1;font-size:15px;color:#1A1A18;display:flex;align-items:center">Olive oil<span style="width:1.5px;height:19px;background:#E8791A;margin-left:3px"></span></div>
+            <div style="width:40px;height:40px;border-radius:50%;background:#E8791A;display:flex;align-items:center;justify-content:center;flex:none">
+              <svg width="17" height="17" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            </div>
+          </div>
+        </div>
+        <div class="cl-note"><strong>Enter</strong> commits and stays open. <strong>Tapping +</strong> opens the detail sheet. The glyph always states what the tap will do.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Suggestion chips (above)</div>
+        <div style="display:flex;gap:7px;padding:6px 0">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:7px 13px;font-size:13.5px;color:#1A1A18;box-shadow:0 3px 10px rgba(0,0,0,.05)">Olive oil</div>
+          <div style="background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:7px 13px;font-size:13.5px;color:#1A1A18;box-shadow:0 3px 10px rgba(0,0,0,.05)">Olives</div>
+        </div>
+        <div class="cl-note">After 2 characters, from this household's history only. Max 3.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Duplicate warning (above)</div>
+        <div style="padding:6px 0">
+          <div style="background:#fff;border:1px solid rgba(0,0,0,.12);border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08);padding:13px 15px">
+            <div style="font-size:14px;color:#1A1A18;line-height:1.4"><strong style="font-weight:600">Milk</strong> is already on Albert Heijn, x2.</div>
+            <div style="display:flex;gap:9px;margin-top:12px">
+              <div style="flex:1;text-align:center;padding:10px;border-radius:10px;background:#1A1A18;color:#fff;font-size:14px;font-weight:600">Make it x3</div>
+              <div style="flex:none;padding:10px 14px;border-radius:10px;border:1px solid rgba(0,0,0,.14);color:#1A1A18;font-size:14px;font-weight:600">Add anyway</div>
+            </div>
+          </div>
+        </div>
+        <div class="cl-note">Exact name match in the target shop, while typing. Enter takes the primary option.</div>
+      </div>
+      <div class="cl-card" style="width:250px">
+        <div class="cl-st">Absent</div>
+        <div style="display:flex;justify-content:flex-end;padding:6px 0">
+          <div style="width:56px;height:56px;border-radius:28px;border:1px dashed rgba(26,26,24,.2);display:flex;align-items:center;justify-content:center;font:11px ui-monospace,monospace;color:rgba(26,26,24,.35)">none</div>
+        </div>
+        <div class="cl-note">Scales to 0 in multi-select and when the list-complete card shows. Never just faded.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">04</div>
+    <h2 class="cl-h">Buttons &amp; inputs</h2>
+    <p class="cl-d">Four button roles and one field. All of them come from the theme, so a screen never styles a button — it picks the role.</p>
+
+    <div class="cl-block">
+      <div class="cl-w">Buttons</div>
+      <p class="cl-ws">Primary is ink-on-paper in every theme, including inside a shop tab — only accents follow the shop.</p>
+      <div class="cl-grid">
+        <div class="cl-card" style="width:230px"><div class="cl-st">Primary</div><div class="cl-btn" style="background:#1A1A18;color:#fff">Continue</div><div class="cl-note"><span class="cl-kbd">ElevatedButton</span> · 52 px, full width</div></div>
+        <div class="cl-card" style="width:230px"><div class="cl-st">Primary · pressed</div><div class="cl-btn" style="background:#1A1A18;color:#fff;transform:scale(.985);opacity:.9">Continue</div><div class="cl-note">120 ms, scale .985</div></div>
+        <div class="cl-card" style="width:230px"><div class="cl-st">Primary · disabled</div><div class="cl-btn" style="background:rgba(26,26,24,.25);color:#fff">Create list</div><div class="cl-note">Only used on New list, with the reason stated nearby.</div></div>
+        <div class="cl-card" style="width:230px"><div class="cl-st">Secondary</div><div class="cl-btn" style="border:1px solid rgba(0,0,0,.15);color:#1A1A18">Keep list</div><div class="cl-note"><span class="cl-kbd">OutlinedButton</span></div></div>
+        <div class="cl-card" style="width:230px"><div class="cl-st">Destructive</div><div class="cl-btn" style="background:#C0392B;color:#fff">Delete for everyone</div><div class="cl-note">Filled red only inside a confirm.</div></div>
+        <div class="cl-card" style="width:230px"><div class="cl-st">Text · neutral / destructive</div><div style="text-align:center;font-size:14.5px;font-weight:600;color:rgba(26,26,24,.45);padding:10px">Skip for now</div><div style="text-align:center;font-size:14.5px;font-weight:600;color:#C0392B;padding:2px 10px 10px">Sign out</div><div class="cl-note"><span class="cl-kbd">TextButton</span> · min 44 px target</div></div>
+      </div>
+    </div>
+
+    <div class="cl-block" style="margin-bottom:0">
+      <div class="cl-w">TextField</div>
+      <p class="cl-ws">The label is always a plain <span class="cl-kbd">Text</span> above the box — never <span class="cl-kbd">labelText</span>, never a floating label.</p>
+      <div class="cl-grid">
+        <div class="cl-card" style="width:250px"><div class="cl-st">Empty</div><div class="cl-input" style="color:rgba(26,26,24,.35)">e.g. Lidl</div></div>
+        <div class="cl-card" style="width:250px"><div class="cl-st">Focused / filled</div><div class="cl-input" style="border-color:#1A1A18">Colruyt<span style="display:inline-block;width:1.5px;height:18px;background:#1A1A18;vertical-align:-3px;margin-left:2px"></span></div></div>
+        <div class="cl-card" style="width:250px"><div class="cl-st">Error</div><div class="cl-input" style="border-color:#C0392B;color:rgba(26,26,24,.35)">Your name</div><div style="color:#C0392B;font-size:13px;font-weight:600;margin-top:8px">Please enter your name to continue.</div><div class="cl-note">Only on submit, never while typing. Shake ±6 px.</div></div>
+        <div class="cl-card" style="width:250px"><div class="cl-st">Prefilled &amp; selected</div><div class="cl-input" style="border-color:#1A1A18;background:rgba(36,86,166,.09)">Weekly Groceries</div><div class="cl-note">Onboarding step 2 — Continue is a valid single tap.</div></div>
+        <div class="cl-card" style="width:290px"><div class="cl-st">Segmented code</div>
+          <div style="display:flex;gap:8px">
+            <div style="flex:1;aspect-ratio:1;border:1.5px solid rgba(0,0,0,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 20px ui-monospace,monospace">8</div>
+            <div style="flex:1;aspect-ratio:1;border:1.5px solid rgba(0,0,0,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 20px ui-monospace,monospace">F</div>
+            <div style="flex:1;aspect-ratio:1;border:1.5px solid rgba(0,0,0,.15);border-radius:12px;display:flex;align-items:center;justify-content:center;font:700 20px ui-monospace,monospace">3</div>
+            <div style="flex:1;aspect-ratio:1;border:1.5px solid #1A1A18;border-radius:12px;display:flex;align-items:center;justify-content:center"><span style="width:2px;height:20px;background:#1A1A18"></span></div>
+            <div style="flex:1;aspect-ratio:1;border:1.5px solid rgba(0,0,0,.15);border-radius:12px"></div>
+          </div>
+          <div class="cl-note">Invite codes only. Auto-advances; paste fills all five.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">05</div>
+    <h2 class="cl-h">Chips, swatches &amp; avatars</h2>
+    <p class="cl-d">The three selection primitives. A shop is picked as a chip, coloured from a swatch, and a person is always an avatar — never a name alone.</p>
+
+    <div class="cl-grid">
+      <div class="cl-card" style="width:320px">
+        <div class="cl-st">ShopChip — selected / unselected / new</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div class="cl-pill" style="background:#2456A6;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Albert Heijn</div>
+          <div class="cl-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#C0392B"></span>Delhaize</div>
+          <div class="cl-pill" style="border:1px dashed rgba(0,0,0,.25);color:#2456A6;font-weight:600"><svg width="11" height="11" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="#2456A6" stroke-width="2" stroke-linecap="round"></path></svg>New shop</div>
+        </div>
+        <div class="cl-note">Used in New list and the product detail sheet. Same shape as ShopTabPill but it selects rather than navigates — do not share the widget.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">ShopToggleRow</div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><span style="width:14px;height:14px;border-radius:50%;background:#2456A6;flex:none"></span><div class="cl-name">Albert Heijn</div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+        <div class="cl-row"><span style="width:14px;height:14px;border-radius:50%;background:#C0392B;flex:none"></span><div class="cl-name">Delhaize</div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+        <div class="cl-note">List settings. Also the onboarding picker, where the switch is a check circle instead.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">ColorSwatch</div>
+        <div style="display:flex;gap:11px;flex-wrap:wrap">
+          <div style="width:34px;height:34px;border-radius:50%;background:#2456A6"></div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#E8791A;border:2.5px solid #1A1A18;box-sizing:border-box;display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:50%;background:#fff"></div></div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#C0392B;opacity:.4"></div>
+          <div style="width:34px;height:34px;border-radius:50%;background:#2E9E5B"></div>
+        </div>
+        <div class="cl-note">Selected gains a 2.5 px ink ring and a white core. Dimmed = already used by another shop — still selectable.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">Avatar — 30 / 32 / 52 / invite</div>
+        <div style="display:flex;gap:12px;align-items:center">
+          <div style="width:30px;height:30px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center">S</div>
+          <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font:700 13px system-ui;display:flex;align-items:center;justify-content:center">A</div>
+          <div style="width:52px;height:52px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 19px system-ui;display:flex;align-items:center;justify-content:center">M</div>
+          <div style="width:32px;height:32px;border-radius:50%;border:1.5px dashed rgba(26,26,24,.25);box-sizing:border-box;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.4)" stroke-width="1.8" stroke-linecap="round"></path></svg></div>
+        </div>
+        <div class="cl-note">Colour is <span class="cl-kbd">avatarColorFor(userId)</span> — hashed, so the same person is the same colour on every device.</div>
+      </div>
+      <div class="cl-card" style="width:300px">
+        <div class="cl-st">AvatarStack — presence</div>
+        <div style="display:flex">
+          <div style="width:30px;height:30px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;border:2px solid #FAFAF8;box-sizing:border-box">S</div>
+          <div style="width:30px;height:30px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;border:2px solid #FAFAF8;box-sizing:border-box;margin-left:-9px;opacity:.4">M</div>
+          <div style="width:30px;height:30px;border-radius:50%;background:#1A1A18;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;border:2px solid #FAFAF8;box-sizing:border-box;margin-left:-9px">A</div>
+        </div>
+        <div class="cl-note">−9 px overlap, 2 px background-coloured ring. 40% opacity = not currently in the app. Replaces the single avatar in the header when others are live.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">06</div>
+    <h2 class="cl-h">Rows in lists</h2>
+    <p class="cl-d">Three row widgets that look related but behave differently. Keeping them separate is what stops settings, the drawer and the household screen drifting apart.</p>
+
+    <div class="cl-grid">
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">SettingsRow — five shapes</div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><div class="cl-name">Manage shops</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><div class="cl-name">Appearance</div><div style="font-size:13.5px;color:rgba(26,26,24,.4);margin-right:8px">System</div><svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Keep checked items</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Show them under Done</div></div><div style="width:44px;height:26px;border-radius:13px;background:#1A1A18;padding:3px;box-sizing:border-box;display:flex;justify-content:flex-end;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><div class="cl-name">Haptics</div><div style="width:44px;height:26px;border-radius:13px;background:rgba(26,26,24,.14);padding:3px;box-sizing:border-box;display:flex;flex:none"><div style="width:20px;height:20px;border-radius:50%;background:#fff"></div></div></div>
+        <div class="cl-row"><div class="cl-name" style="color:#C0392B">Sign out</div></div>
+        <div class="cl-note">Chevron · value + chevron · subtitle + switch · switch · destructive. Nothing else — a sixth shape means the section is wrong.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">DrawerListRow — active / inactive</div>
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px;background:#F1F0EB">
+          <div style="flex:1"><div style="font-size:15px;font-weight:700;color:#1A1A18">Weekly Groceries</div><div style="font-size:12px;color:rgba(26,26,24,.45);margin-top:2px">6 left</div></div>
+          <div style="display:flex;flex:none">
+            <div style="width:22px;height:22px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #F1F0EB;box-sizing:border-box">S</div>
+            <div style="width:22px;height:22px;border-radius:50%;background:#8E5CD9;color:#fff;font:700 9px system-ui;display:flex;align-items:center;justify-content:center;border:1.5px solid #F1F0EB;box-sizing:border-box;margin-left:-7px">M</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:12px">
+          <div style="flex:1"><div style="font-size:15px;color:rgba(26,26,24,.75)">BBQ Party</div><div style="font-size:12px;color:rgba(26,26,24,.4);margin-top:2px">All done</div></div>
+        </div>
+        <div class="cl-note">Active row is the only filled one. Meta is a count or "All done" — never a date.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">MemberRow — you / other / invite</div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">A</div><div class="cl-name">Alex Janssens</div><div style="font-size:11px;font-weight:700;color:rgba(26,26,24,.45);border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:3px 9px">You · Owner</div></div>
+        <div class="cl-row" style="border-bottom:1px solid rgba(0,0,0,.07)"><div style="width:32px;height:32px;border-radius:50%;background:#2E9E5B;color:#fff;font:700 12px system-ui;display:flex;align-items:center;justify-content:center;flex:none">S</div><div style="flex:1"><div style="font-size:16px;color:#1A1A18">Sam De Vos</div><div style="font-size:12.5px;color:rgba(26,26,24,.45);margin-top:2px">Active 4 min ago</div></div><div style="font-size:19px;color:rgba(26,26,24,.35);letter-spacing:1px">···</div></div>
+        <div class="cl-row"><div style="width:32px;height:32px;border-radius:50%;border:1.5px dashed rgba(26,26,24,.25);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.4)" stroke-width="1.8" stroke-linecap="round"></path></svg></div><div class="cl-name" style="color:#2456A6;font-weight:600">Invite someone</div></div>
+        <div class="cl-note">The <span class="cl-kbd">···</span> is owner-only. Everyone else sees no menu at all.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">SectionHeader &amp; DoneDivider</div>
+        <div style="font:700 11px ui-monospace,monospace;letter-spacing:.8px;text-transform:uppercase;color:rgba(26,26,24,.38);padding:6px 4px 10px">Preferences</div>
+        <div style="display:flex;align-items:center;gap:8px;padding:10px 4px;border-bottom:1px solid rgba(0,0,0,.07)">
+          <svg width="10" height="7" viewBox="0 0 10 7"><path d="M1 1l4 4 4-4" stroke="rgba(26,26,24,.42)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <div style="flex:1;font:600 12px ui-monospace,monospace;letter-spacing:.7px;text-transform:uppercase;color:rgba(26,26,24,.42)">Done · 3</div>
+          <div style="font-size:12.5px;font-weight:600;color:#2456A6">Clear checked</div>
+        </div>
+        <div class="cl-note">Same mono eyebrow type. The Done divider adds a chevron (rotates −90° collapsed) and one action.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">07</div>
+    <h2 class="cl-h">Overlays &amp; feedback</h2>
+    <p class="cl-d">Four containers, and the rule for choosing between them: a sheet for a task, a dialog for an irreversible choice, a snackbar for something already done, a status bar for a condition.</p>
+
+    <div class="cl-grid">
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Sheet shell</div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:20px 20px 0 0;padding:12px 16px 18px">
+          <div style="width:36px;height:4px;border-radius:2px;background:rgba(0,0,0,.15);margin:0 auto 14px"></div>
+          <div style="font-size:19px;font-weight:700;color:#1A1A18;margin-bottom:6px">New shop</div>
+          <div style="font-size:14px;color:rgba(26,26,24,.55);line-height:1.45">It joins this list, and becomes available to your other lists too.</div>
+        </div>
+        <div class="cl-note">Radius 24, drag handle from the theme, 30 px bottom inset. 380 ms in / 220 ms out. Sheets stack rather than replace.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Dialog — destructive / neutral</div>
+        <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px">
+          <div style="font-size:16px;font-weight:700;color:#1A1A18;margin-bottom:6px">Delete Weekly Groceries?</div>
+          <div style="font-size:13.5px;color:rgba(26,26,24,.55);line-height:1.5;margin-bottom:14px">This removes the list and its 14 products for all 3 members.</div>
+          <div style="display:flex;gap:9px">
+            <div style="flex:1;text-align:center;padding:11px;border-radius:12px;border:1px solid rgba(0,0,0,.15);font-size:15px;font-weight:600">Cancel</div>
+            <div style="flex:1;text-align:center;padding:11px;border-radius:12px;background:#C0392B;color:#fff;font-size:15px;font-weight:600">Delete</div>
+          </div>
+        </div>
+        <div class="cl-note">Only for things with no undo. Titles name the object; the body names the consequence. Never "Are you sure?".</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">Snackbar — undo / retry</div>
+        <div style="background:#1A1A18;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;margin-bottom:8px">
+          <div style="flex:1;font-size:14px;color:#fff">Pasta removed</div>
+          <div style="font-size:14px;font-weight:700;color:#F0A868">Undo</div>
+        </div>
+        <div style="background:#1A1A18;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px">
+          <div style="flex:1;font-size:14px;color:#fff">Couldn't save "Olive oil"</div>
+          <div style="font-size:14px;font-weight:700;color:#F0A868">Retry</div>
+        </div>
+        <div class="cl-note">Deletion only commits when it expires — undo is local and instant. Sits clear of the FAB, never over it.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">StatusBar — offline / syncing</div>
+        <div style="padding:7px 14px;background:rgba(26,26,24,.06);font-size:13px;color:rgba(26,26,24,.6);display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M1 5.5a11 11 0 0 1 14 0M3.5 8.5a7.5 7.5 0 0 1 9 0M6 11.5a3.5 3.5 0 0 1 4 0" stroke="rgba(26,26,24,.4)" stroke-width="1.4" stroke-linecap="round"></path><line x1="2" y1="14" x2="14" y2="2" stroke="rgba(26,26,24,.5)" stroke-width="1.4" stroke-linecap="round"></line></svg>
+          <span>Offline — changes will sync</span>
+        </div>
+        <div>
+          <div style="padding:7px 14px;background:rgba(26,26,24,.06);font-size:13px;color:rgba(26,26,24,.6)">Syncing 2 changes…</div>
+          <div style="height:2px;background:rgba(26,26,24,.08);position:relative"><div style="position:absolute;left:22%;width:38%;height:2px;background:#2456A6"></div></div>
+        </div>
+        <div class="cl-note">No colour alarm — offline is a normal state in a supermarket, not an error.</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">EmptyState — neutral / tinted / search</div>
+        <div style="display:flex;gap:10px;align-items:flex-start">
+          <div style="flex:1;text-align:center;padding:8px 4px">
+            <div style="width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(26,26,24,.2);margin:0 auto 8px"></div>
+            <div style="font-size:14px;font-weight:600;color:#1A1A18">Nothing yet</div>
+          </div>
+          <div style="flex:1;text-align:center;padding:8px 4px">
+            <div style="width:40px;height:40px;border-radius:10px;border:1.5px solid rgba(232,121,26,.35);margin:0 auto 8px"></div>
+            <div style="font-size:14px;font-weight:600;color:#1A1A18">Nothing for Colruyt</div>
+          </div>
+        </div>
+        <div class="cl-note">Same widget, three configurations: illustration tint, copy, and one action that differ by context. Search's action is "Add «query»".</div>
+      </div>
+      <div class="cl-card" style="width:330px">
+        <div class="cl-st">ContextualHeader (multi-select)</div>
+        <div style="display:flex;align-items:center;gap:14px;padding:8px 4px">
+          <div style="font-size:20px;color:rgba(26,26,24,.55);line-height:1">✕</div>
+          <div style="flex:1;font-size:19px;font-weight:700;color:#1A1A18">3 selected</div>
+          <div style="font-size:14.5px;font-weight:600;color:#2456A6">Move</div>
+          <div style="font-size:14.5px;font-weight:600;color:#C0392B">Delete</div>
+        </div>
+        <div class="cl-note">Cross-fades over the normal header in place — not a route. Search does the same thing with a field.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cl-sec">
+    <div class="cl-tag">08</div>
+    <h2 class="cl-h">Screens, and what they're made of</h2>
+    <p class="cl-d">Every screen in the app, the widgets it composes, and its own states. If a screen has no states column entry, it is static — and if a widget appears in only one screen, ask whether it should be a widget at all.</p>
+    <table class="cl-tbl">
+      <thead><tr><th class="cl-th" style="width:19%">Screen</th><th class="cl-th" style="width:11%">Route</th><th class="cl-th" style="width:37%">Widgets</th><th class="cl-th">Own states</th></tr></thead>
+      <tbody>
+        <tr><td class="cl-td">Splash</td><td class="cl-td">root</td><td class="cl-td">—</td><td class="cl-td">Skipped under 400 ms</td></tr>
+        <tr><td class="cl-td">Welcome</td><td class="cl-td">push</td><td class="cl-td">PrimaryButton, TextButton</td><td class="cl-td">—</td></tr>
+        <tr><td class="cl-td">Onboarding</td><td class="cl-td">push</td><td class="cl-td">TextField, ShopToggleRow, ShopTabPill (preview), PrimaryButton</td><td class="cl-td">4 steps · name invalid</td></tr>
+        <tr><td class="cl-td">Join by code</td><td class="cl-td">push</td><td class="cl-td">TextField (segmented), TextButton</td><td class="cl-td">Empty · partial · wrong code</td></tr>
+        <tr><td class="cl-td"><strong>Home</strong></td><td class="cl-td">root</td><td class="cl-td">ShopTabPill, ProductRow, DoneDivider, AddControl, EmptyState, StatusBar, Snackbar, AvatarStack, ContextualHeader</td><td class="cl-td">Loading · empty · offline · syncing · search · multi-select · complete</td></tr>
+        <tr><td class="cl-td">Drawer</td><td class="cl-td">overlay</td><td class="cl-td">DrawerListRow, Avatar, SettingsRow</td><td class="cl-td">—</td></tr>
+        <tr><td class="cl-td">Product sheet</td><td class="cl-td">sheet</td><td class="cl-td">TextField, ShopChip, <em style="font-style:italic;color:rgba(26,26,24,.6)">Stepper</em>, PrimaryButton</td><td class="cl-td">New · edit</td></tr>
+        <tr><td class="cl-td">New list sheet</td><td class="cl-td">sheet</td><td class="cl-td">TextField, ShopChip, PrimaryButton</td><td class="cl-td">Valid · no shops picked</td></tr>
+        <tr><td class="cl-td">New / edit shop sheet</td><td class="cl-td">sheet</td><td class="cl-td">TextField, ColorSwatch, PrimaryButton</td><td class="cl-td">New · edit · delete-with-products</td></tr>
+        <tr><td class="cl-td">Settings</td><td class="cl-td">push</td><td class="cl-td">Avatar, SettingsRow, SectionHeader</td><td class="cl-td">—</td></tr>
+        <tr><td class="cl-td">List settings</td><td class="cl-td">push</td><td class="cl-td"><em style="font-style:italic;color:rgba(26,26,24,.6)">ListSwitcher</em>, TextField, ShopToggleRow, MemberRow, SettingsRow</td><td class="cl-td">Switcher open · owner vs member</td></tr>
+        <tr><td class="cl-td">Profile</td><td class="cl-td">push</td><td class="cl-td">Avatar (52), ColorSwatch, TextField</td><td class="cl-td">—</td></tr>
+        <tr><td class="cl-td">Notifications</td><td class="cl-td">push</td><td class="cl-td">SettingsRow (switch), SectionHeader</td><td class="cl-td">Permission ungranted · denied</td></tr>
+        <tr><td class="cl-td">Appearance</td><td class="cl-td">push</td><td class="cl-td"><em style="font-style:italic;color:rgba(26,26,24,.6)">ThemePreviewCard</em>, SettingsRow (switch)</td><td class="cl-td">Light · dark · system</td></tr>
+        <tr><td class="cl-td">Manage shops</td><td class="cl-td">push</td><td class="cl-td">ShopToggleRow (reorderable)</td><td class="cl-td">Reordering</td></tr>
+        <tr><td class="cl-td">Household</td><td class="cl-td">push</td><td class="cl-td">MemberRow, <em style="font-style:italic;color:rgba(26,26,24,.6)">InviteCard</em>, Avatar</td><td class="cl-td">Code copied · expired</td></tr>
+        <tr><td class="cl-td">Recently bought</td><td class="cl-td">push</td><td class="cl-td">ProductRow (read-only + add)</td><td class="cl-td">This week · earlier</td></tr>
+      </tbody>
+    </table>
+    <p class="cl-d" style="margin-top:16px;max-width:900px"><em style="font-style:italic;color:rgba(26,26,24,.6)">Italicised</em> entries — Stepper, ListSwitcher, ThemePreviewCard, InviteCard — are one-off compositions inside that single screen, not library widgets. They appear on one screen each, so by the rule at the top of this file they stay as markup; they are named here only so the composition is legible. If one ever turns up on a third screen, promote it.</p>
+    <p class="cl-d" style="margin-top:14px;max-width:900px"><strong>Three widgets do most of the work</strong> — ProductRow, ShopTabPill and SettingsRow appear on nearly every screen. Build and test those three first; the rest of the app is assembly.</p>
+  </div>
+
+</div>
+
+</x-dc>
+</body>
+</html>
