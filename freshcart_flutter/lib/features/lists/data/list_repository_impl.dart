@@ -48,6 +48,17 @@ class ListRepositoryImpl implements ListRepository {
   );
 
   @override
+  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+    ListId id,
+    bool value,
+  ) => _guard(
+    () async => (await _client.list.setClearCheckedAfterShopping(
+      _uuid(id.value),
+      value,
+    )).toDomain(),
+  );
+
+  @override
   Future<Result<void>> leave(ListId id) =>
       _guard(() => _client.list.leave(_uuid(id.value)));
 

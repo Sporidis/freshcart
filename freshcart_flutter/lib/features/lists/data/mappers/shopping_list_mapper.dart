@@ -34,6 +34,7 @@ extension ShoppingListDtoX on dto.ShoppingList {
       ownerId: UserId(ownerId.uuid),
       createdAt: createdAt,
       members: (members ?? const []).map((m) => m.toDomain()).toList(),
+      clearCheckedAfterShopping: clearCheckedAfterShopping,
     );
   }
 }

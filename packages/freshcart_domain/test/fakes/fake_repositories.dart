@@ -158,6 +158,12 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
+  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+    ListId id,
+    bool value,
+  ) => throw UnimplementedError();
+
+  @override
   Stream<Result<ShoppingList>> watch(ListId id) => throw UnimplementedError();
 }
 

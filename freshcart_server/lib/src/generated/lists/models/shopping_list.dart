@@ -35,7 +35,9 @@ abstract class ShoppingList
     this.mutes,
     this.pendingNotifications,
     this.itemNameHistory,
-  }) : createdAt = createdAt ?? DateTime.now();
+    bool? clearCheckedAfterShopping,
+  }) : createdAt = createdAt ?? DateTime.now(),
+       clearCheckedAfterShopping = clearCheckedAfterShopping ?? false;
 
   factory ShoppingList({
     _i1.UuidValue? id,
@@ -49,6 +51,7 @@ abstract class ShoppingList
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
     List<_i7.ItemNameHistory>? itemNameHistory,
+    bool? clearCheckedAfterShopping,
   }) = _ShoppingListImpl;
 
   factory ShoppingList.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -94,6 +97,12 @@ abstract class ShoppingList
           : _i8.Protocol().deserialize<List<_i7.ItemNameHistory>>(
               jsonSerialization['itemNameHistory'],
             ),
+      clearCheckedAfterShopping:
+          jsonSerialization['clearCheckedAfterShopping'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['clearCheckedAfterShopping'],
+            ),
     );
   }
 
@@ -137,6 +146,13 @@ abstract class ShoppingList
   /// suggestion chips.
   List<_i7.ItemNameHistory>? itemNameHistory;
 
+  /// Whether checked items clear themselves the moment the whole list is
+  /// checked, instead of waiting for an explicit "Clear checked" tap
+  /// (decisions #79). `defaultPersist=false` so every existing row backfills
+  /// to the same off default a brand-new list gets -- the same pattern
+  /// `Shop.isActive` already used for an added-in-place NOT NULL column.
+  bool clearCheckedAfterShopping;
+
   @override
   _i1.Table<_i1.UuidValue?> get table => t;
 
@@ -155,6 +171,7 @@ abstract class ShoppingList
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
     List<_i7.ItemNameHistory>? itemNameHistory,
+    bool? clearCheckedAfterShopping,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -178,6 +195,7 @@ abstract class ShoppingList
         'itemNameHistory': itemNameHistory?.toJson(
           valueToJson: (v) => v.toJson(),
         ),
+      'clearCheckedAfterShopping': clearCheckedAfterShopping,
     };
   }
 
@@ -206,6 +224,7 @@ abstract class ShoppingList
         'itemNameHistory': itemNameHistory?.toJson(
           valueToJson: (v) => v.toJsonForProtocol(),
         ),
+      'clearCheckedAfterShopping': clearCheckedAfterShopping,
     };
   }
 
@@ -268,6 +287,7 @@ class _ShoppingListImpl extends ShoppingList {
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
     List<_i7.ItemNameHistory>? itemNameHistory,
+    bool? clearCheckedAfterShopping,
   }) : super._(
          id: id,
          name: name,
@@ -280,6 +300,7 @@ class _ShoppingListImpl extends ShoppingList {
          mutes: mutes,
          pendingNotifications: pendingNotifications,
          itemNameHistory: itemNameHistory,
+         clearCheckedAfterShopping: clearCheckedAfterShopping,
        );
 
   /// Returns a shallow copy of this [ShoppingList]
@@ -298,6 +319,7 @@ class _ShoppingListImpl extends ShoppingList {
     Object? mutes = _Undefined,
     Object? pendingNotifications = _Undefined,
     Object? itemNameHistory = _Undefined,
+    bool? clearCheckedAfterShopping,
   }) {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -324,6 +346,8 @@ class _ShoppingListImpl extends ShoppingList {
       itemNameHistory: itemNameHistory is List<_i7.ItemNameHistory>?
           ? itemNameHistory
           : this.itemNameHistory?.map((e0) => e0.copyWith()).toList(),
+      clearCheckedAfterShopping:
+          clearCheckedAfterShopping ?? this.clearCheckedAfterShopping,
     );
   }
 }
@@ -352,6 +376,12 @@ class ShoppingListUpdateTable extends _i1.UpdateTable<ShoppingListTable> {
         table.createdAt,
         value,
       );
+
+  _i1.ColumnValue<bool, bool> clearCheckedAfterShopping(bool value) =>
+      _i1.ColumnValue(
+        table.clearCheckedAfterShopping,
+        value,
+      );
 }
 
 class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
@@ -373,6 +403,11 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
+    );
+    clearCheckedAfterShopping = _i1.ColumnBool(
+      'clearCheckedAfterShopping',
+      this,
+      hasDefault: true,
     );
   }
 
@@ -429,6 +464,13 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
   /// Product names typed on this list before, for the add control's
   /// suggestion chips.
   _i1.ManyRelation<_i7.ItemNameHistoryTable>? _itemNameHistory;
+
+  /// Whether checked items clear themselves the moment the whole list is
+  /// checked, instead of waiting for an explicit "Clear checked" tap
+  /// (decisions #79). `defaultPersist=false` so every existing row backfills
+  /// to the same off default a brand-new list gets -- the same pattern
+  /// `Shop.isActive` already used for an added-in-place NOT NULL column.
+  late final _i1.ColumnBool clearCheckedAfterShopping;
 
   _i2.ListMemberTable get __members {
     if (___members != null) return ___members!;
@@ -629,6 +671,7 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     joinCode,
     ownerId,
     createdAt,
+    clearCheckedAfterShopping,
   ];
 
   @override

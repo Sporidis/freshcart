@@ -107,6 +107,33 @@ class ItemsSection extends ConsumerWidget {
       );
     }
 
+    // Auto-clears the instant the list finishes, when this list's own
+    // "Clear checked after shopping" preference (decisions #79) is on --
+    // silently, no prompt, which is why the celebration card below is also
+    // gated on this being off: the two are mutually exclusive ways of
+    // handling the same moment, not layered on top of each other. The
+    // preference check happens inside the callback, not around the
+    // `ref.listen` call itself, so this is called unconditionally every
+    // build regardless of the preference's current value.
+    ref.listen(itemsControllerProvider(list.id), (previous, next) {
+      if (!list.clearCheckedAfterShopping) return;
+      final previousItems = previous?.dataOrNull;
+      final nextItems = next.dataOrNull;
+      // No real prior snapshot yet (this is the initial load resolving, not
+      // a change witnessed during this session) -- a list that already
+      // happened to be fully checked when opened must not auto-clear the
+      // instant it loads, only a transition that actually happens while
+      // someone is looking at it.
+      if (previousItems == null || nextItems == null) return;
+      final previousAllDone =
+          previousItems.isNotEmpty && previousItems.every((i) => i.isChecked);
+      final nextAllDone =
+          nextItems.isNotEmpty && nextItems.every((i) => i.isChecked);
+      if (!previousAllDone && nextAllDone) {
+        unawaited(controller.clearChecked().then(report));
+      }
+    });
+
     // A Stack, not a Column: Flow 09 calls this "the FAB" for a reason -- a
     // real floating action button overlays scrollable content, it doesn't
     // sit in its own docked row shrinking the list to make room. The list
@@ -174,8 +201,12 @@ class ItemsSection extends ConsumerWidget {
               // Only once nothing else is competing for the bottom of the
               // screen -- multi-select and search each have their own
               // reason to hide the quick-add bar just below, and the same
-              // reasons apply here.
+              // reasons apply here. Never shown at all when the list
+              // auto-clears (decisions #79): that preference silently
+              // resolves this exact moment instead of prompting, so the two
+              // are mutually exclusive, not layered.
               if (allDone &&
+                  !list.clearCheckedAfterShopping &&
                   !celebrationDismissed &&
                   !selectionMode &&
                   !search.active)

@@ -32,6 +32,7 @@ list:
   - create:
   - join:
   - rename:
+  - setClearCheckedAfterShopping:
   - leave:
   - delete:
   - removeMember:

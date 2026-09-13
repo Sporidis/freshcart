@@ -1200,6 +1200,41 @@ class _ListEndpoint {
     });
   }
 
+  _i3.Future<_i9.ShoppingList> setClearCheckedAfterShopping(
+    _i1.TestSessionBuilder sessionBuilder,
+    _i2.UuidValue listId,
+    bool value,
+  ) async {
+    return _i1.callAwaitableFunctionAndHandleExceptions(() async {
+      var _localUniqueSession =
+          (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
+            endpoint: 'list',
+            method: 'setClearCheckedAfterShopping',
+          );
+      try {
+        var _localCallContext = await _endpointDispatch.getMethodCallContext(
+          createSessionCallback: (_) => _localUniqueSession,
+          endpointPath: 'list',
+          methodName: 'setClearCheckedAfterShopping',
+          parameters: _i1.testObjectToJson({
+            'listId': listId,
+            'value': value,
+          }),
+          serializationManager: _serializationManager,
+        );
+        var _localReturnValue =
+            await (_localCallContext.method.call(
+                  _localUniqueSession,
+                  _localCallContext.arguments,
+                )
+                as _i3.Future<_i9.ShoppingList>);
+        return _localReturnValue;
+      } finally {
+        await _localUniqueSession.close();
+      }
+    });
+  }
+
   _i3.Future<void> leave(
     _i1.TestSessionBuilder sessionBuilder,
     _i2.UuidValue listId,

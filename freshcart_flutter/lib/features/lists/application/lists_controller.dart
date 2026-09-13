@@ -41,6 +41,23 @@ class ListsController extends _$ListsController {
     return result;
   }
 
+  /// Sets whether [id] clears its checked items automatically once
+  /// everything on it is checked (decisions #79).
+  ///
+  /// A direct repository call, not a use case: there is nothing to validate
+  /// on a plain bool, the same "trivial forward" reasoning
+  /// `EditProfileScreen`'s own `setAvatarColor` already follows.
+  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+    ListId id,
+    bool value,
+  ) async {
+    final result = await ref
+        .read(listRepositoryProvider)
+        .setClearCheckedAfterShopping(id, value);
+    if (result.isOk) _refreshIfAlive();
+    return result;
+  }
+
   /// Leaves a list, and refreshes so it drops out of the collection.
   ///
   /// Leaving is not deleting: the list carries on for everyone else. Only the

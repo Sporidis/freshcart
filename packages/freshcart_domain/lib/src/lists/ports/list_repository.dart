@@ -33,6 +33,16 @@ abstract interface class ListRepository {
   /// Renames list [id] to [name]. Owner only.
   Future<Result<ShoppingList>> rename(ListId id, String name);
 
+  /// Sets whether list [id] clears its checked items automatically once
+  /// everything on it is checked (decisions #79). Any member may set this --
+  /// unlike rename/delete, it is a shared shopping-behaviour preference, not
+  /// an identity or destructive action, matching how any member may already
+  /// toggle a shop's `isActive`.
+  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+    ListId id,
+    bool value,
+  );
+
   /// Removes the signed-in user from list [id].
   Future<Result<void>> leave(ListId id);
 

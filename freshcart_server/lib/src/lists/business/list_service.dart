@@ -182,6 +182,32 @@ abstract final class ListService {
     return _withMembers(session, updated);
   }
 
+  /// Sets whether [listId] clears its checked items automatically once
+  /// everything on it is checked (decisions #79).
+  ///
+  /// Any member may set this, checked with [requireMembership] rather than
+  /// an owner check: unlike [rename]/[delete], it is a shared
+  /// shopping-behaviour preference, not an identity or destructive action --
+  /// the same authorisation shape `ShopService.save` already uses for
+  /// toggling a shop's `isActive`.
+  static Future<ShoppingList> setClearCheckedAfterShopping(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+    bool value,
+  ) async {
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list == null) throw ListNotFoundException();
+    await requireMembership(session, listId, userId);
+
+    final updated = await ShoppingList.db.updateRow(
+      session,
+      list.copyWith(clearCheckedAfterShopping: value),
+    );
+    await _announce(session, listId);
+    return _withMembers(session, updated);
+  }
+
   /// Removes [userId] from [listId].
   static Future<void> leave(
     Session session,

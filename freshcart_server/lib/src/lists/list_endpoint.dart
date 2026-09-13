@@ -60,6 +60,19 @@ class ListEndpoint extends Endpoint {
     String name,
   ) => ListService.rename(session, listId, session.requireUserId, name);
 
+  /// Sets whether a list the caller belongs to clears its checked items
+  /// automatically once everything on it is checked.
+  Future<ShoppingList> setClearCheckedAfterShopping(
+    Session session,
+    UuidValue listId,
+    bool value,
+  ) => ListService.setClearCheckedAfterShopping(
+    session,
+    listId,
+    session.requireUserId,
+    value,
+  );
+
   /// Removes the caller from a list.
   Future<void> leave(Session session, UuidValue listId) =>
       ListService.leave(session, listId, session.requireUserId);

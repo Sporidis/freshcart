@@ -120,6 +120,31 @@ void main() {
     expect(find.text('That name is too long'), findsOneWidget);
   });
 
+  testWidgets(
+    'the Clear checked after shopping toggle calls through',
+    (tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.setClearCheckedAfterShoppingResult = Ok(
+        list.copyWith(clearCheckedAfterShopping: true),
+      );
+      await pump(tester, list: list);
+
+      final tile = find.widgetWithText(
+        SwitchListTile,
+        'Clear checked items automatically',
+      );
+      expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+
+      await tester.tap(tile);
+      await tester.pumpAndSettle();
+
+      expect(
+        repository.setClearCheckedAfterShoppingCalls.single.value,
+        isTrue,
+      );
+    },
+  );
+
   testWidgets('the Household row opens the household screen', (tester) async {
     await pump(
       tester,
