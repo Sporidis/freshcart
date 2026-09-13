@@ -28,7 +28,7 @@ behaviour*, not new visual language.
 | Edit profile: user-chosen avatar colour | Small–Medium | ✅ Built — domain field, `ProfileService`, swatch picker on `EditProfileScreen` |
 | Appearance screen (theme mode, larger text, reduce-motion status) | Medium | ✅ Built (inline in Preferences, not a separate screen — nothing in the design requires one). Theme mode is also now persisted; it wasn't before. |
 | Notifications preferences (4 push toggles + per-list mute) | Large | Not built — one item needs local scheduled notifications, a new dependency |
-| List settings screen (replaces Household; rename, members, per-list behaviour, shops, leave/delete) | Medium | ✅ Built, decision #69. "Clear checked after shopping" deliberately still missing, see §9. |
+| List settings screen (replaces Household; rename, members, per-list behaviour, shops, leave/delete) | Medium | ✅ Fully built — decisions #69, #79. |
 
 ## Decisions
 
@@ -205,7 +205,7 @@ Four named push toggles plus per-list mute:
   membership (`ListMember`), or a lightweight preferences table keyed by user+list — needs
   a small domain/server addition either way, not just client-side state.
 
-## 9. List settings screen — ✅ built, decisions #69
+## 9. List settings screen — ✅ fully built, decisions #69, #79
 
 Reached from a list's own header; **replaces Household** as the entry point (decision #69 kept
 `HouseholdScreen` itself alive underneath — see its own "not a second copy" reasoning — rather
@@ -216,11 +216,10 @@ than rebuilding member management inline):
 - "Shops on this list" row → opens the existing `ManageShopsScreen`.
 - Leave / Delete for everyone → both here and on `ListsScreen`'s own per-row menu, deliberately
   (that menu is still how you act on a list you are not currently inside).
-- **Still deliberately missing:** "Clear checked after shopping" — the mockup's toggle, left out
-  because "after shopping" isn't yet a real, defined moment in the domain (all items checked?
-  every shop tab clear? something explicit a person taps?), and `ShoppingList` has no field for it.
-  Needs an actual domain decision plus a migration, not a switch wired to a guess — see decision
-  #69's own note. This is the one piece of §9 not yet built.
+- ~~"Clear checked after shopping"~~ — ✅ built, decision #79. The trigger is the whole list
+  becoming fully checked (the same moment the completion celebration already detects), and the
+  clear is silent — no card, no prompt, just checked items disappearing the instant the list
+  finishes. Any member may toggle it, not owner-only, matching a shop's own `isActive` toggle.
 
 ## Suggested build order
 
@@ -233,8 +232,7 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
    chips and Flow 06's "Recently bought" (inline in search's empty-query state) both ship.
 4. ~~**Drawer enrichment** (§4)~~ — ✅ fully built, decisions #65, #78.
 5. ~~**Edit profile + stored avatar colour** (§6)~~ — ✅ built.
-6. ~~**List settings screen** (§9)~~ — ✅ built, decision #69. "Clear checked after shopping"
-   still deliberately missing, needs its own domain decision.
+6. ~~**List settings screen** (§9)~~ — ✅ fully built, decisions #69, #79.
 7. ~~**Settings restructure** (§5)~~ — ✅ built.
 8. ~~**Appearance screen** (§7)~~ — ✅ built, decisions #76 (inline in Preferences, plus a
    pre-existing persistence bug and a decorative Haptics toggle found and fixed alongside it).
@@ -242,6 +240,6 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
    new dependency (local scheduled notifications) — do this last, and possibly split "list
    finished" push + per-list mute from the local-notification scheduler as two separate phases.
 
-One item is still open, deliberately deferred rather than forgotten: "Clear checked after
-shopping" (§9, needs a real domain decision on what "after shopping" means). Everything else in
-this plan is built.
+Every item in this plan is built except §8, Notifications preferences — the suggested build
+order's own item 9, deliberately last since it is the largest single piece and the only one
+needing a new dependency.

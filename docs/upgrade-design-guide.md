@@ -104,9 +104,9 @@ to add fake server timestamps.
 
 #### Per-list and notification preferences
 
-The design requires a per-list `Clear checked after shopping` value. The current
-preference control is hardcoded and has no domain/server persistence. Add a
-list-scoped preference record and make the automatic clear behaviour explicit.
+**"Clear checked after shopping" — ✅ built, decisions #79.** The trigger is the
+whole list becoming fully checked (the same moment the completion celebration
+already detects), and the clear is silent — no card, no prompt.
 
 List mute persistence already exists on the server, but Flutter cannot currently
 read it back to initialise the settings control. Add the repository read path.
@@ -255,11 +255,10 @@ that file as the detailed feature plan rather than duplicating all architecture
 work here. Most of this list turned out to already be built by the time work on
 it actually started — corrected below rather than left stale.
 
-- **List settings** — ✅ built, decision #69. Member management opens the
-  existing Household screen rather than being rebuilt inline; shop management
-  and Leave/Delete are all reachable from here. Still missing: the per-list
-  "Clear checked after shopping" preference, deliberately, since it needs a real
-  domain decision "after shopping" doesn't have yet.
+- **List settings** — ✅ fully built, decisions #69, #79. Member management
+  opens the existing Household screen rather than being rebuilt inline; shop
+  management and Leave/Delete are all reachable from here; the per-list
+  "Clear checked after shopping" preference ships too.
 - **Settings** — ✅ built. All four groups (Profile, Lists & shops, Preferences,
   About) exist on `SettingsScreen`.
 - **Profile** — ✅ built. Stored avatar colour and photo both exist end to end

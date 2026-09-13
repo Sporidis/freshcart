@@ -1598,3 +1598,48 @@ Fixed by renaming the field to `checkedCount` end-to-end (domain entity, server 
 sidestepping the collision rather than arguing with the compiler about whose `checked` should win.
 Worth naming for the next person who reaches for this exact word: `checked` is not a safe field
 name anywhere `freezed_annotation` is imported, which in this codebase is everywhere.
+
+## 79. "Clear checked after shopping" -- whole-list completion, silent, no new UI surface
+
+**Decision:** `list_settings_screen.dart` and `design-gap-plan.md` §9 both named the same open
+question rather than guessing: what does "after shopping" actually mean? Put to Nikolaos directly
+rather than assumed. Two answers, both taken as given:
+
+1. **The trigger is the whole list becoming fully checked** -- the exact moment
+   `ItemsSection`'s own completion celebration already detects (`allDone`, decisions #61/#67), not
+   a new per-shop mechanic. The alternative (each shop tab finishing on its own) is closer to how
+   a real multi-store trip works, but needs a trigger the app does not have today -- nothing
+   currently detects "this one shop's items are all checked" the way it detects "the whole list
+   is." Reusing the existing moment is the smaller change, and the per-shop version stays a named,
+   deliberately-not-built alternative rather than a silent gap.
+2. **The clear is silent -- no prompt, no card.** Turning the preference on does not mean "the
+   celebration card auto-resolves itself after a delay"; it means the card never appears for this
+   list at all, and checked items simply clear the instant the list finishes. `ItemsSection`'s own
+   `allDone` render condition for `CompletionCelebrationCard` now also requires
+   `!list.clearCheckedAfterShopping` -- the two are mutually exclusive ways of handling the same
+   moment, not layered on top of each other.
+
+**New `ShoppingList.clearCheckedAfterShopping` field**, off by default (an existing list must not
+start clearing itself out from under anyone the moment this ships), with its own additive
+migration (`defaultPersist=false`, the same `Shop.isActive` precedent from earlier this session).
+**Any member may toggle it**, not just the owner -- checked with `ListService.requireMembership`,
+not an ownership check, since this is a shared shopping-behaviour preference like a shop's
+`isActive`, not an identity or destructive action like rename/delete. No use case: a plain bool
+with nothing to validate is a trivial forward, the same reasoning `EditProfileScreen`'s
+`setAvatarColor` already follows for exactly this shape of write.
+
+**The trigger logic lives in a `ref.listen` inside `ItemsSection.build`, called unconditionally
+every build** (not wrapped in `if (list.clearCheckedAfterShopping)`) with the preference checked
+*inside* the callback instead -- calling `ref.listen` conditionally on the surrounding widget tree
+is the kind of thing worth avoiding on principle even where it happens to work, so the check moved
+inside rather than around the call.
+
+**A real bug caught by the test suite itself, not found by inspection:** the first version of the
+transition check fired the auto-clear the instant a list that was *already* fully checked finished
+loading -- `previous` on a provider's very first emission is effectively empty, and treating an
+absent previous snapshot as "was not all done" made every already-finished list clear itself the
+moment its owner opened it, with no transition anyone had actually witnessed happen. Fixed by
+requiring a real previous *items* snapshot to exist before comparing it to the next one, not just
+requiring the next one to exist. `docs/CLAUDE.md`'s "tests live beside the phase that adds the
+feature" rule earned its keep here directly: the "does not fire again once already fully checked
+with nothing new" test was written expecting to pass and caught this instead.
