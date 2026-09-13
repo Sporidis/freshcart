@@ -22,6 +22,13 @@ const _checkboxSlide = 8.0;
 
 /// One row of a shopping list.
 class ItemTile extends StatefulWidget {
+  /// Key on the leading checkbox/selection circle, shared across every row
+  /// rather than keyed to one item's id: it plays the same role
+  /// `find.byType(Checkbox)` used to before the row grew its own bespoke
+  /// [_CheckCircle], and a test scopes it to one row via
+  /// `find.descendant(of: <that row's own finder>, ...)`, same as before.
+  static const checkKey = Key('item-check');
+
   /// Creates a tile for [item].
   const ItemTile({
     required this.item,
@@ -117,6 +124,16 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     value: widget.item.isChecked ? 1 : 0,
   );
 
+  /// Drives [_CheckCircle]'s fill: 340ms `easeOutBack` overshoot on
+  /// checking (Component Library §02 -- "overshoots because the user did
+  /// it"), a plain, un-curved reverse on unchecking -- same asymmetry
+  /// [_strike] already uses, for the same reason.
+  late final AnimationController _checkFill = AnimationController(
+    vsync: this,
+    duration: AppMotion.bouncy,
+    value: widget.item.isChecked ? 1 : 0,
+  );
+
   /// The row's own scale: the long-press "keep holding" tell (0.97) and its
   /// spring-back, both driven directly rather than through a Tween, since
   /// each has its own target reached from `animateTo` calls at different
@@ -206,9 +223,22 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     if (widget.item.isChecked != oldWidget.item.isChecked) {
       if (widget.item.isChecked) {
         _strike.forward();
+        unawaited(
+          _checkFill.animateTo(
+            1,
+            duration: AppMotion.durationFor(context, AppMotion.bouncy),
+            curve: AppMotion.curveFor(context, AppMotion.pop),
+          ),
+        );
       } else {
         // Unchecking reverses with no overshoot: the intent is unambiguous.
         _strike.reverse();
+        unawaited(
+          _checkFill.animateTo(
+            0,
+            duration: AppMotion.durationFor(context, AppMotion.quick),
+          ),
+        );
       }
     }
     if (widget.selectionMode != oldWidget.selectionMode) {
@@ -225,6 +255,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   @override
   void dispose() {
     _strike.dispose();
+    _checkFill.dispose();
     _iconPop.dispose();
     _pressScale.dispose();
     _pressTellTimer?.cancel();
@@ -240,14 +271,33 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     widget.onToggle();
   }
 
-  /// A tap on the row: toggles selection while selection mode is active,
-  /// otherwise the usual checked/unchecked toggle.
-  void _activateRow() {
+  void _toggleSelection() {
+    unawaited(HapticFeedback.selectionClick());
+    widget.onToggleSelection();
+  }
+
+  /// A tap on the leading circle: while selecting, the circle means
+  /// "selected", not "bought" (Component Library §01), so it toggles
+  /// selection the same as tapping anywhere else on the row would. Outside
+  /// selection mode it is the only thing that toggles checked -- a tap
+  /// elsewhere on the row now opens editing instead, see [_activateRow].
+  void _activateLeading() {
     if (widget.selectionMode) {
-      unawaited(HapticFeedback.selectionClick());
-      widget.onToggleSelection();
+      _toggleSelection();
     } else {
       _handleToggle();
+    }
+  }
+
+  /// A tap on the row itself: toggles selection while selecting, otherwise
+  /// opens editing -- "the row opens editing when tapped" (upgrade guide
+  /// §1's Reference). Checking an item off is the leading circle's job now,
+  /// not the row's.
+  void _activateRow() {
+    if (widget.selectionMode) {
+      _toggleSelection();
+    } else {
+      widget.onEdit();
     }
   }
 
@@ -401,54 +451,115 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     );
   }
 
-  /// The row's actual content: checkbox/selection leading slot, name +
-  /// quantity + note title, note/checked-by subtitle, and the edit/reorder
-  /// trailing slot.
+  /// The row's actual content: `InkWell` + `Row`, not `ListTile` (Component
+  /// Library §01) -- the circle, dot and quantity don't fit its slots, and
+  /// `ListTile` has no way to key a background/radius change off [selected]
+  /// the way the reference's own "selected" state does.
   Widget _buildRow(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     final subtitle = _subtitle();
-    return ListTile(
-      onTap: _activateRow,
-      onLongPress: _handleLongPressFire,
-      leading: _buildLeadingSlot(),
-      title: _buildTitleRow(
-        theme: theme,
-        muted: theme.colorScheme.onSurfaceVariant,
+    final selected = widget.selected;
+
+    return AnimatedContainer(
+      duration: AppMotion.durationFor(context, AppMotion.quick),
+      curve: AppMotion.enter,
+      margin: EdgeInsets.symmetric(horizontal: selected ? 6 : 0),
+      decoration: BoxDecoration(
+        color: selected
+            ? (theme.brightness == Brightness.dark
+                  ? AppColors.selectedRowDark
+                  : AppColors.selectedRowLight)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
       ),
-      subtitle: subtitle == null ? null : Text(subtitle),
-      trailing: _buildTrailingSlot(context),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: _activateRow,
+          onLongPress: _handleLongPressFire,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: EdgeInsets.symmetric(
+              horizontal: selected ? 10 : 16,
+              vertical: AppSpacing.rowVertical,
+            ),
+            child: Row(
+              children: [
+                _buildLeadingSlot(),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTitleRow(theme: theme, muted: muted),
+                      if (subtitle != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            subtitle,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.caption.copyWith(
+                              color: muted,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                if (widget.canReorder) ...[
+                  const SizedBox(width: 4),
+                  ReorderableDragStartListener(
+                    index: widget.index,
+                    child: Icon(Icons.drag_handle, color: muted),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 
-  /// The checkbox, cross-faded with the selection circle as
+  /// The checkbox/selection circle, cross-faded with each other as
   /// [_selectionReveal] runs (§10: 240 ms, staggered by [ItemTile.index]).
+  /// Its own tap target, independent of the row's -- see [_activateLeading].
   Widget _buildLeadingSlot() {
-    return AnimatedBuilder(
-      animation: _selectionReveal,
-      builder: (context, child) => SizedBox(
-        width: 48,
-        child: Stack(
-          alignment: Alignment.centerLeft,
-          children: [
-            Opacity(
-              opacity: _selectionReveal.value,
-              child: _SelectionCircle(selected: widget.selected),
-            ),
-            Transform.translate(
-              offset: Offset(_checkboxSlide * _selectionReveal.value, 0),
-              child: Checkbox(
-                value: widget.item.isChecked,
-                onChanged: (_) => _activateRow(),
+    return GestureDetector(
+      key: ItemTile.checkKey,
+      onTap: _activateLeading,
+      child: AnimatedBuilder(
+        animation: _selectionReveal,
+        builder: (context, child) => SizedBox(
+          width: 22,
+          height: 22,
+          child: Stack(
+            alignment: Alignment.centerLeft,
+            children: [
+              Opacity(
+                opacity: _selectionReveal.value,
+                child: _SelectionCircle(selected: widget.selected),
               ),
-            ),
-          ],
+              Transform.translate(
+                offset: Offset(_checkboxSlide * _selectionReveal.value, 0),
+                child: Opacity(
+                  opacity: 1 - _selectionReveal.value,
+                  child: _CheckCircle(fill: _checkFill),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   /// The item's name (struck through and search-highlighted as needed),
-  /// plus the shop dot, quantity, and note glyph that share its line.
+  /// plus the shop dot and quantity that share its line. No note glyph --
+  /// the note itself is the subtitle line now, not a permanent icon here.
   Widget _buildTitleRow({required ThemeData theme, required Color muted}) {
     final item = widget.item;
     return Row(
@@ -456,8 +567,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
         if (widget.shopDotColor != null) ...[
           Container(
             key: const ValueKey('shop-dot'),
-            width: 7,
-            height: 7,
+            width: AppSizes.shopDot,
+            height: AppSizes.shopDot,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               color: widget.shopDotColor,
@@ -480,42 +591,16 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
             ),
           ),
         ),
-        if (item.quantity > 1) ...[
+        // Hidden during selection, same as the reference's own "selected"
+        // state: "gains a drag handle, loses the quantity" -- how many to
+        // buy has nothing to do with picking rows for a bulk action.
+        if (!widget.selectionMode) ...[
           const SizedBox(width: 6),
           Text(
             'x${item.quantity}',
             style: AppTextStyles.caption.copyWith(color: muted),
           ),
         ],
-        if (item.hasNote) ...[
-          const SizedBox(width: 6),
-          Icon(Icons.sticky_note_2_outlined, size: 18, color: muted),
-        ],
-      ],
-    );
-  }
-
-  /// The edit button, plus the drag handle when [ItemTile.canReorder].
-  Widget _buildTrailingSlot(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          onPressed: widget.onEdit,
-          icon: const Icon(Icons.edit_outlined),
-          tooltip: widget.t.common.save,
-        ),
-        if (widget.canReorder)
-          ReorderableDragStartListener(
-            index: widget.index,
-            child: Padding(
-              padding: const EdgeInsets.only(left: 4, right: 4),
-              child: Icon(
-                Icons.drag_handle,
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -556,6 +641,60 @@ class _SelectionCircle extends StatelessWidget {
       child: selected
           ? const Icon(Icons.check, size: 14, color: Colors.white)
           : null,
+    );
+  }
+}
+
+/// The row's own checked state, drawn as CheckCircle (Component Library
+/// §02): a plain 22px outline until [fill] moves, then a solid disc scales
+/// in underneath the outline and a tick fades in "behind" it.
+///
+/// Filled from `colorScheme.primary`, not [ItemTile.shopDotColor] -- the dot
+/// beside the name is *this item's own* shop; the fill is the *active tab's*
+/// colour (ink on "All", the shop's colour inside a tab wrapped in
+/// `AppTheme.forShop`), and the two can differ, in search results spanning
+/// every shop above all. The scoped theme from decisions #73 is what makes
+/// reading it straight off [Theme.of] correct here.
+class _CheckCircle extends AnimatedWidget {
+  const _CheckCircle({required Animation<double> fill}) : super(listenable: fill);
+
+  @override
+  Widget build(BuildContext context) {
+    final fill = (listenable as Animation<double>).value;
+    final theme = Theme.of(context);
+    final primary = theme.colorScheme.primary;
+    final outline = theme.colorScheme.outline;
+
+    return SizedBox(
+      width: 22,
+      height: 22,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: outline, width: 1.5),
+            ),
+          ),
+          if (fill > 0)
+            Transform.scale(
+              scale: fill,
+              child: DecoratedBox(
+                decoration: BoxDecoration(shape: BoxShape.circle, color: primary),
+                child: const SizedBox(width: 22, height: 22),
+              ),
+            ),
+          if (fill > 0.3)
+            Opacity(
+              // The tick fades in over the fill's own last 70% of travel --
+              // "80ms behind the fill" (§02), approximated from the same
+              // progress rather than a second controller for 80ms of it.
+              opacity: ((fill - 0.3) / 0.7).clamp(0.0, 1.0),
+              child: const Icon(Icons.check, size: 14, color: Colors.white),
+            ),
+        ],
+      ),
     );
   }
 }
