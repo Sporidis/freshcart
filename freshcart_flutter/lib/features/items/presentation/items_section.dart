@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
@@ -413,8 +414,16 @@ class _ItemList extends ConsumerWidget {
         // (§10, its own gesture) -- a dedicated handle sidesteps the clash
         // instead of overloading one gesture with two meanings.
         buildDefaultDragHandles: false,
-        onReorderStart: (_) => unawaited(HapticFeedback.selectionClick()),
-        onReorderEnd: (_) => unawaited(HapticFeedback.lightImpact()),
+        onReorderStart: (_) {
+          if (ref.read(hapticsControllerProvider).value ?? true) {
+            unawaited(HapticFeedback.selectionClick());
+          }
+        },
+        onReorderEnd: (_) {
+          if (ref.read(hapticsControllerProvider).value ?? true) {
+            unawaited(HapticFeedback.lightImpact());
+          }
+        },
         onReorderItem: handleReorder,
         // Elevation 8, scale 1.03, opacity 95% (§10). `animation` is driven
         // by ReorderableListView's own pickup/drop transition, so this

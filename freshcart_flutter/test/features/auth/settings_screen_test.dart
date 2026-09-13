@@ -89,4 +89,82 @@ void main() {
 
     expect(auth.signOutCalls, 1);
   });
+
+  group('Preferences', () {
+    Future<void> scrollToPreferences(WidgetTester tester) async {
+      await tester.drag(find.byType(ListView), const Offset(0, -600));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'choosing Dark from the Appearance dialog persists the choice',
+      (tester) async {
+        await pump(tester);
+        await scrollToPreferences(tester);
+
+        await tester.tap(find.text('Appearance'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Dark'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Dark'), findsOneWidget);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getString('appearance_mode'), 'dark');
+      },
+    );
+
+    testWidgets(
+      'larger list text is off by default and persists once toggled',
+      (tester) async {
+        await pump(tester);
+        await scrollToPreferences(tester);
+
+        final tile = find.widgetWithText(SwitchListTile, 'Larger list text');
+        expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+
+        await tester.tap(tile);
+        await tester.pumpAndSettle();
+
+        expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getBool('large_list_text'), isTrue);
+      },
+    );
+
+    testWidgets(
+      'haptics is on by default -- matching every call site\'s current '
+      'unconditional behaviour -- and persists once turned off',
+      (tester) async {
+        await pump(tester);
+        await scrollToPreferences(tester);
+
+        final tile = find.widgetWithText(SwitchListTile, 'Haptics');
+        expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+
+        await tester.tap(tile);
+        await tester.pumpAndSettle();
+
+        expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+        final prefs = await SharedPreferences.getInstance();
+        expect(prefs.getBool('haptics_enabled'), isFalse);
+      },
+    );
+
+    testWidgets(
+      'reduce motion reports the OS status as read-only text, not a switch',
+      (tester) async {
+        await pump(tester);
+        await scrollToPreferences(tester);
+
+        final row = find.widgetWithText(ListTile, 'Reduce motion');
+        expect(row, findsOneWidget);
+        expect(tester.widget(row), isNot(isA<SwitchListTile>()));
+        expect(
+          find.descendant(of: row, matching: find.byType(Switch)),
+          findsNothing,
+        );
+        expect(find.text('Off'), findsOneWidget);
+      },
+    );
+  });
 }

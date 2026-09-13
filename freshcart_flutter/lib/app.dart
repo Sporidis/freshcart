@@ -5,6 +5,12 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
+import 'package:freshcart_flutter/core/theme/large_text_provider.dart';
+
+/// The largest text scale "Larger list text" applies, deliberately modest —
+/// the design's own note is "easier to read at arm's length," not a full
+/// accessibility text-scale system (`docs/design-gap-plan.md` §7).
+const _largeTextScale = TextScaler.linear(1.15);
 
 /// The FreshCart application root.
 ///
@@ -24,7 +30,14 @@ class FreshCartApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appearance = ref.watch(appearanceControllerProvider);
+    // Defaults to system/off while each persisted choice is still loading
+    // (first frame only — shared_preferences resolves fast, and both
+    // defaults are exactly what an unset preference should behave like
+    // anyway).
+    final themeMode =
+        ref.watch(appearanceControllerProvider).value?.themeMode ??
+        ThemeMode.system;
+    final largeText = ref.watch(largeTextControllerProvider).value ?? false;
     final t = ref.watch(translationsProvider);
 
     return MaterialApp.router(
@@ -32,7 +45,7 @@ class FreshCartApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(AppTheme.brandSeed),
       darkTheme: AppTheme.dark(AppTheme.brandSeed),
-      themeMode: appearance.themeMode,
+      themeMode: themeMode,
       routerConfig: ref.watch(appRouterProvider),
       builder: (context, child) => AnimatedTheme(
         data: Theme.of(context),
@@ -41,7 +54,16 @@ class FreshCartApp extends ConsumerWidget {
         // strike-through already use.
         duration: AppMotion.durationFor(context, AppMotion.quick),
         curve: AppMotion.enter,
-        child: child ?? const SizedBox.shrink(),
+        child: MediaQuery(
+          // Overrides, rather than stacks onto, the ambient scaler — this is
+          // an explicit in-app preference, not an addition to whatever
+          // OS-level accessibility scaling the device already applies. Off
+          // leaves the ambient (OS) scaler untouched.
+          data: MediaQuery.of(context).copyWith(
+            textScaler: largeText ? _largeTextScale : null,
+          ),
+          child: child ?? const SizedBox.shrink(),
+        ),
       ),
     );
   }

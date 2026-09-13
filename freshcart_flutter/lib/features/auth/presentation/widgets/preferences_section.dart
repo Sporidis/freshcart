@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
+import 'package:freshcart_flutter/core/theme/large_text_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_dropdown_option.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_status_option.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_toggle_option.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -15,7 +19,10 @@ class PreferencesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appearance = ref.watch(appearanceControllerProvider);
+    final appearance =
+        ref.watch(appearanceControllerProvider).value ?? Appearance.system;
+    final largeText = ref.watch(largeTextControllerProvider).value ?? false;
+    final haptics = ref.watch(hapticsControllerProvider).value ?? true;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -56,6 +63,16 @@ class PreferencesSection extends ConsumerWidget {
           onChanged: (value) =>
               ref.read(activeLocaleProvider.notifier).select(value),
         ),
+        SettingToggleOption(
+          title: t.settings.largerListText,
+          value: largeText,
+          onChanged: (value) =>
+              ref.read(largeTextControllerProvider.notifier).select(value),
+        ),
+        SettingStatusOption(
+          title: t.settings.reduceMotion,
+          status: AppMotion.reduced(context) ? t.settings.on : t.settings.off,
+        ),
         // Notifications: not a row here yet. The design wants four push
         // toggles plus per-list mute, one of which needs a scheduled local
         // notification and its own new dependency — real work, not styling,
@@ -70,8 +87,9 @@ class PreferencesSection extends ConsumerWidget {
         // would be the wrong shape to ship even temporarily.
         SettingToggleOption(
           title: t.settings.haptics,
-          value: true,
-          onChanged: (_) {},
+          value: haptics,
+          onChanged: (value) =>
+              ref.read(hapticsControllerProvider.notifier).select(value),
         ),
       ],
     );
