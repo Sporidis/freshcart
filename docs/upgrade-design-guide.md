@@ -108,12 +108,13 @@ to add fake server timestamps.
 whole list becoming fully checked (the same moment the completion celebration
 already detects), and the clear is silent — no card, no prompt.
 
-List mute persistence already exists on the server, but Flutter cannot currently
-read it back to initialise the settings control. Add the repository read path.
+**List mute — ✅ built, decisions #80 (phase 1).** `PushPort.isListMuted` reads
+it back now; `NotificationsScreen`'s "Per list" section is the settings control.
+
 The four global notification choices, including reminder schedule, still need a
-user preference record and API. Scheduled reminders additionally need local
-notification scheduling, timezone handling, permission, and cancellation on
-disable/sign-out.
+user preference record and API (decisions #80, phases 2–4). Scheduled reminders
+additionally need local notification scheduling, timezone handling, permission,
+and cancellation on disable/sign-out.
 
 ### Missing query or derived data
 
@@ -273,10 +274,11 @@ it actually started — corrected below rather than left stale.
   wired for real.
 - **Drawer — ✅ built, decisions #65, #78.** Remaining count, member avatars,
   and inline New list / Join a list rows all ship.
-- **Notifications:** still not built — add push preferences, per-list mute, and
-  scheduled local reminders as a separately scoped dependency/permission task.
-  The only piece of Priority 2 left, and the only one needing a new
-  dependency.
+- **Notifications — 🟡 phase 1 of 4 built, decision #80.** Per-list mute UI
+  ships (`NotificationsScreen`, reached from a new Settings row). Remaining:
+  the three gateable push toggles and their triggers, the permission-rationale
+  sheet, and scheduled local reminders — the last needs a new dependency
+  (`flutter_local_notifications`) and its own permission flow.
 
 ## Suggested implementation order
 

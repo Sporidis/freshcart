@@ -27,7 +27,7 @@ behaviour*, not new visual language.
 | Settings: 4-group restructure | Medium | ✅ Built — Profile, Lists & shops, Preferences, About |
 | Edit profile: user-chosen avatar colour | Small–Medium | ✅ Built — domain field, `ProfileService`, swatch picker on `EditProfileScreen` |
 | Appearance screen (theme mode, larger text, reduce-motion status) | Medium | ✅ Built (inline in Preferences, not a separate screen — nothing in the design requires one). Theme mode is also now persisted; it wasn't before. |
-| Notifications preferences (4 push toggles + per-list mute) | Large | Not built — one item needs local scheduled notifications, a new dependency |
+| Notifications preferences (4 push toggles + per-list mute) | Large | 🟡 Phase 1 of 4 built (per-list mute), decision #80 — largest remaining piece is the local scheduled reminder (phase 4, new dependency). |
 | List settings screen (replaces Household; rename, members, per-list behaviour, shops, leave/delete) | Medium | ✅ Fully built — decisions #69, #79. |
 
 ## Decisions
@@ -186,24 +186,31 @@ removed outright, the capability here already existed and worked, so the fix was
 toggle for real (a new `HapticsController`, default on to match every site's existing behaviour,
 read at each call site) rather than delete it. See decisions #76.
 
-## 8. Notifications preferences
+## 8. Notifications preferences — four phases, decision #80; phase 1 (per-list mute) built
 
-Four named push toggles plus per-list mute:
+Four named push toggles plus per-list mute. Read against the actual code (not just this doc's own
+summary of itself) before building, decision #80 corrected two things below: per-list mute already
+worked end to end server-side (only the client read-back was missing), and "someone joins" has no
+trigger at all — it doesn't already have "some shape of" one the way item-adds does.
 
-- **"Someone adds an item"** (batched) and **"Someone joins a list"** — both map onto push
-  triggers the server already has some shape of (decisions #37–#39); this is mostly exposing
-  existing capability as a per-user setting rather than building new delivery.
-- **"A list is finished"** — a new push trigger (server-side: detect "last item just got
-  checked" and fire), not currently sent.
-- **"Shopping reminder", "Saturdays at 10:00"** — this is a *scheduled local notification*, a
-  fundamentally different mechanism from the other three (which are all server-push): it needs
-  to fire from the device on a schedule the user sets, whether or not the app or even the network
-  is reachable at the time. Needs a local-notification-scheduling package (e.g.
-  `flutter_local_notifications`) — **a new dependency**, and its own platform permission flow on
-  iOS/Android, distinct from the FCM permission already requested for push.
-- **Per-list mute** — a small persisted per-user-per-list boolean. Natural home: alongside list
-  membership (`ListMember`), or a lightweight preferences table keyed by user+list — needs
-  a small domain/server addition either way, not just client-side state.
+- ~~**Per-list mute**~~ — ✅ built, decision #80 (phase 1). `PushPort.isListMuted` (the missing
+  read half), `ListMuteController`, and a new `NotificationsScreen` reached from Settings, showing
+  only the mockup's "Per list" section for now.
+- **"Someone adds an item"** (batched) and **"Someone joins a list"** — phase 2. The first is
+  mostly exposing an existing trigger as a per-user setting; the second needs a genuinely new one,
+  since `ListService.join` never calls `NotificationService.enqueue` today.
+- **"A list is finished"** — phase 2. A new push trigger (server-side: detect "last item just got
+  checked" and fire, immediately, not batched per the design's own copy), not currently sent.
+- **"Shopping reminder", "Saturdays at 10:00"** — phase 4, last. A *fixed*, non-configurable
+  schedule (confirmed against the design mockup, not assumed) — a scheduled local notification, a
+  fundamentally different mechanism from the other three (which are all server-push): it needs to
+  fire from the device on a schedule, whether or not the app or even the network is reachable at
+  the time. Needs a local-notification-scheduling package (`flutter_local_notifications`) — **a
+  new dependency**, and its own platform permission flow on iOS/Android, distinct from the FCM
+  permission already requested for push.
+- **Notification permission rationale** (Flow 13) — phase 3, not in the design's original
+  four-toggle enumeration but a real, separately-designed screen: a sheet shown before the OS
+  permission prompt, with an "Open Settings" deep-link if permission was already denied.
 
 ## 9. List settings screen — ✅ fully built, decisions #69, #79
 
@@ -236,9 +243,9 @@ up the Appearance screen is resolved — skipped — so nothing here is still bl
 7. ~~**Settings restructure** (§5)~~ — ✅ built.
 8. ~~**Appearance screen** (§7)~~ — ✅ built, decisions #76 (inline in Preferences, plus a
    pre-existing persistence bug and a decorative Haptics toggle found and fixed alongside it).
-9. **Notifications preferences** (§8) — the largest remaining piece, and the only one needing a
-   new dependency (local scheduled notifications) — do this last, and possibly split "list
-   finished" push + per-list mute from the local-notification scheduler as two separate phases.
+9. **Notifications preferences** (§8) — 🟡 phase 1 of 4 built, decision #80 (per-list mute UI).
+   Phases 2–4 (the three gateable push toggles and their triggers; the permission-rationale sheet;
+   the scheduled local reminder, the only piece needing a new dependency) remain, in that order.
 
 Every item in this plan is built except §8, Notifications preferences — the suggested build
 order's own item 9, deliberately last since it is the largest single piece and the only one

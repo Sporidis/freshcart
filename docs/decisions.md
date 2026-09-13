@@ -51,7 +51,7 @@ scripting, Melos may return.
 ## 6. Serverpod-native auth, anonymous-first, provider-linked
 
 **Decision:** one stable `authUserId` from an anonymous start; Google/email added later as
-*linked* providers behind an `AuthPort`. **Why:** users get value with zero sign-up friction,
+_linked_ providers behind an `AuthPort`. **Why:** users get value with zero sign-up friction,
 and upgrading later preserves all data with no migration because identity never changes;
 the port makes adding a provider a swap. **Rejected:** forcing sign-up up front (friction on a
 casual shopping app); Firebase Auth for identity (would split identity across two systems).
@@ -97,7 +97,7 @@ semantics, conflict resolution). **Rejected:** offline-first with drift + CRDT f
 ## 11. Jaspr for the marketing site, Flutter for everything behind login
 
 **Decision:** Jaspr renders the public landing page; Flutter (incl. the installable PWA) is the
-app. **Why:** Flutter Web is for web *apps*, not content sites — it's poor for SEO and semantic
+app. **Why:** Flutter Web is for web _apps_, not content sites — it's poor for SEO and semantic
 HTML; Jaspr emits real HTML/CSS with SSR/SSG, which is exactly what a marketing/SEO surface
 needs. The app lives behind login where SEO is irrelevant. **Rejected:** one Flutter Web build
 for both (bad SEO landing page); a non-Dart site (loses code/type reuse and adds a toolchain).
@@ -106,7 +106,7 @@ for both (bad SEO landing page); a non-Dart site (loses code/type reuse and adds
 ## 12. No `json_serializable` in the domain package
 
 **Decision:** `freshcart_domain` depends on `freezed_annotation` and `meta` only; JSON
-serialization is not available there. **Why:** serialization is a *wire* concern. The domain
+serialization is not available there. **Why:** serialization is a _wire_ concern. The domain
 describes what a `ShoppingItem` **is** and what invariants hold; how it is encoded for
 transport belongs to the DTO layer, which Serverpod already generates. Letting the domain
 carry `toJson`/`fromJson` invites entities to be shaped by wire convenience — exactly the
@@ -115,7 +115,7 @@ domain, as the top-level stack table suggests (convenient, but it re-couples the
 transport concern and the generated DTOs make it redundant). **Trade-off:** if the domain
 ever needs local persistence, the codec goes in that adapter, not on the entity.
 
-## 13. `freshcart_web` sits *outside* the pub workspace
+## 13. `freshcart_web` sits _outside_ the pub workspace
 
 **Decision:** the Jaspr site keeps its own `pubspec.lock` and resolves independently; the
 workspace covers the five Dart/Flutter members only. **Why:** forced by a hard constraint —
@@ -145,7 +145,7 @@ run `build_runner` after a fresh clone — documented in the README and enforced
 ## 15. Local dev credentials committed, real secrets never
 
 **Decision:** `config/passwords.yaml` is gitignored; `config/passwords.example.yaml` is tracked
-and carries the *development* and *test* values verbatim while `staging`/`production` hold
+and carries the _development_ and _test_ values verbatim while `staging`/`production` hold
 placeholders. **Why:** the dev/test values are throwaway credentials for a localhost Docker
 container and must match `docker-compose.yaml`'s `POSTGRES_PASSWORD` for a clone to boot at
 all — hiding them buys no security and costs every fresh clone a debugging session. The
@@ -160,7 +160,7 @@ in the repo — acceptable because it is bound to a local container and grants n
 **Decision:** `Result<T>` is a plain Dart `sealed class` with `fold`/`map`/`flatMap` and
 hand-written `==`. `Failure` and every entity stay on `freezed`, as `architecture.md`
 specifies. **Why:** golden rule 7 — reach for a pattern only when it earns its keep. What
-`freezed` generates is `copyWith`, `==`, `hashCode` and `toString`. For an *entity* that is
+`freezed` generates is `copyWith`, `==`, `hashCode` and `toString`. For an _entity_ that is
 real value: optimistic-UI rollback needs `copyWith`, and Riverpod needs `==` to decide
 whether to rebuild. For `Result` it is close to nothing — `copyWith` on an `Ok` is
 meaningless, and the `==` is four lines. Meanwhile the things `Result` genuinely wants —
@@ -169,19 +169,19 @@ anyway. Since Dart 3 already gives exhaustive `switch` over any `sealed` type, t
 was contributing nothing to the most-used type in the codebase. **Rejected:** `@freezed
 sealed class Result<T>` as written in `architecture.md` (consistent, but adds a generated
 file and a codegen dependency to the one type every layer imports). **Trade-off:** two
-idioms in one package instead of one. The rule that keeps it principled: *codegen where
-data-class boilerplate pays, plain Dart where the language already suffices.*
+idioms in one package instead of one. The rule that keeps it principled: _codegen where
+data-class boilerplate pays, plain Dart where the language already suffices._
 
 ## 17. Ids are extension types, not wrapper classes
 
 **Decision:** `ListId`, `ItemId`, `ShopId`, `UserId`, plus `JoinCode` and `HexColor`, are
 Dart `extension type`s over `String`/`int`. **Why:** they give the type safety the value
 objects exist for — the compiler refuses to pass an `ItemId` where a `ListId` belongs — at
-genuinely zero runtime cost, because an extension type *is* its representation once
+genuinely zero runtime cost, because an extension type _is_ its representation once
 compiled. A wrapper class would allocate an object per id, and a list screen holds hundreds.
 Validation still happens: the unnamed constructor is a factory that throws `ArgumentError`
 on a malformed id (a programmer error — the server never issues one), while `JoinCode.parse`
-and `HexColor.parse` return a `Result` because those *are* fed from user input.
+and `HexColor.parse` return a `Result` because those _are_ fed from user input.
 **Rejected:** `freezed` wrapper classes (allocation per id, a generated file per value
 object, for no added safety); raw `String` ids (the bug class these exist to prevent).
 **Trade-off:** extension types are erased at runtime, so `is ListId` and runtime reflection
@@ -191,7 +191,7 @@ one decision to revisit.
 ## 18. `Failure.validation(field, message)` added to the union
 
 **Decision:** a sixth `Failure` case beyond the five in `architecture.md`. **Why:** value
-objects and use cases reject input *before* any network call — a malformed join code, a
+objects and use cases reject input _before_ any network call — a malformed join code, a
 blank item name, a quantity below one — and none of the existing cases describe that.
 Folding it into `unexpected` would have lost the field name the UI needs to mark the right
 form field. **Trade-off:** one more case for every exhaustive `switch` to handle, which is
@@ -200,7 +200,7 @@ the point of an exhaustive switch.
 ## 19. Shops are scoped to a list, not to a user
 
 **Decision:** `Shop` carries a `listId`; every member of a list sees the same shop set.
-**Why:** shops exist so items can be tagged and filtered *collaboratively*. If shops belonged
+**Why:** shops exist so items can be tagged and filtered _collaboratively_. If shops belonged
 to a user, an item Mom tagged "Colruyt" would reference a shop nobody else on the list owns —
 the tag would be meaningless to everyone but her, and the theme-follows-shop behaviour would
 differ per viewer on the same screen. **Rejected:** user-owned shops (avoids re-creating
@@ -238,7 +238,7 @@ pure — which the Phase 1 purity check already enforces.
 **Decision:** `ItemEndpoint.save` takes the whole item; the server compares the incoming
 `updatedAt` against the stored row and throws `EditConflictException` if they differ, then
 overwrites `listId`, `addedBy` and `createdAt` from the stored row. **Why:** two people
-editing one shopping list at once is this app's *normal* case, not an edge case, so a
+editing one shopping list at once is this app's _normal_ case, not an edge case, so a
 last-write-wins update would routinely discard someone's change. Re-imposing the server-owned
 fields means a client cannot move an item to another list or rewrite its provenance by
 tampering with a field — a whole-entity save is convenient, not a licence. **Rejected:**
@@ -251,10 +251,9 @@ is rejected rather than merged; the client re-reads and re-applies.
 
 **Not a decision — a constraint worth recording.** An endpoint parameter written as
 `int quantity = 1` is generated into the client as `required int quantity`: the default is
-silently dropped, and only *nullability* makes a generated parameter optional. Optional
+silently dropped, and only _nullability_ makes a generated parameter optional. Optional
 endpoint parameters are therefore declared `int? quantity` with the default applied in the
 endpoint body. Worth knowing before designing any endpoint signature.
-
 
 ## 24. `freshcart_l10n` generates plain Dart, not Flutter-integrated slang
 
@@ -288,8 +287,8 @@ translations built by hand need the resolver passed to `buildSync`, which is exa
 
 **Decision:** every controller's state is `AsyncOutcome<T>` — a typedef for
 `AsyncValue<Result<T>>`. **Why:** the two wrappers mean different things and collapsing them
-loses information. `AsyncValue` carries *loading*, a fact about the request. `Result` carries
-*expected failure* — offline, not found, conflict — which `CLAUDE.md` requires to travel as a
+loses information. `AsyncValue` carries _loading_, a fact about the request. `Result` carries
+_expected failure_ — offline, not found, conflict — which `CLAUDE.md` requires to travel as a
 value rather than a thrown exception. Keeping both means `AsyncError` now has a precise
 meaning: something genuinely unexpected happened, i.e. a bug. `AsyncData(Err(...))` means the
 operation completed and failed in a way the UI is expected to handle. **Rejected:** throwing
@@ -322,7 +321,7 @@ first frame. **Why:** the build plan puts auth at phase 10, but every FreshCart 
 `requireLogin`, so without a session the very first list fetch returns unauthorized — phases 5
 and 6 would have passed their tests against fakes while being non-functional against the real
 server. `architecture.md` also says the stable `authUserId` exists "from day one". What phase
-10 actually adds is *linking* Google/email to that existing id, which is a genuinely separate
+10 actually adds is _linking_ Google/email to that existing id, which is a genuinely separate
 problem. **Trade-off:** anonymous accounts can be created by anyone, so the default per-IP
 rate limit on `AnonymousIdpConfig` is kept; app attestation via
 `onBeforeAnonymousAccountCreated` is available if abuse ever appears.
@@ -344,7 +343,7 @@ deliberate act the user is already looking at.
 **Decision:** every mutating controller method returns `Failure?`, and the screen shows a
 snackbar when it is non-null. **Why:** a silent rollback is indistinguishable from a bug — the
 user sees a row tick and then untick itself for no stated reason, and concludes the app is
-broken. Since `Failure.conflict()` is an *expected* outcome on a shared list rather than an
+broken. Since `Failure.conflict()` is an _expected_ outcome on a shared list rather than an
 edge case, this happens often enough to matter. **Rejected:** folding the failure into
 controller state (it is transient, not state) and swallowing it (dishonest).
 
@@ -353,8 +352,8 @@ controller state (it is transient, not state) and swallowing it (dishonest).
 **Decision:** `ItemService.save` sets `checkedBy`/`checkedAt` from the session, ignoring
 whatever the client sent. **Why:** the whole-entity save is a convenience, not a licence. A
 member could otherwise attribute their tick to someone else, and on a shared list "checked off
-by" is the one label that has to be trustworthy. The client still decides *whether* an item is
-checked; the server decides *who* and *when*. Covered by a test that has one user tick an item
+by" is the one label that has to be trustworthy. The client still decides _whether_ an item is
+checked; the server decides _who_ and _when_. Covered by a test that has one user tick an item
 while claiming to be another.
 
 ## 32. The shop filter is one piece of state driving both filtering and theming
@@ -362,7 +361,7 @@ while claiming to be another.
 **Decision:** `shopFilterProvider(listId)` holds the selected `ShopId?`; the visible items and
 the app's seed colour are both derived from it, and `activeShopColorProvider` derives the
 colour rather than storing it. **Why:** the headline behaviour is that picking a shop narrows
-the list *and* re-themes the app. Storing those separately would let them drift — a filter
+the list _and_ re-themes the app. Storing those separately would let them drift — a filter
 showing Colruyt's items under the bakery's colour is exactly the sort of bug that survives
 review because each half looks right on its own. **Trade-off:** the theme is global while the
 filter belongs to whichever list is open, so the detail screen bridges the two with a
@@ -372,7 +371,7 @@ dumb and independently testable.
 
 ## 33. The domain decides what a filter matches, not the widget
 
-**Decision:** filtering calls `ShoppingItem.matchesShopFilter`, which treats an *untagged* item
+**Decision:** filtering calls `ShoppingItem.matchesShopFilter`, which treats an _untagged_ item
 as matching every filter. **Why:** the alternative — hiding untagged items when a shop is
 selected — silently loses shopping. Someone adds "batteries" without tagging it, filters to
 Colruyt, and the item is simply gone. Because the rule lives on the entity it has a unit test
@@ -394,7 +393,7 @@ the stream re-seeds with a full read on every (re)subscribe.
 **Decision:** `ItemsController` keeps a `_pending` map of optimistic values for writes that
 have not been answered, and re-applies it to every snapshot arriving from the stream.
 **Why:** this is where the two mechanisms collide. While one user's write is in flight, an
-unrelated edit by *someone else* triggers a snapshot that still carries the server's older
+unrelated edit by _someone else_ triggers a snapshot that still carries the server's older
 copy of the row being edited — so the tick would visibly undo itself and then reappear a
 moment later. Without the overlay, the more collaborative the list, the more the app flickers,
 which is exactly backwards. **Rejected:** ignoring snapshots while any write is pending (drops
@@ -406,18 +405,18 @@ a third party renames another.
 
 **Decision:** `watch` is implemented by `ListRealtimeSource`, a second channel of the same
 shape as the item one, so a rename or a new member joining reaches an open detail screen
-without a refresh. **Why:** phase 8 originally scoped live sync to *item* edits — the
+without a refresh. **Why:** phase 8 originally scoped live sync to _item_ edits — the
 collaboration that matters in a shop — and `watch` threw `UnimplementedError` so the omission
 was loud rather than silent. The household work made the gap user-visible: sharing a list is
 pointless if the person who shared it cannot see the other member arrive. **Trade-off:** two
 streams per open list instead of one. Acceptable — they are per-screen and closed with it.
 
-*Historical note:* decision entries are not rewritten when they are superseded, but this one
+_Historical note:_ decision entries are not rewritten when they are superseded, but this one
 asserted the opposite of the current behaviour, which is worse than no entry at all.
 
 ## 37. Push delivery sits behind a `PushSender` on the server and a `PushTokenSource` in the app
 
-**Decision:** the server's `NotificationService` decides *who* to notify and *what to say*,
+**Decision:** the server's `NotificationService` decides _who_ to notify and _what to say_,
 then hands a `PushMessage` to a `PushSender`; the only implementation today is
 `LoggingPushSender`. In the app, the one thing Firebase would be responsible for — producing a
 token string — is isolated behind `PushTokenSource`, whose only implementation today is
@@ -434,7 +433,7 @@ test suite.
 on the list; the flush summarises the batch into one push. **Why:** adding five things to a
 list in a row is one action from the user's point of view, and five buzzes from the phone's.
 The key is on the list, so a change arriving inside the window joins the existing batch rather
-than scheduling a competing flush. The batch is deleted *before* sending, so a delivery failure
+than scheduling a competing flush. The batch is deleted _before_ sending, so a delivery failure
 cannot leave a batch that replays the same notification forever. Removals alone produce no
 notification — not worth waking a phone for. **Note:** `futureCallWithDelay` is marked
 deprecated in Serverpod 3.4.13 in favour of "generated future call methods", but running
@@ -444,7 +443,7 @@ version. The deprecated call is the only working API here, and the suppression s
 ## 39. Account linking is implemented on the IdpAdmin primitives, not waited for
 
 **Decision:** `AccountLinkService.linkEmail` calls
-`EmailIdpAdmin.createEmailAuthentication(authUserId:)` against the caller's *existing* id.
+`EmailIdpAdmin.createEmailAuthentication(authUserId:)` against the caller's _existing_ id.
 **Why:** Serverpod 3.4's anonymous provider ships without first-class account linking — its own
 changelog says the feature "can not be completely used yet due to the missing support for
 account linking". But `decisions.md` #6 stakes the entire auth design on the claim that
@@ -498,7 +497,7 @@ question "what was the user doing?" at the place that knows the answer.
 **Decision:** `ShoppingItem.validateName`, `.validateQuantity`, `ShoppingList.validateName`,
 `Shop.validateName` and `AuthUser.validateDisplayName` return `Result<T>`; there is no
 `ItemName` or `ListName` wrapper type. **Why:** a value object that validates in its
-constructor has one fatal property here — it makes *reading* fallible. Server data flows
+constructor has one fatal property here — it makes _reading_ fallible. Server data flows
 through the mappers in `data/`, and a name that the server accepted under an older rule would
 crash the mapper rather than render. Constructors cannot return a `Result`, so the failure has
 nowhere to go but an exception, across the exact boundary golden rule "no throwing" forbids.
@@ -526,15 +525,15 @@ watcher rebuilds it from scratch anyway.
 (with a destination validated to be on the same list) or `deleteItems` — and the whole
 operation runs inside `session.db.transaction`. **Why:** the schema could answer this on its
 own with `onDelete`, and either answer would be wrong for somebody: cascade quietly destroys a
-shopping list, `SetNull` quietly untags it. Deleting a *shop* and deleting *the things you
-still need to buy* are different intentions, and only the user knows which one they mean. The
+shopping list, `SetNull` quietly untags it. Deleting a _shop_ and deleting _the things you
+still need to buy_ are different intentions, and only the user knows which one they mean. The
 UI therefore shows the item count and makes the choice explicit. **Trade-off:** three code
 paths and a modal instead of one `DELETE`. Bought by the fact that the destructive option is
 now deliberate rather than a side effect of a schema annotation.
 
 ## 46. Ownership transfer is one transaction; an owner cannot remove themselves
 
-**Decision:** `ListService.transferOwnership` swaps both member roles *and* the list's
+**Decision:** `ListService.transferOwnership` swaps both member roles _and_ the list's
 `ownerId` inside a single transaction, and `removeMember` refuses when the target is the caller
 or the owner. **Why:** the failure modes of a partial transfer are worse than the failure: a
 list with two owners, or with none and therefore no one who can ever delete or share it, is
@@ -561,7 +560,7 @@ out a hold that no longer means anything.
 `effectiveShopColor` resolves a shop's real colour against it. **Why:** the preview must retint
 things that are not descendants of the colour picker — the app bar, the filter chips, the rows
 behind the modal barrier. Local state can only repaint the subtree it sits in, so the one
-widget the user is looking *past* would keep the old colour, which is precisely the thing the
+widget the user is looking _past_ would keep the old colour, which is precisely the thing the
 preview is for. **Trade-off:** state that must be cleared on dismiss, or a cancelled edit
 leaves the app tinted. `clear()` is called on every exit from the sheet, including the barrier
 tap.
@@ -586,7 +585,7 @@ hamburger opening a lists-switcher drawer, an eyebrow-plus-title stack, and an a
 opens Household — replacing the ad hoc `AppBar` and the in-page member/join-code expansion
 tile. The eyebrow reads `t.appName` ("FreshCart"), not the literal word the mockups show:
 that word is the prototype's own product name (it is also the splash screen's wordmark), so
-the faithful adaptation is *this app's* name in the same slot, not a copied string. **Why:**
+the faithful adaptation is _this app's_ name in the same slot, not a copied string. **Why:**
 the design draws this header on ten of its thirty-three screens, consistently, which is a
 stronger signal than any single one of them; the avatar-opens-Household mapping was the only
 reading that made sense of an avatar with no on-screen menu ever shown next to it. Household
@@ -642,20 +641,20 @@ specified.
 
 **Decision:** Long-press multi-select (`SelectionController`, per list) only arms on the open
 (unchecked) rows — `ItemTile` always renders out of selection mode for a row under the Done
-divider. There is no separate "selection mode active" flag: the mode *is* having a non-empty
+divider. There is no separate "selection mode active" flag: the mode _is_ having a non-empty
 selection, so deselecting the last row exits it the same way emptying it any other way would.
 The contextual bar's "Delete" calls a new `ItemEndpoint.removeMany`, which deletes exactly the
 selected ids from the list in one transaction — the same reasoning as #51's `clearChecked`:
 "delete these" is one promise covering the whole selection, so a loop of `remove` calls that
 can fail partway through would break it. **Why the scoping:** checked items already have their
 own bulk action (Clear checked, §12) and their own locked/settled treatment (drag-reorder
-excludes them the same way, per §10) — letting them into a *second* bulk-delete mechanism would
+excludes them the same way, per §10) — letting them into a _second_ bulk-delete mechanism would
 mean two overlapping ways to do roughly the same thing, with no rule for which wins.
 
 **Trade-off, stated rather than quietly worked around:** the contextual bar's "Move" action
 (§10: "3 selected · Move · Delete · ✕") is not built. Reassigning an item's shop has no UI
 anywhere in the app yet — not even the single-item editor exposes it — so "Move" is not a small
-addition here, it is the app's *first* shop-picker, and building one just to unblock this one
+addition here, it is the app's _first_ shop-picker, and building one just to unblock this one
 toolbar button is its own piece of work with its own design questions (a sheet? inline chips?
 does it reuse for the single-item case too?), not a corner to cut silently inside this feature.
 
@@ -680,8 +679,8 @@ job here (§10: enter multi-select). Rather than let two features fight over one
 silently break the other, dragging goes through `buildDefaultDragHandles: false` plus a
 dedicated `Icons.drag_handle` wrapped in `ReorderableDragStartListener`, next to the edit icon.
 This is a real departure from the mockup, which shows no permanent handle (only a grip glyph
-appearing on the row *already* mid-drag) — but the design's own vocabulary already uses an
-explicit handle for the *other* reorder feature (reordering shops, §13), so this borrows an
+appearing on the row _already_ mid-drag) — but the design's own vocabulary already uses an
+explicit handle for the _other_ reorder feature (reordering shops, §13), so this borrows an
 established pattern rather than inventing one. Scoped to a single shop tab and to open rows only
 — the same two exclusions §10 states for reordering and multi-select respectively — and disabled
 entirely while a selection is active, so the two gestures never have to be told apart on the
@@ -720,10 +719,10 @@ plainer than growing the other one's branching further.
   (drawer → Recently bought) — not an extension of anything already built, so it did not belong
   bundled into this pass.
 - **Offline & sync (§18)** is the biggest single gap left in the whole spec, and deliberately not
-  started here. Its own text says why it is out of scope for a quiet addition: *"Firestore's
-  local cache does the work; the UI's job is honesty without anxiety."* This app is Serverpod
+  started here. Its own text says why it is out of scope for a quiet addition: _"Firestore's
+  local cache does the work; the UI's job is honesty without anxiety."_ This app is Serverpod
   over Postgres, not Firestore — there is no local-cache-first sync engine underneath to be
-  honest *about*. Building genuine offline support (edit while offline, sync on reconnect, a
+  honest _about_. Building genuine offline support (edit while offline, sync on reconnect, a
   "not yet confirmed" mark on unsynced rows) means designing local persistence, a write queue
   and reconciliation from scratch, which is an architecture decision on its own footing, not
   a UI pass over existing plumbing the way search and the three gesture flows were.
@@ -743,7 +742,7 @@ somewhere is a separate problem from whether the banner should keep interrupting
 
 **That somewhere is a new Settings screen** (`/settings`), reached from the drawer. Not
 list-scoped — linking an email is an account-wide fact, not a property of whichever list happens
-to be open — so it does not belong on Household (membership of *one* list) or buried in a list's
+to be open — so it does not belong on Household (membership of _one_ list) or buried in a list's
 overflow menu. `LinkEmailDialog` is now public and opened through one shared
 `showLinkEmailDialog`, so the nudge and Settings cannot drift into two different dialogs for the
 same action.
@@ -777,7 +776,7 @@ requirement** ("add items fast... don't have to click too much"): typing a name 
 Return commits immediately with quantity 1 and no shop, exactly like the old bar's onSubmit, and
 the field stays open and focused for the next item. Tapping the button once there is text is
 the only way to reach the new bottom sheet (`AddItemSheet`) — quantity and a shop, pre-filled
-with the typed name. Gating *every* add behind a sheet would have made the common case (rattling
+with the typed name. Gating _every_ add behind a sheet would have made the common case (rattling
 off several items) slower than the bar it replaced; this keeps the sheet as what was asked for
 (a deliberate path to more detail) without making it mandatory overhead on the fast one.
 
@@ -821,7 +820,7 @@ each one only makes sense against the others.
 
 **Splash is a real route (`/splash`), not a widget `main()` shows before `runApp`.** The old boot
 sequence awaited `AnonymousSessionBootstrap.ensureSignedIn` before calling `runApp` at all, so the
-*OS* launch image covered the wait, and `isNewIdentityProvider` was a plain bool pushed in through a
+_OS_ launch image covered the wait, and `isNewIdentityProvider` was a plain bool pushed in through a
 `ProviderContainer` override once the answer was already known. That cannot produce the design's own
 note on the Splash frame — "the mark is a Hero — it flies to the top-left of Welcome rather than
 cutting" — because a route that does not exist yet cannot animate into one that replaces it. Now
@@ -834,7 +833,7 @@ first frame's `ref.listen` even fires just never shows a second frame of it.
 **Welcome was rebuilt to the mockup, not kept as the from-scratch animated scene it had become** —
 a real, deliberate choice, not a default: the previous version (falling groceries into a basket,
 gradient blobs, a spinning wheel) was a legitimate creative take in the same spirit as decision #50's
-"adapted where it names the prototype," but this session's brief was to match the design *exactly*,
+"adapted where it names the prototype," but this session's brief was to match the design _exactly_,
 which that scene structurally could not do (different content, no top-left mark for the Hero to land
 on). Asked directly, rebuilding to the mockup was the answer, so the animation code
 (`welcome_screen_animations.dart`, `blob_background.dart`, `cart_painter.dart`,
@@ -852,7 +851,7 @@ this pass, despite the rest of the app running through `slang` for five locales 
 choice, now fixed with new `welcome` / `onboarding` / `splash` / `join` translation sections across
 all five `.i18n.json` files. `OnboardingStep` gained `invite`, matching the design's own Step 4
 ("Shopping with someone?"), which meant moving `OnboardingController.finish()` (now `submit()`) to
-fire on the *Shops → Invite* transition instead of at the wizard's end — Invite needs the real list's
+fire on the _Shops → Invite_ transition instead of at the wizard's end — Invite needs the real list's
 join code to show, so the list has to exist before that step renders. The one thing this could not
 inherit from the design's own click-through prototype: `submit()` is a real network round trip, so
 `Back` from Invite to Shops and pressing Continue again had to be guarded (`state.createdList != null`
@@ -893,7 +892,7 @@ piece of decision #60 that was deliberately left as a working placeholder.
 this simple rather than five hand-rolled `FocusNode`s: the design's whole interaction — type and the
 "cursor" hops forward, backspace on an empty box steps back and clears it, pasting a full code fills
 every box — is already exactly what happens to a plain string in one ordinary text field on delete or
-paste. There is no real per-box focus to hand off, only the *look* of five boxes. So one real
+paste. There is no real per-box focus to hand off, only the _look_ of five boxes. So one real
 `TextField`, fully transparent and sized over the whole row, does the actual editing (keeping the
 platform keyboard, paste and SMS-autofill suggestions working for free); five read-only boxes drawn
 underneath just reflect its text and highlight whichever box is next. Tested directly — typing,
@@ -911,13 +910,13 @@ be changed before saving.
 
 **The completion celebration (`CompletionCelebrationCard`) is built.** `AppRadii.celebration` and
 `AppMotion.celebrate`/`AppMotion.spring` had existed since early in the project, unused — this is
-what they were for. Shown when every item on the *whole list* is checked (not just the active shop
+what they were for. Shown when every item on the _whole list_ is checked (not just the active shop
 tab, matching the design's own `allDone` check), it offers "Keep list" (dismiss) and "Clear checked"
 (the same `ItemsController.clearChecked` the Done divider's own button already calls — not a second
 implementation of "clear everything checked"). The dismissal is provider state
 (`CelebrationDismissed`, family-keyed by list id), not widget state, for the same reason as the
 "recently checked" hold (#47): a rebuild must not forget it. It resets itself the moment the list
-stops being fully checked — an item added, unchecked, or cleared — so the *next* time the list is
+stops being fully checked — an item added, unchecked, or cleared — so the _next_ time the list is
 completed, the card shows again rather than staying silenced by one long-ago tap; verified with a
 test that dismisses, re-opens the list via a live update, completes it a second time, and checks the
 card is back. The spring entrance (`AnimationController.animateWith(SpringSimulation(...))`,
@@ -985,7 +984,7 @@ shape to forget the way an ad hoc boolean-plus-optional-fields shape would allow
 pre-fills the item's current shop into the same chip picker `.add` already has, so editing can now
 retag an item to a different shop. This is the first piece of decisions #53's deferred "Move"
 action to land — not the whole thing (there is still no bulk multi-select move), but the
-single-item case no longer has *no* way to do it at all.
+single-item case no longer has _no_ way to do it at all.
 
 **New title and button copy, traced from the same frame the unification note comes from:** "New
 product" / "Edit product" as the sheet's own heading (previously neither sheet had one), "Save"
@@ -1060,12 +1059,12 @@ functions, the same way every other call site in the app already worked. It comp
 inspection looked identical to the existing `ListsScreen` call sites. A widget test tapping
 through the actual flow — enter a name, tap Save — caught what inspection didn't: `Riverpod`
 throws `StateError: Using 'ref' when a widget is about to or has been unmounted is unsafe`,
-because the row's own `onTap` pops the drawer (unmounting `ListsDrawer`) *before* the dialog's
+because the row's own `onTap` pops the drawer (unmounting `ListsDrawer`) _before_ the dialog's
 `onSubmit` ever runs — sometimes seconds later, once someone actually finishes typing. A `ref`
-captured from a widget's `build` does not outlive that widget; a dialog opened *after* that widget
+captured from a widget's `build` does not outlive that widget; a dialog opened _after_ that widget
 closes needs something with its own lifecycle instead. Fixed by changing
 `showCreateListDialog`/`showJoinListDialog` to take a `ProviderContainer` rather than a
-`WidgetRef` — grabbed once via `ProviderScope.containerOf(context, listen: false)` *before* the
+`WidgetRef` — grabbed once via `ProviderScope.containerOf(context, listen: false)` _before_ the
 pop, at every call site (both of `ListsDrawer`'s new rows, and all four existing ones in
 `ListsScreen`, for consistency, though only the drawer's were ever actually unsafe). Worth calling
 out on its own: this is exactly the kind of bug `CLAUDE.md`'s "tests live beside the phase that
@@ -1078,8 +1077,8 @@ actually driving the interaction.
 effect, and its own doc comment said so — "no confetti or full-screen takeover" — as if that were
 a considered simplification. It wasn't recorded as one here, though, and re-reading the Motion &
 Interaction Spec's §09 ("Signature moment — completing the whole list") directly, it's explicit and
-fairly precise: *"400ms: Confetti, but restrained: 14–20 particles in the list's shop colours
-only, gravity fall, 1.4s, no repeat. Skip entirely if reduced-motion is on."* That's not an
+fairly precise: _"400ms: Confetti, but restrained: 14–20 particles in the list's shop colours
+only, gravity fall, 1.4s, no repeat. Skip entirely if reduced-motion is on."_ That's not an
 invitation to interpret loosely — the spec calls this "the one place the app is allowed to be
 theatrical," and then immediately hedges it with exact bounds. Skipping it was a quiet scope cut,
 not a design call, so it's fixed now rather than left as a permanent gap with no justification
@@ -1135,7 +1134,7 @@ that actually drives the widget through disposal.
 **Decision:** `/lists` (`ListsScreen`) rendered a plain `ListTile` per list under a generic
 `AppBar` — early scaffolding, and it showed. Checking the actual design (`Flow Screens.dc.html`,
 Flow 10) rather than assumption: there is no "all lists" screen in it at all. Its own words —
-*"The drawer answers 'which list?' and nothing else — switching is one tap from anywhere"* — and
+_"The drawer answers 'which list?' and nothing else — switching is one tap from anywhere"_ — and
 its drawer mockup already shows the complete list-switching UI (remaining counts, avatars,
 New list/Join a list/Manage shops/Settings), which decisions #65 had already built. `ListsScreen`
 was never actually part of the intended design; it just predated the drawer taking over its job
@@ -1143,7 +1142,7 @@ and was never revisited.
 
 **What's left at `/lists`, and why it isn't simply deleted:** the route is still real, because two
 things about it are. First, it's still the parent route for `/lists/:listId` and everything nested
-under it — removing the path would break every list detail URL. Second, one of its states *is* in
+under it — removing the path would break every list detail URL. Second, one of its states _is_ in
 the design: §11's "No lists yet" empty state, reachable only by deleting your last list. So
 `ListsScreen` now does exactly two things: while `listsControllerProvider` is still loading, and
 for that one genuine empty case. The instant there's at least one list, a `ref.listen` — the same
@@ -1153,7 +1152,7 @@ populated `ListView` branch this screen used to have is gone; there is no path l
 
 **A race worth naming, since it cost a debugging pass:** that `ref.listen` originally read
 `next.value` unconditionally. `ref.invalidateSelf()` (what every mutating method on
-`ListsController` calls after a successful write) deliberately keeps the *previous* value visible
+`ListsController` calls after a successful write) deliberately keeps the _previous_ value visible
 through `.value` while the refetch is in flight, so a list doesn't flash empty mid-reload. Deleting
 your only list therefore transitions through a loading state that still reports the old,
 now-stale, non-empty list — and an unguarded listener redirects on that stale value, straight back
@@ -1191,8 +1190,8 @@ mockup has "Manage lists" as a real row in Settings' "Lists & shops" group, sitt
 Members, Behaviour, Leave/Delete at the bottom "alone... with a rule above them"). The row is
 restored, now pointing at a real screen rather than the removed browser.
 
-**What the design leaves genuinely unspecified:** it shows the Settings *row* and, separately, the
-destination *screen*, but never mocks up what sits between them when there is more than one list
+**What the design leaves genuinely unspecified:** it shows the Settings _row_ and, separately, the
+destination _screen_, but never mocks up what sits between them when there is more than one list
 to choose from. Rather than invent a picker screen nothing in the design calls for, `ListSettingsScreen`
 is opened directly for `firstList` — the same convention `_ListsAndShopsSection` already uses for
 its sibling "Manage shops" and "Household" rows, both of which already treat "the first list" as
@@ -1229,7 +1228,7 @@ screen's own doc comment says so.
 **Decision:** `AppTheme._build` had a local `ink` variable meaning "whichever text colour suits
 this brightness" (white in dark mode, near-black in light) — correct for text, but three `on*`
 colour-scheme roles (`onPrimary`, `onSecondary`, `onTertiary`) reused that same local when the
-*neutral* theme (no active shop — the app's default state on most screens, since it only shifts to
+_neutral_ theme (no active shop — the app's default state on most screens, since it only shifts to
 a shop's colour while a shop tab is actually selected) needed the fixed `AppColors.ink` instead.
 In dark mode this made `primary == onPrimary` (both white) and the same for `secondary`/`tertiary`
 — any `FilledButton`, `FloatingActionButton`, or checkbox reading those roles rendered background
@@ -1257,12 +1256,12 @@ own mockup and the motion spec's token table directly, rather than by screen-hun
 **The add control (`QuickAddBar`) was laid out as the last child of `ItemsSection`'s own `Column`**
 — a docked row sharing space with the item list, which shrank via `Expanded` to make room for it.
 Flow 09 calls it "the FAB" throughout and is explicit ("Bottom-right so it never sits under the
-reading path") that it floats *over* the list, not beside it. Fixed by restructuring
+reading path") that it floats _over_ the list, not beside it. Fixed by restructuring
 `ItemsSection.build` into a `Stack`: the item list (loading/error/empty/search/populated, all of
 it) as a `Positioned.fill` base layer, and the completion celebration + add control as a
 `Positioned` overlay anchored to the bottom. `_ItemList`'s own `ListView` gained
 `padding: EdgeInsets.only(bottom: 84)` so its last rows clear the floating cluster instead of
-rendering underneath it — the inverse of before, where the list was *shrunk* to make room; now it
+rendering underneath it — the inverse of before, where the list was _shrunk_ to make room; now it
 fills the space and the floating cluster sits on top with clearance reserved for it.
 
 **Three motion details inside `QuickAddBar` didn't match §09's own frame-by-frame spec**, each
@@ -1297,7 +1296,7 @@ any of the three. The reported symptom ("white font colour on white background")
 it was two independently-correct-looking pieces of code that stopped agreeing the moment dark mode
 was active: the card's own background stayed hardcoded light (a real, visible bug on its own —
 "bright white" in dark mode, per the human's first report), while the activity text beside it had
-*no* explicit colour and correctly inherited the screen's ambient, theme-aware text colour — white
+_no_ explicit colour and correctly inherited the screen's ambient, theme-aware text colour — white
 in dark mode, exactly like the headline text a few lines up in the same file already does
 correctly. Two things each doing something locally sensible produced white-on-white together.
 Fixed by making the card backgrounds, dividers, borders, and non-inherited text colours in all
@@ -1317,7 +1316,7 @@ widgets, not a systemic pattern worth a wider sweep.
 
 **Decision:** First item off `docs/upgrade-design-guide.md`'s Priority 0. Since decision #32,
 selecting a shop wrote into `activeSeedColorProvider`, a single global piece of state `app.dart`
-read to re-theme the *entire* `MaterialApp` — chrome included. The design's own rule is that shop
+read to re-theme the _entire_ `MaterialApp` — chrome included. The design's own rule is that shop
 colour reaches selected tabs, checks, focused inputs, the quick-add control and empty-state tint,
 while the surrounding chrome (drawer, settings, dialogs, navigation transitions) stays neutral.
 The global mechanism could not express that distinction; it re-themed everything or nothing.
@@ -1346,7 +1345,7 @@ has a shop colour to glide between.
 
 **Test coverage moved, not just updated:** `app_shell_test.dart`'s "theming" group used to prove
 selecting a shop re-themed the app root; that premise is gone, so those two tests are deleted
-rather than patched, leaving one narrower test that the root is *always* neutral. The real
+rather than patched, leaving one narrower test that the root is _always_ neutral. The real
 coverage — a shop tinting the body, and that tint stopping at the drawer — is new, in
 `list_detail_screen_test.dart`, which resolves `Theme.of(context)` from inside `ItemsSection` and
 separately from inside `ListsDrawer` after opening it, so the "does not leak sideways" claim is
@@ -1368,7 +1367,7 @@ already relied on, just built by hand once `ListTile` was gone.
 
 **`_CheckCircle` replaces the stock `Checkbox`, not just restyles it.** The reference's own
 22px-circle "CheckCircle" is a named component with its own states (§02): unchecked outline,
-checked-and-filled, and a 340ms `easeOutBack` fill overshoot specifically on *checking* — "because
+checked-and-filled, and a 340ms `easeOutBack` fill overshoot specifically on _checking_ — "because
 the user did it" — with a plain reverse on unchecking, no overshoot. That asymmetry already existed
 in this file for the strike-through (`_strike.forward()` vs `.reverse()`, "the intent is
 unambiguous"); `_checkFill` is the same shape, a second `AnimationController` rather than folding
@@ -1379,8 +1378,8 @@ of motion — a deliberate simplification, not an oversight.
 
 **The fill colour is `colorScheme.primary`, deliberately not `ItemTile.shopDotColor`.** The
 reference is explicit that CheckCircle's fill is "free when the tab's subtree is wrapped in
-`AppTheme.forShop`" — i.e. it is the *active tab's* colour, while the dot beside an item's name is
-that *item's own* shop, and the two can differ (search results span every shop, with the All tab's
+`AppTheme.forShop`" — i.e. it is the _active tab's_ colour, while the dot beside an item's name is
+that _item's own_ shop, and the two can differ (search results span every shop, with the All tab's
 neutral theme active throughout). Decision #73's tint scoping, from earlier the same session, is
 what makes reading `Theme.of(context).colorScheme.primary` directly the correct thing to do here —
 this rebuild would have inherited the old bug (every check circle either always shop-tinted or
@@ -1413,7 +1412,7 @@ where a test used to reach for the edit icon.
 none needed the others but all three closed the list of "visible flow gaps" in one pass.
 
 **Move reverses decisions #53, on purpose, because its own stated reason no longer holds.** #53
-left "Move" out of multi-select because building it meant building the app's *first* shop-picker
+left "Move" out of multi-select because building it meant building the app's _first_ shop-picker
 just to unblock one button — its own words: "not a corner to cut silently inside this feature."
 That blocker is gone: `ItemSheet`'s `ChoiceChip` shop picker (decisions #63) already exists and
 already reassigns a single item's `shopId` (decisions #64's suggestion chips sit right beside it).
@@ -1432,7 +1431,7 @@ a bulk operation is not a reason to skip the notification path a single edit get
 
 **The controller's optimistic guess and the sheet's own cancel/error handling were both worth a
 real test, not just the code reading right.** `ItemsController.moveSelected` mirrors
-`removeSelected`'s shape exactly (retag locally, call the repository, roll back to the *previous*
+`removeSelected`'s shape exactly (retag locally, call the repository, roll back to the _previous_
 per-item state — not a blanket "clear shopId" — on failure). Three widget tests exercise the sheet
 itself: retagging and exiting the mode on success, keeping the selection on a rejected write (the
 guide's own acceptance line: an error must not lose the pick), and dismissing the sheet without
@@ -1467,7 +1466,7 @@ built." Corrected in the doc directly rather than left to rot further. The one p
 reduce-motion status row — all three built now, inline in `PreferencesSection` rather than a
 separate screen, since nothing in the design mockup requires a dedicated destination and the app
 already had `SettingDropdownOption` for exactly this shape of row. A new `SettingStatusOption`
-was added for reduce motion specifically *because* it must not look tappable (decisions above,
+was added for reduce motion specifically _because_ it must not look tappable (decisions above,
 § Decisions #3) — reusing `SettingToggleOption` for a state with nothing behind it to toggle would
 have been the wrong component wearing the right label.
 
@@ -1487,7 +1486,7 @@ The Settings "Haptics" toggle was decorative: `value: true, onChanged: (_) {}`, 
 Meanwhile `HapticFeedback` fires unconditionally from 7 real call sites across 4 files (checking
 an item, long-press-to-select, swipe-to-delete's threshold pop, drag-to-reorder start/end, the
 invite-code copy confirmation, a shake on error) — the capability the toggle claims to control
-already fully exists and works, unlike decisions #64/#69's two *actually* dead controls
+already fully exists and works, unlike decisions #64/#69's two _actually_ dead controls
 (notifications, global "keep checked items"), which had no capability behind them at all and were
 removed outright rather than wired. That distinction is why this one was fixed, not deleted: a
 toggle promising to gate something real, doing nothing, is a worse state than not having the
@@ -1532,7 +1531,7 @@ used to render nothing." Reusing it is the smaller, more reversible choice; movi
 pushed screen later, if the human disagrees, changes nothing about the data layer underneath it.
 
 **Deliberately no shop-colour dot per row, unlike every other item row in the app.** The mockup
-shows one per row, but `ItemNameHistory` has no shop column -- it is a browse of *names*, and a
+shows one per row, but `ItemNameHistory` has no shop column -- it is a browse of _names_, and a
 name is not stable to one shop (someone might buy "Milk" at Colruyt one week and Delhaize the
 next; the table records only the single most recent add, not a history per shop). Deriving a dot
 from whichever `ShoppingItem` currently holds that name would silently be wrong for the exact rows
@@ -1591,7 +1590,7 @@ freezed mixin. Cause, confirmed by inspection of `package:meta`'s source: `meta.
 unqualified -- so any file importing `freezed_annotation` has `checked` sitting in its library
 scope as a top-level `Object` constant. An unqualified reference inside an instance getter should
 still prefer the instance member over an imported top-level under ordinary Dart scoping, but the
-combination of an *abstract* mixin-provided getter (freezed's `_$ListSummary`) with that exact
+combination of an _abstract_ mixin-provided getter (freezed's `_$ListSummary`) with that exact
 colliding name did not resolve that way in practice, regardless of the reason being a genuine
 analyzer/CFE edge case or a subtlety in how freezed 4's generated mixins expose abstract members.
 Fixed by renaming the field to `checkedCount` end-to-end (domain entity, server model, mapper) --
@@ -1630,16 +1629,60 @@ with nothing to validate is a trivial forward, the same reasoning `EditProfileSc
 
 **The trigger logic lives in a `ref.listen` inside `ItemsSection.build`, called unconditionally
 every build** (not wrapped in `if (list.clearCheckedAfterShopping)`) with the preference checked
-*inside* the callback instead -- calling `ref.listen` conditionally on the surrounding widget tree
+_inside_ the callback instead -- calling `ref.listen` conditionally on the surrounding widget tree
 is the kind of thing worth avoiding on principle even where it happens to work, so the check moved
 inside rather than around the call.
 
 **A real bug caught by the test suite itself, not found by inspection:** the first version of the
-transition check fired the auto-clear the instant a list that was *already* fully checked finished
+transition check fired the auto-clear the instant a list that was _already_ fully checked finished
 loading -- `previous` on a provider's very first emission is effectively empty, and treating an
 absent previous snapshot as "was not all done" made every already-finished list clear itself the
 moment its owner opened it, with no transition anyone had actually witnessed happen. Fixed by
-requiring a real previous *items* snapshot to exist before comparing it to the next one, not just
+requiring a real previous _items_ snapshot to exist before comparing it to the next one, not just
 requiring the next one to exist. `docs/CLAUDE.md`'s "tests live beside the phase that adds the
 feature" rule earned its keep here directly: the "does not fire again once already fully checked
 with nothing new" test was written expecting to pass and caught this instead.
+
+## 80. Notifications preferences -- a four-phase plan, phase 1 (per-list mute) built
+
+**Decision:** `design-gap-plan.md` §8 is the last unbuilt item across both planning docs. Before
+scoping it, read the actual notification infrastructure rather than the doc's own summary of it
+-- the same pattern that caught real gaps in decisions #77/#78. Two corrections came out of that:
+
+- **Per-list mute already worked end to end server-side** -- `ListMute`, `setListMuted`,
+  `isListMuted`, and `NotificationService.recipientTokens`'s own exclusion of muted members all
+  predate this decision (decisions #37). The doc's framing ("needs a small domain/server addition
+  either way") was stale; only the client _read-back_ (`PushPort.isListMuted`) was ever missing,
+  exactly as the doc's one accurate sentence said.
+- **"Someone joins a list" has no trigger at all**, contrary to the doc's claim both push kinds
+  "already have some shape of" one. `ListService.join` calls `_announce` (the live in-app stream)
+  but never `NotificationService.enqueue` -- only item changes do. The doc undersold this gap by
+  bundling it with "adds an item," which is real.
+
+Read `Flow Screens v2.dc.html`'s actual Notifications screen (Flow 10) and its permission-rationale
+sheet (Flow 13) for what the doc left vague: the reminder is a **fixed** "Saturdays at 10:00", not
+user-configurable, and only "Someone adds an item" is called out as batched -- "joins" and "list
+finished" read as immediate, unbatched pushes. Put a four-phase build order to Nikolaos directly,
+confirmed as given: (1) per-list mute UI, (2) the three gateable toggles + their triggers, (3) the
+permission-rationale sheet, (4) the scheduled local reminder (`flutter_local_notifications`, a new
+dependency) -- cheapest and most self-contained first, matching this project's own convention.
+
+**Phase 1, built this pass:** `PushPort.isListMuted` (the missing read half), a new
+`ListMuteController` (a family `AsyncNotifier` keyed per list, fails open to "unmuted" on a read
+error rather than risk silently claiming a list is muted when it might not be), and a new
+`NotificationsScreen` reached from a new Settings row -- with only the mockup's "Per list" section
+built. The "Push" section (the four toggles) is deliberately not stubbed in the meantime: a toggle
+wired to nothing is worse than a toggle not there yet, the same lesson decisions #76's Haptics
+finding already established. `ListsScreen`'s own one-shot redirect (decisions #68: any signed-in
+user with at least one list is sent straight to it, never sees `ListsScreen` render populated)
+meant the new navigation test had to set both `myListsResult` and `byIdResult` on the fake list
+repository, not just the former -- the redirect lands on `ListDetailScreen`, which needs `byId` to
+resolve the list it was redirected to, not just to know the list exists.
+
+**Honest limitation, stated the same way decisions #37 already states it for the rest of push:**
+none of this can be verified end to end here. `firebase_messaging`/`firebase_core` are already
+dependencies and device registration already runs on app start, but the actual token source is
+still `UnconfiguredPushTokenSource` -- a real FCM-backed implementation needs Nikolaos's own
+Firebase project config files, which correctly never touch this repo. Phase 1's mute mechanism is
+fully real and testable regardless (it rides the existing server endpoints, not a new push path),
+but nothing here proves a phone actually buzzes.
