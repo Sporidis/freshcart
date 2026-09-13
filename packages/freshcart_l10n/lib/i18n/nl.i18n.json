@@ -123,7 +123,12 @@
     "hint": "Zoek producten",
     "noResultsTitle": "Geen producten voor ‘{{query}}’",
     "addAction": "\"{{query}}\" toevoegen aan deze lijst",
-    "noResultsBody": "Controleer de spelling, of voeg het toe als nieuw product."
+    "noResultsBody": "Controleer de spelling, of voeg het toe als nieuw product.",
+    "recentlyBought": "Onlangs gekocht",
+    "thisWeek": "Deze week",
+    "lastWeek": "Vorige week",
+    "earlier": "Eerder",
+    "addAgain": "Opnieuw toevoegen"
   },
   "settings": {
     "title": "Instellingen",

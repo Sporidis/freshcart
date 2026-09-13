@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/items/entities/name_history_entry.dart';
 import 'package:freshcart_domain/src/items/entities/shopping_item.dart';
 import 'package:freshcart_domain/src/items/value_objects/item_id.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
@@ -50,4 +51,10 @@ abstract interface class ItemRepository {
   /// recently used first -- the add control's suggestion chips (decisions
   /// #64). Scoped to this list only, the same scope shops already use.
   Future<Result<List<String>>> suggestNames(ListId listId, String query);
+
+  /// Every distinct product name typed on [listId] before, most recently
+  /// used first -- the "Recently bought" shortcut (§06). Unlike
+  /// [suggestNames], this is a browse rather than a filtered search: no
+  /// query text, and no two-character floor.
+  Future<Result<List<NameHistoryEntry>>> recentNames(ListId listId);
 }

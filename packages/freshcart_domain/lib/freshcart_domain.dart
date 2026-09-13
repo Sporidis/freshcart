@@ -20,6 +20,7 @@ export 'src/core/clock.dart';
 export 'src/core/failure.dart';
 export 'src/core/result.dart';
 // Items
+export 'src/items/entities/name_history_entry.dart';
 export 'src/items/entities/note.dart';
 export 'src/items/entities/shopping_item.dart';
 export 'src/items/ports/item_repository.dart';

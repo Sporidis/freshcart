@@ -48,9 +48,11 @@ import 'package:freshcart_server/src/generated/auth/models/linked_provider.dart'
     as _i32;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
     as _i33;
-import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
+import 'package:freshcart_server/src/generated/items/models/item_name_history.dart'
     as _i34;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i35;
+import 'package:freshcart_server/src/generated/lists/models/shopping_list.dart'
+    as _i35;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i36;
 export 'auth/models/linked_provider.dart';
 export 'common/models/account_already_linked_exception.dart';
 export 'common/models/avatar_photo_too_large_exception.dart';
@@ -1235,14 +1237,20 @@ class Protocol extends _i1.SerializationManagerServer {
     if (t == List<String>) {
       return (data as List).map((e) => deserialize<String>(e)).toList() as T;
     }
-    if (t == List<_i34.ShoppingList>) {
+    if (t == List<_i34.ItemNameHistory>) {
       return (data as List)
-              .map((e) => deserialize<_i34.ShoppingList>(e))
+              .map((e) => deserialize<_i34.ItemNameHistory>(e))
               .toList()
           as T;
     }
-    if (t == List<_i35.Shop>) {
-      return (data as List).map((e) => deserialize<_i35.Shop>(e)).toList() as T;
+    if (t == List<_i35.ShoppingList>) {
+      return (data as List)
+              .map((e) => deserialize<_i35.ShoppingList>(e))
+              .toList()
+          as T;
+    }
+    if (t == List<_i36.Shop>) {
+      return (data as List).map((e) => deserialize<_i36.Shop>(e)).toList() as T;
     }
     try {
       return _i3.Protocol().deserialize<T>(data, t);

@@ -2,6 +2,7 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/item_realtime_source.dart';
+import 'package:freshcart_flutter/features/items/data/mappers/name_history_entry_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
 
 /// The Serverpod-backed [ItemRepository].
@@ -77,6 +78,13 @@ class ItemRepositoryImpl implements ItemRepository {
       _guard(
         () => _client.item.suggestNames(_uuid(listId.value), query),
       );
+
+  @override
+  Future<Result<List<NameHistoryEntry>>> recentNames(ListId listId) => _guard(
+    () async => (await _client.item.recentNames(
+      _uuid(listId.value),
+    )).map((e) => e.toDomain()).toList(),
+  );
 
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);

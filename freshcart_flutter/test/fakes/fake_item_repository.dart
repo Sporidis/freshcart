@@ -32,6 +32,14 @@ class FakeItemRepository implements ItemRepository {
   /// Every (listId, query) pair [suggestNames] was called with, in order.
   final List<({ListId listId, String query})> suggestNamesCalls = [];
 
+  /// What [recentNames] returns.
+  Result<List<NameHistoryEntry>> recentNamesResult = const Ok(
+    <NameHistoryEntry>[],
+  );
+
+  /// Every listId [recentNames] was called with, in order.
+  final List<ListId> recentNamesCalls = [];
+
   /// Every argument list [add] was called with, in order.
   final List<
     ({
@@ -151,6 +159,12 @@ class FakeItemRepository implements ItemRepository {
   ) async {
     suggestNamesCalls.add((listId: listId, query: query));
     return suggestNamesResult;
+  }
+
+  @override
+  Future<Result<List<NameHistoryEntry>>> recentNames(ListId listId) async {
+    recentNamesCalls.add(listId);
+    return recentNamesResult;
   }
 }
 

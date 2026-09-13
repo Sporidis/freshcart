@@ -23,6 +23,7 @@ item:
   - removeMany:
   - moveMany:
   - suggestNames:
+  - recentNames:
   - watchList:
 list:
   - myLists:

@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/search_recently_bought.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -47,10 +48,18 @@ class SearchResults extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final trimmed = query.trim();
-    // Nothing typed yet: a blank canvas, not the whole list -- §16 describes
-    // filtering *as you type*, not a browseable "everything" view with its
-    // own separate purpose (that's the shop tabs).
-    if (trimmed.isEmpty) return const SizedBox.shrink();
+    // Nothing typed yet: not a blank canvas any more -- §06's "Recently
+    // bought" is exactly the browseable "everything, grouped" view for this
+    // moment, distinct from the shop tabs' own purpose (browsing this list's
+    // *current* items, not its history).
+    if (trimmed.isEmpty) {
+      return SearchRecentlyBought(
+        listId: list.id,
+        t: t,
+        controller: controller,
+        report: report,
+      );
+    }
 
     final lower = trimmed.toLowerCase();
     final matches = [

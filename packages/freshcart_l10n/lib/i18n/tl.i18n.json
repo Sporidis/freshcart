@@ -123,7 +123,12 @@
     "hint": "Maghanap ng produkto",
     "noResultsTitle": "Walang tugmang produkto para sa ‘{{query}}’",
     "addAction": "Idagdag ang \"{{query}}\" sa listahang ito",
-    "noResultsBody": "Tingnan ang spelling, o idagdag ito bilang bagong produkto."
+    "noResultsBody": "Tingnan ang spelling, o idagdag ito bilang bagong produkto.",
+    "recentlyBought": "Kamakailang binili",
+    "thisWeek": "Ngayong linggo",
+    "lastWeek": "Nakaraang linggo",
+    "earlier": "Mas maaga",
+    "addAgain": "Idagdag muli"
   },
   "settings": {
     "title": "Mga Setting",
