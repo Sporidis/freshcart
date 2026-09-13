@@ -36,6 +36,13 @@ class FakeListRepository implements ListRepository {
   /// Every argument list [rename] was called with, in order.
   final List<({ListId id, String name})> renameCalls = [];
 
+  /// What [setClearCheckedAfterShopping] will return.
+  Result<ShoppingList>? setClearCheckedAfterShoppingResult;
+
+  /// Every argument list [setClearCheckedAfterShopping] was called with, in
+  /// order.
+  final List<({ListId id, bool value})> setClearCheckedAfterShoppingCalls = [];
+
   /// Every id [leave] was called with, in order.
   final List<ListId> leaveCalls = [];
 
@@ -86,6 +93,16 @@ class FakeListRepository implements ListRepository {
   Future<Result<ShoppingList>> rename(ListId id, String name) async {
     renameCalls.add((id: id, name: name));
     return renameResult ?? Ok(buildList(name: name));
+  }
+
+  @override
+  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+    ListId id,
+    bool value,
+  ) async {
+    setClearCheckedAfterShoppingCalls.add((id: id, value: value));
+    return setClearCheckedAfterShoppingResult ??
+        Ok(buildList(clearCheckedAfterShopping: value));
   }
 
   @override
@@ -147,6 +164,7 @@ ShoppingList buildList({
   String name = 'Groceries',
   String joinCode = 'ABC23',
   List<ListMember> members = const [],
+  bool clearCheckedAfterShopping = false,
 }) => ShoppingList(
   id: ListId(id),
   name: name,
@@ -154,6 +172,7 @@ ShoppingList buildList({
   ownerId: UserId('user-1'),
   createdAt: DateTime.utc(2026, 9, 9),
   members: members,
+  clearCheckedAfterShopping: clearCheckedAfterShopping,
 );
 
 /// Builds a domain [ListMember] for tests.

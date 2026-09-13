@@ -33,8 +33,12 @@ void main() {
     shops = FakeShopRepository();
   });
 
-  Future<ProviderContainer> pump(WidgetTester tester) async {
-    final list = buildList(members: [buildMember(displayName: 'Nikolaos')]);
+  Future<ProviderContainer> pump(
+    WidgetTester tester, {
+    ShoppingList? list,
+  }) async {
+    final effectiveList =
+        list ?? buildList(members: [buildMember(displayName: 'Nikolaos')]);
     final container = ProviderContainer(
       overrides: [
         itemRepositoryProvider.overrideWithValue(items),
@@ -50,7 +54,7 @@ void main() {
       UncontrolledProviderScope(
         container: container,
         child: MaterialApp(
-          home: Scaffold(body: ItemsSection(list: list)),
+          home: Scaffold(body: ItemsSection(list: effectiveList)),
         ),
       ),
     );
@@ -952,6 +956,76 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.text('Keep list'), findsOneWidget);
+      },
+    );
+  });
+
+  group('clear checked after shopping (decisions #79)', () {
+    testWidgets(
+      'auto-clears silently, with no celebration card, once the list '
+      'finishes',
+      (tester) async {
+        final list = buildList(
+          members: [buildMember(displayName: 'Nikolaos')],
+          clearCheckedAfterShopping: true,
+        );
+        items.byListResult = Ok([
+          buildItem(name: 'Milk', isChecked: true),
+          buildItem(
+            id: '00000000-0000-4000-8000-0000000000bb',
+            name: 'Bread',
+          ),
+        ]);
+        items.clearCheckedResult = const Ok(1);
+        await pump(tester, list: list);
+        expect(find.text('Keep list'), findsNothing);
+
+        // The last open item gets checked -- the list finishes.
+        items.live.add(
+          Ok([
+            buildItem(name: 'Milk', isChecked: true),
+            buildItem(
+              id: '00000000-0000-4000-8000-0000000000bb',
+              name: 'Bread',
+              isChecked: true,
+            ),
+          ]),
+        );
+        await tester.pumpAndSettle();
+
+        expect(items.clearCheckedCallCount, 1);
+        expect(find.byType(CompletionCelebrationCard), findsNothing);
+        expect(find.text('Keep list'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      'does not fire again once already fully checked with nothing new',
+      (tester) async {
+        final list = buildList(
+          members: [buildMember(displayName: 'Nikolaos')],
+          clearCheckedAfterShopping: true,
+        );
+        // Starts already fully checked -- there is no open-to-done
+        // *transition* to react to, so nothing should auto-clear on load.
+        items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+        await pump(tester, list: list);
+
+        expect(items.clearCheckedCallCount, 0);
+      },
+    );
+
+    testWidgets(
+      'the celebration card still shows when the preference is off',
+      (tester) async {
+        final list = buildList(
+          members: [buildMember(displayName: 'Nikolaos')],
+        );
+        items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+        await pump(tester, list: list);
+
+        expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+        expect(items.clearCheckedCallCount, 0);
       },
     );
   });

@@ -24,6 +24,8 @@
     "settingsTitle": "Настройки списка",
     "nameLabel": "Название списка",
     "rename": "Переименовать",
+    "clearCheckedAfterShopping": "Автоматически убирать отмеченное",
+    "clearCheckedAfterShoppingBody": "Убирает отмеченные товары, когда весь список отмечен.",
     "leave": "Покинуть список",
     "leaveConfirmTitle": "Покинуть этот список?",
     "leaveConfirmBody": "Вы больше не увидите «{{name}}». У остальных он останется.",

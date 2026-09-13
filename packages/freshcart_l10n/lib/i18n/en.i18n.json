@@ -20,6 +20,8 @@
     "settingsTitle": "List settings",
     "nameLabel": "List name",
     "rename": "Rename",
+    "clearCheckedAfterShopping": "Clear checked items automatically",
+    "clearCheckedAfterShoppingBody": "Clears checked items once the whole list is checked off.",
     "leave": "Leave list",
     "leaveConfirmTitle": "Leave this list?",
     "leaveConfirmBody": "You will not see {{name}} any more. Everyone else keeps it.",

@@ -20,6 +20,8 @@
     "settingsTitle": "Lijstinstellingen",
     "nameLabel": "Lijstnaam",
     "rename": "Naam wijzigen",
+    "clearCheckedAfterShopping": "Afgevinkte producten automatisch wissen",
+    "clearCheckedAfterShoppingBody": "Wist afgevinkte producten zodra de hele lijst is afgevinkt.",
     "leave": "Lijst verlaten",
     "leaveConfirmTitle": "Deze lijst verlaten?",
     "leaveConfirmBody": "Je ziet {{name}} niet meer. De anderen houden de lijst.",

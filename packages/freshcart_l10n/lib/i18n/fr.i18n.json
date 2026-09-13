@@ -20,6 +20,8 @@
     "settingsTitle": "Paramètres de la liste",
     "nameLabel": "Nom de la liste",
     "rename": "Renommer",
+    "clearCheckedAfterShopping": "Effacer les produits cochés automatiquement",
+    "clearCheckedAfterShoppingBody": "Efface les produits cochés une fois toute la liste cochée.",
     "leave": "Quitter la liste",
     "leaveConfirmTitle": "Quitter cette liste ?",
     "leaveConfirmBody": "Vous ne verrez plus {{name}}. Les autres la conservent.",

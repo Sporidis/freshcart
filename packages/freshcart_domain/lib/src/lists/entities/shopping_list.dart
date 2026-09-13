@@ -22,6 +22,13 @@ abstract class ShoppingList with _$ShoppingList {
     required UserId ownerId,
     required DateTime createdAt,
     @Default(<ListMember>[]) List<ListMember> members,
+
+    /// Whether checked items clear themselves the moment the whole list is
+    /// checked, instead of waiting for an explicit "Clear checked" tap
+    /// (decisions #79). Off by default: this changes what happens to items
+    /// people have already added, so an existing list does not suddenly
+    /// start clearing itself out from under anyone.
+    @Default(false) bool clearCheckedAfterShopping,
   }) = _ShoppingList;
 
   const ShoppingList._();

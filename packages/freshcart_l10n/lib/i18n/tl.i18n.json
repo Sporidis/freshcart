@@ -20,6 +20,8 @@
     "settingsTitle": "Mga setting ng listahan",
     "nameLabel": "Pangalan ng listahan",
     "rename": "Palitan ang pangalan",
+    "clearCheckedAfterShopping": "Awtomatikong burahin ang mga nachekong item",
+    "clearCheckedAfterShoppingBody": "Binubura ang mga nachekong item kapag nacheck na lahat sa listahan.",
     "leave": "Umalis sa listahan",
     "leaveConfirmTitle": "Aalis sa listahang ito?",
     "leaveConfirmBody": "Hindi mo na makikita ang {{name}}. Mananatili ito sa iba.",

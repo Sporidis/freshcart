@@ -34,7 +34,9 @@ abstract class ShoppingList implements _i1.SerializableModel {
     this.mutes,
     this.pendingNotifications,
     this.itemNameHistory,
-  }) : createdAt = createdAt ?? DateTime.now();
+    bool? clearCheckedAfterShopping,
+  }) : createdAt = createdAt ?? DateTime.now(),
+       clearCheckedAfterShopping = clearCheckedAfterShopping ?? false;
 
   factory ShoppingList({
     _i1.UuidValue? id,
@@ -48,6 +50,7 @@ abstract class ShoppingList implements _i1.SerializableModel {
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
     List<_i7.ItemNameHistory>? itemNameHistory,
+    bool? clearCheckedAfterShopping,
   }) = _ShoppingListImpl;
 
   factory ShoppingList.fromJson(Map<String, dynamic> jsonSerialization) {
@@ -93,6 +96,12 @@ abstract class ShoppingList implements _i1.SerializableModel {
           : _i8.Protocol().deserialize<List<_i7.ItemNameHistory>>(
               jsonSerialization['itemNameHistory'],
             ),
+      clearCheckedAfterShopping:
+          jsonSerialization['clearCheckedAfterShopping'] == null
+          ? null
+          : _i1.BoolJsonExtension.fromJson(
+              jsonSerialization['clearCheckedAfterShopping'],
+            ),
     );
   }
 
@@ -134,6 +143,13 @@ abstract class ShoppingList implements _i1.SerializableModel {
   /// suggestion chips.
   List<_i7.ItemNameHistory>? itemNameHistory;
 
+  /// Whether checked items clear themselves the moment the whole list is
+  /// checked, instead of waiting for an explicit "Clear checked" tap
+  /// (decisions #79). `defaultPersist=false` so every existing row backfills
+  /// to the same off default a brand-new list gets -- the same pattern
+  /// `Shop.isActive` already used for an added-in-place NOT NULL column.
+  bool clearCheckedAfterShopping;
+
   /// Returns a shallow copy of this [ShoppingList]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
@@ -149,6 +165,7 @@ abstract class ShoppingList implements _i1.SerializableModel {
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
     List<_i7.ItemNameHistory>? itemNameHistory,
+    bool? clearCheckedAfterShopping,
   });
   @override
   Map<String, dynamic> toJson() {
@@ -172,6 +189,7 @@ abstract class ShoppingList implements _i1.SerializableModel {
         'itemNameHistory': itemNameHistory?.toJson(
           valueToJson: (v) => v.toJson(),
         ),
+      'clearCheckedAfterShopping': clearCheckedAfterShopping,
     };
   }
 
@@ -196,6 +214,7 @@ class _ShoppingListImpl extends ShoppingList {
     List<_i5.ListMute>? mutes,
     List<_i6.PendingItemNotification>? pendingNotifications,
     List<_i7.ItemNameHistory>? itemNameHistory,
+    bool? clearCheckedAfterShopping,
   }) : super._(
          id: id,
          name: name,
@@ -208,6 +227,7 @@ class _ShoppingListImpl extends ShoppingList {
          mutes: mutes,
          pendingNotifications: pendingNotifications,
          itemNameHistory: itemNameHistory,
+         clearCheckedAfterShopping: clearCheckedAfterShopping,
        );
 
   /// Returns a shallow copy of this [ShoppingList]
@@ -226,6 +246,7 @@ class _ShoppingListImpl extends ShoppingList {
     Object? mutes = _Undefined,
     Object? pendingNotifications = _Undefined,
     Object? itemNameHistory = _Undefined,
+    bool? clearCheckedAfterShopping,
   }) {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
@@ -252,6 +273,8 @@ class _ShoppingListImpl extends ShoppingList {
       itemNameHistory: itemNameHistory is List<_i7.ItemNameHistory>?
           ? itemNameHistory
           : this.itemNameHistory?.map((e0) => e0.copyWith()).toList(),
+      clearCheckedAfterShopping:
+          clearCheckedAfterShopping ?? this.clearCheckedAfterShopping,
     );
   }
 }

@@ -525,6 +525,20 @@ class EndpointList extends _i1.EndpointRef {
     },
   );
 
+  /// Sets whether a list the caller belongs to clears its checked items
+  /// automatically once everything on it is checked.
+  _i2.Future<_i9.ShoppingList> setClearCheckedAfterShopping(
+    _i1.UuidValue listId,
+    bool value,
+  ) => caller.callServerEndpoint<_i9.ShoppingList>(
+    'list',
+    'setClearCheckedAfterShopping',
+    {
+      'listId': listId,
+      'value': value,
+    },
+  );
+
   /// Removes the caller from a list.
   _i2.Future<void> leave(_i1.UuidValue listId) =>
       caller.callServerEndpoint<void>(

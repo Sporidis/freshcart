@@ -32,12 +32,11 @@ import 'package:go_router/go_router.dart';
 /// reachable elsewhere, and duplicating their content here would be a
 /// second copy of both to keep in sync for no reader benefit.
 ///
-/// Deliberately missing: "Clear checked after shopping." The design shows
-/// it as a toggle, but nothing about *when a shop is done* exists in the
-/// domain yet — it would need a real decision about what "after shopping"
-/// means (all items checked? every shop tab clear? a person tapping
-/// something explicit?) and a new field on `ShoppingList`, not just a
-/// switch on a settings row. Left out rather than wired to a guess.
+/// "Clear checked after shopping" (decisions #79) means the whole list
+/// becoming fully checked, the same moment `ItemsSection`'s own completion
+/// celebration already detects -- turning this on suppresses that card
+/// entirely for this list and clears checked items the instant the trigger
+/// fires, with no prompt.
 class ListSettingsScreen extends ConsumerStatefulWidget {
   /// Creates the screen for [listId].
   const ListSettingsScreen({required this.listId, super.key});
@@ -168,6 +167,12 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                   listId: widget.listId,
                   t: t,
                 ),
+                const SizedBox(height: 12),
+                _ClearCheckedAfterShoppingOption(
+                  listId: widget.listId,
+                  value: loaded.clearCheckedAfterShopping,
+                  t: t,
+                ),
                 const SizedBox(height: 24),
                 // "Destructive actions sit alone at the bottom with a rule
                 // above them" -- the design's own words for this screen.
@@ -264,6 +269,34 @@ class _ShopOption extends ConsumerWidget {
       onChanged: (_) =>
           ref.read(shopsControllerProvider(listId).notifier).toggleActive(shop),
       title: Text(shop.name),
+    );
+  }
+}
+
+/// The one preference to survive the "keep checked / clear checked" overlap
+/// (decisions #64/#69/#79) -- per list, not global, and with a real trigger
+/// behind it: the whole list becoming fully checked, the same moment
+/// `ItemsSection`'s completion celebration already detects.
+class _ClearCheckedAfterShoppingOption extends ConsumerWidget {
+  const _ClearCheckedAfterShoppingOption({
+    required this.listId,
+    required this.value,
+    required this.t,
+  });
+
+  final ListId listId;
+  final bool value;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return SwitchListTile(
+      value: value,
+      onChanged: (next) => ref
+          .read(listsControllerProvider.notifier)
+          .setClearCheckedAfterShopping(listId, next),
+      title: Text(t.lists.clearCheckedAfterShopping),
+      subtitle: Text(t.lists.clearCheckedAfterShoppingBody),
     );
   }
 }
