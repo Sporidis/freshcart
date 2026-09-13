@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/lists/entities/list_summary.dart';
 import 'package:freshcart_domain/src/lists/entities/shopping_list.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
@@ -15,6 +16,11 @@ abstract interface class ListRepository {
 
   /// One list by [id], or `Failure.notFound` if it is gone or not visible.
   Future<Result<ShoppingList>> byId(ListId id);
+
+  /// Item counts for each of [ids] the signed-in user belongs to -- the
+  /// drawer's remaining-count row (Flow 10, §4). May return fewer entries
+  /// than [ids] if some are not visible to the caller.
+  Future<Result<List<ListSummary>>> summaries(List<ListId> ids);
 
   /// Creates a list named [name], owned by the signed-in user.
   ///

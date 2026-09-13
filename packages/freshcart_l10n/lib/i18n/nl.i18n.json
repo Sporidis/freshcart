@@ -10,6 +10,11 @@
       "one": "{{n}} lid",
       "other": "{{n}} leden"
     },
+    "itemsLeft": {
+      "one": "{{n}} over",
+      "other": "{{n}} over"
+    },
+    "allDone": "Helemaal klaar",
     "emptyTitle": "Nog geen lijsten",
     "emptyBody": "Begin er een voor je huishouden, of sluit je aan bij een gedeelde lijst.",
     "settingsTitle": "Lijstinstellingen",

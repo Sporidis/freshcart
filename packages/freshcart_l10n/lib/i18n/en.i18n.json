@@ -10,6 +10,11 @@
       "one": "{{n}} member",
       "other": "{{n}} members"
     },
+    "itemsLeft": {
+      "one": "{{n}} left",
+      "other": "{{n}} left"
+    },
+    "allDone": "All done",
     "emptyTitle": "No lists yet",
     "emptyBody": "Start one for your household, or join a list someone shared with you.",
     "settingsTitle": "List settings",

@@ -2,6 +2,7 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/list_realtime_source.dart';
+import 'package:freshcart_flutter/features/lists/data/mappers/list_summary_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
 
 /// The Serverpod-backed [ListRepository].
@@ -24,6 +25,13 @@ class ListRepositoryImpl implements ListRepository {
   @override
   Future<Result<ShoppingList>> byId(ListId id) => _guard(
     () async => (await _client.list.byId(_uuid(id.value))).toDomain(),
+  );
+
+  @override
+  Future<Result<List<ListSummary>>> summaries(List<ListId> ids) => _guard(
+    () async => (await _client.list.summaries([
+      for (final id in ids) _uuid(id.value),
+    ])).map((s) => s.toDomain()).toList(),
   );
 
   @override

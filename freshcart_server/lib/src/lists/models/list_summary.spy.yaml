@@ -1,0 +1,22 @@
+### A list's item counts -- the drawer's "6 left" / "All done" row (Flow 10,
+### §4). Not persisted: computed on demand from ShoppingItem, the same way
+### ShopService.itemCount already computes a count rather than storing one.
+###
+### Deliberately not fields on ShoppingList itself: items are fetched
+### separately from lists precisely because the two change at very different
+### rates (see ShoppingList's own doc comment) -- folding a count onto every
+### list load would mean paying for it even on screens that never show it.
+class: ListSummary
+fields:
+  listId: UuidValue
+
+  ### Every item on the list, checked or not.
+  total: int
+
+  ### How many of [total] are checked off. Named `checkedCount`, not
+  ### `checked`: `package:meta` declares a top-level `checked` constant (the
+  ### old, deprecated `@checked` annotation), and the domain entity this
+  ### maps to could not compile against a field of that exact name. Named
+  ### the same way here for one consistent name across the DTO/domain
+  ### boundary rather than translating it at the mapper for no reason.
+  checkedCount: int

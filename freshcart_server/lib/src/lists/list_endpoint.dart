@@ -20,6 +20,13 @@ class ListEndpoint extends Endpoint {
   Future<ShoppingList> byId(Session session, UuidValue listId) =>
       ListService.byId(session, listId, session.requireUserId);
 
+  /// Item counts for each of [listIds] the caller belongs to -- the
+  /// drawer's remaining-count row.
+  Future<List<ListSummary>> summaries(
+    Session session,
+    List<UuidValue> listIds,
+  ) => ListService.summaries(session, listIds, session.requireUserId);
+
   /// Creates a list owned by the caller.
   Future<ShoppingList> create(Session session, String name) async {
     final userId = session.requireUserId;
