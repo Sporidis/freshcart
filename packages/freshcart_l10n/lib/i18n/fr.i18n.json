@@ -155,6 +155,7 @@
     "appearanceLight": "Clair",
     "appearanceDark": "Sombre",
     "language": "Langue",
+    "notifications": "Notifications",
     "haptics": "Retour haptique",
     "largerListText": "Texte de liste plus grand",
     "reduceMotion": "Réduire les animations",
@@ -220,5 +221,11 @@
     "submit": "Rejoindre la liste",
     "confirmTitle": "Vous y êtes",
     "confirmBody": "Vous avez rejoint {{list}}."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "perList": "Par liste",
+    "on": "Actives",
+    "muted": "Muette"
   }
 }

@@ -49,6 +49,13 @@ class PushRepositoryImpl implements PushPort {
         ),
       );
 
+  @override
+  Future<Result<bool>> isListMuted(ListId listId) => _guard(
+    () => _client.notification.isListMuted(
+      dto.UuidValue.withValidation(listId.value),
+    ),
+  );
+
   static Future<Result<T>> _guard<T>(Future<T> Function() body) async {
     try {
       return Ok(await body());

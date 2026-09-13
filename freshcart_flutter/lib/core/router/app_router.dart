@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/features/lists/presentation/household_screen.d
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart';
+import 'package:freshcart_flutter/features/notifications/presentation/notifications_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/splash_screen.dart';
@@ -58,6 +59,12 @@ abstract final class Routes {
   /// The concrete path to Edit profile.
   static const String editProfile = '$settings/$editProfilePattern';
 
+  /// The path pattern for the Notifications screen, nested under settings.
+  static const String notificationsPattern = 'notifications';
+
+  /// The concrete path to Notifications.
+  static const String notifications = '$settings/$notificationsPattern';
+
   /// The splash screen — the app's actual initial route. Shown for exactly
   /// as long as sign-in takes; it redirects itself onward once it knows.
   static const String splash = '/splash';
@@ -109,6 +116,10 @@ GoRouter appRouter(Ref ref) => GoRouter(
         GoRoute(
           path: Routes.editProfilePattern,
           builder: (context, state) => const EditProfileScreen(),
+        ),
+        GoRoute(
+          path: Routes.notificationsPattern,
+          builder: (context, state) => const NotificationsScreen(),
         ),
       ],
     ),

@@ -2,13 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
 import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
+import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
+import 'package:freshcart_flutter/features/notifications/data/push_repository_provider.dart';
+import 'package:freshcart_flutter/features/notifications/presentation/notifications_screen.dart';
+import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../fakes/fake_auth_repository.dart';
+import '../../fakes/fake_item_repository.dart';
+import '../../fakes/fake_list_repository.dart';
+import '../../fakes/fake_push_repository.dart';
+import '../../fakes/fake_shop_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);
@@ -164,6 +175,58 @@ void main() {
           findsNothing,
         );
         expect(find.text('Off'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'the Notifications row opens the Notifications screen',
+      (tester) async {
+        // The real journey, not SettingsScreen constructed directly: a
+        // context.push needs an actual GoRouter ancestor, which only
+        // FreshCartApp's routing provides -- the same reasoning
+        // list_settings_screen_test.dart's own pump helper documents.
+        final notifList = buildList(members: [buildMember()]);
+        final notifAuth = FakeAuthRepository();
+        final notifLists = FakeListRepository()
+          ..myListsResult = Ok([notifList])
+          ..byIdResult = Ok(notifList);
+        final notifItems = FakeItemRepository();
+        addTearDown(notifAuth.dispose);
+        addTearDown(notifLists.dispose);
+        addTearDown(notifItems.dispose);
+
+        final container = ProviderContainer(
+          overrides: [
+            authRepositoryProvider.overrideWithValue(notifAuth),
+            listRepositoryProvider.overrideWithValue(notifLists),
+            itemRepositoryProvider.overrideWithValue(notifItems),
+            shopRepositoryProvider.overrideWithValue(FakeShopRepository()),
+            pushRepositoryProvider.overrideWithValue(FakePushRepository()),
+            authBootstrapProvider.overrideWith(
+              (ref) async => (authenticated: true, isNewIdentity: false),
+            ),
+          ],
+        );
+        addTearDown(container.dispose);
+        container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const FreshCartApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byIcon(Icons.menu));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Settings'));
+        await tester.pumpAndSettle();
+        await tester.drag(find.byType(ListView), const Offset(0, -600));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Notifications'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(NotificationsScreen), findsOneWidget);
       },
     );
   });

@@ -155,6 +155,7 @@
     "appearanceLight": "Licht",
     "appearanceDark": "Donker",
     "language": "Taal",
+    "notifications": "Meldingen",
     "haptics": "Haptische feedback",
     "largerListText": "Grotere lijsttekst",
     "reduceMotion": "Animaties beperken",
@@ -220,5 +221,11 @@
     "submit": "Aansluiten",
     "confirmTitle": "Je bent erbij",
     "confirmBody": "Aangesloten bij {{list}}."
+  },
+  "notifications": {
+    "title": "Meldingen",
+    "perList": "Per lijst",
+    "on": "Aan",
+    "muted": "Gedempt"
   }
 }

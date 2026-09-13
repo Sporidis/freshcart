@@ -121,6 +121,28 @@ void main() {
     });
   });
 
+  group('isListMuted', () {
+    test('reads the caller\'s mute state back', () async {
+      client.handler = (_, _, _) => true;
+
+      final result = await repository.isListMuted(ListId(listUuid.uuid));
+
+      expect(result, const Ok<bool>(true));
+      final call = client.calls.single;
+      expect(call.method, 'isListMuted');
+      expect(call.args['listId'], listUuid);
+    });
+
+    test('translates a non-member rejection', () async {
+      client.handler = (_, _, _) => throw dto.NotAMemberException();
+
+      expect(
+        (await repository.isListMuted(ListId(listUuid.uuid))).failureOrNull,
+        const Failure.unauthorized(),
+      );
+    });
+  });
+
   group('UnconfiguredPushTokenSource', () {
     test('reports unsupported and yields no token', () async {
       const source = UnconfiguredPushTokenSource(dto.DevicePlatform.ios);
