@@ -15,10 +15,16 @@ import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
 import '../../../fakes/fake_shop_repository.dart';
 
-/// Reached only through the real journey (Settings' "Manage lists" row),
-/// not by constructing the screen directly — the point of this screen is
-/// that door, and a widget test that skips it could not catch the door
-/// going missing.
+/// Reached only through the real journey (drawer -> Settings -> tapping the
+/// list's own row under "Your lists"), not by constructing the screen
+/// directly -- the point of this screen is that door, and a widget test
+/// that skips it could not catch the door going missing.
+///
+/// There is deliberately no single "Manage lists" row to tap: the
+/// `Flow Screens v2.dc.html` re-export replaced it with one row per list,
+/// each opening straight into that list's own settings ("Shops and
+/// household belong to a list. Pick one to manage it.") -- so the door this
+/// suite exercises is a specific list's row, by name.
 void main() {
   setUpAll(configurePluralResolvers);
 
@@ -63,12 +69,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // The real journey: drawer -> Settings -> Manage lists.
+    // The real journey: drawer -> Settings -> the list's own row.
     await tester.tap(find.byIcon(Icons.menu));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Manage lists'));
+    await tester.tap(find.text(list.name));
     await tester.pumpAndSettle();
     return container;
   }
