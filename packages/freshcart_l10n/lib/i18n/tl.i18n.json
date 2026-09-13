@@ -47,7 +47,8 @@
     "addTo": "Idagdag sa {{shop}}",
     "newProductTitle": "Bagong produkto",
     "editProductTitle": "I-edit ang produkto",
-    "remove": "Alisin"
+    "remove": "Alisin",
+    "moveTo": "Ilipat sa"
   },
   "shops": {
     "all": "Lahat ng tindahan",
@@ -73,6 +74,7 @@
     "cancel": "Kanselahin",
     "save": "I-save",
     "delete": "Burahin",
+    "move": "Ilipat",
     "retry": "Subukan muli",
     "undo": "I-undo",
     "dismiss": "I-dismiss"

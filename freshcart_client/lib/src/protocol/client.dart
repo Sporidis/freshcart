@@ -400,6 +400,22 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
+  /// Reassigns every one of [itemIds] to [shopId] (null untags them), in one
+  /// transaction, returning how many moved.
+  _i2.Future<int> moveMany(
+    _i1.UuidValue listId,
+    List<_i1.UuidValue> itemIds,
+    _i1.UuidValue? shopId,
+  ) => caller.callServerEndpoint<int>(
+    'item',
+    'moveMany',
+    {
+      'listId': listId,
+      'itemIds': itemIds,
+      'shopId': shopId,
+    },
+  );
+
   /// Product name suggestions for a list, matching [query], most recently
   /// used first -- the add control's suggestion chips.
   _i2.Future<List<String>> suggestNames(

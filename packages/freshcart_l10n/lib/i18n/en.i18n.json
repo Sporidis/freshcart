@@ -47,7 +47,8 @@
     "addTo": "Add to {{shop}}",
     "newProductTitle": "New product",
     "editProductTitle": "Edit product",
-    "remove": "Remove"
+    "remove": "Remove",
+    "moveTo": "Move to"
   },
   "shops": {
     "all": "All shops",
@@ -73,6 +74,7 @@
     "cancel": "Cancel",
     "save": "Save",
     "delete": "Delete",
+    "move": "Move",
     "retry": "Try again",
     "undo": "Undo",
     "dismiss": "Dismiss"

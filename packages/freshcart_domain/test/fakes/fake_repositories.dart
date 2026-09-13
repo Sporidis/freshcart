@@ -72,6 +72,13 @@ class FakeItemRepository implements ItemRepository {
       throw UnimplementedError();
 
   @override
+  Future<Result<int>> moveMany(
+    ListId listId,
+    List<ItemId> ids,
+    ShopId? shopId,
+  ) => throw UnimplementedError();
+
+  @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
       throw UnimplementedError();
 

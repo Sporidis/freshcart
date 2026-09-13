@@ -557,6 +557,81 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Bread'), findsOneWidget);
     });
+
+    testWidgets('Move re-tags the selected rows and exits the mode', (
+      tester,
+    ) async {
+      final bakery = buildShop(
+        id: '00000000-0000-4000-8000-0000000000c1',
+        name: 'Bakery',
+        color: '#C62828',
+      );
+      shopRepository.byListResult = Ok([bakery]);
+      await openGroceries(tester);
+
+      await tester.longPress(find.text('Milk'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Move to'), findsOneWidget);
+      await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+      await tester.pumpAndSettle();
+
+      expect(itemRepository.moveManyCalls.single.shopId, bakery.id);
+      expect(
+        itemRepository.moveManyCalls.single.ids.single,
+        ItemId('00000000-0000-4000-8000-0000000000aa'),
+      );
+      // Back to the ordinary header, not left on an empty selection.
+      expect(find.text('1 selected'), findsNothing);
+    });
+
+    testWidgets(
+      'a rejected Move keeps the selection, rather than losing the pick',
+      (tester) async {
+        final bakery = buildShop(
+          id: '00000000-0000-4000-8000-0000000000c1',
+          name: 'Bakery',
+          color: '#C62828',
+        );
+        shopRepository.byListResult = Ok([bakery]);
+        itemRepository.moveManyResult = const Err(Failure.network('offline'));
+        await openGroceries(tester);
+
+        await tester.longPress(find.text('Milk'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Move'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('1 selected'), findsOneWidget);
+      },
+    );
+
+    testWidgets('cancelling the Move sheet leaves the selection untouched', (
+      tester,
+    ) async {
+      final bakery = buildShop(
+        id: '00000000-0000-4000-8000-0000000000c1',
+        name: 'Bakery',
+        color: '#C62828',
+      );
+      shopRepository.byListResult = Ok([bakery]);
+      await openGroceries(tester);
+
+      await tester.longPress(find.text('Milk'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Move'));
+      await tester.pumpAndSettle();
+      // Tap outside the sheet to dismiss it without choosing.
+      await tester.tapAt(const Offset(20, 20));
+      await tester.pumpAndSettle();
+
+      expect(itemRepository.moveManyCalls, isEmpty);
+      expect(find.text('1 selected'), findsOneWidget);
+    });
   });
 
   group('search', () {
@@ -583,7 +658,9 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(const ValueKey('search')), findsOneWidget);
-        expect(find.byIcon(Icons.arrow_back), findsOneWidget);
+        // The reference's own search header: the bordered field plus a
+        // trailing "Cancel" text action, no separate leading back-arrow.
+        expect(find.text('Cancel'), findsOneWidget);
         // The quick-add field is the only other TextField this screen has.
         expect(find.byType(TextField), findsOneWidget);
       },
@@ -624,7 +701,7 @@ void main() {
       },
     );
 
-    testWidgets('the back arrow closes search and restores the tab strip', (
+    testWidgets('Cancel closes search and restores the tab strip', (
       tester,
     ) async {
       await openGroceries(tester);
@@ -634,7 +711,7 @@ void main() {
       await tester.enterText(find.byKey(const ValueKey('search')), 'mil');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byIcon(Icons.arrow_back));
+      await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('search')), findsNothing);

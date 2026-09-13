@@ -21,6 +21,7 @@ item:
   - remove:
   - clearChecked:
   - removeMany:
+  - moveMany:
   - suggestNames:
   - watchList:
 list:

@@ -23,6 +23,9 @@ class FakeItemRepository implements ItemRepository {
   /// What [removeMany] returns.
   Result<int>? removeManyResult;
 
+  /// What [moveMany] returns.
+  Result<int>? moveManyResult;
+
   /// What [suggestNames] returns.
   Result<List<String>> suggestNamesResult = const Ok(<String>[]);
 
@@ -49,6 +52,9 @@ class FakeItemRepository implements ItemRepository {
 
   /// Every id list passed to [removeMany], in order.
   final List<List<ItemId>> removeManyCalls = [];
+
+  /// Every (ids, shopId) pair passed to [moveMany], in order.
+  final List<({List<ItemId> ids, ShopId? shopId})> moveManyCalls = [];
 
   /// How many times [clearChecked] was called.
   int clearCheckedCallCount = 0;
@@ -101,6 +107,16 @@ class FakeItemRepository implements ItemRepository {
   Future<Result<int>> removeMany(ListId listId, List<ItemId> ids) async {
     removeManyCalls.add(ids);
     return removeManyResult ?? Ok(ids.length);
+  }
+
+  @override
+  Future<Result<int>> moveMany(
+    ListId listId,
+    List<ItemId> ids,
+    ShopId? shopId,
+  ) async {
+    moveManyCalls.add((ids: ids, shopId: shopId));
+    return moveManyResult ?? Ok(ids.length);
   }
 
   /// Feeds [watchByList]. Tests push snapshots through this to simulate
