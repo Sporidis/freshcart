@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -11,7 +13,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// The button morphs to a checkmark for 1.6 s rather than firing a snackbar:
 /// the feedback belongs on the control that was pressed, and a snackbar for
 /// something this small would cover the very thing they are about to share.
-class InviteCard extends StatefulWidget {
+class InviteCard extends ConsumerStatefulWidget {
   /// Creates the card for [joinCode].
   const InviteCard({required this.joinCode, required this.t, super.key});
 
@@ -22,10 +24,10 @@ class InviteCard extends StatefulWidget {
   final Translations t;
 
   @override
-  State<InviteCard> createState() => _InviteCardState();
+  ConsumerState<InviteCard> createState() => _InviteCardState();
 }
 
-class _InviteCardState extends State<InviteCard> {
+class _InviteCardState extends ConsumerState<InviteCard> {
   static const Duration _held = Duration(milliseconds: 1600);
 
   bool _copied = false;
@@ -39,7 +41,9 @@ class _InviteCardState extends State<InviteCard> {
 
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: widget.joinCode));
-    unawaited(HapticFeedback.lightImpact());
+    if (ref.read(hapticsControllerProvider).value ?? true) {
+      unawaited(HapticFeedback.lightImpact());
+    }
     if (!mounted) return;
     setState(() => _copied = true);
     _reset?.cancel();

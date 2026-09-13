@@ -4,7 +4,9 @@ import 'dart:ui' show lerpDouble;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
@@ -21,7 +23,7 @@ const _swipeDismissThreshold = 0.4;
 const _checkboxSlide = 8.0;
 
 /// One row of a shopping list.
-class ItemTile extends StatefulWidget {
+class ItemTile extends ConsumerStatefulWidget {
   /// Key on the leading checkbox/selection circle, shared across every row
   /// rather than keyed to one item's id: it plays the same role
   /// `find.byType(Checkbox)` used to before the row grew its own bespoke
@@ -113,10 +115,15 @@ class ItemTile extends StatefulWidget {
   final bool justAdded;
 
   @override
-  State<ItemTile> createState() => _ItemTileState();
+  ConsumerState<ItemTile> createState() => _ItemTileState();
 }
 
-class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
+class _ItemTileState extends ConsumerState<ItemTile>
+    with TickerProviderStateMixin {
+  /// Whether this row's haptic feedback should actually fire, per the
+  /// user's own Settings preference (default on -- see [HapticsController]).
+  bool get _hapticsOn => ref.read(hapticsControllerProvider).value ?? true;
+
   /// Drives the strike-through wipe and the fade to 45%.
   late final AnimationController _strike = AnimationController(
     vsync: this,
@@ -181,7 +188,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     if (widget.justAdded) {
-      unawaited(HapticFeedback.lightImpact());
+      if (_hapticsOn) unawaited(HapticFeedback.lightImpact());
       _entrance.forward();
     }
   }
@@ -267,12 +274,14 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   void _handleToggle() {
     // Haptics fire on commitment, and on check only -- confirming a tick is
     // useful, confirming an undo is noise.
-    if (!widget.item.isChecked) unawaited(HapticFeedback.lightImpact());
+    if (!widget.item.isChecked && _hapticsOn) {
+      unawaited(HapticFeedback.lightImpact());
+    }
     widget.onToggle();
   }
 
   void _toggleSelection() {
-    unawaited(HapticFeedback.selectionClick());
+    if (_hapticsOn) unawaited(HapticFeedback.selectionClick());
     widget.onToggleSelection();
   }
 
@@ -330,7 +339,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   void _handleLongPressFire() {
     _pressTellTimer?.cancel();
     _pressTellTimer = null;
-    unawaited(HapticFeedback.mediumImpact());
+    if (_hapticsOn) unawaited(HapticFeedback.mediumImpact());
     unawaited(_pressScale.animateTo(1, duration: AppMotion.quick));
     widget.onLongPress();
   }
@@ -347,7 +356,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     // drag actually crossed it, so the haptic and pop fire once per crossing
     // instead of once per frame.
     if (details.reached && !details.previousReached) {
-      unawaited(HapticFeedback.mediumImpact());
+      if (_hapticsOn) unawaited(HapticFeedback.mediumImpact());
       _iconPop.forward(from: 0);
     }
   }

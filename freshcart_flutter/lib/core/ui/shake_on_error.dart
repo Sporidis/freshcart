@@ -3,6 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 
 /// Shakes its child once each time [errorText] becomes non-null.
@@ -14,7 +16,7 @@ import 'package:freshcart_flutter/core/theme/app_motion.dart';
 /// [shake] exists because not every inline error deserves one. A typo earns
 /// "look again"; an expired invite or an unreachable server is not the user's
 /// mistake, and shaking at them for it is just rude.
-class ShakeOnError extends StatefulWidget {
+class ShakeOnError extends ConsumerStatefulWidget {
   /// Wraps [child].
   const ShakeOnError({
     required this.errorText,
@@ -33,10 +35,10 @@ class ShakeOnError extends StatefulWidget {
   final Widget child;
 
   @override
-  State<ShakeOnError> createState() => _ShakeOnErrorState();
+  ConsumerState<ShakeOnError> createState() => _ShakeOnErrorState();
 }
 
-class _ShakeOnErrorState extends State<ShakeOnError>
+class _ShakeOnErrorState extends ConsumerState<ShakeOnError>
     with SingleTickerProviderStateMixin {
   /// Four oscillations over 320 ms.
   static const int _oscillations = 4;
@@ -55,7 +57,9 @@ class _ShakeOnErrorState extends State<ShakeOnError>
         widget.errorText != null && widget.errorText != oldWidget.errorText;
     if (!(appeared || changed)) return;
     if (!widget.shake || AppMotion.reduced(context)) return;
-    unawaited(HapticFeedback.vibrate());
+    if (ref.read(hapticsControllerProvider).value ?? true) {
+      unawaited(HapticFeedback.vibrate());
+    }
     _controller.forward(from: 0);
   }
 
