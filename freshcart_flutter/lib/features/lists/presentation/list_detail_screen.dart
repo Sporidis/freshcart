@@ -6,7 +6,6 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
@@ -45,12 +44,6 @@ class ListDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
-  /// Captured while the widget is still mounted.
-  ///
-  /// `ref` cannot be used from `dispose` — the element is already deactivated
-  /// by then — so the notifier is held onto here instead.
-  ActiveSeedColor? _seedColor;
-
   /// Backs the header's search field once it is open. Its own controller
   /// rather than `TextEditingController(text: ...)` rebuilt from provider
   /// state every frame, which would fight the user's cursor position on
@@ -58,25 +51,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   final TextEditingController _searchField = TextEditingController();
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _seedColor = ref.read(activeSeedColorProvider.notifier);
-  }
-
-  @override
   void dispose() {
-    // Leaving the list drops its shop colour, so the lists screen is not left
-    // wearing the theme of a shop the user is no longer looking at. Deferred to
-    // a microtask because a provider must not be written during teardown.
-    //
-    // selectIfAlive, not select: the same guard as _refreshIfAlive elsewhere.
-    // A fast pop-then-navigate-away can dispose activeSeedColorProvider
-    // itself before this microtask runs (nothing else on the destination
-    // watches it), and writing to a torn-down provider throws.
-    final notifier = _seedColor;
-    if (notifier != null) {
-      scheduleMicrotask(() => notifier.selectIfAlive(null));
-    }
     _searchField.dispose();
     super.dispose();
   }
@@ -111,18 +86,14 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       );
     }
 
-    // The theme follows the active shop. Done as a listener rather than by
-    // deriving the seed inside the theme provider, because the theme is global
-    // while the filter belongs to whichever list is open — the screen is the
-    // only place that knows both.
-    //
-    // Registered only once there is a list to show. On the error path the
-    // filter and shop providers have nothing keeping them alive, so they
-    // dispose as this frame builds, and a listener still firing into that
-    // teardown writes to a provider that is already gone.
-    ref.listen<HexColor?>(activeShopColorProvider(listId), (previous, next) {
-      ref.read(activeSeedColorProvider.notifier).select(next);
-    });
+    // Scoped, not global: this is the one piece of the screen that tints
+    // with the active shop, so it is the one place that reads this. Null
+    // means "All" or no shop selected yet -- the neutral brand seed, same
+    // as the rest of the app.
+    final activeShopColor = ref.watch(activeShopColorProvider(listId));
+    final scopedSeed = activeShopColor == null
+        ? AppTheme.brandSeed
+        : Color(activeShopColor.argb);
 
     final loaded = list.dataOrNull;
 
@@ -152,165 +123,260 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       // screen would offer a way out of a state that already has one.
       drawer: loaded == null ? null : ListsDrawer(currentListId: listId),
       appBar: AppBar(
-        // Selection mode replaces the drawer's hamburger with a way out of
-        // selection instead -- opening the list switcher mid-select would
-        // abandon the selection with no way back to it. Search does the
-        // same, for the same reason.
-        leading: selectionMode
-            ? IconButton(
-                icon: const Icon(Icons.close),
-                tooltip: t.common.cancel,
-                onPressed: selectionNotifier.clear,
-              )
-            : search.active
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                tooltip: t.common.cancel,
-                onPressed: closeSearch,
-              )
-            : null,
-        title: AnimatedSwitcher(
-          // 280 ms per §16 -- its own value, distinct from the 260 ms token
-          // the selection cross-fade uses; one switcher can only run one
-          // duration, so this is what both transitions share.
-          duration: AppMotion.durationFor(
-            context,
-            const Duration(milliseconds: 280),
-          ),
-          switchInCurve: AppMotion.enter,
-          switchOutCurve: AppMotion.enter,
-          // The header cross-fades into the contextual bar (§10) or the
-          // search field (§16) rather than being replaced by a whole
-          // separate widget tree, so it reads as one bar changing what it
-          // says, not a screen change.
-          child: selectionMode
-              ? Text(
-                  t.items.selectedCount(n: selection.length),
-                  key: const ValueKey('selection'),
-                )
-              : search.active
-              ? TextField(
-                  key: const ValueKey('search'),
-                  controller: _searchField,
-                  autofocus: true,
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: t.search.hint,
-                    border: InputBorder.none,
-                    isDense: true,
-                  ),
-                  onChanged: searchNotifier.updateQuery,
-                )
-              : KeyedSubtree(
-                  key: const ValueKey('normal'),
-                  child: loaded == null
-                      ? Text(t.appName)
-                      : Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            // The app's own name as a small kicker over the
-                            // list's, the way the design's every list screen
-                            // carries it — this is whose product this is,
-                            // not what kind of screen it is.
-                            Text(
-                              t.appName,
-                              style: AppTextStyles.labelStrong.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            EditableListTitle(
-                              name: loaded.name,
-                              onRename: (name) async {
-                                final result = await ref
-                                    .read(listsControllerProvider.notifier)
-                                    .rename(loaded.id, name);
-                                return switch (result) {
-                                  Ok<ShoppingList>() => null,
-                                  Err<ShoppingList>(:final failure) =>
-                                    failure.toMessage(t),
-                                };
-                              },
-                            ),
-                          ],
-                        ),
-                ),
+        leading: _buildLeading(
+          t: t,
+          selectionMode: selectionMode,
+          searchActive: search.active,
+          onCancelSelection: selectionNotifier.clear,
+          onCloseSearch: closeSearch,
         ),
-        actions: selectionMode
-            ? [
-                // "Move" is left out here: it would need a shop-picker
-                // sheet, and there isn't one anywhere in the app yet to
-                // reuse — building the app's first one just for this one
-                // button is its own piece of work, not this one.
-                TextButton(
-                  onPressed: () async {
-                    final failure = await ref
-                        .read(itemsControllerProvider(listId).notifier)
-                        .removeSelected(selection);
-                    if (!context.mounted) return;
-                    if (failure == null) {
-                      selectionNotifier.clear();
-                    } else {
-                      showFailureSnackBar(context, failure: failure, t: t);
-                    }
-                  },
-                  style: TextButton.styleFrom(
-                    foregroundColor: AppColors.destructive,
-                  ),
-                  child: Text(t.common.delete),
-                ),
-              ]
-            // The field itself takes the actions' place while searching --
-            // nothing here is meaningful mid-search, and the back arrow in
-            // leading is already the way out.
-            : search.active
-            ? const []
-            : [
-                if (loaded != null) ...[
-                  IconButton(
-                    icon: const Icon(Icons.search),
-                    tooltip: t.search.hint,
-                    onPressed: openSearch,
-                  ),
-                  _MemberAvatar(list: loaded),
-                  _ListMenu(list: loaded, t: t),
-                ],
-              ],
+        title: _buildTitle(
+          context,
+          theme: theme,
+          t: t,
+          selectionMode: selectionMode,
+          selectionCount: selection.length,
+          search: search,
+          onSearchChanged: searchNotifier.updateQuery,
+          loaded: loaded,
+        ),
+        actions: _buildActions(
+          context,
+          t: t,
+          selectionMode: selectionMode,
+          searchActive: search.active,
+          loaded: loaded,
+          listId: listId,
+          selection: selection,
+          onClearSelection: selectionNotifier.clear,
+          onOpenSearch: openSearch,
+        ),
       ),
-      body: switch (list) {
-        AsyncLoading<Result<ShoppingList>>() => const Center(
-          child: CircularProgressIndicator(),
+      // Everything under body/ — tabs, checks, focused inputs, the quick-add
+      // control, empty-state tint — sees the active shop's colour. The
+      // drawer and app bar above are siblings of this, not descendants, so
+      // they stay on the app's own neutral theme regardless.
+      body: AnimatedTheme(
+        data: theme.brightness == Brightness.dark
+            ? AppTheme.dark(scopedSeed)
+            : AppTheme.light(scopedSeed),
+        // Same token as the app-wide tint this replaces (decisions #71):
+        // "colour tint" is `quick`, 180ms easeOutCubic.
+        duration: AppMotion.durationFor(context, AppMotion.quick),
+        curve: AppMotion.enter,
+        child: _buildBody(
+          context,
+          list: list,
+          listId: listId,
+          searchActive: search.active,
         ),
-        // Both failure arms are handled above, as the screen tier.
-        AsyncError<Result<ShoppingList>>() => const SizedBox.shrink(),
-        AsyncOutcome<ShoppingList>(:final value?) => switch (value) {
-          Err<ShoppingList>() => const SizedBox.shrink(),
-          Ok<ShoppingList>(value: final shoppingList) => Column(
-            children: [
-              // The stakes are real here: this list is shared, so losing the
-              // session would lose access to it.
-              const UpgradeNudge(),
-              // The tab strip slides away while searching (§16): search
-              // results already span every shop, so a filter that would only
-              // narrow them back down has nothing to do here.
-              AnimatedSize(
-                duration: AppMotion.durationFor(context, AppMotion.standard),
-                curve: AppMotion.enter,
-                child: search.active
-                    ? const SizedBox(width: double.infinity)
-                    : Column(
-                        children: [
-                          ShopFilterBar(listId: listId),
-                          const Divider(height: 1),
-                        ],
-                      ),
-              ),
-              Expanded(child: ItemsSection(list: shoppingList)),
-            ],
-          ),
-        },
-      },
+      ),
     );
+  }
+
+  /// The app bar's leading slot: a way out of selection mode or search when
+  /// either is active. Selection mode replaces the drawer's hamburger with a
+  /// way out of selection instead -- opening the list switcher mid-select
+  /// would abandon the selection with no way back to it. Search does the
+  /// same, for the same reason. Neither active: null, so [Scaffold] falls
+  /// back to its own drawer hamburger.
+  Widget? _buildLeading({
+    required Translations t,
+    required bool selectionMode,
+    required bool searchActive,
+    required VoidCallback onCancelSelection,
+    required VoidCallback onCloseSearch,
+  }) {
+    if (selectionMode) {
+      return IconButton(
+        icon: const Icon(Icons.close),
+        tooltip: t.common.cancel,
+        onPressed: onCancelSelection,
+      );
+    }
+    if (searchActive) {
+      return IconButton(
+        icon: const Icon(Icons.arrow_back),
+        tooltip: t.common.cancel,
+        onPressed: onCloseSearch,
+      );
+    }
+    return null;
+  }
+
+  /// The app bar's title. Cross-fades between the normal list-name header,
+  /// the selection count, and the search field (§16) rather than being
+  /// replaced by a whole separate widget tree, so it reads as one bar
+  /// changing what it says, not a screen change.
+  Widget _buildTitle(
+    BuildContext context, {
+    required ThemeData theme,
+    required Translations t,
+    required bool selectionMode,
+    required int selectionCount,
+    required ({bool active, String query}) search,
+    required ValueChanged<String> onSearchChanged,
+    required ShoppingList? loaded,
+  }) {
+    return AnimatedSwitcher(
+      // 280 ms per §16 -- its own value, distinct from the 260 ms token
+      // the selection cross-fade uses; one switcher can only run one
+      // duration, so this is what both transitions share.
+      duration: AppMotion.durationFor(
+        context,
+        const Duration(milliseconds: 280),
+      ),
+      switchInCurve: AppMotion.enter,
+      switchOutCurve: AppMotion.enter,
+      child: selectionMode
+          ? Text(
+              t.items.selectedCount(n: selectionCount),
+              key: const ValueKey('selection'),
+            )
+          : search.active
+          ? TextField(
+              key: const ValueKey('search'),
+              controller: _searchField,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              decoration: InputDecoration(
+                hintText: t.search.hint,
+                border: InputBorder.none,
+                isDense: true,
+              ),
+              onChanged: onSearchChanged,
+            )
+          : KeyedSubtree(
+              key: const ValueKey('normal'),
+              child: loaded == null
+                  ? Text(t.appName)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // The app's own name as a small kicker over the
+                        // list's, the way the design's every list screen
+                        // carries it — this is whose product this is,
+                        // not what kind of screen it is.
+                        Text(
+                          t.appName,
+                          style: AppTextStyles.labelStrong.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        EditableListTitle(
+                          name: loaded.name,
+                          onRename: (name) async {
+                            final result = await ref
+                                .read(listsControllerProvider.notifier)
+                                .rename(loaded.id, name);
+                            return switch (result) {
+                              Ok<ShoppingList>() => null,
+                              Err<ShoppingList>(:final failure) =>
+                                failure.toMessage(t),
+                            };
+                          },
+                        ),
+                      ],
+                    ),
+            ),
+    );
+  }
+
+  /// The app bar's actions: the selection contextual bar's delete button
+  /// while selecting; nothing while searching, since the field itself takes
+  /// the actions' place and the back arrow in [_buildLeading] is already the
+  /// way out; otherwise search/member/menu.
+  List<Widget> _buildActions(
+    BuildContext context, {
+    required Translations t,
+    required bool selectionMode,
+    required bool searchActive,
+    required ShoppingList? loaded,
+    required ListId listId,
+    required Set<ItemId> selection,
+    required VoidCallback onClearSelection,
+    required VoidCallback onOpenSearch,
+  }) {
+    if (selectionMode) {
+      // "Move" is left out here: it would need a shop-picker sheet, and
+      // there isn't one anywhere in the app yet to reuse — building the
+      // app's first one just for this one button is its own piece of work,
+      // not this one.
+      return [
+        TextButton(
+          onPressed: () async {
+            final failure = await ref
+                .read(itemsControllerProvider(listId).notifier)
+                .removeSelected(selection);
+            if (!context.mounted) return;
+            if (failure == null) {
+              onClearSelection();
+            } else {
+              showFailureSnackBar(context, failure: failure, t: t);
+            }
+          },
+          style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
+          child: Text(t.common.delete),
+        ),
+      ];
+    }
+    if (searchActive) return const [];
+    if (loaded == null) return const [];
+    return [
+      IconButton(
+        icon: const Icon(Icons.search),
+        tooltip: t.search.hint,
+        onPressed: onOpenSearch,
+      ),
+      _MemberAvatar(list: loaded),
+      _ListMenu(list: loaded, t: t),
+    ];
+  }
+
+  /// The scaffold body: the loading spinner while the list is still
+  /// fetching, then the shop filter (hidden while searching -- results
+  /// already span every shop, so a filter that would only narrow them back
+  /// down has nothing to do here) above the items.
+  Widget _buildBody(
+    BuildContext context, {
+    required AsyncOutcome<ShoppingList> list,
+    required ListId listId,
+    required bool searchActive,
+  }) {
+    return switch (list) {
+      AsyncLoading<Result<ShoppingList>>() => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      // Both failure arms are handled above, as the screen tier.
+      AsyncError<Result<ShoppingList>>() => const SizedBox.shrink(),
+      AsyncOutcome<ShoppingList>(:final value?) => switch (value) {
+        Err<ShoppingList>() => const SizedBox.shrink(),
+        Ok<ShoppingList>(value: final shoppingList) => Column(
+          children: [
+            // The stakes are real here: this list is shared, so losing the
+            // session would lose access to it.
+            const UpgradeNudge(),
+            // The tab strip slides away while searching (§16): search
+            // results already span every shop, so a filter that would only
+            // narrow them back down has nothing to do here.
+            AnimatedSize(
+              duration: AppMotion.durationFor(context, AppMotion.standard),
+              curve: AppMotion.enter,
+              child: searchActive
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      children: [
+                        ShopFilterBar(listId: listId),
+                        const Divider(height: 1),
+                      ],
+                    ),
+            ),
+            Expanded(child: ItemsSection(list: shoppingList)),
+          ],
+        ),
+      },
+    };
   }
 }
 

@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
-import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
-import 'package:freshcart_flutter/core/theme/active_seed_color_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -91,54 +89,25 @@ void main() {
   });
 
   group('theming', () {
-    testWidgets('starts from the brand seed', (tester) async {
-      await pumpApp(tester);
+    // A shop's colour re-theming the app shell used to be tested here. That
+    // mechanism is gone -- the app root is now permanently neutral, and a
+    // shop only ever tints the list-detail subtree it belongs to (see
+    // list_detail_screen_test.dart's own "theming" group). This shell test
+    // now only has one thing left to prove: the root never wears a shop's
+    // colour in the first place, regardless of what any list is doing.
+    testWidgets(
+      'is always the brand seed, never a shop colour -- there is no '
+      'mechanism left that could change it',
+      (tester) async {
+        await pumpApp(tester);
 
-      final theme = Theme.of(
-        tester.element(find.byType(Scaffold)),
-      );
-      // The neutral/brand theme is ink-on-paper, not a Material-generated
-      // scheme: primary buttons must not change colour when no shop is
-      // active. Only AppTheme.forShop's non-brand seeds get the generated
-      // ColorScheme.fromSeed treatment (see AppTheme's class doc).
-      expect(theme.colorScheme.primary, AppColors.ink);
-    });
-
-    testWidgets('selecting a shop colour re-themes the app', (tester) async {
-      final container = await pumpApp(tester);
-      final before = Theme.of(
-        tester.element(find.byType(Scaffold)),
-      ).colorScheme.primary;
-
-      // A shop's seed colour arrives from the domain as a plain ARGB int.
-      final shopColour = HexColor.parse('#C62828').valueOrNull!;
-      container.read(activeSeedColorProvider.notifier).select(shopColour);
-      await tester.pumpAndSettle();
-
-      final after = Theme.of(
-        tester.element(find.byType(Scaffold)),
-      ).colorScheme.primary;
-      expect(after, isNot(before));
-      // The shop's own colour, not what ColorScheme.fromSeed would have
-      // derived from it: M3's seeding snaps a colour to the nearest tone on
-      // its own generated ramp, which visibly shifts hue and saturation away
-      // from a swatch someone actually picked (see AppTheme._build).
-      expect(after, Color(shopColour.argb));
-    });
-
-    testWidgets('clearing the shop returns to the brand seed', (tester) async {
-      final container = await pumpApp(tester);
-      final notifier = container.read(activeSeedColorProvider.notifier);
-
-      notifier.select(HexColor.parse('#C62828').valueOrNull);
-      await tester.pumpAndSettle();
-      notifier.select(null);
-      await tester.pumpAndSettle();
-
-      expect(
-        Theme.of(tester.element(find.byType(Scaffold))).colorScheme.primary,
-        AppColors.ink,
-      );
-    });
+        final theme = Theme.of(tester.element(find.byType(Scaffold)));
+        // The neutral/brand theme is ink-on-paper, not a Material-generated
+        // scheme: primary buttons must not change colour. Only
+        // AppTheme.forShop's non-brand seeds get the generated
+        // ColorScheme.fromSeed treatment (see AppTheme's class doc).
+        expect(theme.colorScheme.primary, AppColors.ink);
+      },
+    );
   });
 }
