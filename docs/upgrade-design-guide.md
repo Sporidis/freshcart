@@ -208,27 +208,34 @@ here.
 
 ## Priority 1: visible flow gaps
 
-### 4. Complete multi-select actions
+### 4. Complete multi-select actions — ✅ done, decisions #75
 
-`_buildActions` in [`list_detail_screen.dart`](../freshcart_flutter/lib/features/lists/presentation/list_detail_screen.dart)
-currently exposes Delete only. Add the reference `Move` action, with a shop
-picker that updates all selected items and handles cancellation/errors without
-clearing the selection prematurely.
+`_buildActions` now offers Move alongside Delete, resolving decisions #53's own
+stated blocker: "Move" needed the app's first shop-picker, and one already
+exists (`ItemSheet`'s `ChoiceChip` row) since decisions #63/#64 landed after that
+one was written. `ItemService.moveMany` reassigns a selection's `shopId` in one
+transaction, same shape as `removeMany` (decisions #53's own reasoning: one
+promise covering the whole selection, not a loop that can fail partway
+through). Cancelling the sheet or a rejected write both leave the selection
+exactly as it was -- verified by test, not just implied by the code.
 
-### 5. Match the search state
+### 5. Match the search state — ✅ done
 
-The reference uses a bordered rounded search field with a visible search icon and
-an adjacent Cancel action. The current search field is borderless and embedded
-directly in the app-bar title. Keep the existing query controller/provider, but
-change the presentation and verify keyboard focus, cancel, empty results, and
-highlighted matches.
+The search field is now a bordered, rounded `TextField` (an `OutlineInputBorder`
+at `AppRadii.input`) with a visible leading search icon, matching Flow Screens
+v2's "Search, active" mockup exactly. The leading back-arrow is gone; "Cancel"
+moved into the trailing actions slot instead, which is where the reference
+actually draws it. The query controller/provider are untouched -- this was
+presentation only.
 
-### 6. Remove list-flow-only content that is absent from the reference
+### 6. Remove list-flow-only content that is absent from the reference — ✅ done
 
-`UpgradeNudge` is currently inserted above the shop tabs in the list body. The
-updated flow does not show it there, and the existing gap plan places the nudge
-with account/settings surfaces. Move it out of the main list composition rather
-than compensating with spacing.
+`UpgradeNudge` no longer renders above the shop tabs in the list body. The
+account-linking prompt already has two real homes that predate this change --
+`AccountCard` in Settings (decisions #56, always visible while anonymous, no
+dismiss) and `UpgradeNudge` itself inside Edit profile -- so removing it from
+the list body loses no reachable surface, just the one the reference never
+drew there.
 
 ### 7. Add collaborative and pending-sync row states when the data supports them
 
@@ -267,7 +274,9 @@ work here.
    boundaries.~~ — ✅ done, decisions #73.
 3. ~~Rebuild `ItemTile` geometry while retaining its existing gesture/animation
    controllers.~~ — ✅ done.
-4. Add Move, update search presentation, and relocate the upgrade nudge.
+4. ~~Add Move, update search presentation, and relocate the upgrade nudge.~~ —
+   ✅ done, decisions #75. Priority 1 is now only item #7 (remote/offline row
+   states), deliberately last since it needs new data-layer work first.
 5. Implement drawer counts and the secondary settings/list-settings flows from
    [`design-gap-plan.md`](design-gap-plan.md).
 6. Only then add remote/offline row metadata and its visual states, because that

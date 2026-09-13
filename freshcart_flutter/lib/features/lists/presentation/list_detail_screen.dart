@@ -12,7 +12,6 @@ import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
@@ -102,6 +101,11 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final selectionNotifier = ref.read(
       selectionControllerProvider(listId).notifier,
     );
+    // Only the multi-select "Move" action needs this here -- the item sheet
+    // and shop filter bar each fetch their own copy already.
+    final shops =
+        ref.watch(shopsControllerProvider(listId)).dataOrNull ??
+        const <Shop>[];
 
     final search = ref.watch(searchControllerProvider(listId));
     final searchNotifier = ref.read(searchControllerProvider(listId).notifier);
@@ -128,7 +132,6 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           selectionMode: selectionMode,
           searchActive: search.active,
           onCancelSelection: selectionNotifier.clear,
-          onCloseSearch: closeSearch,
         ),
         title: _buildTitle(
           context,
@@ -148,8 +151,10 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           loaded: loaded,
           listId: listId,
           selection: selection,
+          shops: shops,
           onClearSelection: selectionNotifier.clear,
           onOpenSearch: openSearch,
+          onCloseSearch: closeSearch,
         ),
       ),
       // Everything under body/ — tabs, checks, focused inputs, the quick-add
@@ -174,18 +179,17 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     );
   }
 
-  /// The app bar's leading slot: a way out of selection mode or search when
-  /// either is active. Selection mode replaces the drawer's hamburger with a
-  /// way out of selection instead -- opening the list switcher mid-select
-  /// would abandon the selection with no way back to it. Search does the
-  /// same, for the same reason. Neither active: null, so [Scaffold] falls
-  /// back to its own drawer hamburger.
+  /// The app bar's leading slot: a way out of selection mode. Opening the
+  /// list switcher mid-select would abandon the selection with no way back
+  /// to it, so the drawer hamburger is replaced with a close icon instead.
+  /// Search has its own way out -- the trailing "Cancel" in [_buildActions]
+  /// -- so it does not touch this slot at all. Neither active: null, so
+  /// [Scaffold] falls back to its own drawer hamburger.
   Widget? _buildLeading({
     required Translations t,
     required bool selectionMode,
     required bool searchActive,
     required VoidCallback onCancelSelection,
-    required VoidCallback onCloseSearch,
   }) {
     if (selectionMode) {
       return IconButton(
@@ -194,13 +198,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         onPressed: onCancelSelection,
       );
     }
-    if (searchActive) {
-      return IconButton(
-        icon: const Icon(Icons.arrow_back),
-        tooltip: t.common.cancel,
-        onPressed: onCloseSearch,
-      );
-    }
+    // No leading icon while searching -- the reference's own search header
+    // is just the bordered field plus a "Cancel" text action in the
+    // trailing slot (see _buildActions), not a second way out.
     return null;
   }
 
@@ -239,10 +239,34 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               controller: _searchField,
               autofocus: true,
               textInputAction: TextInputAction.search,
+              style: theme.textTheme.bodyLarge,
               decoration: InputDecoration(
                 hintText: t.search.hint,
-                border: InputBorder.none,
                 isDense: true,
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 12,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadii.input),
+                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadii.input),
+                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadii.input),
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.onSurface,
+                    width: 1.5,
+                  ),
+                ),
               ),
               onChanged: onSearchChanged,
             )
@@ -283,10 +307,10 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     );
   }
 
-  /// The app bar's actions: the selection contextual bar's delete button
-  /// while selecting; nothing while searching, since the field itself takes
-  /// the actions' place and the back arrow in [_buildLeading] is already the
-  /// way out; otherwise search/member/menu.
+  /// The app bar's actions: the selection contextual bar's move/delete
+  /// buttons while selecting; nothing while searching, since the field
+  /// itself takes the actions' place and the back arrow in [_buildLeading]
+  /// is already the way out; otherwise search/member/menu.
   List<Widget> _buildActions(
     BuildContext context, {
     required Translations t,
@@ -295,33 +319,69 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     required ShoppingList? loaded,
     required ListId listId,
     required Set<ItemId> selection,
+    required List<Shop> shops,
     required VoidCallback onClearSelection,
     required VoidCallback onOpenSearch,
+    required VoidCallback onCloseSearch,
   }) {
     if (selectionMode) {
-      // "Move" is left out here: it would need a shop-picker sheet, and
-      // there isn't one anywhere in the app yet to reuse — building the
-      // app's first one just for this one button is its own piece of work,
-      // not this one.
+      Future<void> handleDelete() async {
+        final failure = await ref
+            .read(itemsControllerProvider(listId).notifier)
+            .removeSelected(selection);
+        if (!context.mounted) return;
+        if (failure == null) {
+          onClearSelection();
+        } else {
+          showFailureSnackBar(context, failure: failure, t: t);
+        }
+      }
+
+      Future<void> handleMove() async {
+        // Cancelling (null) leaves the selection exactly as it was -- the
+        // sheet is a detour, not a commitment the moment it opens.
+        final outcome = await showModalBottomSheet<_MoveToShopOutcome>(
+          context: context,
+          isScrollControlled: true,
+          showDragHandle: true,
+          builder: (_) => _MoveToShopSheet(shops: shops, t: t),
+        );
+        if (outcome == null) return;
+        final failure = await ref
+            .read(itemsControllerProvider(listId).notifier)
+            .moveSelected(selection, outcome.shopId);
+        if (!context.mounted) return;
+        if (failure == null) {
+          onClearSelection();
+        } else {
+          // Left selected on failure, per the guide's own acceptance check:
+          // an error is not a reason to lose what was picked.
+          showFailureSnackBar(context, failure: failure, t: t);
+        }
+      }
+
       return [
         TextButton(
-          onPressed: () async {
-            final failure = await ref
-                .read(itemsControllerProvider(listId).notifier)
-                .removeSelected(selection);
-            if (!context.mounted) return;
-            if (failure == null) {
-              onClearSelection();
-            } else {
-              showFailureSnackBar(context, failure: failure, t: t);
-            }
-          },
+          onPressed: handleMove,
+          child: Text(t.common.move),
+        ),
+        TextButton(
+          onPressed: handleDelete,
           style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
           child: Text(t.common.delete),
         ),
       ];
     }
-    if (searchActive) return const [];
+    if (searchActive) {
+      // The reference's own search header: the bordered field plus this one
+      // text action, no separate leading back-arrow (_buildLeading).
+      return [
+        TextButton(
+          onPressed: onCloseSearch,
+          child: Text(t.common.cancel),
+        ),
+      ];
+    }
     if (loaded == null) return const [];
     return [
       IconButton(
@@ -354,9 +414,6 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         Err<ShoppingList>() => const SizedBox.shrink(),
         Ok<ShoppingList>(value: final shoppingList) => Column(
           children: [
-            // The stakes are real here: this list is shared, so losing the
-            // session would lose access to it.
-            const UpgradeNudge(),
             // The tab strip slides away while searching (§16): search
             // results already span every shop, so a filter that would only
             // narrow them back down has nothing to do here.
@@ -463,6 +520,72 @@ class _ListMenu extends ConsumerWidget {
             child: Text(t.lists.leave),
           ),
       ],
+    );
+  }
+}
+
+/// What [_MoveToShopSheet] resolved to -- distinct from `null`, which means
+/// "dismissed without choosing", so a caller can tell "moved to no shop"
+/// (untagged, a real choice) apart from "cancelled" (do nothing at all).
+class _MoveToShopOutcome {
+  const _MoveToShopOutcome(this.shopId);
+
+  final ShopId? shopId;
+}
+
+/// The multi-select "Move" sheet: the same `ChoiceChip` shop picker
+/// `ItemSheet` already uses for one item at a time, offered here for a
+/// whole selection instead. Not extracted into a shared widget between the
+/// two -- `ItemSheet`'s picker is one field among several inside a form
+/// with its own save/remove flow, while this is the sheet's entire content
+/// -- but the same shape (a "No shop" chip first, then one per shop, each
+/// tinted with its own colour) on purpose, so the picture looks the same
+/// wherever it is offered.
+class _MoveToShopSheet extends StatelessWidget {
+  const _MoveToShopSheet({required this.shops, required this.t});
+
+  final List<Shop> shops;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.sheetH),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(t.items.moveTo, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 14),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Text(t.shops.none),
+                  selected: false,
+                  onSelected: (_) => Navigator.of(
+                    context,
+                  ).pop(const _MoveToShopOutcome(null)),
+                ),
+                for (final shop in shops)
+                  ChoiceChip(
+                    avatar: CircleAvatar(
+                      backgroundColor: Color(shop.color.argb),
+                      radius: 8,
+                    ),
+                    label: Text(shop.name),
+                    selected: false,
+                    onSelected: (_) => Navigator.of(
+                      context,
+                    ).pop(_MoveToShopOutcome(shop.id)),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

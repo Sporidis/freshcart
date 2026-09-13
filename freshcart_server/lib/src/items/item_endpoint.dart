@@ -60,6 +60,21 @@ class ItemEndpoint extends Endpoint {
     List<UuidValue> itemIds,
   ) => ItemService.removeMany(session, listId, session.requireUserId, itemIds);
 
+  /// Reassigns every one of [itemIds] to [shopId] (null untags them), in one
+  /// transaction, returning how many moved.
+  Future<int> moveMany(
+    Session session,
+    UuidValue listId,
+    List<UuidValue> itemIds,
+    UuidValue? shopId,
+  ) => ItemService.moveMany(
+    session,
+    listId,
+    session.requireUserId,
+    itemIds,
+    shopId,
+  );
+
   /// Product name suggestions for a list, matching [query], most recently
   /// used first -- the add control's suggestion chips.
   Future<List<String>> suggestNames(

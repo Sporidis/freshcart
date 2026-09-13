@@ -47,7 +47,8 @@
     "addTo": "Ajouter à {{shop}}",
     "newProductTitle": "Nouveau produit",
     "editProductTitle": "Modifier le produit",
-    "remove": "Supprimer"
+    "remove": "Supprimer",
+    "moveTo": "Déplacer vers"
   },
   "shops": {
     "all": "Tous les magasins",
@@ -73,6 +74,7 @@
     "cancel": "Annuler",
     "save": "Enregistrer",
     "delete": "Supprimer",
+    "move": "Déplacer",
     "retry": "Réessayer",
     "undo": "Annuler",
     "dismiss": "Ignorer"

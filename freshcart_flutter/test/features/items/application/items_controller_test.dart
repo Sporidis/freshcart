@@ -298,6 +298,87 @@ void main() {
     });
   });
 
+  group('moveSelected', () {
+    final bakery = ShopId('shop-bakery');
+
+    test('re-tags exactly the selected rows immediately', () async {
+      final milk = buildItem(id: 'a', name: 'Milk');
+      final bread = buildItem(id: 'b', name: 'Bread');
+      final eggs = buildItem(id: 'c', name: 'Eggs');
+      repository.byListResult = Ok([milk, bread, eggs]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .moveSelected({milk.id, bread.id}, bakery);
+
+      expect(failure, isNull);
+      final items = await itemsOf(container);
+      expect(
+        items.where((i) => i.id == milk.id || i.id == bread.id),
+        everyElement(predicate<ShoppingItem>((i) => i.shopId == bakery)),
+      );
+      expect(
+        items.singleWhere((i) => i.id == eggs.id).shopId,
+        isNull,
+        reason: 'the row not in the selection is untouched',
+      );
+      expect(
+        repository.moveManyCalls.single.ids,
+        unorderedEquals([milk.id, bread.id]),
+      );
+      expect(repository.moveManyCalls.single.shopId, bakery);
+    });
+
+    test('a null shopId untags the selected rows', () async {
+      final milk = buildItem(id: 'a', name: 'Milk', shopId: bakery);
+      repository.byListResult = Ok([milk]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      await container
+          .read(itemsControllerProvider(listId).notifier)
+          .moveSelected({milk.id}, null);
+
+      expect((await itemsOf(container)).single.shopId, isNull);
+    });
+
+    test('puts every selected row back on its own shop when the server '
+        'refuses', () async {
+      final milk = buildItem(id: 'a', name: 'Milk');
+      repository.byListResult = Ok([milk]);
+      repository.moveManyResult = const Err(Failure.network('offline'));
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .moveSelected({milk.id}, bakery);
+
+      expect(failure, isA<NetworkFailure>());
+      expect((await itemsOf(container)).single.shopId, isNull);
+    });
+
+    test('does nothing given an empty selection', () async {
+      final item = buildItem();
+      repository.byListResult = Ok([item]);
+
+      final container = makeContainer();
+      await itemsOf(container);
+
+      final failure = await container
+          .read(itemsControllerProvider(listId).notifier)
+          .moveSelected(const {}, bakery);
+
+      expect(failure, isNull);
+      expect(repository.moveManyCalls, isEmpty);
+    });
+  });
+
   group('reorder', () {
     test(
       'applies the new position optimistically before the server answers',

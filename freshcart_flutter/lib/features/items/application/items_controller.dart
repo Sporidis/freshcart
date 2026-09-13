@@ -395,6 +395,46 @@ class ItemsController extends _$ItemsController {
     }
   }
 
+  /// Reassigns every item in [ids] to [shopId] (null untags them) -- a
+  /// multi-select "Move".
+  ///
+  /// Same shape as [removeSelected]: one optimistic guess (retag every
+  /// selected row locally), one transaction server-side, not [save] looped
+  /// per id -- for the same reason, "Move" on a selection is one promise
+  /// covering every row in it.
+  Future<Failure?> moveSelected(Set<ItemId> ids, ShopId? shopId) async {
+    final before = _current;
+    if (before == null) return const Failure.unexpected('No items loaded');
+    if (ids.isEmpty) return null;
+
+    final selected = [
+      for (final item in before)
+        if (ids.contains(item.id)) item,
+    ];
+    for (final item in selected) {
+      _pending[item.id] = item;
+    }
+    _show([
+      for (final item in before)
+        if (ids.contains(item.id)) item.copyWith(shopId: shopId) else item,
+    ]);
+
+    final result = await ref
+        .read(itemRepositoryProvider)
+        .moveMany(listId, [for (final item in selected) item.id], shopId);
+    for (final item in selected) {
+      _pending.remove(item.id);
+    }
+
+    switch (result) {
+      case Ok<int>():
+        return null;
+      case Err<int>(:final failure):
+        _show(before);
+        return failure;
+    }
+  }
+
   /// Re-reads the items from the server.
   Future<void> refresh() async => ref.invalidateSelf();
 }

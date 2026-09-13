@@ -47,7 +47,8 @@
     "addTo": "Toevoegen aan {{shop}}",
     "newProductTitle": "Nieuw product",
     "editProductTitle": "Product bewerken",
-    "remove": "Verwijderen"
+    "remove": "Verwijderen",
+    "moveTo": "Verplaatsen naar"
   },
   "shops": {
     "all": "Alle winkels",
@@ -73,6 +74,7 @@
     "cancel": "Annuleren",
     "save": "Opslaan",
     "delete": "Verwijderen",
+    "move": "Verplaatsen",
     "retry": "Opnieuw proberen",
     "undo": "Ongedaan maken",
     "dismiss": "Sluiten"

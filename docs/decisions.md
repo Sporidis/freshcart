@@ -1406,3 +1406,52 @@ anything, and tapping `Icons.edit_outlined` no longer opens the edit sheet. Fixe
 `find.byType(ItemTile)` (reading `.item.isChecked` off the widget directly, which is a more honest
 assertion than reading a stock `Checkbox`'s `.value` ever was) and tapping the row's own name text
 where a test used to reach for the edit icon.
+
+## 75. Priority 1 closed out: Move, the search header, and the upgrade nudge's real home
+
+**Decision:** Three items off `docs/upgrade-design-guide.md`'s Priority 1, taken together since
+none needed the others but all three closed the list of "visible flow gaps" in one pass.
+
+**Move reverses decisions #53, on purpose, because its own stated reason no longer holds.** #53
+left "Move" out of multi-select because building it meant building the app's *first* shop-picker
+just to unblock one button — its own words: "not a corner to cut silently inside this feature."
+That blocker is gone: `ItemSheet`'s `ChoiceChip` shop picker (decisions #63) already exists and
+already reassigns a single item's `shopId` (decisions #64's suggestion chips sit right beside it).
+Reusing that exact shape for the sheet — "No shop" first, then one chip per shop, each tinted —
+rather than extracting a shared widget between a full edit form and a single-purpose picker sheet
+is a deliberate non-abstraction: the two have different lifecycles (one saves on a separate button
+press, the other commits the instant a chip is tapped) and forcing one widget to serve both would
+cost more than the few duplicated lines save.
+
+**`ItemService.moveMany` is `removeMany`'s own shape, reassignment instead of deletion.** One
+transaction, not a loop of individual `save` calls — #53's original reasoning again: "Move" on a
+selection is one promise ("these, all of them, to this shop"), and a loop that fails partway
+through would leave the selection split across two shops with nothing clean to report. Every moved
+item still announces `ItemChangeKind.upserted` over the realtime channel, same as any other edit —
+a bulk operation is not a reason to skip the notification path a single edit gets.
+
+**The controller's optimistic guess and the sheet's own cancel/error handling were both worth a
+real test, not just the code reading right.** `ItemsController.moveSelected` mirrors
+`removeSelected`'s shape exactly (retag locally, call the repository, roll back to the *previous*
+per-item state — not a blanket "clear shopId" — on failure). Three widget tests exercise the sheet
+itself: retagging and exiting the mode on success, keeping the selection on a rejected write (the
+guide's own acceptance line: an error must not lose the pick), and dismissing the sheet without
+choosing leaving the selection untouched — none of which the controller-level tests alone could
+have caught, since they never open the actual sheet.
+
+**The search field's border/radius/icon match Flow Screens v2's "Search, active" mockup
+directly**, read off the export rather than approximated: `OutlineInputBorder` at `AppRadii.input`
+(the same 12px token every other bordered input already uses), a leading search glyph, "Cancel"
+moved from a leading back-arrow into the trailing actions slot — which is where the mockup actually
+draws it, once looked at directly rather than assumed to be a back-arrow because that is the
+platform's usual affordance. The query controller and `SearchController` provider underneath are
+untouched; this was a presentation-only change, confirmed by the existing search tests needing
+only their finders updated (`Icons.arrow_back` → `'Cancel'`), not their assertions about what
+searching actually does.
+
+**`UpgradeNudge` leaving the list body loses no reachable surface.** It looked like a nudge with
+nowhere else to live, but two real homes already existed before this change: `AccountCard` in
+Settings (decisions #56) shows the same prompt permanently while an account is anonymous, and
+`EditProfileScreen` renders `UpgradeNudge` itself already. Removing it from `list_detail_screen.dart`
+is confirmed safe by grep, not assumption: nothing outside those two files, plus its own dedicated
+test file, referenced the widget.

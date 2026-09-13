@@ -39,6 +39,10 @@ abstract interface class ItemRepository {
   /// how many were removed.
   Future<Result<int>> removeMany(ListId listId, List<ItemId> ids);
 
+  /// Reassigns exactly [ids] on [listId] to [shopId] (a multi-select
+  /// "Move"; null untags them), returning how many moved.
+  Future<Result<int>> moveMany(ListId listId, List<ItemId> ids, ShopId? shopId);
+
   /// Live view of the items on [listId] (Phase 8).
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId);
 

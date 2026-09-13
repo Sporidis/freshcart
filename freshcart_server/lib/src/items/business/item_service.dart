@@ -349,4 +349,48 @@ abstract final class ItemService {
       return removed.length;
     });
   }
+
+  /// Reassigns every item in [itemIds] that belongs to [listId] to [shopId]
+  /// (null untags them), in one transaction, returning how many moved.
+  ///
+  /// One transaction, not a loop of individual saves -- same reasoning as
+  /// [removeMany]: a multi-select "Move" is one promise ("these, all of
+  /// them, to this shop"), and a loop that fails partway through would leave
+  /// the selection split across two shops with nothing clean to report.
+  static Future<int> moveMany(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+    List<UuidValue> itemIds,
+    UuidValue? shopId,
+  ) async {
+    await ListService.requireMembership(session, listId, userId);
+    if (itemIds.isEmpty) return 0;
+    return session.db.transaction((transaction) async {
+      final existing = await ShoppingItem.db.find(
+        session,
+        where: (t) => t.listId.equals(listId) & t.id.inSet(itemIds.toSet()),
+        transaction: transaction,
+      );
+      final moved = await ShoppingItem.db.update(
+        session,
+        [for (final item in existing) item.copyWith(shopId: shopId)],
+        transaction: transaction,
+      );
+      for (final item in moved) {
+        await _announce(
+          session,
+          listId,
+          ItemChange(
+            kind: ItemChangeKind.upserted,
+            itemId: item.id!,
+            item: item,
+            actorId: userId,
+          ),
+          itemName: item.name,
+        );
+      }
+      return moved.length;
+    });
+  }
 }

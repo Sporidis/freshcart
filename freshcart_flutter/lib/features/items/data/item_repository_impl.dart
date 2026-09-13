@@ -56,6 +56,19 @@ class ItemRepositoryImpl implements ItemRepository {
   );
 
   @override
+  Future<Result<int>> moveMany(
+    ListId listId,
+    List<ItemId> ids,
+    ShopId? shopId,
+  ) => _guard(
+    () => _client.item.moveMany(
+      _uuid(listId.value),
+      [for (final id in ids) _uuid(id.value)],
+      shopId == null ? null : _uuid(shopId.value),
+    ),
+  );
+
+  @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
       ItemRealtimeSource(_client).watchByList(listId);
 
