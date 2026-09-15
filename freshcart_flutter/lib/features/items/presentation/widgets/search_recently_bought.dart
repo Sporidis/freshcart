@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
@@ -87,7 +89,8 @@ class SearchRecentlyBought extends ConsumerWidget {
           ),
           _ReAddButton(
             tooltip: t.search.addAgain,
-            onPressed: () async => report(await controller.add(name: entry.name)),
+            onPressed: () async =>
+                report(await controller.add(name: entry.name)),
           ),
         ],
       ),
@@ -164,28 +167,35 @@ RecencyBuckets bucketByRecency(List<NameHistoryEntry> entries, DateTime now) {
 /// The circular "+" that re-adds a name, with the design's own "pop" on tap
 /// (§06: "Each + re-adds with a pop") -- the same overshoot-then-settle
 /// shape `ItemTile`'s own `_iconPop` already uses for its swipe-to-delete
-/// icon, just a smaller overshoot for a smaller, less urgent gesture.
-class _ReAddButton extends StatefulWidget {
+/// icon, just a smaller overshoot for a smaller, less urgent gesture -- plus
+/// the `lightImpact()` haptic the spec calls for alongside it, which the pop
+/// alone used to be missing.
+class _ReAddButton extends ConsumerStatefulWidget {
   const _ReAddButton({required this.tooltip, required this.onPressed});
 
   final String tooltip;
-  final VoidCallback onPressed;
+  final Future<void> Function() onPressed;
 
   @override
-  State<_ReAddButton> createState() => _ReAddButtonState();
+  ConsumerState<_ReAddButton> createState() => _ReAddButtonState();
 }
 
-class _ReAddButtonState extends State<_ReAddButton>
+class _ReAddButtonState extends ConsumerState<_ReAddButton>
     with SingleTickerProviderStateMixin {
+  /// Guards against a rapid double-tap starting a second add before the
+  /// first has answered -- `QuickAddBar`'s own `_busy` shape, missing here
+  /// before since nothing awaited [_ReAddButton.onPressed] to know when to
+  /// release it.
+  bool _busy = false;
+
   late final AnimationController _pop = AnimationController(
     vsync: this,
     duration: AppMotion.quick,
   );
-  late final Animation<double> _overshoot =
-      TweenSequence<double>([
-        TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.25), weight: 1),
-        TweenSequenceItem(tween: Tween(begin: 0.25, end: 0.0), weight: 1),
-      ]).animate(CurvedAnimation(parent: _pop, curve: Curves.easeOut));
+  late final Animation<double> _overshoot = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 0.0, end: 0.25), weight: 1),
+    TweenSequenceItem(tween: Tween(begin: 0.25, end: 0.0), weight: 1),
+  ]).animate(CurvedAnimation(parent: _pop, curve: Curves.easeOut));
 
   @override
   void dispose() {
@@ -193,9 +203,15 @@ class _ReAddButtonState extends State<_ReAddButton>
     super.dispose();
   }
 
-  void _handleTap() {
+  Future<void> _handleTap() async {
+    if (_busy) return;
+    setState(() => _busy = true);
     unawaited(_pop.forward(from: 0));
-    widget.onPressed();
+    if (ref.read(hapticsControllerProvider).value ?? true) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+    await widget.onPressed();
+    if (mounted) setState(() => _busy = false);
   }
 
   @override
@@ -205,7 +221,7 @@ class _ReAddButtonState extends State<_ReAddButton>
       button: true,
       label: widget.tooltip,
       child: InkWell(
-        onTap: _handleTap,
+        onTap: _busy ? null : _handleTap,
         customBorder: const CircleBorder(),
         child: AnimatedBuilder(
           animation: _overshoot,
@@ -216,7 +232,10 @@ class _ReAddButtonState extends State<_ReAddButton>
             height: 26,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: ink.withValues(alpha: 0.15), width: 1.5),
+              border: Border.all(
+                color: ink.withValues(alpha: 0.15),
+                width: 1.5,
+              ),
             ),
             child: Icon(Icons.add, size: 14, color: ink),
           ),

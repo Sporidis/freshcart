@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
@@ -72,9 +76,9 @@ class SearchResults extends ConsumerWidget {
         icon: Icons.search_off,
         title: t.search.noResultsTitle(query: trimmed),
         body: t.search.noResultsBody,
-        action: FilledButton(
+        action: _AddToListButton(
+          label: t.search.addAction(query: trimmed),
           onPressed: () async => report(await controller.add(name: trimmed)),
-          child: Text(t.search.addAction(query: trimmed)),
         ),
       );
     }
@@ -103,9 +107,9 @@ class SearchResults extends ConsumerWidget {
             onLongPress: () {},
             highlightQuery: trimmed,
             shopDotColor: dotFor(item.shopId),
-            checkedByName: item.checkedBy == null
+            checkedByMember: item.checkedBy == null
                 ? null
-                : list.memberFor(item.checkedBy!)?.displayName,
+                : list.memberFor(item.checkedBy!),
             onToggle: () async => report(await controller.toggle(item)),
             onSwipeDelete: () => controller.swipeDelete(item),
             onEdit: () async {
@@ -141,4 +145,39 @@ class SearchResults extends ConsumerWidget {
       ],
     );
   }
+}
+
+/// The no-results empty state's "Add '{query}' to this list" action -- a
+/// haptic on tap and a guard against a rapid double-tap starting the add
+/// twice, the same shape [_ReAddButton] in `search_recently_bought.dart`
+/// uses (no pop animation here: §06's "pop" is spec'd for the Recently
+/// bought "+" specifically, not this button).
+class _AddToListButton extends ConsumerStatefulWidget {
+  const _AddToListButton({required this.label, required this.onPressed});
+
+  final String label;
+  final Future<void> Function() onPressed;
+
+  @override
+  ConsumerState<_AddToListButton> createState() => _AddToListButtonState();
+}
+
+class _AddToListButtonState extends ConsumerState<_AddToListButton> {
+  bool _busy = false;
+
+  Future<void> _handleTap() async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    if (ref.read(hapticsControllerProvider).value ?? true) {
+      unawaited(HapticFeedback.lightImpact());
+    }
+    await widget.onPressed();
+    if (mounted) setState(() => _busy = false);
+  }
+
+  @override
+  Widget build(BuildContext context) => FilledButton(
+    onPressed: _busy ? null : _handleTap,
+    child: Text(widget.label),
+  );
 }

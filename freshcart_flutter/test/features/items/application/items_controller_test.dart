@@ -207,6 +207,30 @@ void main() {
         expect(container.read(recentlyAddedProvider(listId)), isNull);
       },
     );
+
+    test(
+      'replaces the existing row in place when the server merged into it',
+      () async {
+        // The server merges a repeat add into an already-open row (see
+        // ItemService.add) and returns that row's id, bumped. The controller
+        // must not treat this as a fresh insert.
+        final existing = buildItem(name: 'Milk');
+        repository.byListResult = Ok([existing]);
+        repository.addResult = Ok(existing.copyWith(quantity: 3));
+
+        final container = makeContainer();
+        await itemsOf(container);
+
+        final failure = await container
+            .read(itemsControllerProvider(listId).notifier)
+            .add(name: 'Milk');
+
+        expect(failure, isNull);
+        final items = await itemsOf(container);
+        expect(items, hasLength(1));
+        expect(items.single.quantity, 3);
+      },
+    );
   });
 
   group('remove', () {

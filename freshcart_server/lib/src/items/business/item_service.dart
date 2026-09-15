@@ -68,18 +68,33 @@ abstract final class ItemService {
   /// is a smaller cost than hand-writing SQL for it.
   static Future<double> _appendSortOrder(
     Session session,
-    UuidValue listId,
-  ) async {
+    UuidValue listId, {
+    Transaction? transaction,
+  }) async {
     final last = await ShoppingItem.db.findFirstRow(
       session,
       where: (t) => t.listId.equals(listId),
       orderBy: (t) => t.sortOrder,
       orderDescending: true,
+      transaction: transaction,
     );
     return (last?.sortOrder ?? 0) + domain.ShoppingItem.sortOrderGap;
   }
 
-  /// Appends an item to [listId].
+  /// Appends an item to [listId] -- or, if an open row already on the list
+  /// names the same product (same name, shop and note text -- see
+  /// `domain.ShoppingItem.sameProduct`), bumps that row's quantity instead.
+  ///
+  /// Reverses decisions #77's "a second row is allowed" stance: re-adding
+  /// the same product repeatedly (the "Recently bought" `+`, most of all) is
+  /// meant to read as "I need more of this," not "here is a second, separate
+  /// line for the same thing." A checked-off row never counts as a match --
+  /// a fresh add for a name already bought starts a new open row.
+  ///
+  /// The whole match-then-update-or-insert decision runs inside one
+  /// transaction, the same shape [save]/[clearChecked]/[removeMany]/
+  /// [moveMany] already use, so two near-simultaneous adds of the same
+  /// product cannot both see "no match" and each insert a row.
   static Future<ShoppingItem> add(
     Session session,
     UuidValue listId,
@@ -91,42 +106,86 @@ abstract final class ItemService {
   }) async {
     await ListService.requireMembership(session, listId, userId);
     final now = DateTime.now().toUtc();
-    final inserted = await ShoppingItem.db.insertRow(
-      session,
-      ShoppingItem(
-        listId: listId,
-        name: name,
-        quantity: quantity,
-        isChecked: false,
-        sortOrder: await _appendSortOrder(session, listId),
-        shopId: shopId,
-        note: noteText == null
-            ? null
-            : Note(text: noteText, authorId: userId, updatedAt: now),
-        addedBy: userId,
-        createdAt: now,
-        updatedAt: now,
-      ),
-    );
+
+    final result = await session.db.transaction((transaction) async {
+      // A list's open items are always a small set -- this is a shopping
+      // list, not a table scan -- so matching in Dart via the one shared
+      // domain rule is simpler than pushing name/note comparison into SQL,
+      // and sidesteps depending on whether the query builder can filter
+      // inside the JSON `note` column at all.
+      final open = await ShoppingItem.db.find(
+        session,
+        where: (t) => t.listId.equals(listId) & t.isChecked.equals(false),
+        transaction: transaction,
+      );
+      ShoppingItem? existing;
+      for (final row in open) {
+        if (row.shopId == shopId &&
+            domain.ShoppingItem.sameProduct(
+              nameA: row.name,
+              noteTextA: row.note?.text,
+              nameB: name,
+              noteTextB: noteText,
+            )) {
+          existing = row;
+          break;
+        }
+      }
+
+      if (existing != null) {
+        return ShoppingItem.db.updateRow(
+          session,
+          existing.copyWith(
+            quantity: existing.quantity + quantity,
+            updatedAt: now,
+          ),
+          transaction: transaction,
+        );
+      }
+
+      return ShoppingItem.db.insertRow(
+        session,
+        ShoppingItem(
+          listId: listId,
+          name: name,
+          quantity: quantity,
+          isChecked: false,
+          sortOrder: await _appendSortOrder(
+            session,
+            listId,
+            transaction: transaction,
+          ),
+          shopId: shopId,
+          note: noteText == null
+              ? null
+              : Note(text: noteText, authorId: userId, updatedAt: now),
+          addedBy: userId,
+          createdAt: now,
+          updatedAt: now,
+        ),
+        transaction: transaction,
+      );
+    });
+
     await _announce(
       session,
       listId,
       ItemChange(
         kind: ItemChangeKind.upserted,
-        itemId: inserted.id!,
-        item: inserted,
+        itemId: result.id!,
+        item: result,
         actorId: userId,
       ),
-      itemName: inserted.name,
+      itemName: result.name,
     );
     // Best-effort bookkeeping for suggestions -- must never fail the add
     // itself, the same reasoning as _announce's own fire-and-forget push.
     try {
       await _recordNameHistory(session, listId, name);
     } on Object catch (_) {
-      // Swallowed on purpose: the item was already added successfully.
+      // Swallowed on purpose: the item was already added/merged successfully.
     }
-    return inserted;
+    return result;
   }
 
   /// Records that [name] was just added to [listId], so it can be suggested

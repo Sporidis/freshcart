@@ -108,6 +108,118 @@ void main() {
       },
     );
 
+    group('add merges into an existing open row of the same product', () {
+      test('bumps quantity instead of duplicating the row', () async {
+        final list = await aSharedList();
+        final first = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        final second = await endpoints.item.add(as(bobId), list.id!, 'Milk');
+
+        expect(second.id, first.id);
+        expect(second.quantity, 2);
+        expect(second.updatedAt.isAfter(first.updatedAt), isTrue);
+        final items = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(items, hasLength(1));
+      });
+
+      test('sums an explicit quantity into the existing row', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Milk', quantity: 2);
+
+        final merged = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          quantity: 3,
+        );
+
+        expect(merged.quantity, 5);
+      });
+
+      test('matches the name trimmed', () async {
+        final list = await aSharedList();
+        final first = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        final second = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          '  Milk  ',
+        );
+
+        expect(second.id, first.id);
+        expect(second.quantity, 2);
+      });
+
+      test('does not merge across different shops', () async {
+        final list = await aSharedList();
+        final colruyt = await endpoints.shop.create(
+          as(aliceId),
+          list.id!,
+          'Colruyt',
+          0xFF4CAF50,
+        );
+        await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          shopId: colruyt.id,
+        );
+
+        await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        final items = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(items, hasLength(2));
+      });
+
+      test('does not merge into a checked-off row', () async {
+        final list = await aSharedList();
+        final first = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        await endpoints.item.save(as(aliceId), first.copyWith(isChecked: true));
+
+        final second = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        expect(second.id, isNot(first.id));
+        expect(second.isChecked, isFalse);
+        final items = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(items, hasLength(2));
+      });
+
+      test('does not merge rows with different note text', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          noteText: 'the oat one',
+        );
+
+        await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          noteText: 'the soy one',
+        );
+
+        final items = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(items, hasLength(2));
+      });
+
+      test('a blank note still merges with a plain, noteless row', () async {
+        final list = await aSharedList();
+        final first = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        final second = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          noteText: '   ',
+        );
+
+        expect(second.id, first.id);
+        expect(second.quantity, 2);
+      });
+    });
+
     test('save persists an edit and moves updatedAt forward', () async {
       final list = await aSharedList();
       final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
