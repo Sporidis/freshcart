@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
@@ -13,6 +15,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/completion
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -36,6 +39,7 @@ void main() {
   Future<ProviderContainer> pump(
     WidgetTester tester, {
     ShoppingList? list,
+    bool reducedMotion = false,
   }) async {
     final effectiveList =
         list ?? buildList(members: [buildMember(displayName: 'Nikolaos')]);
@@ -53,8 +57,11 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp(
-          home: Scaffold(body: ItemsSection(list: effectiveList)),
+        child: MediaQuery(
+          data: MediaQueryData(disableAnimations: reducedMotion),
+          child: MaterialApp(
+            home: Scaffold(body: ItemsSection(list: effectiveList)),
+          ),
         ),
       ),
     );
@@ -81,6 +88,69 @@ void main() {
     expect(find.text('Milk'), findsOneWidget);
     expect(find.text('x2'), findsOneWidget);
     expect(find.text('the seeded one'), findsOneWidget);
+  });
+
+  group('the add control\'s first-run pulse (§11)', () {
+    testWidgets('is armed for a brand-new, still-empty list', (tester) async {
+      items.byListResult = const Ok(<ShoppingItem>[]);
+
+      await pump(tester);
+
+      expect(
+        tester.widget<QuickAddBar>(find.byType(QuickAddBar)).firstRun,
+        isTrue,
+      );
+    });
+
+    testWidgets('is not armed once the list has items', (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+
+      await pump(tester);
+
+      expect(
+        tester.widget<QuickAddBar>(find.byType(QuickAddBar)).firstRun,
+        isFalse,
+      );
+    });
+  });
+
+  testWidgets('a checked item shows who checked it, avatar included', (
+    tester,
+  ) async {
+    items.byListResult = Ok([
+      buildItem(name: 'Milk', isChecked: true, checkedBy: 'user-1'),
+      buildItem(id: '00000000-0000-4000-8000-0000000000bb', name: 'Bread'),
+    ]);
+
+    await pump(
+      tester,
+      list: buildList(members: [buildMember(displayName: 'Nikolaos')]),
+    );
+
+    final milkRow = find.ancestor(
+      of: find.text('Milk'),
+      matching: find.byType(ItemTile),
+    );
+    expect(
+      find.descendant(of: milkRow, matching: find.byType(UserAvatar)),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: milkRow,
+        matching: find.textContaining('Nikolaos'),
+      ),
+      findsOneWidget,
+    );
+
+    final breadRow = find.ancestor(
+      of: find.text('Bread'),
+      matching: find.byType(ItemTile),
+    );
+    expect(
+      find.descendant(of: breadRow, matching: find.byType(UserAvatar)),
+      findsNothing,
+    );
   });
 
   testWidgets('a tagged item shows its shop as a coloured dot', (
@@ -134,14 +204,43 @@ void main() {
     items.byListResult = Ok([buildItem(name: 'Milk')]);
     await pump(tester);
 
-    expect(tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked, isFalse);
+    expect(
+      tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked,
+      isFalse,
+    );
 
     await tester.tap(find.byKey(ItemTile.checkKey));
     await tester.pump();
 
-    expect(tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked, isTrue);
+    expect(
+      tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked,
+      isTrue,
+    );
 
     // Let the 600 ms hold expire so no timer outlives the test.
+    await tester.pump(RecentlyChecked.holdDuration);
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('tapping the row itself also toggles checked (decisions #82)', (
+    tester,
+  ) async {
+    items.byListResult = Ok([buildItem(name: 'Milk')]);
+    await pump(tester);
+
+    expect(
+      tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked,
+      isFalse,
+    );
+
+    await tester.tap(find.text('Milk'));
+    await tester.pump();
+
+    expect(
+      tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked,
+      isTrue,
+    );
+
     await tester.pump(RecentlyChecked.holdDuration);
     await tester.pumpAndSettle();
   });
@@ -167,6 +266,118 @@ void main() {
     expect(find.byType(DoneDivider), findsOneWidget);
     expect(find.text('DONE · 1'), findsOneWidget);
   });
+
+  testWidgets(
+    'checking plays its exit from Open and entrance into Done concurrently',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+      await pump(tester);
+
+      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.pump();
+      await tester.pump(RecentlyChecked.holdDuration);
+      // Mid-transition: the exiting Open copy and the entering Done copy
+      // are both on screen at once.
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Milk'), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.byType(DoneDivider), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'checking rows in quick succession resets the shared debounce, then '
+    'cascades them into Done one at a time',
+    (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+        buildItem(id: 'c', name: 'Eggs'),
+      ]);
+      await pump(tester);
+
+      await tester.tap(find.byKey(ItemTile.checkKey).at(0));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+
+      // Bread resets the debounce -- Milk must NOT settle on its own,
+      // original 600ms-after-its-own-tap schedule.
+      await tester.tap(find.byKey(ItemTile.checkKey).at(1));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(DoneDivider), findsNothing);
+
+      // Eggs resets it again.
+      await tester.tap(find.byKey(ItemTile.checkKey).at(2));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.byType(DoneDivider), findsNothing);
+
+      // 600ms after the *last* check, the held batch starts moving -- but
+      // as a cascade, not all at once: Milk (checked first) starts right
+      // away, Bread and Eggs are still just sitting there, unanimated.
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('Milk'), findsNWidgets(2));
+      expect(find.text('Bread'), findsNWidgets(1));
+      expect(find.text('Eggs'), findsNWidgets(1));
+
+      // A third of the standard move duration later, Bread's turn starts.
+      await tester.pump(const Duration(milliseconds: 87));
+      expect(find.text('Bread'), findsNWidgets(2));
+      expect(find.text('Eggs'), findsNWidgets(1));
+
+      // ...and then Eggs'.
+      await tester.pump(const Duration(milliseconds: 87));
+      expect(find.text('Eggs'), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+      expect(find.byType(DoneDivider), findsOneWidget);
+      expect(find.text('DONE · 3'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'unchecking starts its move back to Open immediately, no 600 ms wait',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+      await pump(tester);
+      expect(find.byType(DoneDivider), findsOneWidget);
+
+      await tester.tap(find.byKey(ItemTile.checkKey));
+      // Nowhere near RecentlyChecked.holdDuration -- unchecking must not
+      // need to wait it out the way checking does.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 50));
+
+      expect(find.text('Milk'), findsNWidgets(2));
+
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.byType(DoneDivider), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'reduced motion collapses the open<->Done move to (near) instant',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+      await pump(tester, reducedMotion: true);
+
+      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.pump();
+      await tester.pump(RecentlyChecked.holdDuration);
+      // AppMotion.micro (120ms), not standard (260ms) -- settled well
+      // before the ordinary, full-motion duration would have finished.
+      await tester.pump(AppMotion.micro);
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.byType(DoneDivider), findsOneWidget);
+    },
+  );
 
   testWidgets('the Done section folds away when tapped', (tester) async {
     items.byListResult = Ok([
@@ -358,6 +569,46 @@ void main() {
         reason: 'dropped above Milk, the row that was previously first',
       );
     });
+
+    testWidgets(
+      'a checked-and-transitioning row does not corrupt reorder index math',
+      (tester) async {
+        items.byListResult = Ok([
+          buildItem(id: 'a', name: 'Milk', shopId: colruyt, sortOrder: 10),
+          buildItem(id: 'b', name: 'Bread', shopId: colruyt, sortOrder: 20),
+          buildItem(id: 'c', name: 'Eggs', shopId: colruyt, sortOrder: 30),
+        ]);
+        final container = await pump(tester);
+        container.read(shopFilterProvider(listId).notifier).select(colruyt);
+        await tester.pumpAndSettle();
+
+        // Check Milk, then immediately -- still held/transitioning, exactly
+        // as an unchecked row would be -- drag Eggs up past it and Bread.
+        // Milk stays a member of the open rows the whole time (the existing
+        // hold mechanic), so the drag's index math must still land right.
+        await tester.tap(find.byKey(ItemTile.checkKey).first);
+        await tester.pump();
+
+        await tester.drag(
+          find.byIcon(Icons.drag_handle).last,
+          const Offset(0, -500),
+        );
+        await tester.pumpAndSettle();
+
+        final saved = items.savedItems.where((i) => i.id == ItemId('c'));
+        expect(saved, isNotEmpty, reason: 'the drag should have saved Eggs');
+        expect(
+          saved.first.sortOrder,
+          lessThan(10),
+          reason: 'dropped above Milk, the row that was previously first',
+        );
+
+        // Let Milk's own hold/transition finish so its RecentlyChecked
+        // timers don't outlive the test.
+        await tester.pump(RecentlyChecked.holdDuration);
+        await tester.pumpAndSettle();
+      },
+    );
   });
 
   testWidgets('a conflict unticks the row and says why', (tester) async {
@@ -370,7 +621,10 @@ void main() {
     await tester.pumpAndSettle();
 
     // Rolled back...
-    expect(tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked, isFalse);
+    expect(
+      tester.widget<ItemTile>(find.byType(ItemTile)).item.isChecked,
+      isFalse,
+    );
     // ...and explained, so the revert does not look like a bug.
     expect(
       find.text('Someone else just changed this. Try again.'),
@@ -394,10 +648,9 @@ void main() {
       ]);
       await pump(tester);
 
-      // The row itself opens editing now -- there is no permanent edit icon
-      // any more (upgrade guide §1's Reference: "The row opens editing when
-      // tapped").
-      await tester.tap(find.text('Milk'));
+      // Tapping the row toggles checked now (decisions #82); editing has its
+      // own trailing icon button.
+      await tester.tap(find.byKey(ItemTile.editKey));
       await tester.pumpAndSettle();
 
       expect(find.text('Edit product'), findsOneWidget);
@@ -418,7 +671,7 @@ void main() {
       items.byListResult = Ok([item]);
       await pump(tester);
 
-      await tester.tap(find.text('Milk'));
+      await tester.tap(find.byKey(ItemTile.editKey));
       await tester.pumpAndSettle();
 
       await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
@@ -435,7 +688,7 @@ void main() {
       items.removeResult = const Ok(null);
       await pump(tester);
 
-      await tester.tap(find.text('Milk'));
+      await tester.tap(find.byKey(ItemTile.editKey));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Remove'));
       await tester.pumpAndSettle();

@@ -238,6 +238,7 @@ class ItemsSection extends ConsumerWidget {
                         listId: list.id,
                         t: t,
                         activeShopName: activeShop?.name,
+                        firstRun: shopFilter == null && allItems.isEmpty,
                         onQuickAdd: (name) async {
                           // Tags to whichever shop tab is active, the same as
                           // the details sheet already does -- "Enter" is
@@ -311,7 +312,9 @@ class _ItemList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final holding = ref.watch(recentlyCheckedProvider(list.id));
+    final recentlyChecked = ref.watch(recentlyCheckedProvider(list.id));
+    final holding = recentlyChecked.holding;
+    final transitioning = recentlyChecked.transitioning;
     final justAddedId = ref.watch(recentlyAddedProvider(list.id));
     final collapsed = ref.watch(doneSectionCollapsedProvider(list.id));
     final selection = ref.watch(selectionControllerProvider(list.id));
@@ -336,14 +339,23 @@ class _ItemList extends ConsumerWidget {
 
     // A row counts as "still shopping" while it is being held, so a just-ticked
     // item keeps its place for 600 ms instead of jumping the moment it is
-    // tapped — see RecentlyChecked.
+    // tapped -- see RecentlyChecked. Once the hold ends it keeps rendering
+    // for one more beat in its *old* section while `transitioning`, playing
+    // its exit animation there, mirrored by an entrance animation on the
+    // copy that simultaneously appears in its *new* section -- see
+    // ItemTile.checkMoveEntering/checkMoveExiting below.
     final open = [
       for (final item in rows)
-        if (!item.isChecked || holding.contains(item.id)) item,
+        if (!item.isChecked ||
+            holding.contains(item.id) ||
+            (item.isChecked && transitioning.contains(item.id)))
+          item,
     ];
     final done = [
       for (final item in rows)
-        if (item.isChecked && !holding.contains(item.id)) item,
+        if ((item.isChecked && !holding.contains(item.id)) ||
+            (!item.isChecked && transitioning.contains(item.id)))
+          item,
     ];
 
     // [index] is only passed for rows that can actually be multi-selected or
@@ -351,66 +363,88 @@ class _ItemList extends ConsumerWidget {
     // modes: checked items are a settled category with their own bulk
     // action already ("Clear checked") and sit locked below the divider,
     // never draggable (§10).
-    Widget tileFor(ShoppingItem item, {int? index}) => ItemTile(
-      key: ValueKey(item.id.value),
-      item: item,
-      t: t,
-      justAdded: item.id == justAddedId,
-      index: index ?? 0,
-      shopDotColor: dotFor(item.shopId),
-      canReorder: index != null && canReorder,
-      selectionMode: index != null && selection.isNotEmpty,
-      selected: selection.contains(item.id),
-      onToggleSelection: () => selectionController.toggle(item.id),
-      onLongPress: () => selectionController.toggle(item.id),
-      checkedByName: item.checkedBy == null
-          ? null
-          : list.memberFor(item.checkedBy!)?.displayName,
-      onToggle: () async {
-        // Held on the way in, released on the way out: checking is easy to
-        // mis-tap, unchecking is deliberate.
-        final recent = ref.read(recentlyCheckedProvider(list.id).notifier);
-        if (item.isChecked) {
-          recent.release(item.id);
-        } else {
-          recent.hold(item.id);
-        }
-        report(
-          await controller.toggle(item),
-          onRetry: () async => report(await controller.toggle(item)),
-        );
-      },
-      onSwipeDelete: () => controller.swipeDelete(item),
-      onEdit: () async {
-        final outcome = await showModalBottomSheet<ItemSheetOutcome>(
-          context: context,
-          isScrollControlled: true,
-          showDragHandle: true,
-          builder: (_) => ItemSheet.edit(item: item, shops: shops, t: t),
-        );
-        switch (outcome) {
-          case null:
-            return;
-          case ItemSheetRemove():
-            report(await controller.remove(item));
-          case ItemSheetSave(
-            :final name,
-            :final quantity,
-            :final shopId,
-            :final noteText,
-          ):
-            report(
-              await controller.edit(
-                item,
-                name: name,
-                quantity: quantity,
-                shopId: shopId,
-                noteText: noteText,
-              ),
+    //
+    // [inDoneSection] tells a mid-transition row which half of its move
+    // *this* copy of it is playing -- the same item can render once in each
+    // section for the duration of the move (different parents, so the same
+    // ValueKey on both is not a conflict).
+    Widget tileFor(
+      ShoppingItem item, {
+      int? index,
+      bool inDoneSection = false,
+    }) {
+      final isMoving = transitioning.contains(item.id);
+      return ItemTile(
+        key: ValueKey(item.id.value),
+        item: item,
+        t: t,
+        justAdded: item.id == justAddedId,
+        index: index ?? 0,
+        shopDotColor: dotFor(item.shopId),
+        canReorder: index != null && canReorder,
+        selectionMode: index != null && selection.isNotEmpty,
+        selected: selection.contains(item.id),
+        onToggleSelection: () => selectionController.toggle(item.id),
+        onLongPress: () => selectionController.toggle(item.id),
+        checkedByMember: item.checkedBy == null
+            ? null
+            : list.memberFor(item.checkedBy!),
+        checkMoveEntering:
+            isMoving && (inDoneSection ? item.isChecked : !item.isChecked),
+        checkMoveExiting:
+            isMoving && (inDoneSection ? !item.isChecked : item.isChecked),
+        onToggle: () async {
+          // Held on the way in, released on the way out: checking is easy to
+          // mis-tap, unchecking is deliberate.
+          final recent = ref.read(recentlyCheckedProvider(list.id).notifier);
+          if (item.isChecked) {
+            recent.release(
+              item.id,
+              exitDuration: AppMotion.durationFor(context, AppMotion.quick),
             );
-        }
-      },
-    );
+          } else {
+            recent.hold(
+              item.id,
+              exitDuration: AppMotion.durationFor(context, AppMotion.standard),
+            );
+          }
+          report(
+            await controller.toggle(item),
+            onRetry: () async => report(await controller.toggle(item)),
+          );
+        },
+        onSwipeDelete: () => controller.swipeDelete(item),
+        onEdit: () async {
+          final outcome = await showModalBottomSheet<ItemSheetOutcome>(
+            context: context,
+            isScrollControlled: true,
+            showDragHandle: true,
+            builder: (_) => ItemSheet.edit(item: item, shops: shops, t: t),
+          );
+          switch (outcome) {
+            case null:
+              return;
+            case ItemSheetRemove():
+              report(await controller.remove(item));
+            case ItemSheetSave(
+              :final name,
+              :final quantity,
+              :final shopId,
+              :final noteText,
+            ):
+              report(
+                await controller.edit(
+                  item,
+                  name: name,
+                  quantity: quantity,
+                  shopId: shopId,
+                  noteText: noteText,
+                ),
+              );
+          }
+        },
+      );
+    }
 
     // onReorderItem's newIndex is already adjusted for the dragged item's
     // own removal from oldIndex, so it names the slot to insert at directly
@@ -510,7 +544,12 @@ class _ItemList extends ConsumerWidget {
               alignment: Alignment.topCenter,
               child: collapsed
                   ? const SizedBox(width: double.infinity)
-                  : Column(children: done.map(tileFor).toList()),
+                  : Column(
+                      children: [
+                        for (final item in done)
+                          tileFor(item, inDoneSection: true),
+                      ],
+                    ),
             ),
           ],
         ],
@@ -534,11 +573,13 @@ class _ItemsEmptyState extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     if (shopFilter == null) {
+      // No arrow here (§11: "no arrow, no persistent coach mark") -- the
+      // first-run hint is the add control itself pulsing, wired through
+      // QuickAddBar.firstRun in ItemsSection.build.
       return EmptyState(
         icon: Icons.shopping_basket_outlined,
         title: t.items.emptyTitle,
         body: t.items.emptyBody,
-        action: const _AddNudgeArrow(),
       );
     }
 
@@ -570,75 +611,6 @@ class _ItemsEmptyState extends ConsumerWidget {
         ),
         child: Text(t.items.emptyShopAction),
       ),
-    );
-  }
-}
-
-/// The arrow that nudges toward the quick-add bar.
-///
-/// Three gentle bounces, then it stops for good: a hint that keeps moving
-/// forever stops reading as a hint and starts reading as a defect.
-///
-/// One controller running a [TweenSequence] rather than a loop of awaited
-/// delays — a timer loop keeps firing after the widget is gone, and leaves
-/// a pending timer behind in any test that renders this state.
-class _AddNudgeArrow extends StatefulWidget {
-  const _AddNudgeArrow();
-
-  @override
-  State<_AddNudgeArrow> createState() => _AddNudgeArrowState();
-}
-
-class _AddNudgeArrowState extends State<_AddNudgeArrow>
-    with SingleTickerProviderStateMixin {
-  static const int _bounces = 3;
-
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppMotion.bouncy * _bounces * 2,
-  );
-
-  late final Animation<double> _offset = TweenSequence<double>([
-    for (var i = 0; i < _bounces; i++) ...[
-      TweenSequenceItem(
-        tween: Tween(begin: 0.0, end: 1.0).chain(
-          CurveTween(curve: AppMotion.enter),
-        ),
-        weight: 1,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: 0.0).chain(
-          CurveTween(curve: AppMotion.enter),
-        ),
-        weight: 1,
-      ),
-    ],
-  ]).animate(_controller);
-
-  @override
-  void initState() {
-    super.initState();
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.28);
-    final arrow = Icon(Icons.arrow_downward, size: 20, color: ink);
-    if (AppMotion.reduced(context)) return arrow;
-    return AnimatedBuilder(
-      animation: _offset,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0, 6 * _offset.value),
-        child: child,
-      ),
-      child: arrow,
     );
   }
 }

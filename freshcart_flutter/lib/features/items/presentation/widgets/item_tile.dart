@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -31,10 +32,15 @@ class ItemTile extends ConsumerStatefulWidget {
   /// `find.descendant(of: <that row's own finder>, ...)`, same as before.
   static const checkKey = Key('item-check');
 
+  /// Key on the trailing edit [IconButton], shared across every row the same
+  /// way [checkKey] is -- a test scopes it to one row via
+  /// `find.descendant(of: <that row's own finder>, ...)`.
+  static const editKey = Key('item-edit');
+
   /// Creates a tile for [item].
   const ItemTile({
     required this.item,
-    required this.checkedByName,
+    required this.checkedByMember,
     required this.onToggle,
     required this.onEdit,
     required this.onSwipeDelete,
@@ -48,19 +54,25 @@ class ItemTile extends ConsumerStatefulWidget {
     this.shopDotColor,
     this.highlightQuery,
     this.justAdded = false,
+    this.checkMoveEntering = false,
+    this.checkMoveExiting = false,
     super.key,
   });
 
   /// The item to render.
   final ShoppingItem item;
 
-  /// Who checked it off, already resolved to a display name, or null.
-  final String? checkedByName;
+  /// Who checked it off, already resolved from the list's membership, or
+  /// null. Carries the name *and* the avatar (photo, chosen colour, or
+  /// neither) so the subtitle can render both without a second lookup.
+  final ListMember? checkedByMember;
 
-  /// Called when the checkbox is tapped.
+  /// Called when the checkbox is tapped, or the row itself outside
+  /// selection mode (decisions #82: toggling is the whole-row gesture now,
+  /// not just the leading circle's).
   final VoidCallback onToggle;
 
-  /// Called when the row is tapped.
+  /// Called when the trailing edit [IconButton] is tapped.
   final VoidCallback onEdit;
 
   /// Called once the swipe commits to deleting the row. Returns the undo
@@ -114,10 +126,29 @@ class ItemTile extends ConsumerStatefulWidget {
   /// see the state class's own `initState`.
   final bool justAdded;
 
+  /// True only on this row's very first build in the section it just
+  /// arrived in -- a checked item's first frame in Done, or an unchecked
+  /// item's first frame back among the open rows (§04/§12). Read once, at
+  /// mount, same contract as [justAdded] -- see the state class's own
+  /// `initState`.
+  final bool checkMoveEntering;
+
+  /// True while this already-mounted row has just been told to leave its
+  /// current section -- the other half of the same move [checkMoveEntering]
+  /// starts on the row's arriving copy. Unlike [checkMoveEntering] this is
+  /// read on every rebuild, not just at mount, since the row was already
+  /// settled here and needs telling when that changes -- see the state
+  /// class's own `didUpdateWidget`.
+  final bool checkMoveExiting;
+
   @override
   ConsumerState<ItemTile> createState() => _ItemTileState();
 }
 
+// TODO(decisions #84 follow-up): this State has grown to seven
+// AnimationControllers plus press/long-press/swipe/dismiss handling -- worth
+// splitting (e.g. swipe/dismiss into its own wrapper widget) as its own
+// commit with its own test run, not mixed into a feature change.
 class _ItemTileState extends ConsumerState<ItemTile>
     with TickerProviderStateMixin {
   /// Whether this row's haptic feedback should actually fire, per the
@@ -184,12 +215,59 @@ class _ItemTileState extends ConsumerState<ItemTile>
     curve: AppMotion.enter,
   );
 
+  /// This row's presence within its *current* section: 1 is fully settled
+  /// here, 0 is fully gone -- the open<->Done cross-section move (§04/§12).
+  /// Driven by [ItemTile.checkMoveEntering] (0→1, once, at mount) and
+  /// [ItemTile.checkMoveExiting] (1→0, from [didUpdateWidget]) rather than
+  /// [widget.item.isChecked] directly, since a row's *own* checked state and
+  /// which section it is *currently rendering in* are different questions --
+  /// see items_section.dart's `tileFor`, which computes both flags per the
+  /// section a given `ItemTile` instance is actually mounted in.
+  late final AnimationController _checkMove = AnimationController(
+    vsync: this,
+    duration: AppMotion.standard,
+    // A fresh element born already mid-exit (e.g. a live update lands an
+    // item that is already checked-and-transitioning, from another
+    // device's action) starts already gone rather than flashing visible
+    // first, same reasoning as [_entrance]'s own initial value.
+    value: widget.checkMoveEntering || widget.checkMoveExiting ? 0 : 1,
+  );
+
   @override
   void initState() {
     super.initState();
     if (widget.justAdded) {
       if (_hapticsOn) unawaited(HapticFeedback.lightImpact());
       _entrance.forward();
+    }
+  }
+
+  /// Whether the one-shot [_checkMove] entrance below has already fired --
+  /// `didChangeDependencies` (unlike `initState`) can run more than once,
+  /// but [ItemTile.checkMoveEntering] must only ever animate this row's
+  /// arrival a single time, the same "read once" contract [justAdded] has.
+  bool _checkMoveEntranceStarted = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // AppMotion.durationFor/curveFor read MediaQuery, which cannot be
+    // depended on from initState (the element isn't linked into the tree
+    // for dependency notifications yet) -- didChangeDependencies is the
+    // first point after initState where that's safe, and it still runs
+    // before the first build, so there's no visible flash either way.
+    if (widget.checkMoveEntering && !_checkMoveEntranceStarted) {
+      _checkMoveEntranceStarted = true;
+      unawaited(
+        _checkMove.animateTo(
+          1,
+          duration: AppMotion.durationFor(
+            context,
+            widget.item.isChecked ? AppMotion.standard : AppMotion.quick,
+          ),
+          curve: AppMotion.curveFor(context, AppMotion.enter),
+        ),
+      );
     }
   }
 
@@ -257,6 +335,18 @@ class _ItemTileState extends ConsumerState<ItemTile>
         _selectionReveal.reverse();
       }
     }
+    if (widget.checkMoveExiting && !oldWidget.checkMoveExiting) {
+      unawaited(
+        _checkMove.animateTo(
+          0,
+          duration: AppMotion.durationFor(
+            context,
+            widget.item.isChecked ? AppMotion.standard : AppMotion.quick,
+          ),
+          curve: AppMotion.curveFor(context, AppMotion.exit),
+        ),
+      );
+    }
   }
 
   @override
@@ -268,6 +358,7 @@ class _ItemTileState extends ConsumerState<ItemTile>
     _pressTellTimer?.cancel();
     _selectionReveal.dispose();
     _entrance.dispose();
+    _checkMove.dispose();
     super.dispose();
   }
 
@@ -288,8 +379,10 @@ class _ItemTileState extends ConsumerState<ItemTile>
   /// A tap on the leading circle: while selecting, the circle means
   /// "selected", not "bought" (Component Library §01), so it toggles
   /// selection the same as tapping anywhere else on the row would. Outside
-  /// selection mode it is the only thing that toggles checked -- a tap
-  /// elsewhere on the row now opens editing instead, see [_activateRow].
+  /// selection mode it toggles checked, same as [_activateRow] -- kept as
+  /// its own target rather than folded away now that the row does the same
+  /// thing, since it is still the row's clearest "this is what tapping does"
+  /// affordance.
   void _activateLeading() {
     if (widget.selectionMode) {
       _toggleSelection();
@@ -299,14 +392,15 @@ class _ItemTileState extends ConsumerState<ItemTile>
   }
 
   /// A tap on the row itself: toggles selection while selecting, otherwise
-  /// opens editing -- "the row opens editing when tapped" (upgrade guide
-  /// §1's Reference). Checking an item off is the leading circle's job now,
-  /// not the row's.
+  /// toggles checked (decisions #82 -- reverting #74's "row opens editing"
+  /// in favour of the whole row being the check target, since a 22px circle
+  /// is too small a hit area for the action done most often). Editing now
+  /// lives on its own trailing [IconButton], see [ItemTile.editKey].
   void _activateRow() {
     if (widget.selectionMode) {
       _toggleSelection();
     } else {
-      widget.onEdit();
+      _handleToggle();
     }
   }
 
@@ -322,15 +416,24 @@ class _ItemTileState extends ConsumerState<ItemTile>
     // 300 ms per §10 -- the row starts easing toward 0.97 from here, so it
     // visibly reaches it right around the 500 ms mark the long press fires.
     _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
+      if (!mounted) return;
       unawaited(_pressScale.animateTo(0.97, duration: AppMotion.quick));
     });
   }
 
   /// The finger lifted or the gesture was cancelled before firing: whatever
   /// tell had started springs back.
+  ///
+  /// `Listener` sits outside `Dismissible`/`InkWell`, so hit-test dispatch
+  /// reaches those inner recognizers -- and can fire e.g. `_activateRow`'s
+  /// `onToggle`, which may remove and dispose this very row -- before it
+  /// reaches this outer callback for the same pointer-up. The `mounted`
+  /// check is what keeps that ordering from touching a disposed
+  /// [_pressScale].
   void _handlePressEnd(PointerEvent event) {
     _pressTellTimer?.cancel();
     _pressTellTimer = null;
+    if (!mounted) return;
     unawaited(_pressScale.animateTo(1, duration: AppMotion.quick));
   }
 
@@ -340,6 +443,7 @@ class _ItemTileState extends ConsumerState<ItemTile>
     _pressTellTimer?.cancel();
     _pressTellTimer = null;
     if (_hapticsOn) unawaited(HapticFeedback.mediumImpact());
+    if (!mounted) return;
     unawaited(_pressScale.animateTo(1, duration: AppMotion.quick));
     widget.onLongPress();
   }
@@ -378,30 +482,44 @@ class _ItemTileState extends ConsumerState<ItemTile>
 
   @override
   Widget build(BuildContext context) {
-    return Listener(
-      // Raw pointer events, not a second gesture recognizer: a `Listener`
-      // sits outside Flutter's gesture arena entirely, so timing the 300 ms
-      // tell here cannot compete with -- or steal -- the tap and long-press
-      // recognizers the `ListTile` below owns.
-      onPointerDown: _handlePressStart,
-      onPointerUp: _handlePressEnd,
-      onPointerCancel: _handlePressEnd,
-      child: Dismissible(
-        key: ValueKey(widget.item.id.value),
-        // Selection mode owns the gesture instead: a swipe mid-select would
-        // be ambiguous between "delete this one" and "drag to select".
-        direction: widget.selectionMode
-            ? DismissDirection.none
-            : DismissDirection.endToStart,
-        dismissThresholds: const {
-          DismissDirection.endToStart: _swipeDismissThreshold,
-        },
-        // 220 ms per the Motion spec (§10) -- the default resize is slower.
-        resizeDuration: const Duration(milliseconds: 220),
-        onUpdate: _handleSwipeUpdate,
-        background: _buildSwipeBackground(),
-        onDismissed: (_) => _handleDismissed(context),
-        child: _buildAnimatedRow(context, child: _buildRow(context)),
+    // Wraps the row's own content in the open<->Done cross-section move
+    // (§04/§12) -- visually inert at rest (_checkMove.value == 1, the
+    // overwhelming majority of a row's life), so applying it unconditionally
+    // is safe and avoids a conditionally-present wrapper that would itself
+    // risk upsetting Column/ReorderableListView's key-based reconciliation.
+    return SizeTransition(
+      sizeFactor: _checkMove,
+      // Equivalent to the deprecated axisAlignment: -1 for Axis.vertical
+      // (the SizeTransition default) -- collapses toward the top.
+      alignment: Alignment.topLeft,
+      child: FadeTransition(
+        opacity: _checkMove,
+        child: Listener(
+          // Raw pointer events, not a second gesture recognizer: a `Listener`
+          // sits outside Flutter's gesture arena entirely, so timing the 300 ms
+          // tell here cannot compete with -- or steal -- the tap and long-press
+          // recognizers the `ListTile` below owns.
+          onPointerDown: _handlePressStart,
+          onPointerUp: _handlePressEnd,
+          onPointerCancel: _handlePressEnd,
+          child: Dismissible(
+            key: ValueKey(widget.item.id.value),
+            // Selection mode owns the gesture instead: a swipe mid-select would
+            // be ambiguous between "delete this one" and "drag to select".
+            direction: widget.selectionMode
+                ? DismissDirection.none
+                : DismissDirection.endToStart,
+            dismissThresholds: const {
+              DismissDirection.endToStart: _swipeDismissThreshold,
+            },
+            // 220 ms per the Motion spec (§10) -- the default resize is slower.
+            resizeDuration: const Duration(milliseconds: 220),
+            onUpdate: _handleSwipeUpdate,
+            background: _buildSwipeBackground(),
+            onDismissed: (_) => _handleDismissed(context),
+            child: _buildAnimatedRow(context, child: _buildRow(context)),
+          ),
+        ),
       ),
     );
   }
@@ -460,14 +578,11 @@ class _ItemTileState extends ConsumerState<ItemTile>
     );
   }
 
-  /// The row's actual content: `InkWell` + `Row`, not `ListTile` (Component
-  /// Library §01) -- the circle, dot and quantity don't fit its slots, and
   /// `ListTile` has no way to key a background/radius change off [selected]
-  /// the way the reference's own "selected" state does.
   Widget _buildRow(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
-    final subtitle = _subtitle();
+    final subtitle = _buildSubtitle(muted);
     final selected = widget.selected;
 
     return AnimatedContainer(
@@ -496,7 +611,6 @@ class _ItemTileState extends ConsumerState<ItemTile>
             child: Row(
               children: [
                 _buildLeadingSlot(),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,18 +620,28 @@ class _ItemTileState extends ConsumerState<ItemTile>
                       if (subtitle != null)
                         Padding(
                           padding: const EdgeInsets.only(top: 2),
-                          child: Text(
-                            subtitle,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.caption.copyWith(
-                              color: muted,
-                            ),
-                          ),
+                          child: subtitle,
                         ),
                     ],
                   ),
                 ),
+                // Hidden during selection, same as the quantity -- editing
+                // one row makes no sense mid-bulk-select.
+                if (!widget.selectionMode) ...[
+                  const SizedBox(width: 4),
+                  IconButton(
+                    key: ItemTile.editKey,
+                    icon: const Icon(Icons.edit_outlined),
+                    iconSize: 20,
+                    color: muted,
+                    visualDensity: VisualDensity.compact,
+                    // Reuses the edit sheet's own title rather than adding a
+                    // new translation key across five locales for one
+                    // tooltip string.
+                    tooltip: widget.t.items.editProductTitle,
+                    onPressed: widget.onEdit,
+                  ),
+                ],
                 if (widget.canReorder) ...[
                   const SizedBox(width: 4),
                   ReorderableDragStartListener(
@@ -541,27 +665,45 @@ class _ItemTileState extends ConsumerState<ItemTile>
       key: ItemTile.checkKey,
       onTap: _activateLeading,
       child: AnimatedBuilder(
-        animation: _selectionReveal,
-        builder: (context, child) => SizedBox(
-          width: 22,
-          height: 22,
-          child: Stack(
-            alignment: Alignment.centerLeft,
-            children: [
-              Opacity(
-                opacity: _selectionReveal.value,
-                child: _SelectionCircle(selected: widget.selected),
-              ),
-              Transform.translate(
-                offset: Offset(_checkboxSlide * _selectionReveal.value, 0),
-                child: Opacity(
-                  opacity: 1 - _selectionReveal.value,
-                  child: _CheckCircle(fill: _checkFill),
+        animation: Listenable.merge([_selectionReveal, _checkFill]),
+        builder: (context, child) {
+          final selectionProgress = _selectionReveal.value;
+          final slotWidth = widget.selectionMode
+              ? 34 * selectionProgress
+              : 34 * _checkFill.value.clamp(0.0, 1.0);
+          return SizedBox(
+            width: slotWidth,
+            height: 22,
+            child: ClipRect(
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                  width: 34,
+                  height: 22,
+                  child: Stack(
+                    alignment: Alignment.centerLeft,
+                    children: [
+                      Opacity(
+                        opacity: selectionProgress,
+                        child: _SelectionCircle(
+                          key: ValueKey(widget.selected),
+                          selected: widget.selected,
+                        ),
+                      ),
+                      Transform.translate(
+                        offset: Offset(_checkboxSlide * selectionProgress, 0),
+                        child: Opacity(
+                          opacity: 1 - selectionProgress,
+                          child: _CheckCircle(fill: _checkFill),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -614,13 +756,47 @@ class _ItemTileState extends ConsumerState<ItemTile>
     );
   }
 
-  String? _subtitle() {
+  /// The row's caption line: a note if it has one, otherwise -- once checked
+  /// -- who checked it off, avatar included. A note wins over "checked by":
+  /// the note is the shopper's own instruction and stays visible even after
+  /// the item is in the trolley, the same priority [_subtitle] always had.
+  Widget? _buildSubtitle(Color muted) {
     final note = widget.item.note;
-    if (note != null && !note.isEmpty) return note.text;
-    if (widget.item.isChecked && widget.checkedByName != null) {
-      return widget.t.items.checkedBy(name: widget.checkedByName!);
+    if (note != null && !note.isEmpty) {
+      return Text(
+        note.text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.caption.copyWith(color: muted),
+      );
     }
-    return null;
+
+    final member = widget.checkedByMember;
+    if (!widget.item.isChecked || member == null) return null;
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(
+          child: Text(
+            widget.t.items.checkedBy(name: member.displayName),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.caption.copyWith(color: muted),
+          ),
+        ),
+        const SizedBox(width: 4),
+        UserAvatar(
+          seed: member.userId.value,
+          initial: member.displayName.isEmpty
+              ? '?'
+              : member.displayName[0].toUpperCase(),
+          photoUrl: member.avatarPhotoUrl,
+          color: member.avatarColor,
+          radius: 10,
+        ),
+      ],
+    );
   }
 }
 
@@ -630,7 +806,7 @@ class _ItemTileState extends ConsumerState<ItemTile>
 /// changing -- no controller of its own, since nothing here needs staggering
 /// or to be read mid-flight the way the reveal does.
 class _SelectionCircle extends StatelessWidget {
-  const _SelectionCircle({required this.selected});
+  const _SelectionCircle({required this.selected, super.key});
 
   final bool selected;
 
@@ -665,7 +841,8 @@ class _SelectionCircle extends StatelessWidget {
 /// every shop above all. The scoped theme from decisions #73 is what makes
 /// reading it straight off [Theme.of] correct here.
 class _CheckCircle extends AnimatedWidget {
-  const _CheckCircle({required Animation<double> fill}) : super(listenable: fill);
+  const _CheckCircle({required Animation<double> fill})
+    : super(listenable: fill);
 
   @override
   Widget build(BuildContext context) {
@@ -690,7 +867,10 @@ class _CheckCircle extends AnimatedWidget {
             Transform.scale(
               scale: fill,
               child: DecoratedBox(
-                decoration: BoxDecoration(shape: BoxShape.circle, color: primary),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: primary,
+                ),
                 child: const SizedBox(width: 22, height: 22),
               ),
             ),
@@ -842,7 +1022,7 @@ Widget itemTilePreview() {
       children: [
         ItemTile(
           item: item(id: 'a', name: 'Bananas', quantity: 6),
-          checkedByName: null,
+          checkedByMember: null,
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
@@ -864,7 +1044,7 @@ Widget itemTilePreview() {
               updatedAt: now,
             ),
           ),
-          checkedByName: null,
+          checkedByMember: null,
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
@@ -878,7 +1058,12 @@ Widget itemTilePreview() {
         ),
         ItemTile(
           item: item(id: 'c', name: 'Milk', quantity: 2, isChecked: true),
-          checkedByName: 'Sam',
+          checkedByMember: ListMember(
+            userId: UserId('user-2'),
+            displayName: 'Sam',
+            role: MemberRole.member,
+            joinedAt: now,
+          ),
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
@@ -893,7 +1078,7 @@ Widget itemTilePreview() {
         ItemTile(
           item: item(id: 'd', name: 'Olive oil'),
           shopDotColor: const Color(0xFFE8791A),
-          checkedByName: null,
+          checkedByMember: null,
           onToggle: () {},
           onEdit: () {},
           onSwipeDelete: () => () {},
