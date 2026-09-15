@@ -83,6 +83,29 @@ abstract class ShoppingItem with _$ShoppingItem {
     return Ok(quantity);
   }
 
+  /// Whether an add naming [nameB]/[noteTextB] describes the same product as
+  /// an existing row named [nameA] with note [noteTextA] -- the merge-on-add
+  /// rule: names compare trimmed, notes compare by their trimmed *text* with
+  /// a blank or absent note treated as "no note" on either side (the same
+  /// rule [withEdit] already uses to decide a note is cleared). Deliberately
+  /// not a straight `Note ==` comparison -- a `Note` also carries who wrote
+  /// it and when, and two notes that read identically to a shopper almost
+  /// never share an author/timestamp, so comparing the whole object would
+  /// make merging with any noted row fail in practice. Shop and checked-state
+  /// equality are plain field compares at the call site -- nothing about
+  /// "same shop" needs normalizing.
+  static bool sameProduct({
+    required String nameA,
+    required String? noteTextA,
+    required String nameB,
+    required String? noteTextB,
+  }) {
+    String? normalize(String? text) =>
+        (text == null || text.trim().isEmpty) ? null : text.trim();
+    return nameA.trim() == nameB.trim() &&
+        normalize(noteTextA) == normalize(noteTextB);
+  }
+
   /// How far apart freshly-appended items are spaced in [sortOrder].
   ///
   /// A gap, not consecutive integers, is what makes [sortOrderBetween] work:

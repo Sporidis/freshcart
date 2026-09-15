@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -8,6 +11,7 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search_recently_bought.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 
@@ -20,12 +24,17 @@ void main() {
 
   late FakeItemRepository repository;
 
-  setUp(() => repository = FakeItemRepository());
+  setUp(() {
+    repository = FakeItemRepository();
+    SharedPreferences.setMockInitialValues({});
+  });
   tearDown(() => repository.dispose());
 
   group('bucketByRecency', () {
-    NameHistoryEntry entryDaysAgo(String name, int days) =>
-        NameHistoryEntry(name: name, lastUsedAt: now.subtract(Duration(days: days)));
+    NameHistoryEntry entryDaysAgo(String name, int days) => NameHistoryEntry(
+      name: name,
+      lastUsedAt: now.subtract(Duration(days: days)),
+    );
 
     test('groups into rolling 7-day windows, not calendar weeks', () {
       final buckets = bucketByRecency([
@@ -81,7 +90,9 @@ void main() {
         (_, _) {},
       );
       addTearDown(subscription.close);
-      final controller = container.read(itemsControllerProvider(listId).notifier);
+      final controller = container.read(
+        itemsControllerProvider(listId).notifier,
+      );
       final t = container.read(translationsProvider);
 
       await tester.pumpWidget(
@@ -147,6 +158,61 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(repository.addCalls.single.name, 'Milk');
+    });
+
+    testWidgets('a rapid second tap does not start a second add', (
+      tester,
+    ) async {
+      repository.recentNamesResult = Ok([
+        NameHistoryEntry(name: 'Milk', lastUsedAt: now),
+      ]);
+      repository.addResult = Ok(buildItem(name: 'Milk'));
+      final pause = Completer<void>();
+      repository.addPause = pause.future;
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pump();
+      // The first add is still in flight -- a second tap while it's pending
+      // must be a no-op, not a second request.
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pump();
+
+      expect(repository.addCalls, hasLength(1));
+
+      pause.complete();
+      await tester.pumpAndSettle();
+    });
+
+    testWidgets('tapping + fires a haptic', (tester) async {
+      repository.recentNamesResult = Ok([
+        NameHistoryEntry(name: 'Milk', lastUsedAt: now),
+      ]);
+      repository.addResult = Ok(buildItem(name: 'Milk'));
+      final calls = <MethodCall>[];
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+            calls.add(call);
+            return null;
+          });
+      addTearDown(
+        () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .setMockMethodCallHandler(SystemChannels.platform, null),
+      );
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+
+      expect(
+        calls,
+        contains(
+          isMethodCall(
+            'HapticFeedback.vibrate',
+            arguments: 'HapticFeedbackType.lightImpact',
+          ),
+        ),
+      );
     });
   });
 }

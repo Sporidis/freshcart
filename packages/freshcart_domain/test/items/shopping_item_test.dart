@@ -62,6 +62,85 @@ void main() {
     });
   });
 
+  group('ShoppingItem.sameProduct', () {
+    test('matches names trimmed', () {
+      expect(
+        ShoppingItem.sameProduct(
+          nameA: 'Milk',
+          noteTextA: null,
+          nameB: '  Milk  ',
+          noteTextB: null,
+        ),
+        isTrue,
+      );
+    });
+
+    test('is case-sensitive on the name', () {
+      expect(
+        ShoppingItem.sameProduct(
+          nameA: 'Milk',
+          noteTextA: null,
+          nameB: 'milk',
+          noteTextB: null,
+        ),
+        isFalse,
+      );
+    });
+
+    test('a blank note matches an absent one', () {
+      expect(
+        ShoppingItem.sameProduct(
+          nameA: 'Milk',
+          noteTextA: '   ',
+          nameB: 'Milk',
+          noteTextB: null,
+        ),
+        isTrue,
+      );
+    });
+
+    test('matches note text regardless of who wrote it or when', () {
+      // sameProduct only ever sees plain text -- these are passed as
+      // note?.text, never a whole Note -- so this pins that the comparison
+      // really is text-only, not incidentally relying on Note's own
+      // field-by-field equality (which would fail here on authorId/updatedAt
+      // alone).
+      expect(
+        ShoppingItem.sameProduct(
+          nameA: 'Olive oil',
+          noteTextA: 'the green tin',
+          nameB: 'Olive oil',
+          noteTextB: 'the green tin',
+        ),
+        isTrue,
+      );
+    });
+
+    test('does not match differing note text', () {
+      expect(
+        ShoppingItem.sameProduct(
+          nameA: 'Olive oil',
+          noteTextA: 'the green tin',
+          nameB: 'Olive oil',
+          noteTextB: 'the blue tin',
+        ),
+        isFalse,
+      );
+    });
+
+    test('a real note does not match no note', () {
+      expect(
+        ShoppingItem.sameProduct(
+          nameA: 'Olive oil',
+          noteTextA: 'the green tin',
+          nameB: 'Olive oil',
+          noteTextB: null,
+        ),
+        isFalse,
+      );
+    });
+  });
+
   group('ShoppingItem.hasNote', () {
     test('is false for no note and for a blank one', () {
       expect(buildItem().hasNote, isFalse);

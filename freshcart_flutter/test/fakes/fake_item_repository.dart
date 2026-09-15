@@ -70,6 +70,10 @@ class FakeItemRepository implements ItemRepository {
   /// Completes before [save] answers, to observe the optimistic state.
   Future<void>? savePause;
 
+  /// Completes before [add] answers, to observe state (or a busy guard)
+  /// while the add is still in flight.
+  Future<void>? addPause;
+
   @override
   Future<Result<List<ShoppingItem>>> byList(ListId listId) async =>
       byListResult;
@@ -89,6 +93,7 @@ class FakeItemRepository implements ItemRepository {
       shopId: shopId,
       noteText: noteText,
     ));
+    if (addPause != null) await addPause;
     return addResult ?? const Err(Failure.unexpected('add not configured'));
   }
 

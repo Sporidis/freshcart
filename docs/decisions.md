@@ -1743,3 +1743,153 @@ off-by-default silence, an opted-in recipient receiving it, the joiner never rec
 re-tapped invite link not double-sending; list-finished notifying an opted-in member and never the
 actor who completed it, staying silent while any item is still open, and not re-firing when an
 already-checked item is edited afterwards.
+
+## 82. `ItemTile` tap target reverts to whole-row-checks -- deliberately diverging from Component Library §01
+
+**Decision:** Decision #74 matched the reference exactly: the row itself opens editing, the
+leading circle is the only thing that checks. Live use surfaced a real usability cost the
+reference didn't have to weigh -- checking an item off is the action done most often on this
+screen, many times per shopping trip, and a 22px circle is a small, precise target for something
+done that often one-handed while holding a trolley. Reopened: the row tap (`_activateRow`) now
+calls the same `_handleToggle` the leading circle's own tap (`_activateLeading`) already did, so
+either hits the same action, and a new trailing `IconButton` (`ItemTile.editKey`) carries editing
+instead -- hidden during selection mode, same as the quantity, since editing one row mid-bulk-select
+doesn't make sense.
+
+This is a scoped reference deviation, not a return to the pre-#74 `ListTile`: the
+`_CheckCircle`/`_SelectionCircle` visuals, the swipe-to-delete, the selection-reveal cross-fade,
+and every other piece #74 rebuilt stand unchanged. Only the two tap handlers' bodies and the
+addition of the edit button moved. The edit button's tooltip reuses `items.editProductTitle`
+("Edit product") rather than adding a sixth translation key across five locales for one tooltip
+string that already exists as the sheet's own title.
+
+**Tests:** `items_section_test.dart`'s "editing an item" group now opens the sheet via
+`ItemTile.editKey` instead of tapping the item's name; a new test confirms tapping the row (not
+just the leading circle) flips `isChecked`, alongside the pre-existing checkbox-tap test it sits
+next to.
+
+## 83. Merge duplicate items on add, fix "Recently bought" feedback, close two FAB design gaps
+
+**Decision:** repeatedly tapping "Recently bought" (or any quick-add path) used to create a new
+`ShoppingItem` row every time -- spamming it ten times meant ten rows, not one row at ×10. `add`
+now merges into an existing **open** row on the same list with the same trimmed **name**, the same
+**shop** (including both untagged), and the same **note text** (blank/absent counts as "no note"
+on either side), bumping its quantity instead of inserting a new row. This directly **reverses
+decision #77's** "re-adding a name already open on the list is allowed to create a second row"
+stance -- #77 only ever compared against the unrelated `ItemNameHistory` dedup precedent, and the
+actual lived behavior (a shopping list quietly filling up with duplicate "Milk" rows) was worse
+than the second-row-is-fine reasoning anticipated.
+
+**Where the rule lives, and why it's race-safe:** `ShoppingItem.sameProduct` (domain) is the one
+place name/note equality is decided -- names compare trimmed, notes compare by their trimmed
+_text_, not a whole `Note` object (a `Note` also carries who wrote it and when, and two notes that
+read identically to a shopper almost never share an author/timestamp, so object equality would
+make merging with any noted row fail in practice). `ItemService.add` calls it directly on its own
+generated rows, the same `domain.ShoppingItem.*` cross-boundary reuse `sortOrderGap` already
+established in this file, rather than duplicating the rule in SQL. The whole "fetch this list's
+open rows, look for a match, then update-or-insert" decision runs inside one
+`session.db.transaction`, the same shape `save`/`clearChecked`/`removeMany`/`moveMany` already use,
+so two near-simultaneous adds of the same product can't both see "no match" and each insert a row.
+Matching happens in Dart over the list's open rows rather than as a SQL `where` clause: a list's
+open items are always a small set, and it sidesteps depending on whether the query builder can
+filter inside the JSON `note` column at all. `ItemsController.add`'s success branch now replaces
+the row in place (reusing the existing `_replacing` helper) when the returned id is already on
+screen, rather than only appending -- otherwise a merge's bumped quantity would sit stale until the
+next live-stream echo.
+
+**Accepted gap, not a missed case:** a merge into a row that is _already visible on screen_ does
+not replay `ItemTile`'s entrance flash -- that animation is deliberately a read-once-at-`initState`
+one-shot (see its own doc comment), and retrofitting a re-triggerable version would be new
+animation-controller surface on an already animation-dense widget for a genuinely rare case (the
+row has to already be on screen for this to matter). The far more common case -- the merged row
+wasn't mounted yet when the merge landed -- still gets the ordinary entrance flash via the live
+stream, since `flash(value.id)` fires unconditionally on every successful add, merge or not.
+
+**"Recently bought" and no-results re-adds had almost no feedback.** Neither `_ReAddButton`
+(`search_recently_bought.dart`) nor the no-results "Add to this list" button
+(`search_results.dart`, now factored into its own `_AddToListButton`) fired the `lightImpact()`
+haptic the Motion spec calls for, and neither guarded against a rapid double-tap starting a second
+add before the first answered -- `QuickAddBar` already had exactly this `_busy` guard shape, just
+never copied here. Both now read `hapticsControllerProvider` the same way `ItemTile._hapticsOn`
+does, and disable themselves while their own `onPressed` future is in flight. The Recently-bought
+pop's `Curves.easeOut` (vs. the spec's literal `easeOutBack`) is left alone -- it produces the same
+overshoot-then-settle shape `ItemTile._iconPop` already uses, and decision #77 already framed the
+reuse as deliberate; not a real gap. Not doing: navigating out of search on a successful add so the
+main list's flash could play -- #77 deliberately kept Recently Bought lightweight and inline, and
+auto-navigating away would cut against that.
+
+**FAB empty-state coach mark: the built arrow was actually contradicting the spec.** §11 is
+explicit -- "the FAB pulses gently three times (scale 1→1.06→1, 900ms apart), then stops for good
+-- **no arrow**, no persistent coach mark." `_AddNudgeArrow` (a separate bouncing arrow in the
+empty state's body, not positioned near the real floating `QuickAddBar` at all) is deleted;
+`QuickAddBar` gains a `firstRun` flag (`ItemsSection` passes
+`shopFilter == null && allItems.isEmpty`, mirroring `_ItemsEmptyState`'s own branch condition) and
+a three-beat
+`TweenSequence` pulse modeled directly on the old arrow's shape, applied only while the button is
+collapsed and only when motion isn't reduced. Unlike Feature 1, this isn't reversing a decision --
+the arrow was untracked in decisions.md/build-plan.md/design-gap-plan.md as either intentional or
+deferred, so building the spec's actual answer here is closing an oversight, not overturning a
+choice. No persistence: `firstRun` is recomputed fresh every build, so the pulse fires again if a
+list is emptied back out and revisited -- the same scope the arrow already had.
+
+**FAB tint on tab-swipe (§05): deliberately not built.** `ShopFilterBar` was checked directly --
+shop-tab switching today is a discrete tap or a flick (`onHorizontalDragEnd` reading release
+_velocity_, then calling the same discrete `select()` a tap would); there is no continuous
+swipe-fraction value exposed anywhere during the gesture. The spec's own text and build-order table
+describe a real `TabController` + `PageView` continuously coupling the pills (and, per its literal
+wording, possibly the item-list content itself) to the drag. "FAB tint on the swipe fraction" has
+nothing to interpolate against until that mechanism exists -- it is downstream of a `ShopFilterBar`
+rewrite that is its own, separately-sized piece of work, not a small follow-on to `QuickAddBar`.
+Named here as a real, deliberately scoped-out gap rather than left to be silently rediscovered.
+
+**Tests:** domain unit tests for `ShoppingItem.sameProduct` (trimmed/case-sensitive name matching,
+blank-vs-absent note equality, note text compared independent of author/timestamp).
+`item_endpoint_test.dart` gained a `'add merges into an existing open row of the same product'`
+group -- bumps quantity onto the same row and id; sums an explicit quantity; matches the name
+trimmed; does not merge across shops, into a checked-off row, or across differing note text; a
+blank note still merges with a plain noteless row. The two pre-existing `add`-ordering tests are
+unaffected (different names never trigger the merge branch). `items_controller_test.dart` gained a
+test that a same-id `addResult` replaces the row in place rather than duplicating it.
+`search_recently_bought_test.dart` and the new `search_results_test.dart` each gained a
+busy-guard test (a rapid second tap only calls `add` once) and a haptic test (mocking
+`SystemChannels.platform` and asserting `HapticFeedback.vibrate`/`lightImpact` fires). The new
+`quick_add_bar_test.dart` covers the pulse: `firstRun: false` never scales the resting button,
+`firstRun: true` pulses past 1.0 and settles back, and reduced motion drops it entirely.
+`items_section_test.dart` gained a test that `QuickAddBar.firstRun` is armed for a brand-new empty
+list and not once it has items.
+
+## 84. Checking multiple rows debounces as one batch, then cascades into Done
+
+**The gap:** the open<->Done cross-section move (checking a row plays an animated exit from Open
+and entrance into Done; unchecking plays it back) used a per-row 600ms hold timer, matching the
+design spec exactly for a single row. Checking several rows in quick succession exposed the flaw:
+each row's own 600ms timer fired independently, so the first row you ticked jumped to Done
+mid-tap-through, shoving the very rows you were about to tap next.
+
+**The fix, two parts, both in `RecentlyChecked`
+(`freshcart_flutter/lib/features/items/application/done_section_controller.dart`):**
+- `hold` now debounces on one shared timer for the whole list, not a timer per row -- every `hold`
+  call cancels and restarts it, so nothing settles until 600ms after the *last* check, whichever
+  row it was on. `release` (uncheck) deliberately keeps its own, independent, un-debounced timing --
+  the design spec already treats unchecking as unambiguous, and that asymmetry (decisions #47) is
+  still correct here.
+- Once the debounce settles, the held rows still don't all move in the same frame -- each row
+  starts its own move a third of `exitDuration` after the previous row's, a cascade rather than a
+  block-jump. The stagger is derived from `exitDuration` (the caller's own
+  `AppMotion.durationFor(...)` result) rather than a separate constant, so it shortens along with
+  the move itself under reduced motion without `RecentlyChecked` ever needing to import
+  `AppMotion` -- the same "no Flutter import in `application/`" rule the rest of this file already
+  keeps.
+
+**Tests:** `items_section_test.dart` gained tests for a single row's exit/entrance playing
+concurrently, an uncheck starting immediately with no 600ms wait, reduced motion collapsing both to
+`AppMotion.micro`, a checked-and-transitioning row not corrupting drag-to-reorder's index math, and
+checking three rows in quick succession -- each tap resetting the shared debounce, then the cascade
+firing one row at a time (first row, then the next ~87ms later, then the last ~87ms after that)
+rather than all three settling together.
+
+**Follow-up, not done here:** `item_tile.dart` is now 1,093 lines carrying seven
+`AnimationController`s and four gesture handlers on one `State` class -- a real God-widget smell
+that predates this change and wasn't caused by it, flagged with a `TODO` at the class rather than
+fixed inline, since a structural split deserves its own commit and its own before/after test run,
+not to be mixed into a feature diff.

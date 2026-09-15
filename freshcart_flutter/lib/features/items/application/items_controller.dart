@@ -68,23 +68,33 @@ class ItemsController extends _$ItemsController {
     return first.future;
   }
 
-  /// Re-applies in-flight optimistic values over an incoming snapshot, and
-  /// drops anything still hidden behind a pending [swipeDelete].
+  /// Re-applies in-flight optimistic values over an incoming snapshot, drops
+  /// anything still hidden behind a pending [swipeDelete], and re-sorts.
+  ///
+  /// Sorting here, unconditionally, matters: a delta from the live stream
+  /// (see [ItemRealtimeSource.applyChange]) upserts a changed row *in its old
+  /// array slot* rather than moving it, so array order alone cannot be
+  /// trusted to reflect [ShoppingItem.sortOrder] past the first snapshot.
   Result<List<ShoppingItem>> _overlay(Result<List<ShoppingItem>> event) {
-    if (_pending.isEmpty && _pendingRemoval.isEmpty) return event;
     return event.map(
-      (items) => [
+      (items) => _sorted([
         for (final item in items)
           if (!_pendingRemoval.containsKey(item.id)) _pending[item.id] ?? item,
-      ],
+      ]),
     );
   }
 
   /// The items currently on screen, or null if none have loaded yet.
   List<ShoppingItem>? get _current => state.dataOrNull;
 
+  /// Sorts by [ShoppingItem.sortOrder] -- the one place this is enforced, so
+  /// every write path ([_show]) and every incoming snapshot ([_overlay])
+  /// agrees on display order without each one having to remember to.
+  List<ShoppingItem> _sorted(List<ShoppingItem> items) =>
+      [...items]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
+
   void _show(List<ShoppingItem> items) =>
-      state = AsyncData(Ok<List<ShoppingItem>>(items));
+      state = AsyncData(Ok<List<ShoppingItem>>(_sorted(items)));
 
   List<ShoppingItem> _replacing(List<ShoppingItem> items, ShoppingItem item) =>
       [
@@ -187,7 +197,7 @@ class ItemsController extends _$ItemsController {
   /// Moves [item] to sit between [before] and [after] (§10: drag to
   /// reorder), applying the new position immediately.
   ///
-  /// [before] and [after] are the *new* neighbours -- wherever the row was
+  /// [before] and [after] are the *new* neighbors -- wherever the row was
   /// dropped -- not whoever it sat next to before the drag started.
   Future<Failure?> reorder(
     ShoppingItem item, {
@@ -214,7 +224,11 @@ class ItemsController extends _$ItemsController {
   ///
   /// Deliberately *not* optimistic: the server mints the id, `createdAt` and
   /// `updatedAt`, and a placeholder row with a fabricated id could not be
-  /// edited or checked until it was replaced.
+  /// edited or checked until it was replaced. This also means an add that
+  /// merges into an existing open row of the same product (same name, shop
+  /// and note text -- server-side, see `ItemService.add`) is indistinguishable
+  /// from a fresh insert here: either way, the server hands back one
+  /// [ShoppingItem] and this just needs to make sure it's the one shown.
   Future<Failure?> add({
     required String name,
     int quantity = 1,
@@ -230,11 +244,17 @@ class ItemsController extends _$ItemsController {
     );
     switch (result) {
       case Ok<ShoppingItem>(:final value):
-        // The live stream will carry this too; appending here keeps the field
-        // responsive, and the merge is by id so the echo is a no-op.
+        // The live stream will carry this too; showing it here keeps the
+        // field responsive. If the id is already in the list this was a
+        // merge -- replace it in place (the bumped quantity), not append,
+        // or the row would sit stale until the next stream echo.
         final current = _current;
-        if (current != null && !current.any((i) => i.id == value.id)) {
-          _show([...current, value]);
+        if (current != null) {
+          _show(
+            current.any((i) => i.id == value.id)
+                ? _replacing(current, value)
+                : [...current, value],
+          );
         }
         // Only for the item this device just added, not whatever the live
         // stream later merges in -- the entrance flash is "you just did
@@ -419,9 +439,9 @@ class ItemsController extends _$ItemsController {
         if (ids.contains(item.id)) item.copyWith(shopId: shopId) else item,
     ]);
 
-    final result = await ref
-        .read(itemRepositoryProvider)
-        .moveMany(listId, [for (final item in selected) item.id], shopId);
+    final result = await ref.read(itemRepositoryProvider).moveMany(listId, [
+      for (final item in selected) item.id,
+    ], shopId);
     for (final item in selected) {
       _pending.remove(item.id);
     }
