@@ -4,6 +4,7 @@ import 'dart:io' show Platform;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_client/freshcart_client.dart';
 import 'package:freshcart_flutter/app.dart';
@@ -84,6 +85,7 @@ Future<void> main() async {
     }),
   );
 
+  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(
     UncontrolledProviderScope(
       container: container,
