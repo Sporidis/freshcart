@@ -36,8 +36,16 @@ class SplashScreen extends ConsumerWidget {
       context.go(session.isNewIdentity ? Routes.welcome : Routes.lists);
     });
 
+    // Same visual system as the app icon, polarity-swapped by mode: dark
+    // mode is ink behind a light tile, light mode inverts every colour —
+    // never a plain-light screen with a plain-dark tile mismatched on top.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final background = isDark ? AppColors.ink : AppColors.bgLight;
+    final tile = isDark ? AppColors.bgLight : AppColors.ink;
+    final mark = isDark ? AppColors.ink : AppColors.bgLight;
+
     return Scaffold(
-      backgroundColor: AppColors.ink,
+      backgroundColor: background,
       body: Semantics(
         label: t.splash.loading,
         child: Center(
@@ -48,22 +56,22 @@ class SplashScreen extends ConsumerWidget {
                 width: 86,
                 height: 86,
                 decoration: BoxDecoration(
-                  color: AppColors.bgLight,
+                  color: tile,
                   borderRadius: BorderRadius.circular(21),
                 ),
                 alignment: Alignment.center,
                 // The mark itself is the Hero; the tile around it is not —
                 // it is this screen's own chrome and fades with the route.
-                child: const Hero(
+                child: Hero(
                   tag: BasketMark.heroTag,
-                  child: BasketMark(size: 44, color: AppColors.ink),
+                  child: BasketMark(size: 44, color: mark),
                 ),
               ),
               const SizedBox(height: 18),
               Text(
                 t.appName,
-                style: const TextStyle(
-                  color: AppColors.bgLight,
+                style: TextStyle(
+                  color: tile,
                   fontSize: 19,
                   fontWeight: FontWeight.w700,
                   letterSpacing: -0.2,
@@ -146,3 +154,7 @@ double _sin(double x) =>
 
 @Preview(group: 'Onboarding', name: 'Splash', size: previewPhone)
 Widget splashScreenPreview() => previewApp(const SplashScreen());
+
+@Preview(group: 'Onboarding', name: 'Splash (dark)', size: previewPhone)
+Widget splashScreenDarkPreview() =>
+    previewApp(const SplashScreen(), brightness: Brightness.dark);
