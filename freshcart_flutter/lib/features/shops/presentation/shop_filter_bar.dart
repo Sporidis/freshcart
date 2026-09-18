@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
@@ -23,10 +24,15 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_p
 /// Library §02 -- "The + is permanent furniture on every list").
 class ShopFilterBar extends ConsumerWidget {
   /// Creates the bar for [listId].
-  const ShopFilterBar({required this.listId, super.key});
+  const ShopFilterBar({required this.listId, required this.revealKey, super.key});
 
   /// The list whose shops to show.
   final ListId listId;
+
+  /// The themed body's reveal state -- selecting a tab anchors the colour
+  /// reveal at the tap (or, for a swipe, the edge it came from) through
+  /// this, before the shop filter itself changes.
+  final GlobalKey<ShopThemeRevealState> revealKey;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -56,14 +62,45 @@ class ShopFilterBar extends ConsumerWidget {
     // there is no second, swipe-only copy of "which tab is active".
     final order = <ShopId?>[null, for (final shop in activeShops) shop.id];
 
-    void select(ShopId? shopId) =>
-        ref.read(shopFilterProvider(listId).notifier).select(shopId);
+    // Set by each pill's onTapDown, read by its own onTap right after --
+    // both are recreated together every build, so this is never stale.
+    Offset? tapOrigin;
+
+    // Where to anchor the reveal when there's no tap position to use --
+    // defensive only, since a real tap always fires onTapDown before onTap.
+    Offset fallbackOrigin() {
+      final box = revealKey.currentContext?.findRenderObject();
+      if (box is RenderBox && box.hasSize) {
+        return box.localToGlobal(box.size.center(Offset.zero));
+      }
+      return Offset.zero;
+    }
+
+    // The reveal has to be anchored *before* the filter provider changes --
+    // see [ShopThemeRevealState.beginReveal] -- so every path that changes
+    // the filter routes through here rather than calling the provider
+    // directly.
+    void select(ShopId? shopId, Offset? origin) {
+      revealKey.currentState?.beginReveal(origin ?? fallbackOrigin());
+      ref.read(shopFilterProvider(listId).notifier).select(shopId);
+    }
+
+    // A swipe has no finger position on the *target* tab to anchor to, so
+    // it reveals from whichever screen edge the new tab conceptually slides
+    // in from instead -- forward through `order` from the right, backward
+    // from the left.
+    Offset? edgeOrigin(int delta) {
+      final box = revealKey.currentContext?.findRenderObject();
+      if (box is! RenderBox || !box.hasSize) return null;
+      final dx = delta > 0 ? box.size.width : 0.0;
+      return box.localToGlobal(Offset(dx, box.size.height / 2));
+    }
 
     void step(int delta) {
       final from = order.indexOf(selected);
       final current = from == -1 ? 0 : from;
       final next = (current + delta).clamp(0, order.length - 1);
-      if (next != current) select(order[next]);
+      if (next != current) select(order[next], edgeOrigin(delta));
     }
 
     return SizedBox(
@@ -90,7 +127,8 @@ class ShopFilterBar extends ConsumerWidget {
                 label: t.shops.all,
                 active: selected == null,
                 count: remainingIn(null),
-                onTap: () => select(null),
+                onTapDown: (details) => tapOrigin = details.globalPosition,
+                onTap: () => select(null, tapOrigin),
               ),
             ),
             for (final shop in activeShops)
@@ -104,7 +142,8 @@ class ShopFilterBar extends ConsumerWidget {
                   active: selected == shop.id,
                   color: Color(ref.watch(effectiveShopColorProvider(shop)).argb),
                   count: remainingIn(shop.id),
-                  onTap: () => select(shop.id),
+                  onTapDown: (details) => tapOrigin = details.globalPosition,
+                  onTap: () => select(shop.id, tapOrigin),
                 ),
               ),
             Padding(

@@ -76,4 +76,27 @@ class AppColors {
   /// is always the same colour on every device.
   static Color avatarColorFor(String userId) =>
       presetShopColors[userId.hashCode.abs() % presetShopColors.length];
+
+  /// Interpolates [a] to [b] by hue/saturation/lightness, taking the short
+  /// way around the hue wheel.
+  ///
+  /// A plain RGB blend (what [Color.lerp] and [ThemeData.lerp] do) between
+  /// two saturated, differently-hued colours passes through a desaturated
+  /// grey-brown at the midpoint -- e.g. green to orange dips through mud,
+  /// because R/G/B are interpolated independently with no notion of "hue".
+  /// [HSLColor.lerp] fixes the desaturation problem but still walks hue the
+  /// long way when the two hues are more than 180° apart; this takes the
+  /// shorter arc instead. Used for the reduced-motion theme crossfade --
+  /// see decisions #85.
+  static Color lerpHsl(Color a, Color b, double t) {
+    final ha = HSLColor.fromColor(a);
+    final hb = HSLColor.fromColor(b);
+    final hueDelta = (hb.hue - ha.hue + 540) % 360 - 180;
+    return HSLColor.fromAHSL(
+      ha.alpha + (hb.alpha - ha.alpha) * t,
+      (ha.hue + hueDelta * t + 360) % 360,
+      ha.saturation + (hb.saturation - ha.saturation) * t,
+      ha.lightness + (hb.lightness - ha.lightness) * t,
+    ).toColor();
+  }
 }
