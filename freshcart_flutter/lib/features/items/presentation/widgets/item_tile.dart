@@ -217,12 +217,16 @@ class _ItemTileState extends ConsumerState<ItemTile>
 
   /// This row's presence within its *current* section: 1 is fully settled
   /// here, 0 is fully gone -- the open<->Done cross-section move (§04/§12).
-  /// Driven by [ItemTile.checkMoveEntering] (0→1, once, at mount) and
-  /// [ItemTile.checkMoveExiting] (1→0, from [didUpdateWidget]) rather than
-  /// [widget.item.isChecked] directly, since a row's *own* checked state and
-  /// which section it is *currently rendering in* are different questions --
-  /// see items_section.dart's `tileFor`, which computes both flags per the
-  /// section a given `ItemTile` instance is actually mounted in.
+  /// Driven by [ItemTile.checkMoveEntering] (0→1, from [didChangeDependencies]
+  /// at first mount, or from [didUpdateWidget] if it flips true again on an
+  /// already-mounted element -- e.g. unchecking a row while it's still
+  /// mid-cascade re-arms this on the same Open-side element rather than
+  /// remounting a fresh one) and [ItemTile.checkMoveExiting] (1→0, from
+  /// [didUpdateWidget]) rather than [widget.item.isChecked] directly, since a
+  /// row's *own* checked state and which section it is *currently rendering
+  /// in* are different questions -- see items_section.dart's `tileFor`, which
+  /// computes both flags per the section a given `ItemTile` instance is
+  /// actually mounted in.
   late final AnimationController _checkMove = AnimationController(
     vsync: this,
     duration: AppMotion.standard,
@@ -344,6 +348,26 @@ class _ItemTileState extends ConsumerState<ItemTile>
             widget.item.isChecked ? AppMotion.standard : AppMotion.quick,
           ),
           curve: AppMotion.curveFor(context, AppMotion.exit),
+        ),
+      );
+    }
+    // Mirrors the block above -- [didChangeDependencies] only ever drives
+    // [_checkMove]'s 0→1 entrance for a row's first-ever mount. Unchecking a
+    // row while it's still `transitioning` (mid-cascade, or waiting out its
+    // own exit timer -- see `RecentlyChecked.release`) re-arms
+    // `checkMoveEntering` on this *same*, already-mounted element rather than
+    // remounting a fresh one, so without this branch `_checkMove` never
+    // restarts and the row stays stuck wherever its exit tween last left it
+    // -- collapsed and invisible, but still a member of the Open list.
+    if (widget.checkMoveEntering && !oldWidget.checkMoveEntering) {
+      unawaited(
+        _checkMove.animateTo(
+          1,
+          duration: AppMotion.durationFor(
+            context,
+            widget.item.isChecked ? AppMotion.standard : AppMotion.quick,
+          ),
+          curve: AppMotion.curveFor(context, AppMotion.enter),
         ),
       );
     }
@@ -625,6 +649,16 @@ class _ItemTileState extends ConsumerState<ItemTile>
                     ],
                   ),
                 ),
+                // Hidden during selection, same as the reference's own "selected"
+                // state: "gains a drag handle, loses the quantity" -- how many to
+                // buy has nothing to do with picking rows for a bulk action.
+                if (!widget.selectionMode) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    'x${widget.item.quantity}',
+                    style: AppTextStyles.caption.copyWith(color: muted),
+                  ),
+                ],
                 // Hidden during selection, same as the quantity -- editing
                 // one row makes no sense mid-bulk-select.
                 if (!widget.selectionMode) ...[
@@ -742,16 +776,6 @@ class _ItemTileState extends ConsumerState<ItemTile>
             ),
           ),
         ),
-        // Hidden during selection, same as the reference's own "selected"
-        // state: "gains a drag handle, loses the quantity" -- how many to
-        // buy has nothing to do with picking rows for a bulk action.
-        if (!widget.selectionMode) ...[
-          const SizedBox(width: 6),
-          Text(
-            'x${item.quantity}',
-            style: AppTextStyles.caption.copyWith(color: muted),
-          ),
-        ],
       ],
     );
   }
