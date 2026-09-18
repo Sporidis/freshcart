@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/auth/presentation/edit_profile_screen.dart';
 import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
@@ -80,12 +81,19 @@ abstract final class Routes {
   static const String join = '/join';
 }
 
+/// Notifies [ListsScreen] when it is revealed again because the route above
+/// it (list detail, or one of its own sub-routes) was popped -- including by
+/// the OS back-swipe gesture, which is otherwise invisible to a plain
+/// [ModalRoute.isCurrent] check. See [ListsScreen]'s own `didPopNext`.
+final listsRouteObserver = RouteObserver<PageRoute<void>>();
+
 /// The app's [GoRouter].
 ///
 /// `keepAlive` because the router owns navigation history; rebuilding it would
 /// throw the user back to the start.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) => GoRouter(
+  observers: [listsRouteObserver],
   // Always Splash — it is the one place that knows whether to send a new
   // identity to Welcome or a restored one straight to Lists (whose own empty
   // state already covers "no lists left", a distinct case from "never

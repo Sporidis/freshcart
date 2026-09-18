@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/lists/application/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list_summaries_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/lists_screen.dart'
@@ -39,6 +40,7 @@ class ListsDrawer extends ConsumerWidget {
     final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
     final lists = ref.watch(listsControllerProvider);
+
     // "The avatars of who else is in them" (design's own words) -- excludes
     // the viewer's own row from each list's stack. Falls back to showing
     // everyone for the one frame before this resolves, rather than blocking
@@ -63,9 +65,10 @@ class ListsDrawer extends ConsumerWidget {
           : t.lists.itemsLeft(n: summary.remaining);
     }
 
-    void openList(ListId id) {
+    Future<void> openList(ListId id) async {
       Navigator.of(context).pop();
       if (id != currentListId) context.go(Routes.listDetail(id));
+      await ref.read(lastOpenedListControllerProvider.notifier).select(id);
     }
 
     return Drawer(
