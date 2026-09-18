@@ -362,6 +362,49 @@ void main() {
   );
 
   testWidgets(
+    'unchecking a row mid-cascade re-arms its return to Open instead of '
+    'leaving it stuck invisible',
+    (tester) async {
+      // Regression for the bug where the item stays in the data but stops
+      // rendering after being marked done: `RecentlyChecked.release` leaves
+      // an already-`transitioning` row (not still `holding`) in
+      // `transitioning` rather than dropping it, so the SAME, already-
+      // mounted Open-side `ItemTile` element gets `checkMoveEntering`
+      // flipped false->true again -- and only `didUpdateWidget`, not the
+      // mount-only `didChangeDependencies`, can react to that on an
+      // existing element.
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+      await pump(tester);
+
+      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.pump();
+      await tester.pump(RecentlyChecked.holdDuration);
+      // Mid-cascade: moved into `transitioning`, exit under way but not
+      // finished -- both the exiting Open copy and entering Done copy are
+      // mounted at once (same window the "plays its exit ... concurrently"
+      // test above exercises).
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('Milk'), findsNWidgets(2));
+
+      // Uncheck while still transitioning.
+      await tester.tap(find.byKey(ItemTile.checkKey).first);
+      await tester.pump();
+      await tester.pumpAndSettle();
+
+      // Back to a single, fully-settled Open row -- not stuck collapsed.
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.byType(DoneDivider), findsNothing);
+      final sizeTransition = tester.widget<SizeTransition>(
+        find.ancestor(
+          of: find.text('Milk'),
+          matching: find.byType(SizeTransition),
+        ),
+      );
+      expect(sizeTransition.sizeFactor.value, 1);
+    },
+  );
+
+  testWidgets(
     'reduced motion collapses the open<->Done move to (near) instant',
     (tester) async {
       items.byListResult = Ok([buildItem(name: 'Milk')]);
