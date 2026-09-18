@@ -70,7 +70,7 @@ void main() {
   }
 
   /// [Theme.of] resolved from inside the list body -- descends from the
-  /// screen's own scoped [AnimatedTheme], not the app root.
+  /// screen's own scoped colour-reveal theme, not the app root.
   ThemeData bodyTheme(WidgetTester tester) =>
       Theme.of(tester.element(find.byType(ItemsSection)));
 

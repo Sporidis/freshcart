@@ -10,6 +10,11 @@ class AppMotion {
   static const Duration sheetIn = Duration(milliseconds: 380);
   static const Duration sheetOut = Duration(milliseconds: 220);
   static const Duration celebrate = Duration(milliseconds: 900);
+  // The shop-theme reveal (decisions #85, slowed per decisions #89): long
+  // enough to actually watch the wave travel to a far corner of the screen
+  // (the FAB, gated on this via WaveThemed) before it's already settled --
+  // 450ms read as barely-there once a real diagonal crossing was involved.
+  static const Duration reveal = Duration(milliseconds: 700);
 
   static const Curve enter = Curves.easeOutCubic;
   static const Curve exit = Curves.easeInCubic;

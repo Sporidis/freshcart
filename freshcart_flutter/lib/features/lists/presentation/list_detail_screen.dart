@@ -4,11 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
@@ -48,6 +50,12 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   /// state every frame, which would fight the user's cursor position on
   /// every keystroke.
   final TextEditingController _searchField = TextEditingController();
+
+  /// Lets [ShopFilterBar], a sibling of the reveal rather than a
+  /// descendant of it, reach across to trigger the items area's colour
+  /// reveal from wherever the shop-filter tap or swipe landed.
+  final GlobalKey<ShopThemeRevealState> _revealKey =
+      GlobalKey<ShopThemeRevealState>();
 
   @override
   void dispose() {
@@ -93,6 +101,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final scopedSeed = activeShopColor == null
         ? AppTheme.brandSeed
         : Color(activeShopColor.argb);
+    final hapticsOn = ref.watch(hapticsControllerProvider).value ?? true;
 
     final loaded = list.dataOrNull;
 
@@ -104,8 +113,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     // Only the multi-select "Move" action needs this here -- the item sheet
     // and shop filter bar each fetch their own copy already.
     final shops =
-        ref.watch(shopsControllerProvider(listId)).dataOrNull ??
-        const <Shop>[];
+        ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
 
     final search = ref.watch(searchControllerProvider(listId));
     final searchNotifier = ref.read(searchControllerProvider(listId).notifier);
@@ -161,20 +169,14 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       // control, empty-state tint — sees the active shop's colour. The
       // drawer and app bar above are siblings of this, not descendants, so
       // they stay on the app's own neutral theme regardless.
-      body: AnimatedTheme(
-        data: theme.brightness == Brightness.dark
-            ? AppTheme.dark(scopedSeed)
-            : AppTheme.light(scopedSeed),
-        // Same token as the app-wide tint this replaces (decisions #71):
-        // "colour tint" is `quick`, 180ms easeOutCubic.
-        duration: AppMotion.durationFor(context, AppMotion.quick),
-        curve: AppMotion.enter,
-        child: _buildBody(
-          context,
-          list: list,
-          listId: listId,
-          searchActive: search.active,
-        ),
+      body: _buildBody(
+        context,
+        list: list,
+        listId: listId,
+        searchActive: search.active,
+        seed: scopedSeed,
+        hapticsOn: hapticsOn,
+        revealKey: _revealKey,
       ),
     );
   }
@@ -403,6 +405,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     required AsyncOutcome<ShoppingList> list,
     required ListId listId,
     required bool searchActive,
+    required Color seed,
+    required bool hapticsOn,
+    required GlobalKey<ShopThemeRevealState> revealKey,
   }) {
     return switch (list) {
       AsyncLoading<Result<ShoppingList>>() => const Center(
@@ -422,14 +427,38 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
               curve: AppMotion.enter,
               child: searchActive
                   ? const SizedBox(width: double.infinity)
-                  : Column(
-                      children: [
-                        ShopFilterBar(listId: listId),
-                        const Divider(height: 1),
-                      ],
+                  // A plain AnimatedTheme, not ShopThemeReveal: this strip
+                  // is small, low-saturation chrome (outline/onSurface
+                  // tones), not the flat colour blocks the spatial reveal
+                  // exists for, and it has to stay live the whole time so
+                  // ShopTabPill's own active/inactive AnimatedContainer
+                  // transition is never hidden under the reveal's frozen
+                  // snapshot -- see decisions #86.
+                  : AnimatedTheme(
+                      data: Theme.of(context).brightness == Brightness.dark
+                          ? AppTheme.dark(seed)
+                          : AppTheme.light(seed),
+                      duration: AppMotion.durationFor(
+                        context,
+                        AppMotion.quick,
+                      ),
+                      curve: AppMotion.enter,
+                      child: Column(
+                        children: [
+                          ShopFilterBar(listId: listId, revealKey: revealKey),
+                          const Divider(height: 1),
+                        ],
+                      ),
                     ),
             ),
-            Expanded(child: ItemsSection(list: shoppingList)),
+            Expanded(
+              child: ShopThemeReveal(
+                key: revealKey,
+                seed: seed,
+                hapticsOn: hapticsOn,
+                child: ItemsSection(list: shoppingList),
+              ),
+            ),
           ],
         ),
       },

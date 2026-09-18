@@ -15,6 +15,7 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_sho
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 
 /// The shops on one list, editable.
+/// TODO: improve the UI and UX for managing shops, including better handling of empty states and error messages.
 class ManageShopsScreen extends ConsumerWidget {
   /// Creates the screen for [listId].
   const ManageShopsScreen({required this.listId, super.key});
@@ -50,8 +51,7 @@ class ManageShopsScreen extends ConsumerWidget {
             action: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () =>
-                    addShop(context, ref, listId, const <Shop>[]),
+                onPressed: () => addShop(context, ref, listId, const <Shop>[]),
                 child: Text(t.shops.add),
               ),
             ),

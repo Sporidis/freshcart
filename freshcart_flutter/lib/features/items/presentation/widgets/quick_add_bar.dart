@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/wave_themed.dart';
 import 'package:freshcart_flutter/features/items/application/item_suggestions_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -75,8 +76,10 @@ class QuickAddBar extends ConsumerStatefulWidget {
   /// The active shop tab's name, or null on "All" (or when the list has no
   /// shops yet) -- drives the placeholder ("Add to Colruyt" vs. a generic
   /// prompt) and the leading dot. The colour itself is not a separate
-  /// parameter: it is already `theme.colorScheme.primary`, since selecting a
-  /// shop tab re-themes the whole app to that shop's colour (decisions #32).
+  /// parameter: it is already `theme.colorScheme.primary` -- this bar is
+  /// wrapped in [WaveThemed] (see this widget's own `build`), which is what
+  /// makes that value correct at any given moment during a shop switch,
+  /// not this widget itself.
   final String? activeShopName;
 
   /// Whether this is a brand-new, still-empty list -- the FAB's own
@@ -247,23 +250,9 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final shopColor = theme.colorScheme.primary;
     final placeholder = widget.activeShopName == null
         ? widget.t.items.namePlaceholder
         : widget.t.items.addTo(shop: widget.activeShopName!);
-
-    // Grey and muted while there is nothing to commit; shop-coloured (and
-    // white-on-colour) the moment there is text, or while still collapsed --
-    // matching the resting FAB, which has no "empty" state of its own to
-    // distinguish.
-    final buttonIsMuted = _phase == _Phase.expanded && !_hasText;
-    final buttonColor = buttonIsMuted
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
-        : shopColor;
-    final glyphColor = buttonIsMuted
-        ? theme.colorScheme.onSurface.withValues(alpha: 0.55)
-        : theme.colorScheme.onPrimary;
 
     // Only once the debounce has actually settled on a query -- watching the
     // provider with the live, pre-debounce text would fire the request (and
@@ -281,202 +270,245 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
                   .value ??
               const <String>[];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 4, 26, 22),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          AnimatedSize(
-            duration: AppMotion.durationFor(context, AppMotion.standard),
-            curve: AppMotion.enter,
-            alignment: Alignment.bottomCenter,
-            child: _phase == _Phase.expanded && suggestions.isNotEmpty
-                ? _SuggestionRow(
-                    suggestions: suggestions,
-                    onTap: (suggestion) => setState(() {
-                      _controller.text = suggestion;
-                      _controller.selection = TextSelection.collapsed(
-                        offset: suggestion.length,
-                      );
-                    }),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
-          AnimatedBuilder(
-            animation: _pulse,
-            builder: (context, child) {
-              // Only while collapsed -- the coach mark's whole point is
-              // drawing the eye to the closed button; pulsing while someone
-              // is already typing would just be noise. Reduced motion drops
-              // the pulse entirely, the same non-negotiable rule every other
-              // animation in this codebase follows.
-              final pulseScale =
-                  _phase == _Phase.collapsed && !AppMotion.reduced(context)
-                  ? _pulseScale.value
-                  : 1.0;
-              return Transform.scale(
-                key: QuickAddBar.pulseKey,
-                scale: pulseScale,
-                child: child,
-              );
-            },
-            child: SizedBox(
-              height: _diameter,
-              child: LayoutBuilder(
-                builder: (context, constraints) => AnimatedBuilder(
-                  animation: _reveal,
-                  builder: (context, child) {
-                    // "260ms, easeOutQuint on width" (§09) -- _reveal itself
-                    // runs linearly (AnimationController has no curve of its
-                    // own); everything riding its progress curves through
-                    // AppMotion.sheet instead of the raw value, so the roll
-                    // decelerates into place rather than moving at a constant
-                    // rate the whole way.
-                    final openness = AppMotion.sheet.transform(_reveal.value);
-                    final width = lerpDouble(
-                      _diameter,
-                      constraints.maxWidth,
-                      openness,
-                    )!;
-                    // The pill's own fill: shop-coloured at rest, plain surface
-                    // once open -- "flattens into the sheet-adjacent surface"
-                    // (design note). One continuous lerp rather than a hard swap,
-                    // since it rides the same width animation.
-                    final fill = Color.lerp(
-                      shopColor,
-                      theme.colorScheme.surface,
-                      openness,
-                    )!;
-                    final borderAlpha = openness.clamp(0.0, 1.0);
-                    return Align(
-                      alignment: Alignment.centerRight,
-                      child: SizedBox(
-                        width: width,
-                        height: _diameter,
-                        // The same StadiumBorder throughout: at width == diameter
-                        // its ends meet in the middle and it reads as a circle, at
-                        // full width it reads as a pill. One shape, not a swap.
-                        child: Material(
-                          color: fill,
-                          elevation: 3,
-                          shape: StadiumBorder(
-                            side: BorderSide(
-                              color: theme.colorScheme.outlineVariant
-                                  .withValues(
-                                    alpha: borderAlpha,
-                                  ),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              if (openness > 0)
-                                Expanded(
-                                  child: Opacity(
-                                    // "Placeholder text fades in over the last
-                                    // 40%" (§09) -- the pill needs room to show
-                                    // it without clipping first.
-                                    opacity: ((openness - 0.6) / 0.4).clamp(
-                                      0.0,
-                                      1.0,
+    return WaveThemed(
+      bounce: true,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(26, 4, 26, 22),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            AnimatedSize(
+              duration: AppMotion.durationFor(context, AppMotion.standard),
+              curve: AppMotion.enter,
+              alignment: Alignment.bottomCenter,
+              child: _phase == _Phase.expanded && suggestions.isNotEmpty
+                  ? _SuggestionRow(
+                      suggestions: suggestions,
+                      onTap: (suggestion) => setState(() {
+                        _controller.text = suggestion;
+                        _controller.selection = TextSelection.collapsed(
+                          offset: suggestion.length,
+                        );
+                      }),
+                    )
+                  : const SizedBox(width: double.infinity),
+            ),
+            AnimatedBuilder(
+              animation: _pulse,
+              builder: (context, child) {
+                // Only while collapsed -- the coach mark's whole point is
+                // drawing the eye to the closed button; pulsing while someone
+                // is already typing would just be noise. Reduced motion drops
+                // the pulse entirely, the same non-negotiable rule every other
+                // animation in this codebase follows.
+                final pulseScale =
+                    _phase == _Phase.collapsed && !AppMotion.reduced(context)
+                    ? _pulseScale.value
+                    : 1.0;
+                return Transform.scale(
+                  key: QuickAddBar.pulseKey,
+                  scale: pulseScale,
+                  child: child,
+                );
+              },
+              child: SizedBox(
+                height: _diameter,
+                child: LayoutBuilder(
+                  builder: (context, constraints) => AnimatedBuilder(
+                    animation: _reveal,
+                    builder: (context, child) {
+                      // Re-fetched here, shadowing the outer `theme` --
+                      // this `context` is the one actually inside
+                      // `WaveThemed`'s override further up in `build()`.
+                      // The outer one belongs to `QuickAddBar`'s own
+                      // element, which sits *above* where `WaveThemed`
+                      // inserts its `Theme`, so it never sees the gated
+                      // value at all -- reading it here was quietly
+                      // defeating decisions #89's whole point, letting
+                      // the FAB react the instant the ambient theme
+                      // changed rather than when the wave actually
+                      // arrived.
+                      final theme = Theme.of(context);
+                      // "260ms, easeOutQuint on width" (§09) -- _reveal itself
+                      // runs linearly (AnimationController has no curve of its
+                      // own); everything riding its progress curves through
+                      // AppMotion.sheet instead of the raw value, so the roll
+                      // decelerates into place rather than moving at a constant
+                      // rate the whole way.
+                      final openness = AppMotion.sheet.transform(_reveal.value);
+                      final width = lerpDouble(
+                        _diameter,
+                        constraints.maxWidth,
+                        openness,
+                      )!;
+                      final shopColor = theme.colorScheme.primary;
+                      // Grey and muted while there is nothing to commit;
+                      // shop-coloured (and white-on-colour) the moment there
+                      // is text, or while still collapsed -- matching the
+                      // resting FAB, which has no "empty" state of its own to
+                      // distinguish.
+                      final buttonIsMuted =
+                          _phase == _Phase.expanded && !_hasText;
+                      final buttonColor = buttonIsMuted
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.08)
+                          : shopColor;
+                      final glyphColor = buttonIsMuted
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.55)
+                          : theme.colorScheme.onPrimary;
+                      // The pill's own fill: shop-coloured at rest, plain surface
+                      // once open -- "flattens into the sheet-adjacent surface"
+                      // (design note). One continuous lerp rather than a hard swap,
+                      // since it rides the same width animation.
+                      final fill = Color.lerp(
+                        shopColor,
+                        theme.colorScheme.surface,
+                        openness,
+                      )!;
+                      final borderAlpha = openness.clamp(0.0, 1.0);
+                      return Align(
+                        alignment: Alignment.centerRight,
+                        child: SizedBox(
+                          width: width,
+                          height: _diameter,
+                          // The same StadiumBorder throughout: at width == diameter
+                          // its ends meet in the middle and it reads as a circle, at
+                          // full width it reads as a pill. One shape, not a swap.
+                          child: Material(
+                            key: const ValueKey('quick-add-pill'),
+                            color: fill,
+                            elevation: 3,
+                            shape: StadiumBorder(
+                              side: BorderSide(
+                                color: theme.colorScheme.outlineVariant
+                                    .withValues(
+                                      alpha: borderAlpha,
                                     ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 18),
-                                      child: Row(
-                                        children: [
-                                          if (widget.activeShopName !=
-                                              null) ...[
-                                            Container(
-                                              key: const ValueKey(
-                                                'quick-add-dot',
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                if (openness > 0)
+                                  Expanded(
+                                    child: Opacity(
+                                      // "Placeholder text fades in over the last
+                                      // 40%" (§09) -- the pill needs room to show
+                                      // it without clipping first.
+                                      opacity: ((openness - 0.6) / 0.4).clamp(
+                                        0.0,
+                                        1.0,
+                                      ),
+                                      child: Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 18,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            if (widget.activeShopName !=
+                                                null) ...[
+                                              Container(
+                                                key: const ValueKey(
+                                                  'quick-add-dot',
+                                                ),
+                                                width: AppSizes.shopDot,
+                                                height: AppSizes.shopDot,
+                                                decoration: BoxDecoration(
+                                                  color: shopColor,
+                                                  shape: BoxShape.circle,
+                                                ),
                                               ),
-                                              width: AppSizes.shopDot,
-                                              height: AppSizes.shopDot,
-                                              decoration: BoxDecoration(
-                                                color: shopColor,
-                                                shape: BoxShape.circle,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 11),
-                                          ],
-                                          Expanded(
-                                            child: TextField(
-                                              controller: _controller,
-                                              focusNode: _focus,
-                                              enabled: !_busy,
-                                              textCapitalization:
-                                                  TextCapitalization.sentences,
-                                              textInputAction:
-                                                  TextInputAction.done,
-                                              style: TextStyle(
-                                                color:
-                                                    theme.colorScheme.onSurface,
-                                              ),
-                                              cursorColor: shopColor,
-                                              decoration: InputDecoration(
-                                                hintText: placeholder,
-                                                hintStyle: TextStyle(
+                                              const SizedBox(width: 11),
+                                            ],
+                                            Expanded(
+                                              child: TextField(
+                                                controller: _controller,
+                                                focusNode: _focus,
+                                                enabled: !_busy,
+                                                textCapitalization:
+                                                    TextCapitalization
+                                                        .sentences,
+                                                textInputAction:
+                                                    TextInputAction.done,
+                                                style: TextStyle(
                                                   color: theme
                                                       .colorScheme
-                                                      .onSurfaceVariant,
+                                                      .onSurface,
                                                 ),
-                                                border: InputBorder.none,
-                                                isDense: true,
+                                                cursorColor: shopColor,
+                                                decoration: InputDecoration(
+                                                  hintText: placeholder,
+                                                  hintStyle: TextStyle(
+                                                    color: theme
+                                                        .colorScheme
+                                                        .onSurfaceVariant,
+                                                  ),
+                                                  border: InputBorder.none,
+                                                  enabledBorder:
+                                                      InputBorder.none,
+                                                  focusedBorder:
+                                                      InputBorder.none,
+                                                  disabledBorder:
+                                                      InputBorder.none,
+                                                  isDense: true,
+                                                ),
+                                                onSubmitted: (_) => _quickAdd(),
                                               ),
-                                              onSubmitted: (_) => _quickAdd(),
                                             ),
-                                          ),
-                                        ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                Padding(
+                                  padding: const EdgeInsets.all(6),
+                                  child: AnimatedContainer(
+                                    key: const ValueKey('quick-add-icon-bg'),
+                                    duration: AppMotion.quick,
+                                    width: _buttonDiameter,
+                                    height: _buttonDiameter,
+                                    decoration: BoxDecoration(
+                                      color: buttonColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      padding: EdgeInsets.zero,
+                                      onPressed: _busy ? null : _handleIconTap,
+                                      tooltip: _phase == _Phase.collapsed
+                                          ? widget.t.items.add
+                                          : (_hasText
+                                                ? widget.t.items.add
+                                                : widget.t.common.cancel),
+                                      icon: AnimatedRotation(
+                                        turns: _showsPlus ? 0 : 0.125,
+                                        duration: AppMotion.quick,
+                                        // "easeOutBack on the glyph rotation"
+                                        // (§09) -- the same overshoot AppMotion.pop
+                                        // already names for exactly this kind of
+                                        // "settles with a small bounce" motion.
+                                        curve: AppMotion.curveFor(
+                                          context,
+                                          AppMotion.pop,
+                                        ),
+                                        child: Icon(
+                                          Icons.add,
+                                          color: glyphColor,
+                                        ),
                                       ),
                                     ),
                                   ),
                                 ),
-                              Padding(
-                                padding: const EdgeInsets.all(6),
-                                child: AnimatedContainer(
-                                  key: const ValueKey('quick-add-icon-bg'),
-                                  duration: AppMotion.quick,
-                                  width: _buttonDiameter,
-                                  height: _buttonDiameter,
-                                  decoration: BoxDecoration(
-                                    color: buttonColor,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: IconButton(
-                                    padding: EdgeInsets.zero,
-                                    onPressed: _busy ? null : _handleIconTap,
-                                    tooltip: _phase == _Phase.collapsed
-                                        ? widget.t.items.add
-                                        : (_hasText
-                                              ? widget.t.items.add
-                                              : widget.t.common.cancel),
-                                    icon: AnimatedRotation(
-                                      turns: _showsPlus ? 0 : 0.125,
-                                      duration: AppMotion.quick,
-                                      // "easeOutBack on the glyph rotation"
-                                      // (§09) -- the same overshoot AppMotion.pop
-                                      // already names for exactly this kind of
-                                      // "settles with a small bounce" motion.
-                                      curve: AppMotion.curveFor(
-                                        context,
-                                        AppMotion.pop,
-                                      ),
-                                      child: Icon(Icons.add, color: glyphColor),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         ),
-                      ),
-                    );
-                  },
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
