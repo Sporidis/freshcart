@@ -342,8 +342,7 @@ abstract final class ListService {
     if (listIds.isEmpty) return [];
     final memberships = await ListMember.db.find(
       session,
-      where: (t) =>
-          t.listId.inSet(listIds.toSet()) & t.userId.equals(userId),
+      where: (t) => t.listId.inSet(listIds.toSet()) & t.userId.equals(userId),
     );
     final allowed = memberships.map((m) => m.listId);
 

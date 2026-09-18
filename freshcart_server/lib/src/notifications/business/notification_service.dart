@@ -90,7 +90,9 @@ abstract final class NotificationService {
     if (candidates.isEmpty) return [];
 
     final preferences = await Future.wait(
-      candidates.map((id) => NotificationPreferencesService.forUser(session, id)),
+      candidates.map(
+        (id) => NotificationPreferencesService.forUser(session, id),
+      ),
     );
     final recipients = <UuidValue>{
       for (var i = 0; i < candidates.length; i++)
