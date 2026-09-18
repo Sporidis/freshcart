@@ -2,11 +2,21 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "freshcart_flutter",
+            "name": "debug",
             "cwd": "${workspaceFolder}/freshcart_flutter",
             "request": "launch",
             "type": "dart",
             "program": "lib/main.dart"
+        },
+        {
+            "name": "debug-live",
+            "cwd": "${workspaceFolder}/freshcart_flutter",
+            "request": "launch",
+            "type": "dart",
+            "program": "lib/main.dart",
+            "args": [
+                "--dart-define=SERVER_URL=https://freshcart-nikos.duckdns.org/"
+            ]
         },
         {
             "name": "freshcart_server",
@@ -15,9 +25,6 @@
             "type": "dart",
             "preLaunchTask": "docker_compose_up",
             "program": "bin/main.dart",
-            "env": {
-                "SERVERPOD_PASSWORD_database": "izIUEcQO878DoCjW4nqXHoG6XZkddSap"
-            },
             "args": [
                 "--apply-migrations"
             ]
@@ -28,7 +35,7 @@
             "name": "freshcart (full stack)",
             "configurations": [
                 "freshcart_server",
-                "freshcart_flutter"
+                "debug"
             ],
             "presentation": {
                 "order": 1
