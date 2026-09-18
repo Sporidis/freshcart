@@ -144,7 +144,7 @@ void main() {
 
     testWidgets(
       'haptics is on by default -- matching every call site\'s current '
-      'unconditional behaviour -- and persists once turned off',
+      'unconditional behavior -- and persists once turned off',
       (tester) async {
         await pump(tester);
         await scrollToPreferences(tester);

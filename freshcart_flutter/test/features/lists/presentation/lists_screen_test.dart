@@ -37,7 +37,7 @@ void main() {
     // Only the delete-confirmation test needs a resolved identity (to land
     // on the owner branch of the list menu); everything else leaves this
     // null and gets the default "assume membership until it resolves"
-    // behaviour the menu itself documents.
+    // behavior the menu itself documents.
     String? currentUserId,
   }) async {
     final container = ProviderContainer(
@@ -165,7 +165,7 @@ void main() {
   });
 
   group('joining by code', () {
-    testWidgets('accepts a valid code, normalising case', (tester) async {
+    testWidgets('accepts a valid code, normalizing case', (tester) async {
       repository.joinResult = Ok(buildList(name: 'Shared'));
       await pump(tester);
 
