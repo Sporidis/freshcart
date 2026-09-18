@@ -396,24 +396,29 @@ void main() {
       },
     );
 
-    test('re-tapping an already-valid invite link does not notify again', () async {
-      final recorder = RecordingPushSender();
-      NotificationService.sender = recorder;
-      addTearDown(() => NotificationService.sender = const LoggingPushSender());
+    test(
+      're-tapping an already-valid invite link does not notify again',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
 
-      final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.notification.setMemberJoinedEnabled(as(aliceId), true);
-      await endpoints.notification.registerDevice(
-        as(aliceId),
-        'token-a7',
-        DevicePlatform.android,
-      );
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.notification.setMemberJoinedEnabled(as(aliceId), true);
+        await endpoints.notification.registerDevice(
+          as(aliceId),
+          'token-a7',
+          DevicePlatform.android,
+        );
 
-      await endpoints.list.join(as(bobId), list.joinCode);
-      await endpoints.list.join(as(bobId), list.joinCode); // re-tap
+        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(as(bobId), list.joinCode); // re-tap
 
-      expect(recorder.sent, hasLength(1));
-    });
+        expect(recorder.sent, hasLength(1));
+      },
+    );
 
     test(
       'checking the last open item notifies an opted-in member, never the '
