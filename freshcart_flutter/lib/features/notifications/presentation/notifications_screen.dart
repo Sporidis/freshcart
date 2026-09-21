@@ -32,7 +32,9 @@ class NotificationsScreen extends ConsumerWidget {
     final preferences =
         ref.watch(notificationPreferencesControllerProvider).value ??
         const NotificationPreferences();
-    final notifier = ref.read(notificationPreferencesControllerProvider.notifier);
+    final notifier = ref.read(
+      notificationPreferencesControllerProvider.notifier,
+    );
 
     return Scaffold(
       appBar: AppBar(

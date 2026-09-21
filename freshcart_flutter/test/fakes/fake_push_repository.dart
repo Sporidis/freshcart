@@ -37,7 +37,10 @@ class FakePushRepository implements PushPort {
   }
 
   @override
-  Future<Result<void>> setListMuted(ListId listId, {required bool muted}) async {
+  Future<Result<void>> setListMuted(
+    ListId listId, {
+    required bool muted,
+  }) async {
     setListMutedCalls.add((listId: listId, muted: muted));
     if (setListMutedResult.isOk) mutedByList[listId] = muted;
     return setListMutedResult;
