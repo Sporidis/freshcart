@@ -1893,3 +1893,336 @@ rather than all three settling together.
 that predates this change and wasn't caused by it, flagged with a `TODO` at the class rather than
 fixed inline, since a structural split deserves its own commit and its own before/after test run,
 not to be mixed into a feature diff.
+
+## 85. Shop-theme transition: reveal instead of crossfade, supersedes #71's tuning
+
+**The gap:** the scoped body retint from #73 used `AnimatedTheme`, which lerps every
+`ColorScheme` role independently through `Color.lerp` (plain RGB). Between two saturated,
+differently-hued shop colours (green to orange, say) the midpoint frame is a desaturated
+grey-brown -- R/G/B interpolate with no notion of "hue", so the blend passes through whatever
+falls out of the arithmetic rather than anything resembling either colour. On top of that, a flat,
+uniform crossfade carries no sense of _where_ the change came from -- selecting a shop tab and the
+whole body fading in place, disconnected from the tap.
+
+**The fix:** `ShopThemeReveal` (`freshcart_flutter/lib/core/theme/shop_theme_reveal.dart`)
+replaces the `AnimatedTheme` wrap in `list_detail_screen.dart`. Instead of blending colours, it
+reveals them spatially, so no frame is ever a blend of the two schemes:
+
+- The body is wrapped in a permanent `RepaintBoundary`. Whoever changes the shop filter --
+  `ShopFilterBar`'s tap and swipe handlers -- calls `ShopThemeRevealState.beginReveal(origin)`
+  _before_ mutating `shopFilterProvider`, which snapshots the boundary's current pixels via
+  `RenderRepaintBoundary.toImage()`. Capturing has to happen before the state change, not
+  reactively after it in `didUpdateWidget`, or the "old" snapshot would already show the new
+  colours.
+- The live body immediately rebuilds in the new theme underneath; the frozen snapshot sits on top,
+  with a circular hole growing through it from `origin` (`_RevealPunchPainter`, `Path.combine`
+  difference of the full rect and an expanding circle). Every visible pixel is always fully one
+  theme or the other.
+- `origin` is a tap's `globalPosition` (`ShopTabPill` gained `onTapDown` for this) for a direct
+  tap, or a screen edge (`ShopFilterBar._edgeOrigin`) matching swipe direction when there's no
+  finger position to anchor to -- forward through the tab order reveals from the right, backward
+  from the left.
+- Reduced-motion viewers skip the spatial reveal entirely (`AppMotion.reduced`) and get a quick
+  crossfade instead, same as before -- but even that fallback now interpolates the _seed colour_
+  through `AppColors.lerpHsl` (HSL, shortest hue arc) rather than lerping the derived scheme, for
+  the same muddy-midpoint reason applied to the one path that still blends at all.
+- New motion token `AppMotion.reveal` (450ms) paces the reveal -- longer than #71's 180ms `quick`,
+  which read as an instant snap rather than a deliberate colour change for what is meant to be one
+  of the app's headline moments.
+
+**The punch-hole geometry itself**, in `_RevealPunchPainter.paint`: the covering radius is the
+distance from `origin` to the single farthest of `size`'s four corners (the other three are
+closer, so reaching that one guarantees the circle has swallowed the whole rect) times `progress`.
+`Path.combine(PathOperation.difference, fullRect, circle)` turns that into "the rect minus the
+circle" -- `canvas.clipPath` with it before `drawImageRect` so only the ring outside the growing
+circle actually paints the frozen snapshot; the live body shows through the hole. `image`'s pixel
+size isn't `size` (captured at device pixel ratio), so the draw call's `srcRect` spans the image's
+own pixels while `dstRect` is `Offset.zero & size`.
+
+**Tests:** the existing `list_detail_screen_test.dart` theming group (body starts neutral, tapping
+a shop tints it, the drawer stays neutral, returning to "All" un-tints) passes unchanged against
+the new widget -- it asserts `Theme.of` from inside `ItemsSection`, which resolves through the
+_live_ layer, not the transient snapshot overlay. `shop_filter_test.dart` updated for
+`ShopFilterBar`'s new required `revealKey`. No dedicated test for the punch-hole geometry itself
+yet -- it's pure `Canvas`/`Path` math with no widget-tree assertion surface; a golden-image test
+would be the honest way to cover it, not attempted here.
+
+## 86. The reveal doesn't cover the shop-tab strip -- it broke that row's own transition
+
+**The gap:** #85 wrapped the _whole_ body -- tab strip included -- in `ShopThemeReveal`'s
+snapshot-and-punch-hole mechanism. `ShopTabPill` already had its own smooth, independent 180ms
+`AnimatedContainer` transition for active/inactive fill and border (predates #85 entirely,
+untouched by it). Once the whole body sat inside the reveal's frozen snapshot, that pill
+transition kept playing live underneath the snapshot the whole time -- invisible until the
+growing hole swept over that part of the row, at which point whatever frame the pill's own
+animation happened to be on got exposed all at once. Two independently-timed animations sharing
+one strip of pixels, one of them hidden until a rigid image tears open in front of it: reported
+as "not smooth, it just changes colour."
+
+**The fix:** `list_detail_screen.dart`'s `_buildBody` no longer wraps the tab strip in
+`ShopThemeReveal` at all. The strip gets its own plain `AnimatedTheme` (the exact mechanism #85
+retired for the body at large), and only the `Expanded` items area below it -- `ItemsSection`,
+`revealKey` and all -- sits inside `ShopThemeReveal`. Two deliberate asymmetries, not an
+inconsistency:
+
+- The strip is small, low-saturation chrome (`outlineVariant`, `onSurface` tones) -- exactly the
+  scale where a plain RGB crossfade's muddy-midpoint problem (the reason #85 exists at all) isn't
+  visible. The spatial reveal earns its complexity for the large, saturated colour blocks
+  (backgrounds, selected-row highlight, FAB) the items area actually has; the strip never needed
+  it.
+- The strip has to stay live throughout the transition for `ShopTabPill`'s own animation to be
+  watchable at all -- freezing it under a snapshot, even briefly, is what caused the bug.
+
+`ShopFilterBar` keeps taking `revealKey` unchanged -- its tap/swipe handlers still anchor the
+_items area's_ reveal from wherever the tap landed, they just no longer live inside the subtree
+that gets revealed.
+
+**Tests:** `list_detail_screen_test.dart`'s theming group and `shop_filter_test.dart` both pass
+unchanged -- neither asserts anything about which widget wraps which, only the resulting
+`Theme.of` values, which are unaffected by where the boundary between "plain crossfade" and
+"spatial reveal" now sits.
+
+## 87. Unchecking a row mid-cascade could strand it invisible in Open -- `ItemTile._checkMove` had no re-entrance path on an already-mounted element
+
+**The gap:** an item's checked/unchecked state stayed correct, but the row itself could stop
+rendering after being marked done -- not removed, just invisible -- until the screen was torn
+down and rebuilt. `ItemTile`'s open<->Done cross-section move (§04/§12, decisions #84) is driven by
+one `AnimationController _checkMove` feeding _both_ `SizeTransition.sizeFactor` and
+`FadeTransition.opacity` -- at 0 a row is zero height and fully transparent, which is exactly
+"still in the tree, not painted."
+
+`_checkMove` had only one path to 0→1 (`ItemTile.checkMoveEntering`, fired from
+`didChangeDependencies`, guarded by a one-shot flag so it only ever runs on a freshly-mounted
+element) versus two paths that could in principle drive 1→0 or 0→1 across an element's whole
+lifetime -- but `didUpdateWidget` only had a handler for `checkMoveExiting` (1→0), not the
+symmetric `checkMoveEntering` (0→1). That asymmetry is invisible in the common case (a row
+normally only _enters_ a section once, at the moment it's freshly mounted there) and only bites
+when `checkMoveEntering` flips false->true on a row that was already mounted and settled --
+which happens when: check a row (starts the 600 ms hold, then the cascade moves it into
+`transitioning` and starts its exit from Open); while still `transitioning` -- mid-cascade, or
+during the few hundred ms its own exit timer is still counting down -- uncheck it. Row's own
+`RecentlyChecked.release` (`done_section_controller.dart:136-157`) sees the id is no longer in
+`holding` (it already progressed to `transitioning`), so it does _not_ drop the row from
+`transitioning` -- it keeps it there, under a fresh exit timer. That keeps the _same_,
+already-mounted Open-side `ItemTile` element alive continuously across the whole sequence, so its
+next flag recompute (per `items_section.dart`'s `tileFor`) is a false->true flip on
+`checkMoveEntering` seen by `didUpdateWidget`, not a fresh mount seen by `didChangeDependencies`
+-- and nothing was listening for that. `_checkMove` simply finishes whatever `animateTo(0, ...)`
+was already in flight from the original check, settles there, and nothing ever restarts it: stuck
+collapsed. The row isn't a rare edge case to trigger, either -- the whole point of the 600 ms hold
+is that the row doesn't visibly move yet, which is exactly what invites a "did that register?"
+second tap.
+
+**The fix:** `item_tile.dart`'s `didUpdateWidget` gained the missing symmetric branch --
+`if (widget.checkMoveEntering && !oldWidget.checkMoveEntering)`, mirroring the existing
+`checkMoveExiting` block line for line (same duration/curve logic, `AppMotion.enter` instead of
+`AppMotion.exit`) -- so a row re-entering its section on an already-mounted element gets the same
+treatment a row entering a section for the first time does.
+
+**Tests:** `items_section_test.dart` gained `'unchecking a row mid-cascade re-arms its return to
+Open instead of leaving it stuck invisible'` -- checks a row, lets the cascade move it into
+`transitioning`, unchecks it 100ms into its exit (the same mid-flight window the existing
+"plays its exit ... concurrently" test above exercises), then asserts the row settles back to a
+single, fully-sized Open row rather than disappearing. Verified against the pre-fix code: the test
+fails there (not, as first expected, with a stuck `sizeFactor: 0` -- the row it's stuck on
+eventually loses `open`-list membership too once other timers interact, so the failure surfaces as
+`find.text('Milk')` finding nothing at all) and passes once the `didUpdateWidget` branch is added.
+
+## 88. The shop-theme reveal gets a spring, a glow, and a haptic -- feedback that it read as "dull"
+
+**The gap:** #85-#86 fixed the reveal's correctness (no muddy colours, no hidden-under-a-snapshot
+tab strip) but left it feeling flat -- a clean, correctly-clipped circle is not the same thing as
+a _lively_ one. Explored with the human rather than picked unilaterally (an aesthetic call, not a
+correctness one): four combinable, independently cheap additions, all landing in
+`core/theme/shop_theme_reveal.dart` and `shop_tab_pill.dart`.
+
+**What shipped:**
+
+- **Overshoot easing.** The reveal's progress now runs through `AppMotion.curveFor(context,
+  AppMotion.pop)` (`easeOutBack`, already reduced-motion-aware) instead of the plain decelerate
+  `AppMotion.enter` -- the same curve family behind the FAB's own checked-state pop, so the
+  headline colour transition shares its spring. Fed straight into the mask radius: an overshoot
+  past `maxRadius` is harmless (the hole already covers everything, so "too big" and "exactly big
+  enough" look identical), and `easeOutBack` never dips back below 1 after settling, so no sliver
+  of old colour reappears once the wave has passed.
+- **Shockwave ring.** `_RevealPunchPainter` gained a `ringColor` (the new shop's seed) and now
+  strokes a soft, blurred rim at the same radius as the mask, riding its overshoot -- bright near
+  the tap, fading to nothing by the time the wave finishes travelling (`(1 -
+  progress.clamp(0,1)) * 0.55`, tapering stroke width 5→1). Deliberately uses the _unclamped_
+  progress the mask itself is built from, so the ring overshoots and settles in lockstep with the
+  hole rather than as a separately-timed effect.
+- **Haptic tap-off.** `ShopThemeReveal.beginReveal` fires `HapticFeedback.lightImpact()` the
+  instant it's called, gated by a plain `hapticsOn` bool the caller resolves (`list_detail_screen`
+  reads `hapticsControllerProvider` and passes it down) rather than a Riverpod read inside the
+  widget itself -- `ShopThemeReveal` had no Riverpod dependency before this and one boolean isn't
+  worth giving it one, same reasoning `RecentlyChecked` gives for staying `AppMotion`-free.
+  Deliberately fires even under reduced motion: a physical "the tap landed" cue is a different
+  accessibility axis than the spatial animation, and reduced-motion viewers still get the
+  crossfade fallback.
+
+**Not done here (Learn by Doing, in progress):** `ShopTabPill` converted from `StatelessWidget` to
+`StatefulWidget` with a `TODO(human)` for the fourth ingredient -- a small scale "kick" (1.0 ->
+~1.08 -> 1.0) on tap, mirroring `item_tile.dart`'s own `_iconPop`/`_iconPopOvershoot`
+`AnimationController` + `TweenSequence` pattern, so the tapped chip visibly "launches" the wave it
+anchors. Left as an exercise since it's a self-contained piece that directly reuses a pattern
+already sitting in this same codebase, not a new technique. The scaffolding (the `State` class,
+`_handleTap`, every field reference updated to `widget.*`) is in place and compiles/tests clean
+without the kick; only the animation itself is missing.
+
+**Tests:** existing theming and filter-bar suites (`list_detail_screen_test.dart`,
+`shop_filter_test.dart`) pass unchanged -- none of the four additions change any `Theme.of` value
+or filter behaviour, only how the transition looks and feels while it plays.
+
+## 89. `WaveThemed`: a few hero widgets retint on real contact with the wave, not on tap
+
+**The gap:** `QuickAddBar`'s resting pill fill read `theme.colorScheme.primary` directly and had no
+transition of its own -- it looked fine before #85 only because the whole subtree's ambient
+`AnimatedTheme` was interpolating underneath it every frame, and any widget passively reading
+`Theme.of(context)` rode that for free. #85 replaced the ambient crossfade with an instantly-updated
+`Theme` plus a _cosmetic_ spatial mask (background pixels are already on the new theme the whole
+time; the frozen snapshot on top just delays _looking_ like it). That's invisible for content with
+no reaction of its own to the theme -- but `QuickAddBar` needed one anyway (color #85/#86
+already covered this half: giving it back a transition), and that transition necessarily ran on
+its _own_ timer, independent of the wave. Once it had one, the deeper problem showed through: the
+FAB's colour changed the instant you tapped, while the wave was still visibly making its way
+across the screen toward it. Two things happening near each other, on different clocks, is not one
+event -- explored with the human (`WaveThemed`, matching the "let the wave do it" direction) rather
+than picked alone.
+
+**The fix:** `shop_theme_reveal.dart` now exposes the reveal's live geometry -- origin, current
+radius, old seed, new seed -- to descendants via `RevealWaveScope`, an `InheritedNotifier` wrapping
+the same `AnimationController` that drives the visual mask (`RevealWaveGeometry` holds the
+geometry; `RevealWaveScope.of(context)` reads it). A new widget, `WaveThemed`
+(`core/theme/wave_themed.dart`), wraps a specific "hero" element: it finds its own on-screen
+position, compares it against the wave's live radius, and renders its child under the _old_ seed
+until covered, the _new_ one the instant it is -- no fade of its own, because the change is real,
+not simulated. `QuickAddBar` drops the `_retheme`/HSL-crossfade/bounce machinery #85/#86 gave it in
+favour of just being wrapped in `WaveThemed` -- `theme.colorScheme.primary`, read plainly, is now
+already correct at every moment, so nothing else needs to react to it changing.
+
+Deliberately _not_ applied everywhere: wrapping every row of a long list in `WaveThemed` would mean
+a position lookup and a rebuild per row per frame, real and avoidable cost for content that has no
+independent reaction to the theme and is already served correctly by the cheap snapshot-and-mask.
+This is for the handful of elements -- so far just the FAB -- that have their own logic keyed off
+`Theme.of(context)` and need to be physically, not cosmetically, correct.
+
+**Bug caught by its own test:** `RevealWaveScope`'s default `InheritedNotifier.updateShouldNotify`
+only compares `notifier` (the `AnimationController`, the same instance for a reveal's whole
+lifetime) -- it knew nothing about the added `geometry`/`curve` fields. The one moment `geometry`
+actually matters (null -> real, right as a wave starts) went through a normal widget rebuild, not
+a controller tick, so it relied on `updateShouldNotify` and was silently dropped; dependents only
+caught up a frame later once the controller's own, separate tick-notify path fired. Fixed by
+overriding `updateShouldNotify` to also compare `geometry` and `curve`. Likely the biggest
+contributor to "doesn't feel like the wave changes the FAB's theme" -- a widget test written
+against the intended geometry contract (below) caught it immediately, failing with the FAB probe
+stuck on `MaterialApp`'s own default theme rather than either seed.
+
+**Also:** the shockwave ring's dark-mode swap to white (added same session, before this) was
+scoped too broadly -- it read `brightness == dark` alone, turning every shop's own hue white at
+night. Corrected to swap only when the seed _is_ the neutral "All" seed (`AppTheme.brandSeed`,
+near-black ink, which is the one seed that actually disappears into a dark background); every real
+shop colour keeps its own hue in both brightnesses. And `AppMotion.reveal` moved from 450ms to
+700ms -- a diagonal screen crossing at 450ms read as barely-there once a real destination (the FAB)
+was involved to visibly arrive at.
+
+**Tests:** `test/core/theme/wave_themed_test.dart` (new) -- a harness with two `WaveThemed` probes,
+one placed exactly at a wave's origin (covered from radius 0) and one a measured `maxRadius` away
+(covered only once the driving controller's value passes 1). Written _before_ the
+`updateShouldNotify` fix, confirmed it failed for the right reason (the near probe never left the
+default theme), then confirmed it passed after. Existing `quick_add_bar_test.dart`,
+`items_section_test.dart` and theming suites pass unchanged.
+
+## 90. A second `WaveThemed`-defeating scoping bug, plus a bounce that reacts to the tap, not the retint
+
+**The gap:** live testing after #89 still showed the FAB reacting before the wave visibly arrived.
+The cause wasn't another `InheritedNotifier` subtlety this time -- it was much more basic.
+`_QuickAddBarState.build()` read `final theme = Theme.of(context);` at its own top, using its own
+element's `context`. `WaveThemed`'s `Theme` override lives _inside_ the widget tree that same
+`build()` method constructs and returns -- i.e. below, not above, that `context`. So every colour
+the FAB drew (`shopColor`, `buttonColor`, `glyphColor`, the border, the fill) was reading the
+ambient, ungated theme the whole time; `WaveThemed`'s wrap around the returned tree was doing
+nothing for any of them. The tell, once suspected: removing the outer `theme` variable left it
+completely unused -- every reference to it lived inside the innermost `AnimatedBuilder`, which
+already receives its own `context` as a builder parameter, correctly scoped _below_ `WaveThemed`.
+Fixed by re-fetching `Theme.of(context)` there instead, shadowing the outer one.
+
+**Also fixed while here:** the shockwave ring's dark-mode-white swap (added mid-session) had
+already been scoped too broadly once, corrected in the moment; a second correction was needed
+after the human's own follow-up clarified the intent precisely (white only for the neutral "All"
+seed's ink, every real shop colour keeps its own hue in both brightnesses -- see #89's own "Also"
+paragraph, which already carries the final wording).
+
+**The FAB bounce:** first attempt tied it to `WaveThemed`'s own coverage flipping (i.e. play when
+this widget's colour arrives) -- reasonable in isolation, but not what was asked for: the human
+wanted the bounce to react to _the tap on the shop nav_, independent of whenever this particular
+widget's own retint happens to catch up. `WaveThemed` gained a `bounce` flag that instead fires off
+`RevealWaveGeometry` identity: `ShopThemeReveal` constructs a fresh `RevealWaveGeometry` instance
+each time a wave starts and reuses that same instance for every tick during it, so `!identical(new,
+old)` cleanly means "a new wave started" -- independent of whether _this_ widget happens to be
+covered by it yet. Applied to `QuickAddBar` via `WaveThemed(bounce: true, ...)`.
+
+The bounce's own shape needed a second pass too: the first version curved each of its two
+`TweenSequenceItem`s independently (`Tween(...).chain(CurveTween(curve: AppMotion.enter))` on both
+the rise and the fall) -- two separately-decelerating arcs stitched together, which reads as a
+hitch/stutter right at the peak rather than one smooth grow-and-shrink. `item_tile.dart`'s own
+`_iconPop`/`_iconPopOvershoot` (the established pattern for this exact shape) puts the curve on the
+`AnimationController` itself via a single `CurvedAnimation`, leaving the two tween stages plain
+linear `Tween`s underneath it -- one continuous eased arc, not two. `WaveThemed`'s bounce now
+mirrors that structure exactly.
+
+**Tests:** `wave_themed_test.dart` gained a case with a probe positioned so the wave's radius never
+reaches it for the whole test, confirming the bounce still fires (keyed to the wave starting, not
+to reaching this widget). `quick_add_bar_test.dart` gained a `WaveThemed` gating test scoped to
+`QuickAddBar` itself -- the exact test that would have caught the `Theme.of(context)` scoping bug,
+had it existed before this round.
+
+## 91. Cached reads close the "can't see my list offline" gap -- offline-sync-plan.md Phase G
+
+**The gap:** the offline write queue (Phases A-D) and the in-memory reconnect resilience later
+retrofitted as Phase F both assumed _something_ was already alive to fall back on -- a live
+stream that was open when the connection dropped. Neither helps a cold app launch with zero
+signal: `resilientWatch`'s very first `fetch()` has nothing in memory yet, throws, and the whole
+list screen showed an error instead of the list. This is exactly the scenario a shopping list app
+exists for -- standing in a store with no signal -- and offline-sync-plan.md §4 had explicitly
+deferred it out of the original write-queue scope. Closed now that it turned out to be the thing
+that actually mattered in practice, not a hypothetical.
+
+**The fix:** two new local tables, `CachedLists`/`CachedItems`, each one JSON blob column (`data`)
+per row rather than a column per entity field -- consistent with `PendingOperations`' own payload
+column, and simpler, since nothing here is ever queried by anything but the id. `ShoppingItem`'s
+codec reuses the existing `ShoppingItemQueuePayload` built for the offline queue's `edit` payload
+(already a lossless full-entity round-trip); `ShoppingList` gets an equivalent new
+`ShoppingListCachePayload`, members included.
+
+`resilientWatch` gained two optional hooks -- `cacheWrite` on every value it yields, `cacheRead`
+consulted only when the very first fetch fails with a `NetworkFailure` -- rather than a parallel
+mechanism. A cache hit on cold start routes into the _same_ reconnect-and-resubscribe path Phase F
+already built for a live stream dropping mid-flight (extracted into a shared `_reconnect` helper),
+rather than a second copy of "wait for online, retry with backoff". Both hooks default to no-ops,
+so every other caller of `resilientWatch` is unaffected. `ListRepositoryImpl.myLists()` -- a
+one-shot call, not a stream, and what `ListsScreen` actually reads on launch -- gets the same
+write-through/fallback shape by hand, since it never goes through `resilientWatch`.
+
+**Decision -- cache miss vs. confirmed-empty are not distinguished.** A brand-new account that has
+never once synced sees the same "nothing to show" state a confirmed-zero list/lists would. Not
+solved with a second "has synced" marker column: the case requires going offline before ever
+completing one successful sync, vanishingly rare for a signed-in user, against the ongoing cost of
+tracking it as its own piece of state everywhere the cache is read. KISS inside the rigour (golden
+rule 7) -- revisit only if this actually bites someone in practice.
+
+**Decision -- only a `NetworkFailure` ever consults the cache.** A real failure (unauthorized, the
+list was deleted, a malformed server response) surfaces as-is and never falls back to a stale
+cached value pretending to be current -- the cache exists to survive a connectivity problem, not
+to paper over a genuine one.
+
+**Not done here:** the pending-write visual cue (offline-sync-plan.md Phase E) -- `pending` exists
+on both domain entities and is set correctly, but nothing in `presentation/` reads it yet. That is
+the natural next piece: an item or list added/edited offline should look visibly different, not
+just be covered by the generic "Offline - changes will sync" banner.
+
+**Tests:** `test/features/sync/data/cached_lists_store_test.dart`,
+`test/features/sync/data/cached_items_store_test.dart` (round-trip, replace-not-add semantics, a
+list's cache only ever touching its own rows), four new cases in `resilient_watch_test.dart`
+(cache hit on cold start, cache miss behaves exactly as before, a non-network failure never
+consults the cache, `cacheWrite` fires for the seed and every delta), and a new "cached reads"
+group in `list_repository_impl_test.dart` covering `myLists()`'s write-through and fallback.

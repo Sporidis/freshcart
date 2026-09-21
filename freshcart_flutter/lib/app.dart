@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
 import 'package:freshcart_flutter/core/theme/large_text_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/queue_drain_coordinator.dart';
 
 /// The largest text scale "Larger list text" applies, deliberately modest —
 /// the design's own note is "easier to read at arm's length," not a full
@@ -40,6 +41,10 @@ class FreshCartApp extends ConsumerWidget {
         ThemeMode.system;
     final largeText = ref.watch(largeTextControllerProvider).value ?? false;
     final t = ref.watch(translationsProvider);
+
+    // Kick off the queue drain coordinator to listen for sync status changes.
+    // (KeepAlive = true)
+    ref.watch(queueDrainCoordinatorProvider);
 
     return SessionResumeObserver(
       child: MaterialApp.router(

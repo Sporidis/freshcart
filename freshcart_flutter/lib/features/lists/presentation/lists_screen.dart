@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -56,7 +58,17 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
   // SessionResumeObserver, the same recovery for the background/foreground
   // case.
   @override
-  void didPopNext() => ref.read(listsControllerProvider.notifier).refresh();
+  void didPopNext() {
+    // Deferred: this can fire mid-build (the pop notification is flushed
+    // from inside the Navigator's own rebuild), and invalidating a provider
+    // synchronously there violates Flutter's "no setState during build" rule.
+    // The microtask runs after the current build finishes either way.
+    unawaited(
+      Future.microtask(
+        () => ref.read(listsControllerProvider.notifier).refresh(),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {

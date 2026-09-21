@@ -49,6 +49,22 @@ void main() {
       );
     });
 
+    test(
+      'maps the live-update stream\'s own exception family to network, not '
+      'unexpected — it runs over a separate WebSocket from the request/'
+      'response path above, so it never throws a ServerpodClientException',
+      () {
+        expect(
+          mapExceptionToFailure(const dto.WebSocketClosedException()),
+          isA<NetworkFailure>(),
+        );
+        expect(
+          mapExceptionToFailure(const dto.ConnectionClosedException()),
+          isA<NetworkFailure>(),
+        );
+      },
+    );
+
     test('anything unrecognised becomes unexpected, keeping its cause', () {
       final cause = ArgumentError('nope');
       expect(

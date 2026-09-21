@@ -36,6 +36,7 @@ class SearchRecentlyBought extends ConsumerWidget {
     required this.t,
     required this.controller,
     required this.report,
+    this.now = DateTime.now,
     super.key,
   });
 
@@ -46,6 +47,11 @@ class SearchRecentlyBought extends ConsumerWidget {
   final ItemsController controller;
   final void Function(Failure?, {VoidCallback? onRetry}) report;
 
+  /// Clock used to bucket entries by recency. Defaults to the real wall
+  /// clock; tests override it so fixtures anchored to a fixed date stay
+  /// correct regardless of when the test actually runs.
+  final DateTime Function() now;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final entries =
@@ -55,7 +61,7 @@ class SearchRecentlyBought extends ConsumerWidget {
     // no history yet -- not an error state, just nothing to show.
     if (entries.isEmpty) return const SizedBox.shrink();
 
-    final buckets = bucketByRecency(entries, DateTime.now());
+    final buckets = bucketByRecency(entries, now());
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurface.withValues(alpha: 0.42);
 

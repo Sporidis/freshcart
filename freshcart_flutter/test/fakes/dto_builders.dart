@@ -52,6 +52,7 @@ dto.ListMember buildMemberDto({
 /// Builds a wire [dto.ShoppingItem].
 dto.ShoppingItem buildItemDto({
   String name = 'Milk',
+  bool pending = false,
   int quantity = 1,
   bool isChecked = false,
   double sortOrder = 0,

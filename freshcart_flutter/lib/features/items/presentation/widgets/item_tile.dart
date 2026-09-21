@@ -23,6 +23,12 @@ const _swipeDismissThreshold = 0.4;
 /// per the Motion spec (§10).
 const _checkboxSlide = 8.0;
 
+/// The row's corner radius -- shared between [_ItemTileState._getRowDecoration]'s
+/// background and [_DashedRRectBorder]'s stroke so a pending row's dashed
+/// outline always traces the exact same rounded rect the background paints,
+/// rather than two literals that could silently drift apart.
+const _rowBorderRadius = 8.0;
+
 /// One row of a shopping list.
 class ItemTile extends ConsumerStatefulWidget {
   /// Key on the leading checkbox/selection circle, shared across every row
@@ -613,81 +619,101 @@ class _ItemTileState extends ConsumerState<ItemTile>
       duration: AppMotion.durationFor(context, AppMotion.quick),
       curve: AppMotion.enter,
       margin: EdgeInsets.symmetric(horizontal: selected ? 6 : 0),
-      decoration: BoxDecoration(
-        color: selected
-            ? (theme.brightness == Brightness.dark
-                  ? AppColors.selectedRowDark
-                  : AppColors.selectedRowLight)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: _activateRow,
-          onLongPress: _handleLongPressFire,
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: selected ? 10 : 16,
-              vertical: AppSpacing.rowVertical,
-            ),
-            child: Row(
-              children: [
-                _buildLeadingSlot(),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _buildTitleRow(theme: theme, muted: muted),
-                      if (subtitle != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: subtitle,
-                        ),
-                    ],
+      decoration: _getRowDecoration(theme, selected),
+      // BoxDecoration.border only ever draws a solid line -- there is no
+      // dashed BorderStyle to pick -- so a pending row's dashed outline is
+      // painted by hand instead, as a second layer on top of everything
+      // else this Material/InkWell subtree draws. CustomPaint sizes itself
+      // to its child, which fills exactly the same box the decoration above
+      // paints its background into, so the dashes trace that box precisely.
+      child: CustomPaint(
+        foregroundPainter: widget.item.pending
+            ? const _DashedRRectBorder(color: Colors.grey)
+            : null,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: _activateRow,
+            onLongPress: _handleLongPressFire,
+            borderRadius: BorderRadius.circular(_rowBorderRadius),
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: selected ? 10 : 16,
+                vertical: AppSpacing.rowVertical,
+              ),
+              child: Row(
+                children: [
+                  _buildLeadingSlot(),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildTitleRow(theme: theme, muted: muted),
+                        if (subtitle != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: subtitle,
+                          ),
+                      ],
+                    ),
                   ),
-                ),
-                // Hidden during selection, same as the reference's own "selected"
-                // state: "gains a drag handle, loses the quantity" -- how many to
-                // buy has nothing to do with picking rows for a bulk action.
-                if (!widget.selectionMode) ...[
-                  const SizedBox(width: 6),
-                  Text(
-                    'x${widget.item.quantity}',
-                    style: AppTextStyles.caption.copyWith(color: muted),
-                  ),
+                  // Hidden during selection, same as the reference's own
+                  // "selected" state: "gains a drag handle, loses the
+                  // quantity" -- how many to buy has nothing to do with
+                  // picking rows for a bulk action.
+                  if (!widget.selectionMode) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      'x${widget.item.quantity}',
+                      style: AppTextStyles.caption.copyWith(color: muted),
+                    ),
+                  ],
+                  // Hidden during selection, same as the quantity --
+                  // editing one row makes no sense mid-bulk-select.
+                  if (!widget.selectionMode) ...[
+                    const SizedBox(width: 4),
+                    IconButton(
+                      key: ItemTile.editKey,
+                      icon: const Icon(Icons.edit_outlined),
+                      iconSize: 20,
+                      color: muted,
+                      visualDensity: VisualDensity.compact,
+                      // Reuses the edit sheet's own title rather than
+                      // adding a new translation key across five locales
+                      // for one tooltip string.
+                      tooltip: widget.t.items.editProductTitle,
+                      onPressed: widget.onEdit,
+                    ),
+                  ],
+                  if (widget.canReorder) ...[
+                    const SizedBox(width: 4),
+                    ReorderableDragStartListener(
+                      index: widget.index,
+                      child: Icon(Icons.drag_handle, color: muted),
+                    ),
+                  ],
                 ],
-                // Hidden during selection, same as the quantity -- editing
-                // one row makes no sense mid-bulk-select.
-                if (!widget.selectionMode) ...[
-                  const SizedBox(width: 4),
-                  IconButton(
-                    key: ItemTile.editKey,
-                    icon: const Icon(Icons.edit_outlined),
-                    iconSize: 20,
-                    color: muted,
-                    visualDensity: VisualDensity.compact,
-                    // Reuses the edit sheet's own title rather than adding a
-                    // new translation key across five locales for one
-                    // tooltip string.
-                    tooltip: widget.t.items.editProductTitle,
-                    onPressed: widget.onEdit,
-                  ),
-                ],
-                if (widget.canReorder) ...[
-                  const SizedBox(width: 4),
-                  ReorderableDragStartListener(
-                    index: widget.index,
-                    child: Icon(Icons.drag_handle, color: muted),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
         ),
       ),
+    );
+  }
+
+  /// The row's background: the selected tint, or transparent. The pending
+  /// dashed outline is a separate [CustomPaint] layer in [_buildRow], not
+  /// part of this decoration -- [BoxDecoration.border] cannot express a
+  /// dashed line, only ever a solid one.
+  BoxDecoration _getRowDecoration(ThemeData theme, bool selected) {
+    return BoxDecoration(
+      color: selected
+          ? (theme.brightness == Brightness.dark
+                ? AppColors.selectedRowDark
+                : AppColors.selectedRowLight)
+          : Colors.transparent,
+      borderRadius: BorderRadius.circular(_rowBorderRadius),
     );
   }
 
@@ -1016,6 +1042,56 @@ class _StrikePainter extends CustomPainter {
       old.progress != progress || old.color != color;
 }
 
+/// Draws a dashed outline around a rounded rectangle matching
+/// [_rowBorderRadius] -- there is no `BorderStyle` for this
+/// (`BoxDecoration.border` can only ever draw a solid line), so a pending
+/// row's outline is painted by hand instead of expressed as a decoration.
+class _DashedRRectBorder extends CustomPainter {
+  const _DashedRRectBorder({required this.color});
+
+  final Color color;
+
+  static const _strokeWidth = 1.5;
+  static const _dashLength = 4.0;
+  static const _gapLength = 3.0;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // The same rounded rect _getRowDecoration paints as this row's
+    // background -- computed from the size Flutter hands this painter
+    // (matching its child's own layout size) rather than duplicated as a
+    // literal, so it can never fall out of step with that background.
+    final outline = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          Offset.zero & size,
+          const Radius.circular(_rowBorderRadius),
+        ),
+      );
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = _strokeWidth;
+
+    // Path.computeMetrics walks the outline as one continuous length (a
+    // rounded rect's perimeter, corners included) rather than as four
+    // separate straight edges -- extractPath then carves a short segment
+    // out of that length for each dash, leaving a gap before the next one,
+    // all the way around.
+    for (final metric in outline.computeMetrics()) {
+      var distance = 0.0;
+      while (distance < metric.length) {
+        final dashEnd = (distance + _dashLength).clamp(0.0, metric.length);
+        canvas.drawPath(metric.extractPath(distance, dashEnd), paint);
+        distance += _dashLength + _gapLength;
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedRRectBorder old) => old.color != color;
+}
+
 @Preview(group: 'Items', name: 'Item row · every state', size: Size(393, 340))
 Widget itemTilePreview() {
   final t = previewTranslations;
@@ -1025,6 +1101,7 @@ Widget itemTilePreview() {
     required String name,
     int quantity = 1,
     bool isChecked = false,
+    bool pending = false,
     Note? note,
   }) => ShoppingItem(
     id: ItemId(id),
@@ -1035,6 +1112,7 @@ Widget itemTilePreview() {
     updatedAt: now,
     quantity: quantity,
     isChecked: isChecked,
+    pending: pending,
     note: note,
     checkedBy: isChecked ? UserId('user-2') : null,
     checkedAt: isChecked ? now : null,
@@ -1113,6 +1191,20 @@ Widget itemTilePreview() {
           index: 0,
           canReorder: false,
           justAdded: true,
+          t: t,
+        ),
+        ItemTile(
+          item: item(id: 'e', name: 'Eggs', pending: true),
+          checkedByMember: null,
+          onToggle: () {},
+          onEdit: () {},
+          onSwipeDelete: () => () {},
+          selectionMode: false,
+          selected: false,
+          onToggleSelection: () {},
+          onLongPress: () {},
+          index: 0,
+          canReorder: false,
           t: t,
         ),
       ],

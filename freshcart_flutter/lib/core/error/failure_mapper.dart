@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
@@ -25,7 +27,35 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.ServerpodClientNotFound() => const Failure.notFound(),
   dto.ServerpodClientException() => Failure.network(error.toString()),
 
+  // Network-level failures that are not covered by the above transport-level exceptions.
+  TimeoutException() => Failure.network(error.toString()),
+
+  // The live-update stream (`ItemRealtimeSource.watchByList` and friends)
+  // runs over its own WebSocket, separate from the request/response path
+  // above — so it fails through this whole exception family instead
+  // (verified against serverpod_client's method_stream_manager_exceptions.dart)
+  // when that socket drops, not a ServerpodClientException.
+  dto.MethodStreamException() => Failure.network(error.toString()),
+
   // Anything else is a bug rather than an expected outcome, so it keeps its
   // cause for logging and shows a generic message.
   _ => Failure.unexpected(error),
 };
+
+Future<T> retryOnUnreachable<T>(
+  Future<T> Function() body, {
+  int maxAttempts = 2,
+}) async {
+  try {
+    return await body();
+  } on Object catch (error) {
+    if (isUnreachable(error) && maxAttempts > 1) {
+      return await retryOnUnreachable(body, maxAttempts: maxAttempts - 1);
+    }
+    rethrow;
+  }
+}
+
+bool isUnreachable(Object error) =>
+    (error is dto.ServerpodClientException && error.statusCode == -1) ||
+    error is TimeoutException;

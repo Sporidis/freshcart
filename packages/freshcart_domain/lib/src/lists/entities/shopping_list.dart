@@ -29,6 +29,12 @@ abstract class ShoppingList with _$ShoppingList {
     /// people have already added, so an existing list does not suddenly
     /// start clearing itself out from under anyone.
     @Default(false) bool clearCheckedAfterShopping,
+
+    /// True while this list reflects a write that couldn't reach the server
+    /// and is sitting in the offline queue rather than confirmed there (Flow
+    /// 07). `id` may be a locally-minted temp id in that state — see
+    /// `docs/offline-sync-plan.md` §2.
+    @Default(false) bool pending,
   }) = _ShoppingList;
 
   const ShoppingList._();

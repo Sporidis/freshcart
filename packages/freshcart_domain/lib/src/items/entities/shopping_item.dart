@@ -40,6 +40,12 @@ abstract class ShoppingItem with _$ShoppingItem {
     Note? note,
     UserId? checkedBy,
     DateTime? checkedAt,
+
+    /// True while this item reflects a write that couldn't reach the server
+    /// and is sitting in the offline queue rather than confirmed there (Flow
+    /// 07). `id` may be a locally-minted temp id in that state — see
+    /// `docs/offline-sync-plan.md` §2.
+    @Default(false) bool pending,
   }) = _ShoppingItem;
 
   const ShoppingItem._();

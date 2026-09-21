@@ -73,7 +73,10 @@ void main() {
   });
 
   group('SearchRecentlyBought', () {
-    Future<void> pump(WidgetTester tester) async {
+    Future<void> pump(
+      WidgetTester tester, {
+      DateTime Function() now = DateTime.now,
+    }) async {
       final container = ProviderContainer(
         overrides: [
           itemRepositoryProvider.overrideWithValue(repository),
@@ -105,6 +108,7 @@ void main() {
                 t: t,
                 controller: controller,
                 report: (_, {onRetry}) {},
+                now: now,
               ),
             ),
           ),
@@ -136,7 +140,7 @@ void main() {
           lastUsedAt: now.subtract(const Duration(days: 20)),
         ),
       ]);
-      await pump(tester);
+      await pump(tester, now: () => now);
 
       expect(find.text('Recently bought'), findsOneWidget);
       expect(find.text('THIS WEEK'), findsOneWidget);

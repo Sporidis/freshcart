@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/core/streaming/resilient_watch.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
+import 'package:freshcart_flutter/features/sync/data/cached_items_store.dart';
+import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
 
 /// Turns the server's change deltas into a live list of items.
 ///
@@ -11,37 +15,38 @@ import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapp
 /// transport, below anything that knows what a widget is.
 class ItemRealtimeSource {
   /// Creates the source against a generated Serverpod [dto.Client].
-  const ItemRealtimeSource(this._client);
+  const ItemRealtimeSource(
+    this._client,
+    this._connectivityAdapter,
+    this._cache,
+  );
 
   final dto.Client _client;
+  final ConnectivityAdapter _connectivityAdapter;
+  final CachedItemsStore _cache;
 
   /// Emits the full list of items on [listId], re-emitting on every change.
   ///
-  /// Seeds with a normal fetch, then applies deltas. Emits `Err` rather than
-  /// closing when the connection drops, so the UI can show a reconnecting state
-  /// instead of going blank.
-  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) async* {
+  /// Seeds with a normal fetch, then applies deltas. A dropped connection no
+  /// longer ends this stream: [resilientWatch] keeps the last good value and
+  /// reconnects transparently once [ConnectivityAdapter] reports we're back
+  /// online (see `docs/offline-sync-plan.md` Phase F). Every snapshot is also
+  /// written through to [_cache], and a cold start with no connection falls
+  /// back to reading it (§4's "cached reads") instead of failing outright.
+  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
     final listUuid = dto.UuidValue.withValidation(listId.value);
 
-    List<ShoppingItem> current;
-    try {
-      current = (await _client.item.byList(
-        listUuid,
-      )).map((i) => i.toDomain()).toList();
-    } on Object catch (error) {
-      yield Err(mapExceptionToFailure(error));
-      return;
-    }
-    yield Ok(List<ShoppingItem>.unmodifiable(current));
-
-    try {
-      await for (final change in _client.item.watchList(listUuid)) {
-        current = applyChange(current, change);
-        yield Ok(List<ShoppingItem>.unmodifiable(current));
-      }
-    } on Object catch (error) {
-      yield Err(mapExceptionToFailure(error));
-    }
+    return resilientWatch(
+      fetch: () async => List<ShoppingItem>.unmodifiable(
+        (await _client.item.byList(listUuid)).map((i) => i.toDomain()),
+      ),
+      watch: () => _client.item.watchList(listUuid),
+      reduce: (current, event) =>
+          List<ShoppingItem>.unmodifiable(applyChange(current, event)),
+      online: _connectivityAdapter.watchIsOnline,
+      cacheWrite: (items) => unawaited(_cache.replaceForList(listId, items)),
+      cacheRead: () => _cache.readForList(listId),
+    );
   }
 
   /// Merges one change into [current].
