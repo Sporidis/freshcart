@@ -7,9 +7,10 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 
 /// Counts how many times each provider's build function runs, standing in
-/// for the real repository stack -- this test is about SessionResumeObserver
-/// invalidating the right providers on resume, not about what the providers
-/// fetch. The real fetch behaviour has its own tests.
+/// for the real repository stack -- this test is about which providers
+/// SessionResumeObserver does (and, just as importantly, does not) invalidate
+/// on resume, not about what the providers fetch. The real fetch behaviour
+/// has its own tests.
 class _BuildCounts {
   int lists = 0;
   int listById = 0;
@@ -70,14 +71,15 @@ void main() {
   }
 
   testWidgets(
-    'resuming from the background reopens the lists and realtime providers',
+    'resuming from the background refreshes lists but leaves the realtime '
+    'providers alone',
     (tester) async {
       final (:container, :counts) = buildContainer();
       addTearDown(container.dispose);
 
       // Keep each provider alive (autoDispose would tear it down the instant
-      // nothing is listening, which is exactly the state this fix has to
-      // recover from, not the state a test starts in).
+      // nothing is listening) so a build-count change can only come from
+      // SessionResumeObserver itself, not from listener churn.
       container
         ..listen(listsControllerProvider, (_, _) {})
         ..listen(listByIdProvider(listId), (_, _) {})
@@ -95,11 +97,15 @@ void main() {
       );
       await tester.pump();
 
-      // One fresh build each -- the same "brand-new open" recovery the
-      // manual Retry button already performs, now automatic.
+      // listsControllerProvider is a one-shot fetch, so a resume-triggered
+      // refresh is a plain rebuild. listById and items are both backed by
+      // resilientWatch now (docs/offline-sync-plan.md Phase F), which
+      // reconnects a dropped socket on its own -- invalidating them here
+      // would tear ItemsController down and, with it, its in-memory
+      // pending-write overlay, mid-flight.
       expect(counts.lists, 2);
-      expect(counts.listById, 2);
-      expect(counts.items, 2);
+      expect(counts.listById, 1);
+      expect(counts.items, 1);
     },
   );
 
