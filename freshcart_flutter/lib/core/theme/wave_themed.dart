@@ -33,10 +33,29 @@ class WaveThemed extends StatefulWidget {
   /// [child]'s own colour arriving (that's still gated on real coverage,
   /// unaffected by this): the bounce is this widget's reaction to being
   /// interacted with, not to its own retint finishing.
-  const WaveThemed({required this.child, this.bounce = false, super.key});
+  ///
+  /// [localReveal] switches from a single all-or-nothing flip to actually
+  /// punching the wave's own circle through [child]'s own bounds: the part
+  /// of [child] the wave hasn't geometrically reached yet stays under
+  /// [RevealWaveGeometry.oldSeed], the part it has already swept over shows
+  /// [RevealWaveGeometry.newSeed], live, mid-widget. It costs building
+  /// [child] *twice* (old-themed underneath, new-themed on top, clipped to
+  /// the wave's circle) for the wave's duration, so it's only safe for a
+  /// [child] with no exclusive, single-instance interactive state of its
+  /// own (a shared `TextEditingController`/`FocusNode` attached twice is
+  /// undefined) -- the caller is responsible for only setting this when
+  /// [child] is in a state where that's true (see `QuickAddBar`, which only
+  /// requests it while collapsed, before its own text field mounts).
+  const WaveThemed({
+    required this.child,
+    this.bounce = false,
+    this.localReveal = false,
+    super.key,
+  });
 
   final Widget child;
   final bool bounce;
+  final bool localReveal;
 
   @override
   State<WaveThemed> createState() => _WaveThemedState();
@@ -89,42 +108,82 @@ class _WaveThemedState extends State<WaveThemed>
     _lastGeometry = geometry;
   }
 
+  Widget _themedCopy(Color seed, Brightness brightness) => Theme(
+    data: brightness == Brightness.dark
+        ? AppTheme.dark(seed)
+        : AppTheme.light(seed),
+    child: widget.child,
+  );
+
   @override
   Widget build(BuildContext context) {
-    final subtree = KeyedSubtree(key: _positionKey, child: widget.child);
-
     final scope = RevealWaveScope.of(context);
     final geometry = scope?.geometry;
     final Widget themed;
     if (scope == null || geometry == null) {
       // No wave in flight: nothing to gate on, so no theme override --
       // just the ordinary ambient one, already the settled, correct value.
-      themed = subtree;
+      themed = KeyedSubtree(key: _positionKey, child: widget.child);
     } else {
       // Read from the *previous* frame's layout, which is safe and
       // standard for a position that doesn't move frame to frame -- by
       // the time this rebuilds (every tick of the wave), the subtree has
       // already been laid out at least once.
       final box = _positionKey.currentContext?.findRenderObject();
-      final myCenter = (box is RenderBox && box.hasSize)
-          ? box.localToGlobal(box.size.center(Offset.zero))
-          // Not laid out yet (this widget's very first frame): assume
-          // already covered rather than flashing the old colour for one
-          // frame before the real position is known.
-          : geometry.globalOrigin;
-
       final progress = scope.curve.transform(scope.controller.value);
       final radius = geometry.maxRadius * progress;
-      final covered = (myCenter - geometry.globalOrigin).distance <= radius;
-      final seed = covered ? geometry.newSeed : geometry.oldSeed;
-
       final brightness = Theme.of(context).brightness;
-      themed = Theme(
-        data: brightness == Brightness.dark
-            ? AppTheme.dark(seed)
-            : AppTheme.light(seed),
-        child: subtree,
-      );
+
+      if (widget.localReveal) {
+        // Punches the *same* growing circle `ShopThemeReveal` uses through
+        // this widget's own bounds, in its own local coordinates, instead
+        // of flipping the whole thing at once -- the old-themed copy sits
+        // underneath, the new-themed one on top, clipped to the wave's
+        // circle so only the part it has actually swept over shows the new
+        // colour. Both copies are *live*, not a snapshot (unlike
+        // `ShopThemeReveal`'s own mask): fine for a `child` this simple and
+        // non-interactive, but this is exactly what makes `localReveal`
+        // unsafe for a `child` with exclusive state of its own -- see the
+        // constructor's own doc.
+        final localOrigin = (box is RenderBox && box.hasSize)
+            ? box.globalToLocal(geometry.globalOrigin)
+            // Not laid out yet: nothing to clip open yet either, so this
+            // frame just shows the old colour whole, same as it would have
+            // before any wave started.
+            : null;
+        themed = KeyedSubtree(
+          key: _positionKey,
+          child: Stack(
+            fit: StackFit.passthrough,
+            children: [
+              IgnorePointer(
+                child: _themedCopy(geometry.oldSeed, brightness),
+              ),
+              if (localOrigin != null)
+                ClipPath(
+                  clipper: _CircleClipper(
+                    center: localOrigin,
+                    radius: radius,
+                  ),
+                  child: _themedCopy(geometry.newSeed, brightness),
+                ),
+            ],
+          ),
+        );
+      } else {
+        final myCenter = (box is RenderBox && box.hasSize)
+            ? box.localToGlobal(box.size.center(Offset.zero))
+            // Not laid out yet (this widget's very first frame): assume
+            // already covered rather than flashing the old colour for one
+            // frame before the real position is known.
+            : geometry.globalOrigin;
+        final covered = (myCenter - geometry.globalOrigin).distance <= radius;
+        final seed = covered ? geometry.newSeed : geometry.oldSeed;
+        themed = KeyedSubtree(
+          key: _positionKey,
+          child: _themedCopy(seed, brightness),
+        );
+      }
     }
 
     if (!widget.bounce) return themed;
@@ -135,4 +194,23 @@ class _WaveThemedState extends State<WaveThemed>
       child: themed,
     );
   }
+}
+
+/// Clips to a circle at [center] (in the clipped widget's own local
+/// coordinates) with the given [radius] -- [WaveThemed]'s own local reveal,
+/// the same shape `ShopThemeReveal`'s punch-hole mask grows, just scoped to
+/// one widget's bounds instead of the whole screen.
+class _CircleClipper extends CustomClipper<Path> {
+  const _CircleClipper({required this.center, required this.radius});
+
+  final Offset center;
+  final double radius;
+
+  @override
+  Path getClip(Size size) =>
+      Path()..addOval(Rect.fromCircle(center: center, radius: radius));
+
+  @override
+  bool shouldReclip(covariant _CircleClipper oldClipper) =>
+      oldClipper.center != center || oldClipper.radius != radius;
 }
