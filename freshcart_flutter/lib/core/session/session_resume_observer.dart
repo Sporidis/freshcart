@@ -1,18 +1,27 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 
-/// Recovers realtime list/item streams after the app comes back from the
-/// background.
+/// Refreshes the plain, non-streamed list collection after the app comes
+/// back from the background.
 ///
-/// Backgrounding the app kills the Serverpod client's underlying WebSocket.
-/// Its already-open `watchList()` streams die with it and never reopen
-/// themselves — Serverpod only retries with a fresh auth key on a stream's
-/// *first* open, not one that dies mid-flight — so without this, a resumed
-/// app is left showing a stale "you don't have access" error until the user
-/// taps Retry (which works only because it forces a brand-new open). This
-/// does the same thing Retry does, automatically, on every resume.
+/// This used to also invalidate `itemsControllerProvider` and
+/// `listByIdProvider`, to recover from Serverpod's dead-socket-after-
+/// backgrounding problem: those `watchList()`/`watch()` streams died with
+/// the socket and never reopened themselves (Serverpod only retries with a
+/// fresh auth key on a stream's *first* open), so a resumed app was left
+/// showing a stale "you don't have access" error until the user tapped
+/// Retry. `ItemRealtimeSource`/`ListRealtimeSource` now handle that
+/// themselves via `resilientWatch` (`docs/offline-sync-plan.md` Phase F),
+/// which reconnects transparently without tearing the provider down — doing
+/// it here as well was worse than redundant: invalidating
+/// `itemsControllerProvider` wiped `ItemsController`'s in-memory pending-write
+/// overlay, so a queued-but-unsynced item visibly vanished every time the
+/// app was backgrounded and resumed while offline, until the queue drained.
+/// `listsControllerProvider`'s own `build()` is a one-shot fetch, not a
+/// stream, so it was never affected by the dead-socket problem and still
+/// gets refreshed here to pick up changes made from another device while
+/// backgrounded.
 class SessionResumeObserver extends ConsumerStatefulWidget {
   /// Wraps [child], watching app lifecycle for as long as it is mounted.
   const SessionResumeObserver({required this.child, super.key});
@@ -41,11 +50,7 @@ class _SessionResumeObserverState extends ConsumerState<SessionResumeObserver>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state != AppLifecycleState.resumed) return;
-    // Invalidating without a family argument clears every cached instance,
-    // so this doesn't need to know which list (if any) is currently open.
     ref.invalidate(listsControllerProvider);
-    ref.invalidate(listByIdProvider);
-    ref.invalidate(itemsControllerProvider);
   }
 
   @override
