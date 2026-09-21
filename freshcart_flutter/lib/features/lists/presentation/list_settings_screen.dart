@@ -155,6 +155,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                 ),
                 const SizedBox(height: 6),
                 TextField(
+                  key: const Key('listNameField'),
                   controller: _name,
                   enabled: !_savingName,
                   decoration: InputDecoration(errorText: _nameError),

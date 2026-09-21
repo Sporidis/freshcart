@@ -34,6 +34,14 @@ class ItemsSection extends ConsumerWidget {
   /// Creates the section for [list].
   const ItemsSection({required this.list, super.key});
 
+  /// Clears the floating add control (56px resting circle + its own
+  /// margins) that sits on top of this section -- shared by [_ItemList]'s
+  /// own bottom padding and [_ItemsEmptyState]'s, so neither the last row
+  /// nor the empty-state copy renders underneath it, or centres itself
+  /// against the full height behind it instead of the space actually left
+  /// above it.
+  static const double _floatingClusterInset = 84;
+
   /// The list whose items to show. Members come from here so a checked-off item
   /// can name the person who ticked it without another request.
   final ShoppingList list;
@@ -144,52 +152,78 @@ class ItemsSection extends ConsumerWidget {
     return Stack(
       children: [
         Positioned.fill(
-          child: switch (items) {
-            AsyncLoading<Result<List<ShoppingItem>>>() => const Center(
-              child: CircularProgressIndicator(),
-            ),
-            AsyncError<Result<List<ShoppingItem>>>() => Center(
-              child: Text(t.errors.unexpected),
-            ),
-            AsyncOutcome<List<ShoppingItem>>(:final value?) => switch (value) {
-              Err<List<ShoppingItem>>(:final failure) => Center(
-                child: Text(failure.toMessage(t)),
+          // Keyed per branch, not just switched: without a key that
+          // actually changes across shop tabs, two non-empty shops both
+          // rendering an `_ItemList` are the *same* widget as far as
+          // Flutter's tree-diffing is concerned -- it just updates the
+          // existing element's `rows` in place, so switching shops with
+          // items in both used to hard-cut with no transition at all,
+          // unlike the header's own themed colour reveal. A shop-scoped key
+          // makes every switch -- list-to-list included -- a genuine child
+          // replacement AnimatedSwitcher can cross-fade.
+          child: AnimatedSwitcher(
+            duration: AppMotion.durationFor(context, AppMotion.standard),
+            switchInCurve: AppMotion.enter,
+            switchOutCurve: AppMotion.enter,
+            child: switch (items) {
+              AsyncLoading<Result<List<ShoppingItem>>>() => const Center(
+                key: ValueKey('loading'),
+                child: CircularProgressIndicator(),
               ),
-              // Search bypasses the shop filter and the open/done split
-              // entirely (§16: "one flat list across all shops") -- checked
-              // first, ahead of the ordinary empty-state and list branches,
-              // so it wins regardless of what they would have shown.
-              Ok<List<ShoppingItem>>(value: final all) when search.active =>
-                SearchResults(
+              AsyncError<Result<List<ShoppingItem>>>() => Center(
+                key: const ValueKey('error'),
+                child: Text(t.errors.unexpected),
+              ),
+              AsyncOutcome<List<ShoppingItem>>(:final value?) => switch (value) {
+                Err<List<ShoppingItem>>(:final failure) => Center(
+                  key: const ValueKey('error'),
+                  child: Text(failure.toMessage(t)),
+                ),
+                // Search bypasses the shop filter and the open/done split
+                // entirely (§16: "one flat list across all shops") -- checked
+                // first, ahead of the ordinary empty-state and list branches,
+                // so it wins regardless of what they would have shown. Not
+                // keyed per-query -- re-fading on every keystroke would be
+                // noise, not a "switched to a different view" moment.
+                Ok<List<ShoppingItem>>(value: final all) when search.active =>
+                  SearchResults(
+                    // Not 'search' -- the app bar's own search TextField
+                    // (list_detail_screen.dart's `_buildTitle`) already owns
+                    // that key, and both are mounted at once while search is
+                    // active.
+                    key: const ValueKey('search-results'),
+                    list: list,
+                    allItems: all,
+                    query: search.query,
+                    t: t,
+                    controller: controller,
+                    report: report,
+                  ),
+                // Two different empties, and the difference matters: an empty
+                // shop tab is a filter result, so it names the shop and tints
+                // to its colour, while an empty list is the first-run state and
+                // points at the add field instead.
+                Ok<List<ShoppingItem>>(value: final all)
+                    when visibleIn(all, shopFilter).isEmpty =>
+                  _ItemsEmptyState(
+                    key: ValueKey(('empty', shopFilter)),
+                    listId: list.id,
+                    shopFilter: shopFilter,
+                    t: t,
+                  ),
+                Ok<List<ShoppingItem>>(value: final all) => _ItemList(
+                  key: ValueKey(('list', shopFilter)),
+                  rows: visibleIn(all, shopFilter),
                   list: list,
-                  allItems: all,
-                  query: search.query,
+                  shopFilter: shopFilter,
                   t: t,
                   controller: controller,
                   report: report,
+                  onRefresh: controller.refresh,
                 ),
-              // Two different empties, and the difference matters: an empty
-              // shop tab is a filter result, so it names the shop and tints
-              // to its colour, while an empty list is the first-run state and
-              // points at the add field instead.
-              Ok<List<ShoppingItem>>(value: final all)
-                  when visibleIn(all, shopFilter).isEmpty =>
-                _ItemsEmptyState(
-                  listId: list.id,
-                  shopFilter: shopFilter,
-                  t: t,
-                ),
-              Ok<List<ShoppingItem>>(value: final all) => _ItemList(
-                rows: visibleIn(all, shopFilter),
-                list: list,
-                shopFilter: shopFilter,
-                t: t,
-                controller: controller,
-                report: report,
-                onRefresh: controller.refresh,
-              ),
+              },
             },
-          },
+          ),
         ),
         Positioned(
           left: 0,
@@ -296,6 +330,7 @@ class _ItemList extends ConsumerWidget {
     required this.controller,
     required this.report,
     required this.onRefresh,
+    super.key,
   });
 
   final List<ShoppingItem> rows;
@@ -517,10 +552,9 @@ class _ItemList extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView(
-        // Clears the floating add control (56px resting circle + its own
-        // margins) sitting on top of this list -- without it the last rows
-        // render underneath the FAB rather than being reachable above it.
-        padding: const EdgeInsets.only(bottom: 84),
+        padding: const EdgeInsets.only(
+          bottom: ItemsSection._floatingClusterInset,
+        ),
         children: [
           openSection(),
           if (done.isNotEmpty) ...[
@@ -564,6 +598,7 @@ class _ItemsEmptyState extends ConsumerWidget {
     required this.listId,
     required this.shopFilter,
     required this.t,
+    super.key,
   });
 
   final ListId listId;
@@ -576,40 +611,55 @@ class _ItemsEmptyState extends ConsumerWidget {
       // No arrow here (§11: "no arrow, no persistent coach mark") -- the
       // first-run hint is the add control itself pulsing, wired through
       // QuickAddBar.firstRun in ItemsSection.build.
-      return EmptyState(
-        icon: Icons.shopping_basket_outlined,
-        title: t.items.emptyTitle,
-        body: t.items.emptyBody,
+      return Padding(
+        padding: const EdgeInsets.only(
+          bottom: ItemsSection._floatingClusterInset,
+        ),
+        child: EmptyState(
+          icon: Icons.shopping_basket_outlined,
+          title: t.items.emptyTitle,
+          body: t.items.emptyBody,
+        ),
       );
     }
 
     final shops = ref.watch(shopsControllerProvider(listId)).dataOrNull;
     final shop = shops?.where((s) => s.id == shopFilter).firstOrNull;
     if (shop == null) {
-      return EmptyState(
-        icon: Icons.shopping_basket_outlined,
-        title: t.items.emptyTitle,
-        body: t.items.emptyBody,
+      return Padding(
+        padding: const EdgeInsets.only(
+          bottom: ItemsSection._floatingClusterInset,
+        ),
+        child: EmptyState(
+          icon: Icons.shopping_basket_outlined,
+          title: t.items.emptyTitle,
+          body: t.items.emptyBody,
+        ),
       );
     }
 
     final tint = Color(shop.color.argb);
-    return EmptyState(
-      icon: Icons.shopping_basket_outlined,
-      title: t.items.emptyShopTitle(shop: shop.name),
-      body: t.items.emptyShopBody,
-      tint: tint,
-      action: FilledButton(
-        onPressed: () => FocusScope.of(context).nextFocus(),
-        style: FilledButton.styleFrom(
-          backgroundColor: tint,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(0, 38),
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          shape: const StadiumBorder(),
-          textStyle: AppTextStyles.labelStrong,
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: ItemsSection._floatingClusterInset,
+      ),
+      child: EmptyState(
+        icon: Icons.shopping_basket_outlined,
+        title: t.items.emptyShopTitle(shop: shop.name),
+        body: t.items.emptyShopBody,
+        tint: tint,
+        action: FilledButton(
+          onPressed: () => FocusScope.of(context).nextFocus(),
+          style: FilledButton.styleFrom(
+            backgroundColor: tint,
+            foregroundColor: Colors.white,
+            minimumSize: const Size(0, 38),
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            shape: const StadiumBorder(),
+            textStyle: AppTextStyles.labelStrong,
+          ),
+          child: Text(t.items.emptyShopAction),
         ),
-        child: Text(t.items.emptyShopAction),
       ),
     );
   }

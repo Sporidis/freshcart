@@ -109,7 +109,10 @@ void main() {
 
       // The sheet itself, not just the tooltip -- "Shop name" only exists
       // once EditShopSheet is actually open.
-      expect(find.text(container.read(translationsProvider).shops.nameLabel), findsOneWidget);
+      expect(
+        find.text(container.read(translationsProvider).shops.nameLabel),
+        findsOneWidget,
+      );
     });
 
     testWidgets('a leftward flick steps to the next tab, same as a tap', (
@@ -127,18 +130,30 @@ void main() {
       expect(container.read(shopFilterProvider(listId)), isNull);
 
       // All -> Colruyt.
-      await tester.fling(find.byType(ShopFilterBar), const Offset(-400, 0), 1000);
+      await tester.fling(
+        find.byType(ShopFilterBar),
+        const Offset(-400, 0),
+        1000,
+      );
       await tester.pumpAndSettle();
       expect(container.read(shopFilterProvider(listId)), colruyt.id);
       expect(find.text('Cake'), findsNothing);
 
       // Colruyt -> Bakery.
-      await tester.fling(find.byType(ShopFilterBar), const Offset(-400, 0), 1000);
+      await tester.fling(
+        find.byType(ShopFilterBar),
+        const Offset(-400, 0),
+        1000,
+      );
       await tester.pumpAndSettle();
       expect(container.read(shopFilterProvider(listId)), bakery.id);
 
       // A rightward flick steps back.
-      await tester.fling(find.byType(ShopFilterBar), const Offset(400, 0), 1000);
+      await tester.fling(
+        find.byType(ShopFilterBar),
+        const Offset(400, 0),
+        1000,
+      );
       await tester.pumpAndSettle();
       expect(container.read(shopFilterProvider(listId)), colruyt.id);
     });

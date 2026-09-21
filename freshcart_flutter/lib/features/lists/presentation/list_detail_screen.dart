@@ -24,6 +24,7 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/list_dange
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
+import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -451,6 +452,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
                       ),
                     ),
             ),
+            const OfflineSyncingBanner(),
             Expanded(
               child: ShopThemeReveal(
                 key: revealKey,

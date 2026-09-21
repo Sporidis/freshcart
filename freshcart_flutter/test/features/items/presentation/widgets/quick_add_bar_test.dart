@@ -142,10 +142,11 @@ void main() {
     });
   });
 
-  group('WaveThemed gating (decisions #89)', () {
+  group('WaveThemed gating (decisions #89, local reveal per user feedback)', () {
     testWidgets(
-      'the resting pill holds the old seed until a wave actually reaches '
-      'it, not the instant the ambient theme changes',
+      'the resting pill layers the old seed under the new one -- a real '
+      'local reveal, not a single flip the instant the ambient theme '
+      'changes -- and collapses back to one layer once the wave ends',
       (tester) async {
         late AnimationController controller;
         final geometry = ValueNotifier<RevealWaveGeometry?>(null);
@@ -159,7 +160,7 @@ void main() {
               // The ambient theme is already the *new* seed throughout --
               // exactly what a real ShopThemeReveal does the instant the
               // shop filter changes. Only WaveThemed's own gating should
-              // be holding the pill back from it.
+              // be holding any of the pill back from it.
               theme: AppTheme.light(newSeed),
               home: Scaffold(
                 body: Align(
@@ -186,22 +187,26 @@ void main() {
         // `Colors.blue`/`Colors.red`'s own MaterialColor subtype -- same
         // pixel value, different runtime type, so `==` alone would fail on
         // a distinction that isn't visually real.
-        int pillColor() => tester
-            .widget<Material>(find.byKey(const ValueKey('quick-add-pill')))
-            .color!
-            .toARGB32();
+        List<int> pillColors() => tester
+            .widgetList<Material>(find.byKey(const ValueKey('quick-add-pill')))
+            .map((m) => m.color!.toARGB32())
+            .toList();
 
-        // No wave at all yet: the ambient (already-new) theme applies,
-        // same as any ordinary, unwrapped widget.
         final newPrimary = AppTheme.light(
           newSeed,
         ).colorScheme.primary.toARGB32();
-        expect(pillColor(), newPrimary);
+        final oldPrimary = AppTheme.light(
+          oldSeed,
+        ).colorScheme.primary.toARGB32();
+
+        // No wave at all yet: a single copy, the ambient (already-new)
+        // theme applies, same as any ordinary, unwrapped widget.
+        expect(pillColors(), [newPrimary]);
 
         // A wave starts, anchored far from the FAB -- e.g. a tap on the
         // shop filter bar at the top of the screen.
         final pillCenter = tester.getCenter(
-          find.byKey(const ValueKey('quick-add-pill')),
+          find.byKey(const ValueKey('quick-add-pill')).first,
         );
         final origin = pillCenter.translate(-500, -500);
         geometry.value = RevealWaveGeometry(
@@ -212,19 +217,31 @@ void main() {
         );
         await tester.pump();
 
-        // Wave just started (radius ~0, nowhere near the FAB): must read
-        // as the *old* seed, not the ambient one -- this is exactly the
-        // bug decisions #89 fixed (QuickAddBar was reading `Theme.of` from
-        // its own element, above where WaveThemed inserts its override).
-        final oldPrimary = AppTheme.light(
-          oldSeed,
-        ).colorScheme.primary.toARGB32();
-        expect(pillColor(), oldPrimary);
+        // Wave just started (radius ~0, nowhere near the FAB yet): both
+        // layers now exist -- the old seed underneath, wherever the wave
+        // hasn't swept yet, and the new seed on top, clipped to the wave's
+        // still-tiny circle. Whether that clip actually reaches any given
+        // pixel is `_CircleClipper`'s own geometry (plain `Path.addOval`,
+        // the same shape `ShopThemeReveal`'s own punch-hole mask uses, not
+        // re-verified here -- see decisions #85's own note on that math
+        // having no widget-tree assertion surface). What this asserts is
+        // the wiring: this is a real two-layer reveal, not a single flip.
+        expect(pillColors()..sort(), [oldPrimary, newPrimary]..sort());
 
-        // Comfortably past the FAB's own distance from the origin.
+        // Comfortably past the FAB's own distance from the origin -- still
+        // layered (the old seed stays live underneath for as long as the
+        // wave itself is in flight), the point of `_CircleClipper` is that
+        // its clip now geometrically covers the pill's own position.
         controller.value = 1.5;
         await tester.pump();
-        expect(pillColor(), newPrimary);
+        expect(pillColors()..sort(), [oldPrimary, newPrimary]..sort());
+
+        // The wave itself has finished (mirrors ShopThemeReveal's own
+        // `_onRevealStatusChanged` clearing its geometry once the reveal
+        // completes): back to a single copy, the ambient theme.
+        geometry.value = null;
+        await tester.pump();
+        expect(pillColors(), [newPrimary]);
       },
     );
   });

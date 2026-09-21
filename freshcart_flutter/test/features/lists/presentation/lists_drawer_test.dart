@@ -85,7 +85,10 @@ void main() {
   ) async {
     final listId = ListId('00000000-0000-4000-8000-000000000001');
     repository.myListsResult = Ok([
-      buildList(id: listId.value, members: [buildMember(userId: me)]),
+      buildList(
+        id: listId.value,
+        members: [buildMember(userId: me)],
+      ),
     ]);
     repository.summariesResult = Ok([
       ListSummary(listId: listId, total: 8, checkedCount: 2),
@@ -101,7 +104,10 @@ void main() {
   ) async {
     final listId = ListId('00000000-0000-4000-8000-000000000001');
     repository.myListsResult = Ok([
-      buildList(id: listId.value, members: [buildMember(userId: me)]),
+      buildList(
+        id: listId.value,
+        members: [buildMember(userId: me)],
+      ),
     ]);
     repository.summariesResult = Ok([
       ListSummary(listId: listId, total: 4, checkedCount: 4),

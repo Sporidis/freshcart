@@ -10,7 +10,10 @@ import 'package:freshcart_flutter/features/items/data/item_repository_provider.d
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/sync_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/sync_status.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
@@ -24,6 +27,7 @@ void main() {
   late FakeShopRepository shopRepository;
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     repository = FakeListRepository();
     // The detail screen renders the items section, so navigating there needs an
     // item repository even when the test is about the lists screen.
@@ -45,6 +49,7 @@ void main() {
         listRepositoryProvider.overrideWithValue(repository),
         itemRepositoryProvider.overrideWithValue(itemRepository),
         shopRepositoryProvider.overrideWithValue(shopRepository),
+        syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
         // These tests are about ListsScreen itself, not the onboarding gate —
         // a restored (non-new) identity so the router starts on /lists.
         authBootstrapProvider.overrideWith(

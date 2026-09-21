@@ -16,9 +16,11 @@ Future<Map<ListId, ListSummary>> listSummaries(Ref ref) async {
   final loaded = ref.watch(listsControllerProvider).dataOrNull;
   if (loaded == null || loaded.isEmpty) return const {};
 
-  final result = await ref.watch(
-    listRepositoryProvider,
-  ).summaries([for (final list in loaded) list.id]);
+  final result = await ref
+      .watch(
+        listRepositoryProvider,
+      )
+      .summaries([for (final list in loaded) list.id]);
   return switch (result) {
     Ok<List<ListSummary>>(:final value) => {
       for (final summary in value) summary.listId: summary,

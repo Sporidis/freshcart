@@ -12,7 +12,10 @@ import 'package:freshcart_flutter/features/items/presentation/items_section.dart
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/sync_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/sync_status.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
@@ -33,6 +36,7 @@ void main() {
   final colruyt = buildShop(name: 'Colruyt', color: '#C0392B');
 
   setUp(() {
+    SharedPreferences.setMockInitialValues({});
     listRepository = FakeListRepository();
     itemRepository = FakeItemRepository();
     shopRepository = FakeShopRepository();
@@ -49,6 +53,9 @@ void main() {
         listRepositoryProvider.overrideWithValue(listRepository),
         itemRepositoryProvider.overrideWithValue(itemRepository),
         shopRepositoryProvider.overrideWithValue(shopRepository),
+        // Real connectivity_plus has no platform to answer in a widget test
+        // and never resolves — pumpAndSettle hangs forever without this.
+        syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
         authBootstrapProvider.overrideWith(
           (ref) async => (authenticated: true, isNewIdentity: false),
         ),
