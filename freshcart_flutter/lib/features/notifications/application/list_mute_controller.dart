@@ -10,9 +10,11 @@ part 'list_mute_controller.g.dart';
 class ListMuteController extends _$ListMuteController {
   @override
   Future<bool> build(ListId listId) async {
-    final result = await ref.watch(pushRepositoryProvider).isListMuted(
-      listId,
-    );
+    final result = await ref
+        .watch(pushRepositoryProvider)
+        .isListMuted(
+          listId,
+        );
     return switch (result) {
       Ok<bool>(:final value) => value,
       // Fails open: a read that couldn't confirm the mute state should not

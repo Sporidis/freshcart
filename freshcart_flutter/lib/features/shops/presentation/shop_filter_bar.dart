@@ -24,7 +24,11 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_p
 /// Library §02 -- "The + is permanent furniture on every list").
 class ShopFilterBar extends ConsumerWidget {
   /// Creates the bar for [listId].
-  const ShopFilterBar({required this.listId, required this.revealKey, super.key});
+  const ShopFilterBar({
+    required this.listId,
+    required this.revealKey,
+    super.key,
+  });
 
   /// The list whose shops to show.
   final ListId listId;
@@ -37,7 +41,8 @@ class ShopFilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final shops = ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
+    final shops =
+        ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
     // Turned off in List settings: still a real shop (still taggable from
     // the item sheet), just not a tab here. See Shop.isActive's own doc.
     final activeShops = [
@@ -140,7 +145,9 @@ class ShopFilterBar extends ConsumerWidget {
                 child: ShopTabPill(
                   label: shop.name,
                   active: selected == shop.id,
-                  color: Color(ref.watch(effectiveShopColorProvider(shop)).argb),
+                  color: Color(
+                    ref.watch(effectiveShopColorProvider(shop)).argb,
+                  ),
                   count: remainingIn(shop.id),
                   onTapDown: (details) => tapOrigin = details.globalPosition,
                   onTap: () => select(shop.id, tapOrigin),
