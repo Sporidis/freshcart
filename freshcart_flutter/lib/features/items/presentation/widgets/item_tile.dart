@@ -23,10 +23,8 @@ const _swipeDismissThreshold = 0.4;
 /// per the Motion spec (§10).
 const _checkboxSlide = 8.0;
 
-/// The row's corner radius -- shared between [_ItemTileState._getRowDecoration]'s
-/// background and [_DashedRRectBorder]'s stroke so a pending row's dashed
-/// outline always traces the exact same rounded rect the background paints,
-/// rather than two literals that could silently drift apart.
+/// The row's corner radius, used by [_ItemTileState._getRowDecoration]'s
+/// background and the row's own [InkWell].
 const _rowBorderRadius = 8.0;
 
 /// One row of a shopping list.
@@ -621,14 +619,15 @@ class _ItemTileState extends ConsumerState<ItemTile>
       margin: EdgeInsets.symmetric(horizontal: selected ? 6 : 0),
       decoration: _getRowDecoration(theme, selected),
       // BoxDecoration.border only ever draws a solid line -- there is no
-      // dashed BorderStyle to pick -- so a pending row's dashed outline is
+      // dashed BorderStyle to pick -- so a pending row's dashed stripe is
       // painted by hand instead, as a second layer on top of everything
       // else this Material/InkWell subtree draws. CustomPaint sizes itself
       // to its child, which fills exactly the same box the decoration above
-      // paints its background into, so the dashes trace that box precisely.
+      // paints its background into, so the stripe is positioned against
+      // that same box.
       child: CustomPaint(
         foregroundPainter: widget.item.pending
-            ? const _DashedRRectBorder(color: Colors.grey)
+            ? const _PendingStripe(color: Colors.grey)
             : null,
         child: Material(
           type: MaterialType.transparency,
@@ -1042,54 +1041,44 @@ class _StrikePainter extends CustomPainter {
       old.progress != progress || old.color != color;
 }
 
-/// Draws a dashed outline around a rounded rectangle matching
-/// [_rowBorderRadius] -- there is no `BorderStyle` for this
-/// (`BoxDecoration.border` can only ever draw a solid line), so a pending
-/// row's outline is painted by hand instead of expressed as a decoration.
-class _DashedRRectBorder extends CustomPainter {
-  const _DashedRRectBorder({required this.color});
+/// Draws a dashed vertical stripe along the row's left edge, standing in for
+/// a full-row outline -- there is no `BorderStyle` for a dashed line
+/// (`BoxDecoration.border` can only ever draw a solid one), so a pending
+/// row's cue is painted by hand instead of expressed as a decoration.
+///
+/// [_inset] holds it off the row's own left edge, which otherwise sits flush
+/// against the screen edge -- a border with no breathing room read as a
+/// rendering glitch rather than a deliberate cue.
+class _PendingStripe extends CustomPainter {
+  const _PendingStripe({required this.color});
 
   final Color color;
 
-  static const _strokeWidth = 1.5;
+  static const _strokeWidth = 2.5;
   static const _dashLength = 4.0;
   static const _gapLength = 3.0;
+  static const _inset = 6.0;
+  static const _verticalInset = 4.0;
 
   @override
   void paint(Canvas canvas, Size size) {
-    // The same rounded rect _getRowDecoration paints as this row's
-    // background -- computed from the size Flutter hands this painter
-    // (matching its child's own layout size) rather than duplicated as a
-    // literal, so it can never fall out of step with that background.
-    final outline = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Offset.zero & size,
-          const Radius.circular(_rowBorderRadius),
-        ),
-      );
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = _strokeWidth;
+      ..strokeWidth = _strokeWidth
+      ..strokeCap = StrokeCap.round;
 
-    // Path.computeMetrics walks the outline as one continuous length (a
-    // rounded rect's perimeter, corners included) rather than as four
-    // separate straight edges -- extractPath then carves a short segment
-    // out of that length for each dash, leaving a gap before the next one,
-    // all the way around.
-    for (final metric in outline.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        final dashEnd = (distance + _dashLength).clamp(0.0, metric.length);
-        canvas.drawPath(metric.extractPath(distance, dashEnd), paint);
-        distance += _dashLength + _gapLength;
-      }
+    var y = _verticalInset;
+    final bottom = size.height - _verticalInset;
+    while (y < bottom) {
+      final dashEnd = (y + _dashLength).clamp(0.0, bottom);
+      canvas.drawLine(Offset(_inset, y), Offset(_inset, dashEnd), paint);
+      y += _dashLength + _gapLength;
     }
   }
 
   @override
-  bool shouldRepaint(_DashedRRectBorder old) => old.color != color;
+  bool shouldRepaint(_PendingStripe old) => old.color != color;
 }
 
 @Preview(group: 'Items', name: 'Item row · every state', size: Size(393, 340))
