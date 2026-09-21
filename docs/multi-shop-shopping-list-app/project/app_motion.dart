@@ -20,8 +20,11 @@ class AppMotion {
   static const Curve sheet = Curves.easeOutQuint;
   static const Curve press = Curves.easeOut;
 
-  static const SpringDescription spring =
-      SpringDescription(mass: 1, stiffness: 180, damping: 14);
+  static const SpringDescription spring = SpringDescription(
+    mass: 1,
+    stiffness: 180,
+    damping: 14,
+  );
 
   /// Stagger delay for list children entering together (capped at 6).
   static Duration stagger(int index) =>

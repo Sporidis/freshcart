@@ -205,18 +205,6 @@ class ShopThemeRevealState extends State<ShopThemeReveal>
                           // the FAB's own checked-state pop, so this
                           // headline transition shares its spring.
                           progress: wavePop.transform(_revealController.value),
-                          // Every real shop's own hue reads fine as a glow
-                          // in either brightness. Only the neutral "All"
-                          // seed (near-black ink) is the exception: that
-                          // reads fine as a glow on light backgrounds but
-                          // disappears into a dark one, so it -- and only
-                          // it -- swaps to white in dark mode.
-                          ringColor:
-                              (widget.seed.toARGB32() ==
-                                      AppTheme.brandSeed.toARGB32() &&
-                                  brightness == Brightness.dark)
-                              ? Colors.white
-                              : widget.seed,
                         ),
                       ),
                     ),
@@ -236,21 +224,20 @@ class ShopThemeRevealState extends State<ShopThemeReveal>
 /// this is driven with, slightly past 1 before settling). Whatever shows
 /// through the hole is the live body underneath, already rebuilt in the new
 /// theme, so this never blends the two: each pixel is always fully one
-/// theme or the other. A glowing [ringColor] rim rides the hole's leading
-/// edge, using the same (unclamped) progress so it overshoots and settles
-/// right along with the hole -- decisions #88.
+/// theme or the other -- exactly the new shop's colour wherever the wave has
+/// reached, exactly the old one everywhere it hasn't yet, no in-between
+/// glow or ring dressing it up (dropped after it read as a glitchy edge
+/// rather than a shockwave -- decisions #88's own addition, undone).
 class _RevealPunchPainter extends CustomPainter {
   const _RevealPunchPainter({
     required this.image,
     required this.origin,
     required this.progress,
-    required this.ringColor,
   });
 
   final ui.Image image;
   final Offset origin;
   final double progress;
-  final Color ringColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -272,7 +259,6 @@ class _RevealPunchPainter extends CustomPainter {
     final hole = Path()
       ..addOval(Rect.fromCircle(center: origin, radius: radius));
     final visible = Path.combine(PathOperation.difference, fullRect, hole);
-    canvas.save();
     canvas.clipPath(visible);
     canvas.drawImageRect(
       image,
@@ -280,25 +266,6 @@ class _RevealPunchPainter extends CustomPainter {
       Offset.zero & size,
       Paint(),
     );
-    canvas.restore();
-
-    // The shockwave: a soft, fading rim riding the same radius, straddling
-    // the boundary between the still-covered snapshot and the newly
-    // revealed live content. Peaks bright near the tap, dissolves as the
-    // wave finishes traveling -- clamped separately from the mask radius
-    // above, since the mask deliberately keeps using the raw (occasionally
-    // >1) progress so an overshoot never leaves a sliver of old colour
-    // showing back through.
-    final clamped = progress.clamp(0.0, 1.0);
-    final ringAlpha = (1 - clamped) * 0.55;
-    if (ringAlpha > 0.01) {
-      final ringPaint = Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = ui.lerpDouble(5, 1, clamped)!
-        ..color = ringColor.withValues(alpha: ringAlpha)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
-      canvas.drawCircle(origin, radius, ringPaint);
-    }
 
     canvas.restore();
   }
@@ -307,8 +274,7 @@ class _RevealPunchPainter extends CustomPainter {
   bool shouldRepaint(covariant _RevealPunchPainter oldDelegate) =>
       oldDelegate.image != image ||
       oldDelegate.origin != origin ||
-      oldDelegate.progress != progress ||
-      oldDelegate.ringColor != ringColor;
+      oldDelegate.progress != progress;
 }
 
 /// The geometry of one in-flight [ShopThemeReveal] wave, in global
