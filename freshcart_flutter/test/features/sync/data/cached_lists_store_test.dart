@@ -26,19 +26,22 @@ void main() {
       expect(await store.readAll(), isNull);
     });
 
-    test('upsert then read round-trips the full list, members included', () async {
-      final list = buildListDto(
-        members: [buildMemberDto(displayName: 'Mom')],
-      ).toDomain();
+    test(
+      'upsert then read round-trips the full list, members included',
+      () async {
+        final list = buildListDto(
+          members: [buildMemberDto(displayName: 'Mom')],
+        ).toDomain();
 
-      await store.upsert(list);
-      final cached = await store.read(list.id);
+        await store.upsert(list);
+        final cached = await store.read(list.id);
 
-      expect(cached, isNotNull);
-      expect(cached!.name, list.name);
-      expect(cached.joinCode, list.joinCode);
-      expect(cached.members.single.displayName, 'Mom');
-    });
+        expect(cached, isNotNull);
+        expect(cached!.name, list.name);
+        expect(cached.joinCode, list.joinCode);
+        expect(cached.members.single.displayName, 'Mom');
+      },
+    );
 
     test('upsert replaces an existing row for the same list id', () async {
       final list = buildListDto().toDomain();
@@ -50,18 +53,21 @@ void main() {
       expect(all!.single.name, 'Renamed');
     });
 
-    test('replaceAll replaces the whole cached set, not just adds to it', () async {
-      final first = buildListDto(name: 'Old').toDomain();
-      await store.upsert(first);
+    test(
+      'replaceAll replaces the whole cached set, not just adds to it',
+      () async {
+        final first = buildListDto(name: 'Old').toDomain();
+        await store.upsert(first);
 
-      final second = buildListDto(name: 'New').toDomain().copyWith(
-        id: ListId(itemUuid.uuid), // any second, distinct id
-      );
-      await store.replaceAll([second]);
+        final second = buildListDto(name: 'New').toDomain().copyWith(
+          id: ListId(itemUuid.uuid), // any second, distinct id
+        );
+        await store.replaceAll([second]);
 
-      final all = await store.readAll();
-      expect(all!.map((l) => l.name), ['New']);
-    });
+        final all = await store.readAll();
+        expect(all!.map((l) => l.name), ['New']);
+      },
+    );
   });
 
   group('ShoppingListCachePayload', () {

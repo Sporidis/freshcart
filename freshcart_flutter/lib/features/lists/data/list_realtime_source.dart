@@ -15,7 +15,11 @@ import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
 /// event simply replaces what was there.
 class ListRealtimeSource {
   /// Creates the source against a generated Serverpod [dto.Client].
-  const ListRealtimeSource(this._client, this._connectivityAdapter, this._cache);
+  const ListRealtimeSource(
+    this._client,
+    this._connectivityAdapter,
+    this._cache,
+  );
 
   final dto.Client _client;
   final ConnectivityAdapter _connectivityAdapter;
