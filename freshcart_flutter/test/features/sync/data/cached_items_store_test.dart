@@ -36,14 +36,21 @@ void main() {
       expect(cached!.map((i) => i.name), containsAll(['Milk', 'Bread']));
     });
 
-    test('replaceForList drops rows no longer present, not just adds', () async {
-      final listId = ListId(listUuid.uuid);
-      await store.replaceForList(listId, [buildItemDto(name: 'Milk').toDomain()]);
-      await store.replaceForList(listId, [buildItemDto(name: 'Bread').toDomain()]);
+    test(
+      'replaceForList drops rows no longer present, not just adds',
+      () async {
+        final listId = ListId(listUuid.uuid);
+        await store.replaceForList(listId, [
+          buildItemDto(name: 'Milk').toDomain(),
+        ]);
+        await store.replaceForList(listId, [
+          buildItemDto(name: 'Bread').toDomain(),
+        ]);
 
-      final cached = await store.readForList(listId);
-      expect(cached!.map((i) => i.name), ['Bread']);
-    });
+        final cached = await store.readForList(listId);
+        expect(cached!.map((i) => i.name), ['Bread']);
+      },
+    );
 
     test('replaceForList only touches rows for its own list id', () async {
       final otherListId = ListId(userUuid.uuid);

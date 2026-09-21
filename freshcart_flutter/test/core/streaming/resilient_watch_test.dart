@@ -300,7 +300,10 @@ void main() {
 
         await Future<void>.delayed(Duration.zero);
         expect(fetchCallCount, 1);
-        expect(events.single.valueOrNull, 42); // the cached value, shown at once
+        expect(
+          events.single.valueOrNull,
+          42,
+        ); // the cached value, shown at once
         expect(watchControllers, isEmpty); // still offline, nothing live yet
 
         // Reconnect.

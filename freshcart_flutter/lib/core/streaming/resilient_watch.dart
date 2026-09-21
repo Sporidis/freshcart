@@ -55,7 +55,11 @@ Stream<Result<T>> resilientWatch<T, E>({
     // loop below uses, rather than a second copy of that logic.
     current = cached;
     yield Ok(current);
-    switch (await _reconnect(fetch: fetch, online: online, backoff: reconnectBackoff)) {
+    switch (await _reconnect(
+      fetch: fetch,
+      online: online,
+      backoff: reconnectBackoff,
+    )) {
       case Ok(:final value):
         current = value;
         cacheWrite?.call(current);
@@ -81,7 +85,11 @@ Stream<Result<T>> resilientWatch<T, E>({
         return;
       }
 
-      switch (await _reconnect(fetch: fetch, online: online, backoff: reconnectBackoff)) {
+      switch (await _reconnect(
+        fetch: fetch,
+        online: online,
+        backoff: reconnectBackoff,
+      )) {
         case Ok(:final value):
           current = value;
           cacheWrite?.call(current);

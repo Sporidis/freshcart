@@ -420,10 +420,11 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
                                           // "Placeholder text fades in over the last
                                           // 40%" (§09) -- the pill needs room to show
                                           // it without clipping first.
-                                          opacity: ((openness - 0.6) / 0.4).clamp(
-                                            0.0,
-                                            1.0,
-                                          ),
+                                          opacity: ((openness - 0.6) / 0.4)
+                                              .clamp(
+                                                0.0,
+                                                1.0,
+                                              ),
                                           child: Padding(
                                             padding: const EdgeInsets.only(
                                               left: 18,
