@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// The chip row that floats just above the pill once there is enough typed
 /// to suggest something -- traced from §09's own frame 4 markup ("Olive

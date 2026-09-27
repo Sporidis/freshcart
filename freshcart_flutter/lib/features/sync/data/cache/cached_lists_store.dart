@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/shopping_list_cache_payload.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/shopping_list_cache_payload.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
 
 /// Persists the last-known state of the lists a user belongs to, so
 /// `ListRepositoryImpl.myLists` and `ListRealtimeSource.watch` have

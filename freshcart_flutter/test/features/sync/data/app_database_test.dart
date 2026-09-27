@@ -2,8 +2,8 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
 
 import '../../../helpers/date_time_precision.dart';
 

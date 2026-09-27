@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// Draws a strike-through across [child] as [progress] runs 0 to 1.
 ///

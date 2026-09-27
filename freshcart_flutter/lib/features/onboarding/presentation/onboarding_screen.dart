@@ -4,12 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop_step.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/create_list_step.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/display_name_step.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/invite_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/add_shop_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/create_list_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/display_name_step.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/invite_step.dart';
 
 @Preview(group: 'Onboarding', name: 'Wizard shell', size: previewPhone)
 Widget onboardingScreenPreview() => previewApp(const OnboardingScreen());

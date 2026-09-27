@@ -6,11 +6,11 @@ import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/item_realtime_source.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/name_history_entry_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_items_store.dart';
-import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
-import 'package:freshcart_flutter/features/sync/data/shopping_item_queue_payload.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/features/sync/data/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/shopping_item_queue_payload.dart';
 
 /// The Serverpod-backed [ItemRepository].
 class ItemRepositoryImpl implements ItemRepository {

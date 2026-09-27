@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:drift/drift.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
 
 /// Persists writes that couldn't reach the server, so they survive the app
 /// being killed and can be replayed later (Phase D).

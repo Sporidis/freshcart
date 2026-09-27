@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// The list name in the app bar, editable in place.
 ///

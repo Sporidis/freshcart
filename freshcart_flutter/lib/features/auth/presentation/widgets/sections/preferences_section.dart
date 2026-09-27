@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/appearance_controller.dart';
-import 'package:freshcart_flutter/core/theme/large_text_controller.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_dropdown_option.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_status_option.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_toggle_option.dart';
+import 'package:freshcart_flutter/core/theme/preferences/appearance_controller.dart';
+import 'package:freshcart_flutter/core/theme/preferences/large_text_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/settings_options/setting_dropdown_option.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/settings_options/setting_status_option.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/settings_options/setting_toggle_option.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 

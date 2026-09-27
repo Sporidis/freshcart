@@ -1,5 +1,5 @@
-import 'package:freshcart_flutter/features/sync/data/app_database_provider.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_queue.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database_provider.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_queue.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'pending_operations_queue_provider.g.dart';

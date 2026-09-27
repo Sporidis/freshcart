@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// A "No shop" chip followed by one chip per shop, each tinted with its own
