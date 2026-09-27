@@ -34,6 +34,8 @@ void main() {
     );
   });
 
+  tearDown(() => db.close());
+
   group('ItemRepositoryImpl', () {
     test('byList maps every item to the domain', () async {
       client.handler = (_, _, _) => [
