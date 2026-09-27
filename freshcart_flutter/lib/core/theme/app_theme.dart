@@ -127,6 +127,7 @@ class AppSizes {
   static const double avatar = 32;
   static const double avatarLarge = 52;
   static const double buttonHeight = 52;
+  static const double quantityIcon = 18;
 }
 
 /// Basket theming.
