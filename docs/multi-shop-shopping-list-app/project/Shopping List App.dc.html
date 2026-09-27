@@ -209,6 +209,16 @@ a:hover{color:#1A3E77}
     <sc-if value="{{ isMain }}" hint-placeholder-val="{{ false }}">
     <div style="padding-top:60px;height:100%;box-sizing:border-box;display:flex;flex-direction:column">
 
+      <sc-if value="{{ rearrange }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:none">
+        <div style="display:flex;align-items:center;gap:12px;padding:15px 20px;background:#1A1A18">
+          <div style="flex:1;font:700 16px system-ui,sans-serif;color:#fff">Drag to reorder</div>
+          <div onClick="{{ exitRearrange }}" style="font:700 14.5px system-ui;color:#F0A868;flex:none;cursor:pointer">Done</div>
+        </div>
+        <div style="padding:9px 20px 11px;background:#EDEBE5;font:400 12.5px/1.4 system-ui,sans-serif;color:rgba(26,26,24,.5)">{{ rearrangeScope }}</div>
+      </div>
+      </sc-if>
+
       <sc-if value="{{ selectMode }}" hint-placeholder-val="{{ false }}">
       <div style="padding:6px 20px 0;display:flex;align-items:center;gap:14px;flex:none">
         <div onClick="{{ exitSelect }}" style="font-size:20px;color:rgba(26,26,24,.55);line-height:1;flex:none;cursor:pointer">✕</div>
@@ -277,16 +287,13 @@ a:hover{color:#1A3E77}
       <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
       <div style="padding:4px 20px;flex:1;overflow-y:auto">
         <sc-for list="{{ openItems }}" as="item" hint-placeholder-count="4">
-          <div style="position:relative;overflow:hidden;margin:0 -4px">
-            <div style="position:absolute;inset:0;background:#C0392B;display:flex;align-items:center;justify-content:flex-end;padding-right:22px;border-radius:10px">
-              <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-            </div>
-            <div onPointerDown="{{ item.dragStart }}" onPointerMove="{{ item.dragMove }}" onPointerUp="{{ item.dragEnd }}" onPointerCancel="{{ item.dragEnd }}" onClick="{{ item.rowTap }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;touch-action:pan-y;background:{{ item.rowBg }};transform:translateX({{ item.swipeX }}px) translateY({{ item.liftY }}px) scale({{ item.liftScale }});box-shadow:{{ item.liftShadow }};border-radius:{{ item.liftRadius }}px;z-index:{{ item.liftZ }};opacity:{{ item.liftOpacity }}">
+          <div style="position:relative;margin:0 -4px">
+            <div onPointerDown="{{ item.dragStart }}" onPointerMove="{{ item.dragMove }}" onPointerUp="{{ item.dragEnd }}" onPointerCancel="{{ item.dragEnd }}" onClick="{{ item.rowTap }}" style="position:relative;display:flex;align-items:center;gap:12px;padding:13px 8px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;touch-action:pan-y;background:{{ item.rowBg }};transform:translateY({{ item.liftY }}px) scale({{ item.liftScale }});box-shadow:{{ item.liftShadow }};border-radius:{{ item.liftRadius }}px;z-index:{{ item.liftZ }};opacity:{{ item.liftOpacity }}">
               <sc-if value="{{ item.showHandle }}" hint-placeholder-val="{{ false }}">
                 <svg width="16" height="10" viewBox="0 0 16 10" style="flex:none;cursor:grab"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg>
               </sc-if>
               <sc-if value="{{ item.showCheck }}" hint-placeholder-val="{{ true }}">
-                <div onClick="{{ item.toggleChecked }}" style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{ item.checkBg }};border:{{ item.checkBorder }}">
+                <div style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:{{ item.checkBg }};border:{{ item.checkBorder }}">
                   <sc-if value="{{ item.selected }}" hint-placeholder-val="{{ false }}"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
                 </div>
               </sc-if>
@@ -306,7 +313,7 @@ a:hover{color:#1A3E77}
         </sc-if>
 
         <sc-for list="{{ doneItems }}" as="item" hint-placeholder-count="0">
-          <div onClick="{{ item.open }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;opacity:.45">
+          <div onClick="{{ item.rowTap }}" style="display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid rgba(0,0,0,.07);cursor:pointer;opacity:.45">
             <div onClick="{{ item.toggleChecked }}" style="width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;background:#1A1A18">
               <svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
@@ -351,6 +358,31 @@ a:hover{color:#1A3E77}
               <svg width="8" height="14" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
             </div>
           </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeRowMenu }}" style="position:absolute;inset:0;background:rgba(26,26,24,.18);z-index:40"></div>
+      <div style="position:absolute;left:14px;right:14px;top:210px;background:#fff;border-radius:16px;box-shadow:0 16px 38px rgba(0,0,0,.28);z-index:41;overflow:hidden">
+        <div style="display:flex;align-items:center;gap:12px;padding:13px 13px 11px">
+          <div style="width:22px;height:22px;border-radius:50%;flex:none;border:1.5px solid rgba(0,0,0,.2)"></div>
+          <span style="width:7px;height:7px;border-radius:50%;background:{{ menuColor }};flex:none"></span>
+          <div style="flex:1;font-size:15.5px;font-weight:600;color:#1A1A18">{{ menuName }}</div>
+          <div style="display:flex;align-items:center;gap:1px;border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:2px;flex:none">
+            <div onClick="{{ menuDec }}" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="12" height="2" viewBox="0 0 12 2"><line x1="1" y1="1" x2="11" y2="1" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line></svg></div>
+            <div style="min-width:19px;text-align:center;font:700 14.5px system-ui;color:#1A1A18">{{ menuQty }}</div>
+            <div onClick="{{ menuInc }}" style="width:30px;height:30px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center;cursor:pointer"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5v11M1.5 7h11" stroke="#fff" stroke-width="2" stroke-linecap="round"></path></svg></div>
+          </div>
+        </div>
+        <div style="height:1px;background:rgba(0,0,0,.07);margin:0 13px"></div>
+        <div style="padding:5px 0 7px">
+          <div onClick="{{ menuEdit }}" style="display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M11 2l3 3-8 8H3v-3z" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#1A1A18">Edit details</div></div>
+          <div onClick="{{ menuMove }}" style="display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M2 8h12M10 4l4 4-4 4" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#1A1A18;flex:1">Move to shop</div><span style="width:7px;height:7px;border-radius:50%;background:{{ menuColor }};flex:none"></span></div>
+          <div onClick="{{ menuRearrange }}" style="display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M2 4h12M2 8h12M2 12h8" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linecap="round"></path></svg><div style="font-size:15px;color:#1A1A18">Rearrange list</div></div>
+          <div onClick="{{ menuDelete }}" style="display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M2 5h12M6 5V3h4v2M4 5l.7 9h6.6l.7-9" stroke="#C0392B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#C0392B">Delete</div></div>
+          <div style="height:1px;background:rgba(0,0,0,.07);margin:5px 13px"></div>
+          <div onClick="{{ menuSelectMore }}" style="display:flex;align-items:center;gap:12px;padding:11px 15px;cursor:pointer"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><rect x="2" y="2" width="12" height="12" rx="3" stroke="rgba(26,26,24,.5)" stroke-width="1.5"></rect><path d="M5.5 8l1.8 1.8L11 6" stroke="rgba(26,26,24,.5)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#1A1A18">Select more…</div></div>
         </div>
       </div>
       </sc-if>
@@ -885,8 +917,8 @@ class Component extends DCLogic {
     doneCollapsed: false,
     celebrateDismissed: false,
     snack: null,
-    swipeId: null,
-    swipeX: 0,
+    menuId: null,
+    rearrange: false,
     dragX: null,
     avatarHex: '#1A1A18',
     appearanceMode: 'System',
@@ -1016,7 +1048,7 @@ class Component extends DCLogic {
     this.setState({
       items: this.state.items.filter(i => i.id !== id),
       snack: { text: removed.name + ' removed', restore: [removed] },
-      swipeId: null, swipeX: 0,
+      menuId: null,
     });
   };
   undoSnack = () => {
@@ -1026,31 +1058,30 @@ class Component extends DCLogic {
   };
   ROW_H = 48;
 
+  // Two gestures only: tap toggles bought, hold opens the row menu.
+  // No swipe-to-delete and no default-state handle, so the shop pager and the
+  // scroll view keep their axes unconditionally.
   dragStart = (id, e) => {
-    if (this.state.selectMode) {
-      // Reorder: no swipe in select mode, so the same gesture lifts the row.
+    if (this.state.rearrange) {
       this.setState({ liftId: id, dragY: e.clientY, liftY: 0 });
       return;
     }
-    this.setState({ swipeId: id, dragX: e.clientX, swipeX: 0 });
-    this._lp = setTimeout(() => this.enterSelect(id), 450);
+    this._lpFrom = { x: e.clientX, y: e.clientY };
+    this._lp = setTimeout(() => this.openRowMenu(id), 450);
   };
   dragMove = (id, e) => {
     if (this.state.liftId === id && this.state.dragY != null) {
       this.setState({ liftY: e.clientY - this.state.dragY });
       return;
     }
-    if (this.state.swipeId !== id || this.state.dragX == null) return;
-    const dx = Math.min(0, e.clientX - this.state.dragX);
-    if (Math.abs(dx) > 6) clearTimeout(this._lp);
-    this.setState({ swipeX: Math.max(dx, -220) });
+    if (!this._lpFrom) return;
+    const moved = Math.abs(e.clientX - this._lpFrom.x) + Math.abs(e.clientY - this._lpFrom.y);
+    if (moved > 8) { clearTimeout(this._lp); this._lpFrom = null; }
   };
   dragEnd = (id) => {
     clearTimeout(this._lp);
+    this._lpFrom = null;
     if (this.state.liftId === id) { this.commitReorder(id); return; }
-    if (this.state.swipeId !== id) return;
-    if (this.state.swipeX < -140) this.deleteItem(id);
-    else this.setState({ swipeId: null, swipeX: 0, dragX: null });
   };
   commitReorder = (id) => {
     const shift = Math.round((this.state.liftY || 0) / this.ROW_H);
@@ -1069,8 +1100,25 @@ class Component extends DCLogic {
     // The pointerup that ends the long-press still fires a click; swallow it
     // so the row we just selected isn't immediately toggled back off.
     this._fromLongPress = true;
-    this.setState({ selectMode: true, selectedIds: [id], swipeId: null, swipeX: 0, fabOpen: false });
+    setTimeout(() => { this._fromLongPress = false; }, 0);
+    this.setState({ selectMode: true, selectedIds: [id], menuId: null, fabOpen: false });
   };
+
+  openRowMenu = (id) => {
+    // Swallow only the synthetic click from the pointerup that ended this
+    // long-press — the scrim mounts over the row, so that click may never
+    // reach rowTap; clear the guard on the next frame either way.
+    this._fromLongPress = true;
+    setTimeout(() => { this._fromLongPress = false; }, 0);
+    this.setState({ menuId: id, fabOpen: false });
+  };
+  closeRowMenu = () => { this._fromLongPress = false; this.setState({ menuId: null }); };
+  bumpMenuQty = (d) => {
+    const id = this.state.menuId;
+    this.setState({ items: this.state.items.map(i => i.id === id ? { ...i, qty: Math.max(1, i.qty + d) } : i) });
+  };
+  enterRearrange = () => { this._fromLongPress = false; this.setState({ rearrange: true, menuId: null, fabOpen: false, selectMode: false, selectedIds: [] }); };
+  exitRearrange = () => { this._fromLongPress = false; this.setState({ rearrange: false, liftId: null, liftY: 0 }); };
   exitSelect = () => this.setState({ selectMode: false, selectedIds: [], moveSheetOpen: false });
   toggleSelected = (id) => {
     const has = this.state.selectedIds.includes(id);
@@ -1283,10 +1331,9 @@ class Component extends DCLogic {
         shopColor: shop ? shop.color : '#999',
         checkBg: (s.selectMode ? s.selectedIds.includes(i.id) : i.checked) ? '#1A1A18' : 'transparent',
         checkBorder: (s.selectMode ? s.selectedIds.includes(i.id) : i.checked) ? 'none' : '1.5px solid rgba(0,0,0,.2)',
-        swipeX: s.swipeId === i.id ? s.swipeX : 0,
         selected: s.selectedIds.includes(i.id),
-        showHandle: !!s.selectMode,
-        showCheck: true,
+        showHandle: !!s.rearrange,
+        showCheck: !s.rearrange,
         rowBg: s.selectMode && s.selectedIds.includes(i.id) ? '#F1F0EB' : '#FAFAF8',
         liftY: s.liftId === i.id ? s.liftY : 0,
         liftScale: s.liftId === i.id ? 1.03 : 1,
@@ -1296,7 +1343,8 @@ class Component extends DCLogic {
         liftOpacity: s.liftId === i.id ? 0.95 : 1,
         rowTap: () => {
           if (this._fromLongPress) { this._fromLongPress = false; return; }
-          if (s.selectMode) this.toggleSelected(i.id); else this.openProduct(i.id);
+          if (s.rearrange) return;
+          if (s.selectMode) this.toggleSelected(i.id); else this.toggleChecked(i.id);
         },
         open: () => this.openProduct(i.id),
         toggleChecked: (e) => {
@@ -1313,6 +1361,8 @@ class Component extends DCLogic {
     const doneItems = s.doneCollapsed ? [] : checkedInScope.map(decorate);
     const filteredItems = inScope.map(decorate);
     const activeShopName = activeShop ? activeShop.name : '';
+    const menuItem = s.menuId ? s.items.find(i => i.id === s.menuId) : null;
+    const menuShop = menuItem ? s.shops.find(sh => sh.id === menuItem.shop) : null;
     const isEmpty = inScope.length === 0;
     const allDone = !s.celebrateDismissed && s.items.length > 0 && s.items.every(i => i.checked);
     const typed = (s.quickAddText || '').trim().toLowerCase();
@@ -1440,7 +1490,22 @@ class Component extends DCLogic {
       askDeleteList: this.askDeleteList, cancelDeleteList: this.cancelDeleteList,
       confirmDeleteList: this.confirmDeleteList, leaveList: this.leaveList,
       selectMode: !!s.selectMode,
-      showNormalHeader: !s.selectMode && !s.searchOpen,
+      rearrange: !!s.rearrange,
+      exitRearrange: this.exitRearrange,
+      rearrangeScope: s.activeTab === 'all' ? 'Manual order — applies to every shop on this list' : 'Manual order — applies to ' + activeShopName + ' only',
+      menuOpen: !!s.menuId,
+      closeRowMenu: this.closeRowMenu,
+      menuName: menuItem ? menuItem.name : '',
+      menuQty: menuItem ? menuItem.qty : 1,
+      menuColor: menuShop ? menuShop.color : '#999',
+      menuInc: () => this.bumpMenuQty(1),
+      menuDec: () => this.bumpMenuQty(-1),
+      menuEdit: () => { this._fromLongPress = false; const id = s.menuId; this.setState({ menuId: null }, () => this.openProduct(id)); },
+      menuMove: () => { this._fromLongPress = false; this.setState({ menuId: null, selectMode: true, selectedIds: [s.menuId], moveSheetOpen: true }); },
+      menuRearrange: this.enterRearrange,
+      menuDelete: () => { this._fromLongPress = false; const id = s.menuId; this.setState({ menuId: null }, () => this.deleteItem(id)); },
+      menuSelectMore: () => { this._fromLongPress = false; this.setState({ menuId: null, selectMode: true, selectedIds: [s.menuId] }); },
+      showNormalHeader: !s.selectMode && !s.searchOpen && !s.rearrange,
       selectedCount: s.selectedIds.length,
       exitSelect: this.exitSelect, deleteSelected: this.deleteSelected,
       openMoveSheet: this.openMoveSheet, closeMoveSheet: this.closeMoveSheet,
@@ -1516,7 +1581,7 @@ class Component extends DCLogic {
       clearChecked: this.clearChecked,
       showList: !isEmpty,
       showEmpty: isEmpty,
-      showFabClosed: !allDone && !s.fabOpen && !s.selectMode,
+      showFabClosed: !allDone && !s.fabOpen && !s.selectMode && !s.rearrange,
       fabOpen: !!s.fabOpen,
       fabPlaceholder: s.activeTab === 'all' ? 'Add a product…' : 'Add to ' + activeShopName,
       glyphRotation: s.quickAddText.trim() ? 0 : 45,
@@ -1555,7 +1620,7 @@ class Component extends DCLogic {
       snackText: s.snack ? s.snack.text : '',
       undoSnack: this.undoSnack,
       searchOpen: !!s.searchOpen,
-      searchClosed: !s.searchOpen && !s.selectMode,
+      searchClosed: !s.searchOpen && !s.selectMode && !s.rearrange,
       searchText: s.searchText || '',
       openSearch: this.openSearch, closeSearch: this.closeSearch, setSearchText: this.setSearchText,
       offline: !!s.offline, toggleOffline: this.toggleOffline,

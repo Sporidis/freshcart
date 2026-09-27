@@ -549,12 +549,12 @@ a:hover{color:#1A3E77}
   <div class="fs-sec">
     <div class="fs-tag">Flow 03</div>
     <h2 class="fs-flowh">Gestures</h2>
-    <p class="fs-flowd">Swipe-to-delete with local undo, long-press multi-select, and drag-to-reorder. Each is drawn mid-gesture, at the moment the spec's haptic fires.</p>
+    <p class="fs-flowd">Two gestures on the row and nothing else: <strong>tap</strong> marks bought, <strong>hold</strong> opens the stepper and menu. Both drag axes stay with navigation — horizontal switches shop, vertical scrolls — so there is no swipe-to-delete and no handle in the default state. Rare actions live in labelled modes.</p>
     <div class="fs-grp">
 
       <div class="fs-item">
-        <div class="fs-cap">Swipe to delete — past threshold</div>
-        <div class="fs-sub">At 40% the icon pops to 1.15 and mediumImpact() fires, pre-commit.</div>
+        <div class="fs-cap">Hold an item — stepper + menu</div>
+        <div class="fs-sub">450 ms, selectionClick(). The row lifts in place; the list dims behind it.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr">
             <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
@@ -566,31 +566,35 @@ a:hover{color:#1A3E77}
             <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)"><span style="width:8px;height:8px;border-radius:50%;background:#2456A6"></span>Albert Heijn</div>
             <div class="fs-pill" style="border:1px dashed rgba(0,0,0,.3);color:rgba(26,26,24,.45);padding:8px 13px"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg></div>
           </div>
-          <div class="fs-list">
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#2456A6"></span><div class="fs-name">Bananas</div><div class="fs-qty">x6</div></div>
-            <div style="position:relative;border-radius:10px;overflow:hidden;margin:0 -4px">
-              <div style="position:absolute;inset:0;background:#C0392B;display:flex;align-items:center;justify-content:flex-end;padding-right:22px">
-                <svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          <div class="fs-list" style="background:rgba(26,26,24,.16);margin:0 -16px;padding:4px 16px">
+            <div class="fs-row" style="opacity:.3;border-bottom:none"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#2456A6"></span><div class="fs-name">Bananas</div><div class="fs-qty">x6</div></div>
+            <div style="background:#fff;border-radius:16px;box-shadow:0 14px 34px rgba(0,0,0,.26);transform:scale(1.015)">
+              <div class="fs-row" style="border-bottom:none;padding:13px 13px 11px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name" style="font-weight:600">Pasta</div>
+                <div style="display:flex;align-items:center;gap:1px;border:1px solid rgba(0,0,0,.14);border-radius:100px;padding:2px;flex:none">
+                  <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center"><svg width="12" height="2" viewBox="0 0 12 2"><line x1="1" y1="1" x2="11" y2="1" stroke="#1A1A18" stroke-width="2" stroke-linecap="round"></line></svg></div>
+                  <div style="min-width:19px;text-align:center;font:700 14.5px system-ui;color:#1A1A18">2</div>
+                  <div style="width:30px;height:30px;border-radius:50%;background:#1A1A18;display:flex;align-items:center;justify-content:center"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1.5v11M1.5 7h11" stroke="#fff" stroke-width="2" stroke-linecap="round"></path></svg></div>
+                </div>
               </div>
-              <div class="fs-row" style="position:relative;background:#FAFAF8;transform:translateX(-170px);border-bottom:none;padding-left:8px;padding-right:8px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+              <div style="height:1px;background:rgba(0,0,0,.07);margin:0 13px"></div>
+              <div style="padding:5px 0 7px">
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 15px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M11 2l3 3-8 8H3v-3z" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#1A1A18">Edit details</div></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 15px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M2 8h12M10 4l4 4-4 4" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#1A1A18;flex:1">Move to shop</div><span class="fs-dot" style="background:#E8791A"></span></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 15px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M2 4h12M2 8h12M2 12h8" stroke="rgba(26,26,24,.5)" stroke-width="1.5" stroke-linecap="round"></path></svg><div style="font-size:15px;color:#1A1A18">Rearrange list</div></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 15px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><path d="M2 5h12M6 5V3h4v2M4 5l.7 9h6.6l.7-9" stroke="#C0392B" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#C0392B">Delete</div></div>
+                <div style="height:1px;background:rgba(0,0,0,.07);margin:5px 13px"></div>
+                <div style="display:flex;align-items:center;gap:12px;padding:11px 15px"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" style="flex:none"><rect x="2" y="2" width="12" height="12" rx="3" stroke="rgba(26,26,24,.5)" stroke-width="1.5"></rect><path d="M5.5 8l1.8 1.8L11 6" stroke="rgba(26,26,24,.5)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg><div style="font-size:15px;color:#1A1A18">Select more…</div></div>
+              </div>
             </div>
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#C0392B"></span><div class="fs-name">Ground beef</div><div class="fs-qty">x1</div></div>
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
-          </div>
-          <div style="position:absolute;left:16px;right:16px;bottom:96px;background:#1A1A18;border-radius:12px;padding:13px 16px;display:flex;align-items:center;gap:12px;box-sizing:border-box">
-            <div style="flex:1;font-size:14px;color:#fff">Pasta removed</div>
-            <div style="font-size:14px;font-weight:700;color:#F0A868">Undo</div>
-          </div>
-          <div class="fs-fab" style="background:#1A1A18">
-            <svg width="20" height="20" viewBox="0 0 20 20"><path d="M10 2v16M2 10h16" stroke="#fff" stroke-width="2.2" stroke-linecap="round"></path></svg>
+            <div class="fs-row" style="opacity:.3;border-bottom:none"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#C0392B"></span><div class="fs-name">Ground beef</div><div class="fs-qty">x1</div></div>
           </div>
         </div></div>
-        <div class="fs-note">The row is only deleted from Firebase when the snackbar expires — undo is instant and purely local.</div>
+        <div class="fs-note">An overlay anchored to the row's RenderBox, not a route — so the aisle position is never lost. The stepper acts immediately and the menu stays open; menu items dismiss first, then act. Delete writes to Firebase only when its undo snackbar expires.</div>
       </div>
 
       <div class="fs-item">
         <div class="fs-cap">Multi-select mode</div>
-        <div class="fs-sub">Header cross-fades to a contextual bar; the FAB scales to zero and leaves.</div>
+        <div class="fs-sub">Entered from hold → Select more. Header cross-fades in place; the FAB scales out. The circle now means selected, not bought.</div>
         <div class="fs-scr"><div class="fs-body">
           <div class="fs-hdr" style="gap:14px">
             <div style="font-size:20px;color:rgba(26,26,24,.55);line-height:1;flex:none">✕</div>
@@ -609,33 +613,25 @@ a:hover{color:#1A3E77}
       </div>
 
       <div class="fs-item">
-        <div class="fs-cap">Drag to reorder — row lifted</div>
-        <div class="fs-sub">Elevation 8, scale 1.03, 95% opacity. Checked rows are locked below the Done divider.</div>
+        <div class="fs-cap">Rearrange mode — row lifted</div>
+        <div class="fs-sub">Entered from hold → Rearrange. Handles exist only here; tabs stop swiping and the FAB scales out.</div>
         <div class="fs-scr"><div class="fs-body">
-          <div class="fs-hdr">
-            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
-            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:-16px -16px 0;padding:16px;background:#1A1A18">
+            <div style="flex:1;font:700 16px system-ui,sans-serif;color:#fff">Drag to reorder</div>
+            <div style="font:700 14.5px system-ui;color:#F0A868;flex:none">Done</div>
           </div>
-          <div class="fs-tabs">
-            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
-            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
-            <div class="fs-pill" style="border:1px dashed rgba(0,0,0,.3);color:rgba(26,26,24,.45);padding:8px 13px"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg></div>
-          </div>
-          <div class="fs-list">
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+          <div style="margin:0 -16px;padding:9px 16px 11px;background:rgba(26,26,24,.04);font:400 12.5px/1.4 system-ui,sans-serif;color:rgba(26,26,24,.5)">Manual order — applies to Colruyt only</div>
+          <div class="fs-list" style="margin-top:10px">
+            <div class="fs-row"><svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div></div>
             <div style="height:52px;border-radius:10px;border:1.5px dashed rgba(232,121,26,.4);margin:6px 0"></div>
             <div class="fs-row" style="background:#fff;border-radius:12px;box-shadow:0 10px 24px rgba(0,0,0,.16);transform:scale(1.03);border-bottom:none;padding:14px 12px;margin:0 -6px;opacity:.95">
               <svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg>
               <span class="fs-dot" style="background:#E8791A"></span><div class="fs-name" style="font-weight:600">Butter</div><div class="fs-qty">x1</div>
             </div>
-            <div class="fs-row" style="margin-top:6px"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
-            <div class="fs-done">
-              <svg width="10" height="7" viewBox="0 0 10 7"><path d="M1 1l4 4 4-4" stroke="rgba(26,26,24,.42)" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-              <div class="fs-done-l" style="flex:1">Done · 1</div>
-            </div>
-            <div class="fs-row" style="opacity:.45"><div class="fs-check" style="background:#E8791A"><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name" style="text-decoration:line-through">Rice</div><div class="fs-qty">x1</div></div>
+            <div class="fs-row" style="margin-top:6px"><svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div></div>
+            <div class="fs-row"><svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Rice</div></div>
           </div>
+          <div class="fs-note" style="position:absolute;left:16px;right:16px;bottom:18px;font:400 11.5px/1.4 system-ui,sans-serif;color:rgba(26,26,24,.4);margin:0">Checking off is suspended in this mode — the whole row is draggable, so the handle is a signpost, not a target.</div>
         </div></div>
       </div>
 
@@ -1102,18 +1098,13 @@ a:hover{color:#1A3E77}
         <div class="fs-cap">1 · Resting</div>
         <div class="fs-sub">56&nbsp;px circle, tinted to the active shop. Bottom-right so it never sits under the reading path.</div>
         <div class="fs-scr"><div class="fs-body">
-          <div class="fs-hdr">
-            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
-            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:-16px -16px 0;padding:16px;background:#1A1A18">
+            <div style="flex:1;font:700 16px system-ui,sans-serif;color:#fff">Drag to reorder</div>
+            <div style="font:700 14.5px system-ui;color:#F0A868;flex:none">Done</div>
           </div>
-          <div class="fs-tabs">
-            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
-            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
-            <div class="fs-pill" style="border:1px dashed rgba(0,0,0,.3);color:rgba(26,26,24,.45);padding:8px 13px"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg></div>
-          </div>
-          <div class="fs-list">
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+          <div style="margin:0 -16px;padding:9px 16px 11px;background:rgba(26,26,24,.04);font:400 12.5px/1.4 system-ui,sans-serif;color:rgba(26,26,24,.5)">Manual order — applies to Colruyt only</div>
+          <div class="fs-list" style="margin-top:10px">
+            <div class="fs-row"><svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Butter</div><div class="fs-qty">x1</div></div>
           </div>
@@ -1157,18 +1148,13 @@ a:hover{color:#1A3E77}
         <div class="fs-cap">3 · Open, empty — glyph is ×</div>
         <div class="fs-sub">Keyboard up, cursor in the field. The × is the only way back, and it rolls the capsule shut in reverse.</div>
         <div class="fs-scr"><div class="fs-body">
-          <div class="fs-hdr">
-            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
-            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:-16px -16px 0;padding:16px;background:#1A1A18">
+            <div style="flex:1;font:700 16px system-ui,sans-serif;color:#fff">Drag to reorder</div>
+            <div style="font:700 14.5px system-ui;color:#F0A868;flex:none">Done</div>
           </div>
-          <div class="fs-tabs">
-            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
-            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
-            <div class="fs-pill" style="border:1px dashed rgba(0,0,0,.3);color:rgba(26,26,24,.45);padding:8px 13px"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg></div>
-          </div>
-          <div class="fs-list">
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+          <div style="margin:0 -16px;padding:9px 16px 11px;background:rgba(26,26,24,.04);font:400 12.5px/1.4 system-ui,sans-serif;color:rgba(26,26,24,.5)">Manual order — applies to Colruyt only</div>
+          <div class="fs-list" style="margin-top:10px">
+            <div class="fs-row"><svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
           </div>
           <div style="position:absolute;left:20px;right:20px;bottom:300px;height:56px;border-radius:28px;background:#fff;border:1px solid rgba(0,0,0,.1);box-shadow:0 8px 22px rgba(0,0,0,.10);display:flex;align-items:center;padding:0 8px 0 18px;box-sizing:border-box">
@@ -1187,18 +1173,13 @@ a:hover{color:#1A3E77}
         <div class="fs-cap">4 · Text entered — × rotates back to +</div>
         <div class="fs-sub">The moment the field is non-empty the glyph un-rotates and re-fills with the shop colour. Two exits now: <strong>Enter</strong> commits and stays open for the next item; <strong>tapping +</strong> opens the detail sheet.</div>
         <div class="fs-scr"><div class="fs-body">
-          <div class="fs-hdr">
-            <div style="width:18px;height:14px;display:flex;flex-direction:column;justify-content:space-between;flex:none"><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div><div style="height:2px;background:#1A1A18;border-radius:1px"></div></div>
-            <div style="flex:1"><div class="fs-eyebrow">Basket</div><div class="fs-title">Weekly Groceries</div></div>
-            <div style="width:32px;height:32px;border-radius:50%;background:#1A1A18;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none">A</div>
+          <div style="display:flex;align-items:center;gap:12px;margin:-16px -16px 0;padding:16px;background:#1A1A18">
+            <div style="flex:1;font:700 16px system-ui,sans-serif;color:#fff">Drag to reorder</div>
+            <div style="font:700 14.5px system-ui;color:#F0A868;flex:none">Done</div>
           </div>
-          <div class="fs-tabs">
-            <div class="fs-pill" style="border:1px solid rgba(0,0,0,.14);color:rgba(26,26,24,.7)">All</div>
-            <div class="fs-pill" style="background:#E8791A;color:#fff;font-weight:600"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt</div>
-            <div class="fs-pill" style="border:1px dashed rgba(0,0,0,.3);color:rgba(26,26,24,.45);padding:8px 13px"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="rgba(26,26,24,.45)" stroke-width="2" stroke-linecap="round"></path></svg></div>
-          </div>
-          <div class="fs-list">
-            <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div><div class="fs-qty">x2</div></div>
+          <div style="margin:0 -16px;padding:9px 16px 11px;background:rgba(26,26,24,.04);font:400 12.5px/1.4 system-ui,sans-serif;color:rgba(26,26,24,.5)">Manual order — applies to Colruyt only</div>
+          <div class="fs-list" style="margin-top:10px">
+            <div class="fs-row"><svg width="16" height="10" viewBox="0 0 16 10" style="flex:none"><line x1="1" y1="1" x2="15" y2="1" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="5" x2="15" y2="5" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line><line x1="1" y1="9" x2="15" y2="9" stroke="rgba(26,26,24,.35)" stroke-width="1.6" stroke-linecap="round"></line></svg><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Pasta</div></div>
             <div class="fs-row"><div class="fs-check" style="border:1.5px solid rgba(0,0,0,.2)"></div><span class="fs-dot" style="background:#E8791A"></span><div class="fs-name">Chocolate spread</div><div class="fs-qty">x1</div></div>
           </div>
           <div style="position:absolute;left:20px;right:20px;bottom:364px;display:flex;gap:7px;overflow:hidden">
