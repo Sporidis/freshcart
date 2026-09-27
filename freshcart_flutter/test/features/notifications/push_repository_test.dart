@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/notifications/data/push_repository_impl.dart';
-import 'package:freshcart_flutter/features/notifications/data/push_token_source.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
+import 'package:freshcart_flutter/features/notifications/data/sources/push_token_source.dart';
 
 import '../../fakes/dto_builders.dart';
 import '../../fakes/fake_client.dart';

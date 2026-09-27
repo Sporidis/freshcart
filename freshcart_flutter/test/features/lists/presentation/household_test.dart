@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
-import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
+import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/invite_card.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

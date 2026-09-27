@@ -4,12 +4,12 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/data/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/cache/cached_items_store.dart';
-import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
 
 import '../../../fakes/dto_builders.dart';
 import '../../../fakes/fake_client.dart';

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/auth/presentation/upgrade_nudge.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/upgrade_nudge.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The card nudging an anonymous account to link an email, or confirming one

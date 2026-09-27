@@ -4,12 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
-import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
-import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
-import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
-import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
+import 'package:freshcart_flutter/features/shops/application/controllers/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filter_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../fakes/fake_item_repository.dart';

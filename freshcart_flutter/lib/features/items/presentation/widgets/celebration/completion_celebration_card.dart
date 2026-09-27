@@ -6,7 +6,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/screen/celebration_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/confetti_burst.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';

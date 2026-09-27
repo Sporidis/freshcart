@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
-import 'package:freshcart_flutter/features/notifications/data/push_repository_provider.dart';
-import 'package:freshcart_flutter/features/notifications/presentation/notifications_screen.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_provider.dart';
+import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../fakes/fake_list_repository.dart';

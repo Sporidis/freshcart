@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
-import 'package:freshcart_flutter/features/auth/presentation/edit_profile_screen.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/presentation/screens/edit_profile_screen.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

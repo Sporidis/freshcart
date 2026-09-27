@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/features/sync/application/pending_write_count_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_status.dart';
+import 'package:freshcart_flutter/features/sync/application/providers/pending_write_count_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/providers/sync_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/providers/sync_status.dart';
 
 class OfflineSyncingBanner extends ConsumerWidget {
   const OfflineSyncingBanner({super.key});

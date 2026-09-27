@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 

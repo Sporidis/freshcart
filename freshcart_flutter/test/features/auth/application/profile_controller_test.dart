@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/application/profile_controller.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/controllers/profile_controller.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_provider.dart';
 
 import '../../../fakes/fake_auth_repository.dart';
 
