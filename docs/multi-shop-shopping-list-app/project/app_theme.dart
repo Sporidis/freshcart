@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'app_colors.dart';
 
 /// Basket type scale. Sizes and weights match the design one-for-one:
@@ -12,85 +11,53 @@ class AppTextStyles {
   static const String fontFamily = '.SF Pro Text';
 
   static const TextStyle largeTitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.6,
-    height: 1.12,
+    fontFamily: fontFamily, fontSize: 28, fontWeight: FontWeight.w700,
+    letterSpacing: -0.6, height: 1.12,
   );
   static const TextStyle screenTitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 26,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.35,
-    height: 1.15,
+    fontFamily: fontFamily, fontSize: 26, fontWeight: FontWeight.w700,
+    letterSpacing: -0.35, height: 1.15,
   );
   static const TextStyle sheetTitle = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
+    fontFamily: fontFamily, fontSize: 22, fontWeight: FontWeight.w700,
     letterSpacing: -0.2,
   );
   static const TextStyle bodyStrong = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
+    fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w600,
   );
   static const TextStyle body = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 16,
-    fontWeight: FontWeight.w400,
+    fontFamily: fontFamily, fontSize: 16, fontWeight: FontWeight.w400,
   );
   static const TextStyle secondary = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-    height: 1.5,
+    fontFamily: fontFamily, fontSize: 15, fontWeight: FontWeight.w400, height: 1.5,
   );
   static const TextStyle secondaryStrong = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
+    fontFamily: fontFamily, fontSize: 15, fontWeight: FontWeight.w600,
   );
   static const TextStyle label = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
+    fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w400,
   );
   static const TextStyle labelStrong = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 14,
-    fontWeight: FontWeight.w600,
+    fontFamily: fontFamily, fontSize: 14, fontWeight: FontWeight.w600,
   );
   static const TextStyle caption = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 13,
-    fontWeight: FontWeight.w400,
+    fontFamily: fontFamily, fontSize: 13, fontWeight: FontWeight.w400,
   );
   static const TextStyle captionStrong = TextStyle(
-    fontFamily: fontFamily,
-    fontSize: 13,
-    fontWeight: FontWeight.w600,
+    fontFamily: fontFamily, fontSize: 13, fontWeight: FontWeight.w600,
   );
 
   /// Section eyebrows: LISTS, DONE · 3, THIS WEEK.
   static const TextStyle eyebrow = TextStyle(
-    fontFamily: 'monospace',
-    fontSize: 12,
-    fontWeight: FontWeight.w700,
+    fontFamily: 'monospace', fontSize: 12, fontWeight: FontWeight.w700,
     letterSpacing: 0.7,
   );
-
   /// Invite links and codes.
   static const TextStyle code = TextStyle(
-    fontFamily: 'monospace',
-    fontSize: 14,
-    fontWeight: FontWeight.w400,
+    fontFamily: 'monospace', fontSize: 14, fontWeight: FontWeight.w400,
   );
   static const TextStyle codeLarge = TextStyle(
-    fontFamily: 'monospace',
-    fontSize: 20,
-    fontWeight: FontWeight.w600,
+    fontFamily: 'monospace', fontSize: 20, fontWeight: FontWeight.w600,
     letterSpacing: 4,
   );
 }
@@ -148,24 +115,13 @@ class AppSizes {
 class AppTheme {
   AppTheme._();
 
-  static final ThemeData light = _build(
-    brightness: Brightness.light,
-    seed: AppColors.ink,
-  );
-  static final ThemeData dark = _build(
-    brightness: Brightness.dark,
-    seed: AppColors.ink,
-  );
+  static final ThemeData light = _build(brightness: Brightness.light, seed: AppColors.ink);
+  static final ThemeData dark = _build(brightness: Brightness.dark, seed: AppColors.ink);
 
-  static ThemeData forShop(Color? shopColor, Brightness brightness) => _build(
-    brightness: brightness,
-    seed: shopColor ?? AppColors.shopColorFallback,
-  );
+  static ThemeData forShop(Color? shopColor, Brightness brightness) =>
+      _build(brightness: brightness, seed: shopColor ?? AppColors.shopColorFallback);
 
-  static ThemeData _build({
-    required Brightness brightness,
-    required Color seed,
-  }) {
+  static ThemeData _build({required Brightness brightness, required Color seed}) {
     final isDark = brightness == Brightness.dark;
 
     final ink = isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
@@ -173,24 +129,19 @@ class AppTheme {
     final surface = isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
     final border = isDark ? AppColors.borderDark : AppColors.borderLight;
     final divider = isDark ? AppColors.dividerDark : AppColors.dividerLight;
-    final secondaryText = isDark
-        ? AppColors.textSecondaryDark
-        : AppColors.textSecondaryLight;
-    final mutedText = isDark
-        ? AppColors.textMutedDark
-        : AppColors.textMutedLight;
+    final secondaryText = isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+    final mutedText = isDark ? AppColors.textMutedDark : AppColors.textMutedLight;
 
     // Primary buttons are ink-on-paper in both modes, whatever the shop is.
     final buttonBg = isDark ? Colors.white : AppColors.ink;
     final buttonFg = isDark ? AppColors.ink : Colors.white;
 
-    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness)
-        .copyWith(
-          surface: surface,
-          onSurface: ink,
-          error: AppColors.destructive,
-          onError: Colors.white,
-        );
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness).copyWith(
+      surface: surface,
+      onSurface: ink,
+      error: AppColors.destructive,
+      onError: Colors.white,
+    );
 
     final textTheme = TextTheme(
       displayLarge: AppTextStyles.largeTitle.copyWith(color: ink),
@@ -233,9 +184,7 @@ class AppTheme {
         elevation: 0,
         modalBarrierColor: const Color(0x59141412),
         shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(AppRadii.sheet),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
         ),
         showDragHandle: true,
         dragHandleSize: const Size(36, 4),
@@ -251,9 +200,7 @@ class AppTheme {
           disabledForegroundColor: buttonFg.withValues(alpha: 0.7),
           minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
           padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
           textStyle: AppTextStyles.bodyStrong,
           elevation: 0,
         ),
@@ -265,9 +212,7 @@ class AppTheme {
           foregroundColor: ink,
           side: BorderSide(color: border, width: 1),
           minimumSize: const Size.fromHeight(AppSizes.buttonHeight),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
           textStyle: AppTextStyles.bodyStrong,
         ),
       ),
@@ -294,9 +239,7 @@ class AppTheme {
         focusedBorder: _inputBorder(scheme.primary),
         errorBorder: _inputBorder(AppColors.destructive),
         focusedErrorBorder: _inputBorder(AppColors.destructive),
-        errorStyle: AppTextStyles.captionStrong.copyWith(
-          color: AppColors.destructive,
-        ),
+        errorStyle: AppTextStyles.captionStrong.copyWith(color: AppColors.destructive),
       ),
 
       // Shop tab pills. Selected background is the shop's own colour when the
@@ -306,9 +249,7 @@ class AppTheme {
         selectedColor: scheme.primary,
         disabledColor: Colors.transparent,
         labelStyle: AppTextStyles.label.copyWith(color: secondaryText),
-        secondaryLabelStyle: AppTextStyles.labelStrong.copyWith(
-          color: scheme.onPrimary,
-        ),
+        secondaryLabelStyle: AppTextStyles.labelStrong.copyWith(color: scheme.onPrimary),
         side: BorderSide(color: border),
         shape: const StadiumBorder(),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
@@ -325,15 +266,10 @@ class AppTheme {
       // The round check circle on every product row.
       checkboxTheme: CheckboxThemeData(
         fillColor: WidgetStateProperty.resolveWith(
-          (states) => states.contains(WidgetState.selected)
-              ? scheme.primary
-              : Colors.transparent,
+          (states) => states.contains(WidgetState.selected) ? scheme.primary : Colors.transparent,
         ),
         checkColor: WidgetStatePropertyAll(scheme.onPrimary),
-        side: BorderSide(
-          color: isDark ? Colors.white30 : Colors.black26,
-          width: 1.5,
-        ),
+        side: BorderSide(color: isDark ? Colors.white30 : Colors.black26, width: 1.5),
         shape: const CircleBorder(),
         materialTapTargetSize: MaterialTapTargetSize.padded,
       ),
@@ -356,9 +292,7 @@ class AppTheme {
         actionTextColor: AppColors.undoAccent,
         insetPadding: const EdgeInsets.all(16),
         elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.snackbar),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.snackbar)),
       ),
 
       dialogTheme: DialogThemeData(
@@ -366,14 +300,8 @@ class AppTheme {
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        titleTextStyle: AppTextStyles.sheetTitle.copyWith(
-          color: ink,
-          fontSize: 18,
-        ),
-        contentTextStyle: AppTextStyles.label.copyWith(
-          color: secondaryText,
-          height: 1.5,
-        ),
+        titleTextStyle: AppTextStyles.sheetTitle.copyWith(color: ink, fontSize: 18),
+        contentTextStyle: AppTextStyles.label.copyWith(color: secondaryText, height: 1.5),
       ),
 
       drawerTheme: DrawerThemeData(
@@ -401,17 +329,15 @@ class AppTheme {
 
       iconTheme: IconThemeData(color: ink, size: 22),
 
-      pageTransitionsTheme: const PageTransitionsTheme(
-        builders: {
-          TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-          TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-        },
-      ),
+      pageTransitionsTheme: const PageTransitionsTheme(builders: {
+        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+      }),
     );
   }
 
   static OutlineInputBorder _inputBorder(Color color) => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(AppRadii.input),
-    borderSide: BorderSide(color: color, width: 1.5),
-  );
+        borderRadius: BorderRadius.circular(AppRadii.input),
+        borderSide: BorderSide(color: color, width: 1.5),
+      );
 }

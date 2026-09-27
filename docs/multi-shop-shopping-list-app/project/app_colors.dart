@@ -59,14 +59,8 @@ class AppColors {
   /// The colour picker offered when a user creates or edits a shop.
   /// First entry is the default suggestion.
   static const List<Color> presetShopColors = [
-    swatchBlue,
-    swatchOrange,
-    swatchRed,
-    swatchGreen,
-    swatchPurple,
-    swatchGold,
-    swatchTeal,
-    swatchPink,
+    swatchBlue, swatchOrange, swatchRed, swatchGreen,
+    swatchPurple, swatchGold, swatchTeal, swatchPink,
   ];
 
   /// Used when a shop somehow has no colour assigned.

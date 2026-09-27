@@ -55,7 +55,12 @@
     "newProductTitle": "Bagong produkto",
     "editProductTitle": "I-edit ang produkto",
     "remove": "Alisin",
-    "moveTo": "Ilipat sa"
+    "moveTo": "Ilipat sa",
+    "menuEditDetails": "I-edit ang detalye",
+    "menuMoveToShop": "Ilipat sa tindahan",
+    "menuRearrangeList": "Ayusin ulit ang listahan",
+    "menuSelectMore": "Pumili pa…",
+    "rearrangeHeader": "I-drag para ayusin"
   },
   "shops": {
     "all": "Lahat ng tindahan",
@@ -84,7 +89,8 @@
     "move": "Ilipat",
     "retry": "Subukan muli",
     "undo": "I-undo",
-    "dismiss": "I-dismiss"
+    "dismiss": "I-dismiss",
+    "done": "Tapos na"
   },
   "errors": {
     "network": "Hindi maabot ang server.",

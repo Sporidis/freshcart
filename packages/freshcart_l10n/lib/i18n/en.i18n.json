@@ -55,7 +55,12 @@
     "newProductTitle": "New product",
     "editProductTitle": "Edit product",
     "remove": "Remove",
-    "moveTo": "Move to"
+    "moveTo": "Move to",
+    "menuEditDetails": "Edit details",
+    "menuMoveToShop": "Move to shop",
+    "menuRearrangeList": "Rearrange list",
+    "menuSelectMore": "Select more…",
+    "rearrangeHeader": "Drag to reorder"
   },
   "shops": {
     "all": "All shops",
@@ -84,7 +89,8 @@
     "move": "Move",
     "retry": "Try again",
     "undo": "Undo",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "done": "Done"
   },
   "errors": {
     "network": "Could not reach the server.",

@@ -60,10 +60,10 @@ A ✅ means "this row may depend on this column." Anything not ticked is a viola
 | Entities, value objects, `Failure` union | `packages/freshcart_domain/.../domain/`            |
 | Repository **interfaces** (ports)        | `packages/freshcart_domain/.../domain/`            |
 | Use cases (application-agnostic logic)   | `packages/freshcart_domain/.../domain/`            |
-| Repository **implementations**           | `freshcart_flutter/.../features/<f>/data/`         |
+| Repository **implementations**           | `freshcart_flutter/.../features/<f>/data/repositories/` |
 | DTO ↔ entity mappers                     | `freshcart_flutter/.../features/<f>/data/mappers/` |
-| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/`  |
-| Screens, widgets                         | `freshcart_flutter/.../features/<f>/presentation/` |
+| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/{controllers,providers,screen}/` |
+| Screens, widgets                         | `freshcart_flutter/.../features/<f>/presentation/{screens,widgets}/` |
 | DB models, endpoints, server ops         | `freshcart_server/`                                |
 | Generated protocol + client              | `freshcart_client/` (never hand-edit)              |
 
@@ -73,27 +73,33 @@ the server, and the compiler physically prevents Flutter/Serverpod imports from 
 
 ## Feature folder layout (the app)
 
+Every feature uses the same template, decided by what a file *is* rather than
+what it is about -- so where a file lives is known before the folder is opened,
+even when a subfolder holds a single file.
+
 ```
 freshcart_flutter/lib/
-├── core/
-│   ├── di/                 # root ProviderScope wiring, overrides
-│   ├── router/             # go_router config, guards (auth, list membership)
-│   ├── theme/              # ColorScheme.fromSeed(activeShopColor), light/dark
-│   ├── error/              # Failure → user-facing message mapping
-│   └── extensions/
-└── features/
-    └── lists/
-        ├── data/
-        │   ├── mappers/            # ShoppingListDto.toDomain(), etc.
-        │   ├── list_repository_impl.dart
-        │   └── list_realtime_source.dart   # wraps Serverpod streaming
-        ├── application/
-        │   ├── lists_controller.dart        # @riverpod
-        │   └── list_stream_provider.dart
-        └── presentation/
-            ├── lists_screen.dart
-            └── widgets/
+├── core/                   # cross-cutting, one concern per folder (not a feature)
+│   ├── di/  error/  l10n/  router/  session/  streaming/  ui/
+│   └── theme/              # tokens/  preferences/  reveal/
+└── features/<feature>/
+    ├── application/
+    │   ├── controllers/    # XController -- Notifiers owning feature state + actions
+    │   ├── providers/      # function providers: derived values, use-case DI
+    │   └── screen/         # XScreenController/XScreenState + per-screen UI state
+    ├── data/
+    │   ├── repositories/   # *_repository_impl.dart + *_repository_provider.dart
+    │   ├── sources/        # realtime sources, adapters, local stores (grouped if many)
+    │   └── mappers/        # Dto.toDomain() / Entity.toDto()
+    └── presentation/
+        ├── screens/        # route-level *_screen.dart
+        └── widgets/        # everything else; clusters get their own folder
+                            # (item_tile/, quick_add/, app_bar/, ...)
 ```
+
+Only the subfolders a feature actually needs exist -- `shops/` has no `screen/`,
+`onboarding/` has no `data/`. Naming inside them follows `CLAUDE.md`'s Riverpod
+naming rule.
 
 The domain half of `lists` lives in the shared package:
 

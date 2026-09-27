@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/app_color.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
-import 'package:freshcart_flutter/features/onboarding/application/onboarding_state.dart';
+import 'package:freshcart_flutter/features/onboarding/application/screen/onboarding_controller.dart';
+import 'package:freshcart_flutter/features/onboarding/application/screen/onboarding_state.dart';
 
 class OnboardingContinueButton extends ConsumerWidget {
   const OnboardingContinueButton({super.key});
