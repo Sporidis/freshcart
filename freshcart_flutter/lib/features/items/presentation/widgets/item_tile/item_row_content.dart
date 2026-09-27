@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/checked_state.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile_v2/check_circle.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile_v2/quantity_stepper.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/check_circle.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The row's visual content, reused unmodified as `ItemMenu`'s header once
@@ -40,7 +40,7 @@ class ItemRowContent extends StatelessWidget {
   final Widget? dragHandle;
 
   /// Who checked this item off, if anyone. A note always wins over showing
-  /// this -- see `ItemTileV2.checkedByMember`.
+  /// this -- see `ItemTile.checkedByMember`.
   final ListMember? checkedByMember;
 
   @override

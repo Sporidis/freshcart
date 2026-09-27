@@ -9,7 +9,7 @@ import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -99,19 +99,21 @@ class SearchResults extends ConsumerWidget {
             key: ValueKey(item.id.value),
             item: item,
             t: t,
-            index: 0,
-            canReorder: false,
-            selectionMode: false,
-            selected: false,
-            onToggleSelection: () {},
-            onLongPress: () {},
-            highlightQuery: trimmed,
-            shopDotColor: dotFor(item.shopId),
+            shopColor: dotFor(item.shopId),
             checkedByMember: item.checkedBy == null
                 ? null
                 : list.memberFor(item.checkedBy!),
             onToggle: () async => report(await controller.toggle(item)),
-            onSwipeDelete: () => controller.swipeDelete(item),
+            onDelete: () => controller.swipeDelete(item),
+            onQuantityChanged: (quantity) async => report(
+              await controller.edit(
+                item,
+                name: item.name,
+                quantity: quantity,
+                shopId: item.shopId,
+                noteText: item.note?.text,
+              ),
+            ),
             onEdit: () async {
               final outcome = await showModalBottomSheet<ItemSheetOutcome>(
                 context: context,

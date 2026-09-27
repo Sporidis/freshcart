@@ -2,8 +2,6 @@ import 'package:flutter/widgets.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/auth/presentation/edit_profile_screen.dart';
 import 'package:freshcart_flutter/features/auth/presentation/settings_screen.dart';
-import 'package:freshcart_flutter/features/items/presentation/item_tile_v2_playground_screen.dart';
-import 'package:freshcart_flutter/features/items/presentation/items_section_v2.dart';
 import 'package:freshcart_flutter/features/lists/presentation/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_settings_screen.dart';
@@ -68,22 +66,6 @@ abstract final class Routes {
   /// The concrete path to Notifications.
   static const String notifications = '$settings/$notificationsPattern';
 
-  /// The path pattern for the dev-only [ItemTileV2PlaygroundScreen], nested
-  /// under settings. Only reachable from Settings' dev-tools row, itself
-  /// gated to `kDebugMode` — see `preferences_section.dart`.
-  static const String itemTileV2PlaygroundPattern = 'dev/item-tile-v2';
-
-  /// The concrete path to the item-tile-v2 playground.
-  static const String itemTileV2Playground =
-      '$settings/$itemTileV2PlaygroundPattern';
-
-  /// The path pattern for the dev-only [ItemsSectionV2Screen], nested under
-  /// settings the same way [itemTileV2PlaygroundPattern] is.
-  static const String itemsSectionV2Pattern = 'dev/items-section-v2';
-
-  /// The concrete path to the items-section-v2 dev screen.
-  static const String itemsSectionV2 = '$settings/$itemsSectionV2Pattern';
-
   /// The splash screen — the app's actual initial route. Shown for exactly
   /// as long as sign-in takes; it redirects itself onward once it knows.
   static const String splash = '/splash';
@@ -146,14 +128,6 @@ GoRouter appRouter(Ref ref) => GoRouter(
         GoRoute(
           path: Routes.notificationsPattern,
           builder: (context, state) => const NotificationsScreen(),
-        ),
-        GoRoute(
-          path: Routes.itemTileV2PlaygroundPattern,
-          builder: (context, state) => const ItemTileV2PlaygroundScreen(),
-        ),
-        GoRoute(
-          path: Routes.itemsSectionV2Pattern,
-          builder: (context, state) => const ItemsSectionV2Screen(),
         ),
       ],
     ),

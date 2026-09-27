@@ -42,10 +42,9 @@ class ShopThemeReveal extends StatefulWidget {
   final Widget child;
 
   /// Whether [beginReveal] should fire a light haptic when it starts.
-  /// Resolved by the caller (a plain `bool`, not a Riverpod read in here) --
-  /// same reasoning `RecentlyChecked` gives for staying `AppMotion`-free
-  /// itself: this widget has no other Riverpod dependency, and one haptics
-  /// check isn't worth giving it one.
+  /// Resolved by the caller (a plain `bool`, not a Riverpod read in here):
+  /// this widget has no other Riverpod dependency, and one haptics check
+  /// isn't worth giving it one.
   final bool hapticsOn;
 
   @override

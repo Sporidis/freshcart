@@ -6,12 +6,12 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/checked_state.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile_v2/item_menu.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile_v2/item_row_content.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-class ItemTileV2 extends StatefulWidget {
-  const ItemTileV2({
+class ItemTile extends StatefulWidget {
+  const ItemTile({
     required this.item,
     required this.shopColor,
     required this.onToggle,
@@ -60,7 +60,7 @@ class ItemTileV2 extends StatefulWidget {
   /// meaningful while [selectionMode] is true -- reuses the same circle
   /// `CheckCircle` otherwise shows the checked state in, since a
   /// selectable row is never simultaneously a checked one (selection only
-  /// ever applies to the open section -- see `ItemsSectionV2`).
+  /// ever applies to the open section -- see `ItemsSection`).
   final bool selected;
 
   /// Whether the list is in multi-select right now. While true, this row's
@@ -107,10 +107,10 @@ class ItemTileV2 extends StatefulWidget {
   final ListMember? checkedByMember;
 
   @override
-  State<ItemTileV2> createState() => _ItemTileV2State();
+  State<ItemTile> createState() => _ItemTileState();
 }
 
-class _ItemTileV2State extends State<ItemTileV2> with TickerProviderStateMixin {
+class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   static const _longPressThreshold = Duration(milliseconds: 450);
   static const _liftDuration = Duration(milliseconds: 300);
   static const _liftScale = 1.015;
@@ -175,7 +175,7 @@ class _ItemTileV2State extends State<ItemTileV2> with TickerProviderStateMixin {
   }
 
   @override
-  void didUpdateWidget(covariant ItemTileV2 oldWidget) {
+  void didUpdateWidget(covariant ItemTile oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Re-sync if the real checked state changed for a reason other than our
     // own optimistic flip below -- a realtime update from another member, or
@@ -354,11 +354,11 @@ class _ItemTileV2State extends State<ItemTileV2> with TickerProviderStateMixin {
 void _noop() {}
 void _noopInt(int _) {}
 
-@Preview(group: 'Items', name: 'Item row v2 — list', size: previewPhone)
-Widget itemTileV2Preview() => previewPiece(
+@Preview(group: 'Items', name: 'Item row — list', size: previewPhone)
+Widget itemTilePreview() => previewPiece(
   ListView(
     children: [
-      ItemTileV2(
+      ItemTile(
         item: _sampleItem(name: 'Pasta', quantity: 2),
         shopColor: Colors.red,
         onToggle: _noop,
@@ -367,7 +367,7 @@ Widget itemTileV2Preview() => previewPiece(
         onQuantityChanged: _noopInt,
         t: previewTranslations,
       ),
-      ItemTileV2(
+      ItemTile(
         item: _sampleItem(
           name: 'Olive oil',
           quantity: 1,
@@ -380,7 +380,7 @@ Widget itemTileV2Preview() => previewPiece(
         onQuantityChanged: _noopInt,
         t: previewTranslations,
       ),
-      ItemTileV2(
+      ItemTile(
         item: _sampleItem(name: 'Bananas', quantity: 6),
         shopColor: null,
         onToggle: _noop,
@@ -389,7 +389,7 @@ Widget itemTileV2Preview() => previewPiece(
         onQuantityChanged: _noopInt,
         t: previewTranslations,
       ),
-      ItemTileV2(
+      ItemTile(
         item: _sampleItem(name: 'Yoghurt', quantity: 4),
         shopColor: Colors.blue,
         onToggle: _noop,
@@ -398,7 +398,7 @@ Widget itemTileV2Preview() => previewPiece(
         onQuantityChanged: _noopInt,
         t: previewTranslations,
       ),
-      ItemTileV2(
+      ItemTile(
         item: _sampleItem(
           name: 'Ground beef',
           quantity: 1,
@@ -411,7 +411,7 @@ Widget itemTileV2Preview() => previewPiece(
         onQuantityChanged: _noopInt,
         t: previewTranslations,
       ),
-      ItemTileV2(
+      ItemTile(
         item: _sampleItem(name: 'Chocolate spread', quantity: 1),
         shopColor: Colors.purple,
         onToggle: _noop,

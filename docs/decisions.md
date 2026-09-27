@@ -545,6 +545,8 @@ reassignment is the eventual answer; refusing is the correct behaviour until it 
 
 ## 47. The "recently checked" hold is provider state, not widget state
 
+> **Superseded by #92** -- the hold was removed along with the old item row.
+
 **Decision:** `RecentlyChecked` keeps a checked item visible in place for 600 ms via timers in
 a `@riverpod` notifier, rather than in the row's `State`. **Why:** the item list rebuilds
 constantly — live updates, filter changes, optimistic writes — and a checked row is removed
@@ -2226,3 +2228,30 @@ list's cache only ever touching its own rows), four new cases in `resilient_watc
 (cache hit on cold start, cache miss behaves exactly as before, a non-network failure never
 consults the cache, `cacheWrite` fires for the seed and every delta), and a new "cached reads"
 group in `list_repository_impl_test.dart` covering `myLists()`'s write-through and fallback.
+
+## 92. The item row is replaced, and the items screen gets a view model
+
+**Decision:** the old `ItemTile` and `ItemsSection` are replaced outright by the row-interaction
+redesign (`docs/multi-shop-shopping-list-app/project/Item Row Interaction.dc.html`), not kept
+side by side behind a flag. Long-press now opens a row menu; multi-select ("Select more…") and
+the new rearrange mode are entered from it.
+
+**Decision -- a view model, composing rather than replacing.** `ItemsViewModel` watches the
+existing per-list controllers (items, shops, filter, selection, search, rearrange, done-collapsed,
+celebration) and derives one immutable `ItemsViewState`, including a single `ItemsMode`
+(browse/search/select/rearrange). Both `ListDetailScreen`'s header and `ItemsSection` read it, so
+the title, actions and body can never disagree about which mode is active -- previously each
+re-derived it from separate booleans in nested ternaries. The small controllers stay: each still
+owns one piece of state, and mode flags live in their own providers (`RearrangeController`)
+because the view model's `build()` re-runs on every watched change and would reset a flag stored
+on it. The view model never touches `BuildContext`: actions return `Failure?` and the widget
+decides how to show it, which keeps it unit-testable without a widget tree.
+
+**Deliberately dropped (accepted regressions, revisit only if missed):**
+- the 600 ms "recently checked" hold before a row drops to Done (#47) and its cascade;
+- the "just added" row entrance flash (`RecentlyAdded`);
+- the cross-fade between shop tabs;
+- query highlighting in search results;
+- a snackbar when the "clear checked after shopping" auto-clear (#79) fails -- the rule itself
+  moved into the view model and still applies, but a failure now only rolls back silently.
+

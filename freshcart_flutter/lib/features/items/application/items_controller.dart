@@ -4,7 +4,6 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/item_use_case_providers.dart';
-import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -256,10 +255,6 @@ class ItemsController extends _$ItemsController {
                 : [...current, value],
           );
         }
-        // Only for the item this device just added, not whatever the live
-        // stream later merges in -- the entrance flash is "you just did
-        // this," not "something changed."
-        ref.read(recentlyAddedProvider(listId).notifier).flash(value.id);
         return null;
       case Err<ShoppingItem>(:final failure):
         return failure;
