@@ -1,5 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
 
 /// A [ConnectivityAdapter] whose online/offline stream a test fully
 /// controls, instead of touching the real `connectivity_plus` plugin (which

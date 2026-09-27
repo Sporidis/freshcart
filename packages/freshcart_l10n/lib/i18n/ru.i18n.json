@@ -61,7 +61,12 @@
     "newProductTitle": "Новый товар",
     "editProductTitle": "Изменить товар",
     "remove": "Удалить",
-    "moveTo": "Переместить в"
+    "moveTo": "Переместить в",
+    "menuEditDetails": "Изменить детали",
+    "menuMoveToShop": "Переместить в магазин",
+    "menuRearrangeList": "Изменить порядок списка",
+    "menuSelectMore": "Выбрать ещё…",
+    "rearrangeHeader": "Перетащите, чтобы изменить порядок"
   },
   "shops": {
     "all": "Все магазины",
@@ -90,7 +95,8 @@
     "move": "Переместить",
     "retry": "Повторить",
     "undo": "Отменить",
-    "dismiss": "Скрыть"
+    "dismiss": "Скрыть",
+    "done": "Готово"
   },
   "errors": {
     "network": "Не удалось связаться с сервером.",

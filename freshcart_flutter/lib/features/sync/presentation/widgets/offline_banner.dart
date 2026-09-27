@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_status.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_queue_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/providers/pending_write_count_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/providers/sync_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/providers/sync_status.dart';
 
 class OfflineSyncingBanner extends ConsumerWidget {
   const OfflineSyncingBanner({super.key});
@@ -10,7 +10,7 @@ class OfflineSyncingBanner extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final status = ref.watch(syncProvider).value;
-    final pendingCount = ref.watch(queueCountProvider).value ?? 0;
+    final pendingCount = ref.watch(pendingWriteCountProvider).value ?? 0;
     final isSyncing = status == SyncStatus.online && pendingCount > 0;
 
     if (status != SyncStatus.offline && !isSyncing) {

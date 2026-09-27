@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/app_color.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 
 /// Renders one person's avatar: an uploaded photo if they have one,
 /// otherwise a colour they chose, otherwise the deterministic colour hashed
@@ -65,7 +66,7 @@ class _UserAvatarState extends State<UserAvatar> {
       return _bordered(
         CircleAvatar(
           radius: widget.radius,
-          backgroundColor: Color(widget.color!.argb),
+          backgroundColor: widget.color!.toColor(),
           foregroundColor: Colors.white,
           child: Text(widget.initial, style: AppTextStyles.captionStrong),
         ),
