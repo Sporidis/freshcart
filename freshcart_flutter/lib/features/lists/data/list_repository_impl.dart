@@ -42,7 +42,11 @@ class ListRepositoryImpl implements ListRepository {
     );
     switch (result) {
       case Ok(:final value):
-        unawaited(_cache.replaceAll(value));
+        // Best-effort, same reasoning as ItemRealtimeSource/ListRealtimeSource's
+        // own cacheWrite: nothing here awaits this, so a failed write (e.g.
+        // the app closing the database mid-write) must not surface as an
+        // uncaught error -- myLists() already has its answer either way.
+        unawaited(_cache.replaceAll(value).catchError((_) {}));
         return result;
       case Err(:final failure):
         // A cold start with no signal: nothing in _guard's retry loop ever

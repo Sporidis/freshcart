@@ -43,7 +43,11 @@ class ListRealtimeSource {
       watch: () => _client.list.watchList(listUuid),
       reduce: (_, next) => next.toDomain(),
       online: _connectivityAdapter.watchIsOnline,
-      cacheWrite: (list) => unawaited(_cache.upsert(list)),
+      // Best-effort: a failed write here (e.g. the app closing the database
+      // mid-write) must not surface as an uncaught error on a stream nobody
+      // awaits this against -- the live watch above already has its value,
+      // cached reads are only a fallback for a cold offline start.
+      cacheWrite: (list) => unawaited(_cache.upsert(list).catchError((_) {})),
       cacheRead: () => _cache.read(listId),
     );
   }
