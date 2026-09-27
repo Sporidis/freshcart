@@ -102,8 +102,17 @@ void main() {
   });
 
   group('Preferences', () {
-    Future<void> scrollToPreferences(WidgetTester tester) async {
-      await tester.drag(find.byType(ListView), const Offset(0, -600));
+    // A fixed-distance drag here was fragile to exactly how much content sat
+    // above/below the target on the day it was written -- it happened to
+    // work by clamping to the list's max scroll extent, which broke the
+    // moment that extent grew. Scrolling to the specific widget each test
+    // actually needs is robust to the Preferences section changing size.
+    Future<void> scrollToPreferences(WidgetTester tester, Finder target) async {
+      await tester.dragUntilVisible(
+        target,
+        find.byType(ListView),
+        const Offset(0, -100),
+      );
       await tester.pumpAndSettle();
     }
 
@@ -111,7 +120,7 @@ void main() {
       'choosing Dark from the Appearance dialog persists the choice',
       (tester) async {
         await pump(tester);
-        await scrollToPreferences(tester);
+        await scrollToPreferences(tester, find.text('Appearance'));
 
         await tester.tap(find.text('Appearance'));
         await tester.pumpAndSettle();
@@ -128,9 +137,9 @@ void main() {
       'larger list text is off by default and persists once toggled',
       (tester) async {
         await pump(tester);
-        await scrollToPreferences(tester);
-
         final tile = find.widgetWithText(SwitchListTile, 'Larger list text');
+        await scrollToPreferences(tester, tile);
+
         expect(tester.widget<SwitchListTile>(tile).value, isFalse);
 
         await tester.tap(tile);
@@ -147,9 +156,9 @@ void main() {
       'unconditional behavior -- and persists once turned off',
       (tester) async {
         await pump(tester);
-        await scrollToPreferences(tester);
-
         final tile = find.widgetWithText(SwitchListTile, 'Haptics');
+        await scrollToPreferences(tester, tile);
+
         expect(tester.widget<SwitchListTile>(tile).value, isTrue);
 
         await tester.tap(tile);
@@ -165,9 +174,9 @@ void main() {
       'reduce motion reports the OS status as read-only text, not a switch',
       (tester) async {
         await pump(tester);
-        await scrollToPreferences(tester);
-
         final row = find.widgetWithText(ListTile, 'Reduce motion');
+        await scrollToPreferences(tester, row);
+
         expect(row, findsOneWidget);
         expect(tester.widget(row), isNot(isA<SwitchListTile>()));
         expect(
