@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
 import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
@@ -102,7 +103,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final activeShopColor = ref.watch(activeShopColorProvider(listId));
     final scopedSeed = activeShopColor == null
         ? AppTheme.brandSeed
-        : Color(activeShopColor.argb);
+        : activeShopColor.toColor();
     final hapticsOn = ref.watch(hapticsControllerProvider).value ?? true;
 
     final loaded = list.dataOrNull;
@@ -577,7 +578,7 @@ class _MoveToShopSheet extends StatelessWidget {
                 for (final shop in shops)
                   ChoiceChip(
                     avatar: CircleAvatar(
-                      backgroundColor: Color(shop.color.argb),
+                      backgroundColor: shop.color.toColor(),
                       radius: 8,
                     ),
                     label: Text(shop.name),

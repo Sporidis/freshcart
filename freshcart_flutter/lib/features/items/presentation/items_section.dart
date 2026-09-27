@@ -6,6 +6,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
@@ -50,7 +51,7 @@ class ItemsSection extends ConsumerWidget {
 
     Color? dotFor(ShopId? shopId) {
       final shop = s.shopFor(shopId);
-      return shop == null ? null : Color(shop.color.argb);
+      return shop?.color.toColor();
     }
 
     Future<void> openEditSheet(ShoppingItem item) async {
@@ -172,7 +173,7 @@ class ItemsSection extends ConsumerWidget {
                     itemCount: s.allItems.length,
                     shopColors: s.shops.isEmpty
                         ? AppColors.presetShopColors
-                        : [for (final shop in s.shops) Color(shop.color.argb)],
+                        : [for (final shop in s.shops) shop.color.toColor()],
                     t: t,
                     report: report,
                   ),
@@ -316,7 +317,7 @@ class _ItemsEmptyState extends StatelessWidget {
               icon: Icons.shopping_basket_outlined,
               title: t.items.emptyShopTitle(shop: shop.name),
               body: t.items.emptyShopBody,
-              tint: Color(shop.color.argb),
+              tint: shop.color.toColor(),
             ),
     );
   }

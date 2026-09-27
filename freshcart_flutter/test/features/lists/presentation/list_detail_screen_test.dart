@@ -5,6 +5,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
@@ -99,7 +100,7 @@ void main() {
 
       expect(
         bodyTheme(tester).colorScheme.primary,
-        Color(colruyt.color.argb),
+        colruyt.color.toColor(),
       );
     });
 

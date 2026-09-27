@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
 
 /// What the user chose to do with a shop's products.
 typedef ShopDeletion = ({ShopItemDisposition disposition, ShopId? moveTo});
@@ -74,7 +75,7 @@ class DeleteShopSheet extends ConsumerWidget {
           if (itemCount > 0) ...[
             for (final target in destinations)
               _Option(
-                leading: _Dot(color: Color(target.color.argb)),
+                leading: _Dot(color: target.color.toColor()),
                 title: t.shops.moveTo(name: target.name),
                 subtitle: t.shops.moveKeeps(n: itemCount),
                 onTap: () => Navigator.of(context).pop((
