@@ -6,10 +6,10 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/celebratio
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/join_flow_screen.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/splash_screen.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/welcome_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/screens/join_flow_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/screens/onboarding_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/screens/splash_screen.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';

@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/data/item_realtime_source.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
+import 'package:freshcart_flutter/features/items/data/sources/item_realtime_source.dart';
 
 import '../../../fakes/dto_builders.dart';
 
