@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/about_section.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/account_card.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/lists_and_shops_section.dart';
@@ -19,7 +19,7 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final user = ref.watch(currentUserProvider);
+    final user = ref.watch(profileControllerProvider);
     final account = user.dataOrNull;
     final lists = ref.watch(listsControllerProvider).dataOrNull ?? const [];
 

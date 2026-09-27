@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/section_label.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_option.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -25,10 +25,11 @@ class AboutSection extends StatelessWidget {
           Consumer(
             builder: (context, ref, _) => TextButton(
               onPressed: () async {
-                final result = await ref.read(authRepositoryProvider).signOut();
+                final failure = await ref
+                    .read(profileControllerProvider.notifier)
+                    .signOut();
                 if (!context.mounted) return;
-                if (result.isOk) {
-                  ref.invalidate(currentUserProvider);
+                if (failure == null) {
                   final router = GoRouter.maybeOf(context);
                   if (router != null) {
                     router.go(Routes.welcome);

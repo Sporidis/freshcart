@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge_controller.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
 
 /// Prompts an anonymous user to attach an email to their account.
 ///
@@ -26,7 +25,7 @@ class UpgradeNudge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final user = ref.watch(currentUserProvider);
+    final user = ref.watch(profileControllerProvider);
     final dismissed = ref.watch(upgradeNudgeControllerProvider);
 
     // Say nothing until the identity is known: a nudge that flickers in and
@@ -112,20 +111,18 @@ class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
       _busy = true;
       _error = null;
     });
-    final result = await ref
-        .read(authRepositoryProvider)
+    final failure = await ref
+        .read(profileControllerProvider.notifier)
         .linkEmail(email: _email.text.trim(), password: _password.text);
     if (!mounted) return;
 
-    switch (result) {
-      case Ok<AuthUser>():
-        ref.invalidate(currentUserProvider);
-        Navigator.of(context).pop();
-      case Err<AuthUser>(:final failure):
-        setState(() {
-          _busy = false;
-          _error = failure.toMessage(ref.read(translationsProvider));
-        });
+    if (failure == null) {
+      Navigator.of(context).pop();
+    } else {
+      setState(() {
+        _busy = false;
+        _error = failure.toMessage(ref.read(translationsProvider));
+      });
     }
   }
 
