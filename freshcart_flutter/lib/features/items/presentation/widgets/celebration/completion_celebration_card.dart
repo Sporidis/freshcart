@@ -8,7 +8,7 @@ import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/celebration_dismissed_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/confetti_burst.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/confetti_burst.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// "Everything on this list is checked off" — one raised card, plus the

@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/search_recently_bought.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
