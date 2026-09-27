@@ -274,6 +274,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   Widget build(BuildContext context) {
     if (widget.selectionMode) {
       return GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: widget.onSelectionToggle,
         child: ItemRowContent(
           item: widget.item,
