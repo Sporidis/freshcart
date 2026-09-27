@@ -3,12 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_color_preview_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
@@ -164,7 +164,7 @@ class _ShopRow extends ConsumerWidget {
     // Whether it saved or was dismissed, the preview must not outlive the
     // sheet: an abandoned colour left tinting the app would be a lie about
     // what is stored.
-    ref.read(shopColorPreviewProvider.notifier).clear();
+    ref.read(shopColorPreviewControllerProvider.notifier).clear();
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {

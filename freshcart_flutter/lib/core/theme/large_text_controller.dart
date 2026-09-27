@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'large_text_provider.g.dart';
+part 'large_text_controller.g.dart';
 
 /// Whether list text renders at the "easier to read at arm's length" size
 /// the design calls for (`docs/design-gap-plan.md` §7) — a deliberately

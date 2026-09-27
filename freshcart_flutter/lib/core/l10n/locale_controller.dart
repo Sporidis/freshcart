@@ -3,7 +3,7 @@ import 'dart:ui' show PlatformDispatcher;
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'locale_provider.g.dart';
+part 'locale_controller.g.dart';
 
 /// The app's active locale.
 ///
@@ -13,7 +13,7 @@ part 'locale_provider.g.dart';
 /// the better fit anyway: it is app state, and every widget that needs strings
 /// already has a `ref`.
 @Riverpod(keepAlive: true)
-class ActiveLocale extends _$ActiveLocale {
+class LocaleController extends _$LocaleController {
   @override
   AppLocale build() => _deviceLocaleOrBase();
 
@@ -39,4 +39,4 @@ class ActiveLocale extends _$ActiveLocale {
 /// resolvers for `nl` and `tl` are applied — see `docs/decisions.md` #25.
 @Riverpod(keepAlive: true)
 Translations translations(Ref ref) =>
-    translationsFor(ref.watch(activeLocaleProvider));
+    translationsFor(ref.watch(localeControllerProvider));

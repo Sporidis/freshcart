@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
-import 'package:freshcart_flutter/features/auth/application/upgrade_nudge_dismissed.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/upgrade_nudge_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
 
 /// Prompts an anonymous user to attach an email to their account.
@@ -16,7 +16,7 @@ import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.da
 /// list is shared or joined. Shown here, on the list detail screen, rather than
 /// on first launch where it would just be a signup form with extra steps.
 ///
-/// Dismissible, and permanently so (see [UpgradeNudgeDismissed]) — the same
+/// Dismissible, and permanently so (see [UpgradeNudgeController]) — the same
 /// action stays one tap away from Settings for whenever it is actually
 /// wanted, so nothing is lost by not repeating it on every list opened.
 class UpgradeNudge extends ConsumerWidget {
@@ -27,7 +27,7 @@ class UpgradeNudge extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
     final user = ref.watch(currentUserProvider);
-    final dismissed = ref.watch(upgradeNudgeDismissedProvider);
+    final dismissed = ref.watch(upgradeNudgeControllerProvider);
 
     // Say nothing until the identity is known: a nudge that flickers in and
     // out on every rebuild is worse than no nudge.
@@ -65,7 +65,7 @@ class UpgradeNudge extends ConsumerWidget {
               tooltip: t.common.dismiss,
               color: theme.colorScheme.onSurfaceVariant,
               onPressed: () =>
-                  ref.read(upgradeNudgeDismissedProvider.notifier).dismiss(),
+                  ref.read(upgradeNudgeControllerProvider.notifier).dismiss(),
             ),
           ],
         ),

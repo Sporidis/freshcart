@@ -52,8 +52,10 @@ class ShopsController extends _$ShopsController {
     if (result.isOk) {
       _refreshIfAlive();
       if (result.valueOrNull?.isActive == false &&
-          ref.read(shopFilterProvider(shop.listId)) == shop.id) {
-        ref.read(shopFilterProvider(shop.listId).notifier).select(null);
+          ref.read(shopFilterControllerProvider(shop.listId)) == shop.id) {
+        ref
+            .read(shopFilterControllerProvider(shop.listId).notifier)
+            .select(null);
       }
     }
     return result;
@@ -94,7 +96,7 @@ class ShopsController extends _$ShopsController {
 /// is themed from. Keeping it as one piece of state is what makes those two
 /// stay in step.
 @riverpod
-class ShopFilter extends _$ShopFilter {
+class ShopFilterController extends _$ShopFilterController {
   @override
   ShopId? build(ListId listId) => null;
 
@@ -107,7 +109,7 @@ class ShopFilter extends _$ShopFilter {
 /// Derived rather than stored, so it cannot drift out of step with the filter.
 @riverpod
 HexColor? activeShopColor(Ref ref, ListId listId) {
-  final filter = ref.watch(shopFilterProvider(listId));
+  final filter = ref.watch(shopFilterControllerProvider(listId));
   if (filter == null) return null;
 
   final shops = ref.watch(shopsControllerProvider(listId));

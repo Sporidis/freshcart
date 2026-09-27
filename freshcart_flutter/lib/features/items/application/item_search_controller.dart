@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'search_controller.g.dart';
+part 'item_search_controller.g.dart';
 
 /// Whether search is open on one list, and what has been typed.
 ///
@@ -11,7 +11,7 @@ part 'search_controller.g.dart';
 /// still to be typed, and that state has to persist until the field is
 /// explicitly closed, not collapse the instant it renders with nothing in it.
 @riverpod
-class SearchController extends _$SearchController {
+class ItemSearchController extends _$ItemSearchController {
   @override
   ({bool active, String query}) build(ListId listId) =>
       (active: false, query: '');

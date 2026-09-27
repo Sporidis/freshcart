@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_color_preview_controller.dart';
 
 /// Renames and recolours a shop, or creates a new one when [shop] is null.
 ///
@@ -76,7 +76,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     setState(() => _color = color);
     final id = widget.shop?.id;
     if (id != null) {
-      ref.read(shopColorPreviewProvider.notifier).preview(id, color);
+      ref.read(shopColorPreviewControllerProvider.notifier).preview(id, color);
     }
   }
 
@@ -103,7 +103,9 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
       });
       return;
     }
-    if (!_isCreate) ref.read(shopColorPreviewProvider.notifier).clear();
+    if (!_isCreate) {
+      ref.read(shopColorPreviewControllerProvider.notifier).clear();
+    }
     if (mounted) Navigator.of(context).pop();
   }
 

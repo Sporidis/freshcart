@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
@@ -56,7 +56,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+    container.read(localeControllerProvider.notifier).select(AppLocale.en);
     await container.read(currentUserIdProvider.future);
 
     await tester.pumpWidget(
@@ -121,7 +121,9 @@ void main() {
       items.byListResult = Ok([buildItem(name: 'Bread', shopId: bakery.id)]);
 
       final container = await pump(tester);
-      container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+      container
+          .read(shopFilterControllerProvider(listId).notifier)
+          .select(colruyt.id);
       await tester.pumpAndSettle();
 
       expect(find.text('Bread'), findsNothing);
@@ -275,7 +277,9 @@ void main() {
       ]);
 
       final container = await pump(tester);
-      container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+      container
+          .read(shopFilterControllerProvider(listId).notifier)
+          .select(colruyt.id);
       await tester.pumpAndSettle();
 
       expect(find.text('Bread'), findsNothing);
@@ -311,7 +315,9 @@ void main() {
 
       final container = await pump(tester);
       // Reorder is scoped to one shop tab, same as ItemsSection's own rule.
-      container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+      container
+          .read(shopFilterControllerProvider(listId).notifier)
+          .select(colruyt.id);
       await tester.pumpAndSettle();
 
       final gesture = await tester.startGesture(
@@ -409,7 +415,9 @@ void main() {
     ]);
 
     final container = await pump(tester);
-    container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+    container
+        .read(shopFilterControllerProvider(listId).notifier)
+        .select(colruyt.id);
     await tester.pumpAndSettle();
 
     expect(find.text('Milk'), findsOneWidget);

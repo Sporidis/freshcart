@@ -5,7 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
@@ -84,7 +84,7 @@ void main() {
         ],
       );
       addTearDown(container.dispose);
-      container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+      container.read(localeControllerProvider.notifier).select(AppLocale.en);
       // itemsControllerProvider is autoDispose; holding a listener keeps it
       // alive across the tap below, the same way an open screen would (see
       // items_controller_test.dart's identical pattern).

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
@@ -52,7 +52,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+    container.read(localeControllerProvider.notifier).select(AppLocale.en);
 
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -127,7 +127,7 @@ void main() {
         ).copyWith(shopId: bakery.id),
       ]);
       final container = await pump(tester);
-      expect(container.read(shopFilterProvider(listId)), isNull);
+      expect(container.read(shopFilterControllerProvider(listId)), isNull);
 
       // All -> Colruyt.
       await tester.fling(
@@ -136,7 +136,7 @@ void main() {
         1000,
       );
       await tester.pumpAndSettle();
-      expect(container.read(shopFilterProvider(listId)), colruyt.id);
+      expect(container.read(shopFilterControllerProvider(listId)), colruyt.id);
       expect(find.text('Cake'), findsNothing);
 
       // Colruyt -> Bakery.
@@ -146,7 +146,7 @@ void main() {
         1000,
       );
       await tester.pumpAndSettle();
-      expect(container.read(shopFilterProvider(listId)), bakery.id);
+      expect(container.read(shopFilterControllerProvider(listId)), bakery.id);
 
       // A rightward flick steps back.
       await tester.fling(
@@ -155,7 +155,7 @@ void main() {
         1000,
       );
       await tester.pumpAndSettle();
-      expect(container.read(shopFilterProvider(listId)), colruyt.id);
+      expect(container.read(shopFilterControllerProvider(listId)), colruyt.id);
     });
   });
 
@@ -177,7 +177,9 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Cake'), findsOneWidget);
 
-      container.read(shopFilterProvider(listId).notifier).select(colruyt.id);
+      container
+          .read(shopFilterControllerProvider(listId).notifier)
+          .select(colruyt.id);
       await tester.pumpAndSettle();
 
       expect(find.text('Milk'), findsOneWidget);
@@ -238,7 +240,9 @@ void main() {
       ]);
 
       final container = await pump(tester);
-      final filter = container.read(shopFilterProvider(listId).notifier);
+      final filter = container.read(
+        shopFilterControllerProvider(listId).notifier,
+      );
 
       filter.select(colruyt.id);
       await tester.pumpAndSettle();
@@ -259,7 +263,9 @@ void main() {
 
       expect(container.read(activeShopColorProvider(listId)), isNull);
 
-      container.read(shopFilterProvider(listId).notifier).select(bakery.id);
+      container
+          .read(shopFilterControllerProvider(listId).notifier)
+          .select(bakery.id);
       await tester.pumpAndSettle();
 
       expect(
@@ -275,7 +281,9 @@ void main() {
       final container = await pump(tester);
 
       // A stale filter — the shop was deleted by someone else.
-      container.read(shopFilterProvider(listId).notifier).select(bakery.id);
+      container
+          .read(shopFilterControllerProvider(listId).notifier)
+          .select(bakery.id);
       await tester.pumpAndSettle();
 
       expect(container.read(activeShopColorProvider(listId)), isNull);

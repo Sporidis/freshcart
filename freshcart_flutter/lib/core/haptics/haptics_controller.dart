@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'haptics_provider.g.dart';
+part 'haptics_controller.g.dart';
 
 /// Whether the app's own [HapticFeedback](https://api.flutter.dev/flutter/services/HapticFeedback-class.html)
 /// calls (swipe-to-delete, checking an item, reordering, the invite-code

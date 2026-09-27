@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'celebration_dismissed_provider.g.dart';
+part 'celebration_controller.g.dart';
 
 /// Whether the completion celebration for [listId] has been dismissed via
 /// "Keep list", for however long the list has been sitting fully checked.
@@ -16,7 +16,7 @@ part 'celebration_dismissed_provider.g.dart';
 /// it reaches all-done, the celebration shows again rather than staying
 /// dismissed forever from one long-ago tap.
 @riverpod
-class CelebrationDismissed extends _$CelebrationDismissed {
+class CelebrationController extends _$CelebrationController {
   @override
   bool build(ListId listId) => false;
 

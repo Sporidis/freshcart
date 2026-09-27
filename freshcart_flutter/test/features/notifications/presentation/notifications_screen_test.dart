@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/notifications/data/push_repository_provider.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/notifications_screen.dart';
@@ -30,7 +30,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+    container.read(localeControllerProvider.notifier).select(AppLocale.en);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,

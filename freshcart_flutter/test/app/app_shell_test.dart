@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -36,7 +36,7 @@ void main() {
     );
     addTearDown(container.dispose);
     if (locale != null) {
-      container.read(activeLocaleProvider.notifier).select(locale);
+      container.read(localeControllerProvider.notifier).select(locale);
     }
     await tester.pumpWidget(
       UncontrolledProviderScope(
@@ -80,7 +80,7 @@ void main() {
       final container = await pumpApp(tester, locale: AppLocale.en);
       expect(find.text('My lists'), findsOneWidget);
 
-      container.read(activeLocaleProvider.notifier).select(AppLocale.fr);
+      container.read(localeControllerProvider.notifier).select(AppLocale.fr);
       await tester.pumpAndSettle();
 
       expect(find.text('Mes listes'), findsOneWidget);
