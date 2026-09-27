@@ -289,6 +289,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       );
     }
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTapDown: (_) {
         _longPressTimer?.cancel();
         _longPressTimer = Timer(_longPressThreshold, () {
