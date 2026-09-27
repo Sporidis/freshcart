@@ -17,6 +17,8 @@ void main() {
     store = CachedListsStore(db);
   });
 
+  tearDown(() => db.close());
+
   group('CachedListsStore', () {
     test('read returns null for a list that was never cached', () async {
       expect(await store.read(ListId(listUuid.uuid)), isNull);

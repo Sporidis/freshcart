@@ -34,6 +34,8 @@ void main() {
     );
   });
 
+  tearDown(() => db.close());
+
   group('ListRepositoryImpl success paths', () {
     test('myLists returns domain entities, never DTOs', () {
       client.handler = (_, _, _) => [buildListDto()];
