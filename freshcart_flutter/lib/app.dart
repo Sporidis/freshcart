@@ -3,10 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/session/session_resume_observer.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/core/theme/appearance_controller.dart';
-import 'package:freshcart_flutter/core/theme/large_text_controller.dart';
+import 'package:freshcart_flutter/core/theme/preferences/appearance_controller.dart';
+import 'package:freshcart_flutter/core/theme/preferences/large_text_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/sync/application/queue_drain_coordinator_provider.dart';
 
 /// The largest text scale "Larger list text" applies, deliberately modest —

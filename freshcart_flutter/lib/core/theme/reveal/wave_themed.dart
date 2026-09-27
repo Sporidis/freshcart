@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
+import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// Retints [child] the instant the nearest ancestor [ShopThemeReveal]'s wave
 /// physically reaches its position -- not the moment the shop filter

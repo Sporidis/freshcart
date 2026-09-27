@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 
 /// The app's mark: a basket, drawn from the design's own SVG path data
 /// rather than a bundled asset, so it can be recoloured (dark on the splash,

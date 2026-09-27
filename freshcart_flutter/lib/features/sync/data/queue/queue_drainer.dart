@@ -1,10 +1,10 @@
 import 'dart:convert';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
-import 'package:freshcart_flutter/features/sync/data/shopping_item_queue_payload.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/shopping_item_queue_payload.dart';
 
 /// What happened when a single queued write was replayed.
 enum _ReplayOutcome {

@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_items_table.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_lists_table.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_items_table.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_lists_table.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
 
 part 'app_database.g.dart';
 

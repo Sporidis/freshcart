@@ -7,10 +7,10 @@ import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/list_realtime_source.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/list_summary_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_lists_store.dart';
-import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_lists_store.dart';
+import 'package:freshcart_flutter/features/sync/data/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
 
 /// The Serverpod-backed [ListRepository].
 ///

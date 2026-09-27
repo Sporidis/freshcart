@@ -4,8 +4,8 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/streaming/resilient_watch.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_items_store.dart';
-import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/features/sync/data/connectivity/connectivity_adapter.dart';
 
 /// Turns the server's change deltas into a live list of items.
 ///

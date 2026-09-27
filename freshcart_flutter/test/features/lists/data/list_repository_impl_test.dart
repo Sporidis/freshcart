@@ -6,10 +6,10 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_lists_store.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_lists_store.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/pending_operations_table.dart';
 
 import '../../../fakes/dto_builders.dart';
 import '../../../fakes/fake_client.dart';

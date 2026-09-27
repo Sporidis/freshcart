@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// The round button at the pill's trailing end: one [Icons.add] glyph that
 /// rotates 1/8 turn into an "×" rather than swapping icons, so "the × turns

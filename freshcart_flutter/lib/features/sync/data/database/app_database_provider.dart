@@ -1,5 +1,5 @@
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

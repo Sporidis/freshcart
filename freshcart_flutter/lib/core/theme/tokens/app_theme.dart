@@ -1,6 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 
 /// Basket type scale. Sizes and weights match the design one-for-one:
 /// 28/26 titles · 22 sheet titles · 16-17 body · 14-15 secondary · 12-13 caption.

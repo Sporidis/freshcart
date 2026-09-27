@@ -5,7 +5,7 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/theme/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/features/auth/data/auth_bootstrap_provider.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/sync/data/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/shopping_item_queue_payload.dart';
+import 'package:freshcart_flutter/features/sync/data/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/queue/shopping_item_queue_payload.dart';
 
 /// Persists the last-known items of one list, so
 /// `ItemRealtimeSource.watchByList` has something to show when the very

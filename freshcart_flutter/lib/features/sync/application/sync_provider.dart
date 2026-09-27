@@ -1,5 +1,5 @@
 import 'package:freshcart_flutter/features/sync/application/sync_status.dart';
-import 'package:freshcart_flutter/features/sync/data/connectivity_adapter_provider.dart';
+import 'package:freshcart_flutter/features/sync/data/connectivity/connectivity_adapter_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'sync_provider.g.dart';

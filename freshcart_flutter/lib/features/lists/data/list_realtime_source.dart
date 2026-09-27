@@ -4,8 +4,8 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/streaming/resilient_watch.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/cached_lists_store.dart';
-import 'package:freshcart_flutter/features/sync/data/connectivity_adapter.dart';
+import 'package:freshcart_flutter/features/sync/data/cache/cached_lists_store.dart';
+import 'package:freshcart_flutter/features/sync/data/connectivity/connectivity_adapter.dart';
 
 /// Turns the server's list broadcasts into a live view of one list.
 ///

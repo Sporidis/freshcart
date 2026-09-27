@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// The row's checkmark: a plain filled/outlined circle rather than
 /// [Checkbox], whose Material fill colour, size, and checkmark weight don't
