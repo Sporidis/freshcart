@@ -44,7 +44,12 @@ class ItemRealtimeSource {
       reduce: (current, event) =>
           List<ShoppingItem>.unmodifiable(applyChange(current, event)),
       online: _connectivityAdapter.watchIsOnline,
-      cacheWrite: (items) => unawaited(_cache.replaceForList(listId, items)),
+      // Best-effort: a failed write here (e.g. the app closing the database
+      // mid-write) must not surface as an uncaught error on a stream nobody
+      // awaits this against -- the live watch above already has its value,
+      // cached reads are only a fallback for a cold offline start.
+      cacheWrite: (items) =>
+          unawaited(_cache.replaceForList(listId, items).catchError((_) {})),
       cacheRead: () => _cache.readForList(listId),
     );
   }
