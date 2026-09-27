@@ -4,13 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_view_model.dart';
-import 'package:freshcart_flutter/features/items/application/items_view_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
@@ -23,7 +23,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// with the completion celebration and the add control floating on top.
 ///
 /// Pure UI: every derivation and multi-step action lives in
-/// [ItemsViewModel]. What stays here is what needs a `BuildContext` --
+/// [ItemsScreenController]. What stays here is what needs a `BuildContext` --
 /// sheets and snackbars. The header (title, selection and search actions)
 /// belongs to `ListDetailScreen`, which reads the same view model.
 ///
@@ -38,8 +38,8 @@ class ItemsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final s = ref.watch(itemsViewModelProvider(list));
-    final vm = ref.read(itemsViewModelProvider(list).notifier);
+    final s = ref.watch(itemsScreenControllerProvider(list));
+    final vm = ref.read(itemsScreenControllerProvider(list).notifier);
 
     void report(Failure? failure, {VoidCallback? onRetry}) {
       if (failure == null || !context.mounted) return;
@@ -211,8 +211,8 @@ class _ItemList extends StatelessWidget {
     required this.onEdit,
   });
 
-  final ItemsViewState state;
-  final ItemsViewModel vm;
+  final ItemsScreenState state;
+  final ItemsScreenController vm;
   final Translations t;
   final Color? Function(ShopId?) dotFor;
   final void Function(Failure?, {VoidCallback? onRetry}) report;

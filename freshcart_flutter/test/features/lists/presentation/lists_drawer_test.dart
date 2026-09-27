@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
@@ -30,7 +30,7 @@ void main() {
       ],
     );
     addTearDown(container.dispose);
-    container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+    container.read(localeControllerProvider.notifier).select(AppLocale.en);
 
     // A real Scaffold.drawer, opened properly -- ListsDrawer's own rows
     // call Navigator.pop() to close themselves before acting, which needs

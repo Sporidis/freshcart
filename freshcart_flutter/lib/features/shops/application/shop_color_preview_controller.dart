@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'shop_color_preview.g.dart';
+part 'shop_color_preview_controller.g.dart';
 
 /// A shop colour being tried out, before anyone commits to it.
 ///
@@ -14,7 +14,7 @@ part 'shop_color_preview.g.dart';
 /// Cleared when the sheet closes, whether it saved or not: an abandoned
 /// preview must not outlive the sheet that was showing it.
 @riverpod
-class ShopColorPreview extends _$ShopColorPreview {
+class ShopColorPreviewController extends _$ShopColorPreviewController {
   @override
   ({ShopId shopId, HexColor color})? build() => null;
 
@@ -32,7 +32,7 @@ class ShopColorPreview extends _$ShopColorPreview {
 /// cannot reach some dots and miss others.
 @riverpod
 HexColor effectiveShopColor(Ref ref, Shop shop) {
-  final preview = ref.watch(shopColorPreviewProvider);
+  final preview = ref.watch(shopColorPreviewControllerProvider);
   if (preview == null || preview.shopId != shop.id) return shop.color;
   return preview.color;
 }

@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
@@ -15,8 +15,8 @@ import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/items_view_model.dart';
-import 'package:freshcart_flutter/features/items/application/items_view_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -112,10 +112,10 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     // has loaded: the view model is keyed by it.
     final items = loaded == null
         ? null
-        : ref.watch(itemsViewModelProvider(loaded));
+        : ref.watch(itemsScreenControllerProvider(loaded));
     final vm = loaded == null
         ? null
-        : ref.read(itemsViewModelProvider(loaded).notifier);
+        : ref.read(itemsScreenControllerProvider(loaded).notifier);
     final mode = items?.mode ?? ItemsMode.browse;
 
     // Both clear the field alongside the view model: without it, the next
@@ -323,7 +323,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     required Translations t,
     required ItemsMode mode,
     required ShoppingList? loaded,
-    required ItemsViewModel? vm,
+    required ItemsScreenController? vm,
     required List<Shop> shops,
     required VoidCallback onOpenSearch,
     required VoidCallback onCloseSearch,

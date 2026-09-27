@@ -10,7 +10,7 @@ part 'done_section_controller.g.dart';
 /// them folded away. Session-scoped for now — surviving a restart means a
 /// stored preference, which is its own (small) piece of work.
 @riverpod
-class DoneSectionCollapsed extends _$DoneSectionCollapsed {
+class DoneSectionController extends _$DoneSectionController {
   @override
   bool build(ListId listId) => false;
 

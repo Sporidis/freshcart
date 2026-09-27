@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_color_preview_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/shop_repository_provider.dart';
 import 'package:freshcart_flutter/features/shops/presentation/manage_shops_screen.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
@@ -35,7 +35,7 @@ void main() {
       overrides: [shopRepositoryProvider.overrideWithValue(shops)],
     );
     addTearDown(container.dispose);
-    container.read(activeLocaleProvider.notifier).select(AppLocale.en);
+    container.read(localeControllerProvider.notifier).select(AppLocale.en);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
@@ -161,7 +161,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('swatch-$orange')));
     await tester.pumpAndSettle();
 
-    final preview = container.read(shopColorPreviewProvider);
+    final preview = container.read(shopColorPreviewControllerProvider);
     expect(preview?.color.argb, isNot(blue));
     // Nothing committed yet — the preview is not a write.
     expect(shops.savedShops, isEmpty);
@@ -177,14 +177,14 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('swatch-$orange')));
     await tester.pumpAndSettle();
-    expect(container.read(shopColorPreviewProvider), isNotNull);
+    expect(container.read(shopColorPreviewControllerProvider), isNotNull);
 
     // Dismiss without saving.
     Navigator.of(tester.element(find.byType(EditShopSheet))).pop();
     await tester.pumpAndSettle();
 
     expect(
-      container.read(shopColorPreviewProvider),
+      container.read(shopColorPreviewControllerProvider),
       isNull,
       reason: 'a colour left tinting the app would lie about what is stored',
     );

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/appearance_provider.dart';
-import 'package:freshcart_flutter/core/theme/large_text_provider.dart';
+import 'package:freshcart_flutter/core/theme/appearance_controller.dart';
+import 'package:freshcart_flutter/core/theme/large_text_controller.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_dropdown_option.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_status_option.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/setting_toggle_option.dart';
@@ -54,7 +54,7 @@ class PreferencesSection extends ConsumerWidget {
         ),
         SettingDropdownOption<AppLocale>(
           title: t.settings.language,
-          value: ref.watch(activeLocaleProvider),
+          value: ref.watch(localeControllerProvider),
           options: {
             AppLocale.nl: 'Nederlands',
             AppLocale.en: 'English',
@@ -63,7 +63,7 @@ class PreferencesSection extends ConsumerWidget {
             AppLocale.tl: 'Tagalog',
           },
           onChanged: (value) =>
-              ref.read(activeLocaleProvider.notifier).select(value),
+              ref.read(localeControllerProvider.notifier).select(value),
         ),
         SettingToggleOption(
           title: t.settings.largerListText,

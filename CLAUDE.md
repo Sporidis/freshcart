@@ -130,6 +130,11 @@ flowchart TD
   nouns (`ShoppingList`, `ShoppingItem`, `Shop`). Use cases are verbs (`AddItem`,
   `JoinList`). Repository interfaces end in `Repository`; implementations in
   `RepositoryImpl`. Mappers are `X.toDomain()` / `X.toDto()` extensions.
+- **Riverpod naming:** a Notifier class (state + methods) is `XController`; a
+  screen-level Notifier that only composes other providers is `XScreenController`,
+  its state `XScreenState`. A function provider (derived value or DI wiring, no
+  methods) has no suffix. Files are named after their main declaration
+  (`x_controller.dart` / `x_provider.dart`).
 - **Files:** one public declaration per file where practical. Feature layout in
   `docs/architecture.md`.
 - **No secrets in the repo.** Firebase config, Serverpod passwords, service keys stay in

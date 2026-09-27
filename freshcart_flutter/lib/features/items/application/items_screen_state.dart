@@ -4,7 +4,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 ///
 /// One value instead of three independent booleans (rearranging, selecting,
 /// searching) that the UI would otherwise have to rank against each other in
-/// every nested ternary -- the ranking lives once, in `ItemsViewModel`.
+/// every nested ternary -- the ranking lives once, in `ItemsScreenController`.
 enum ItemsMode { browse, search, select, rearrange }
 
 /// Everything `ItemsSection` renders, already derived.
@@ -12,8 +12,8 @@ enum ItemsMode { browse, search, select, rearrange }
 /// Pure Dart on purpose (domain types only, [HexColor] rather than Flutter's
 /// `Color`): the screen converts at the last moment, and this stays
 /// unit-testable without a widget tree.
-class ItemsViewState {
-  const ItemsViewState({
+class ItemsScreenState {
+  const ItemsScreenState({
     required this.list,
     required this.mode,
     required this.allItems,

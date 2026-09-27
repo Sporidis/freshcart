@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'appearance_provider.g.dart';
+part 'appearance_controller.g.dart';
 
 enum Appearance { system, light, dark }
 
 /// The user's chosen theme mode.
 ///
 /// Persisted with `shared_preferences`, the same pattern
-/// [UpgradeNudgeDismissed] uses — this is a plain UI preference, not
+/// [UpgradeNudgeController] uses — this is a plain UI preference, not
 /// anything secret. Stored by [Appearance.name] rather than an index, so
 /// adding a value later can't silently shift what an already-stored index
 /// means.

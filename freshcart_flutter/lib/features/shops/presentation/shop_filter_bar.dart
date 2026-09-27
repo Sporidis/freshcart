@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/core/l10n/locale_provider.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_color_preview.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_color_preview_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
@@ -15,7 +15,7 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_p
 ///
 /// Selecting a tab does two things at once: it narrows the visible items and
 /// it re-themes the app to that shop's colour. Both read the same piece of
-/// state ([shopFilterProvider]), so they cannot disagree -- and a swipe
+/// state ([shopFilterControllerProvider]), so they cannot disagree -- and a swipe
 /// across the strip drives that exact same state a tap would, rather than
 /// keeping a second index of its own.
 ///
@@ -49,7 +49,7 @@ class ShopFilterBar extends ConsumerWidget {
       for (final shop in shops)
         if (shop.isActive) shop,
     ];
-    final selected = ref.watch(shopFilterProvider(listId));
+    final selected = ref.watch(shopFilterControllerProvider(listId));
 
     // Remaining, not total: the count answers "how much is left to find in
     // here?", so a checked-off item should make it tick down. Hidden at
@@ -87,7 +87,7 @@ class ShopFilterBar extends ConsumerWidget {
     // directly.
     void select(ShopId? shopId, Offset? origin) {
       revealKey.currentState?.beginReveal(origin ?? fallbackOrigin());
-      ref.read(shopFilterProvider(listId).notifier).select(shopId);
+      ref.read(shopFilterControllerProvider(listId).notifier).select(shopId);
     }
 
     // A swipe has no finger position on the *target* tab to anchor to, so
@@ -168,7 +168,7 @@ class ShopFilterBar extends ConsumerWidget {
 }
 
 /// The permanent dashed "+" that opens [addShop]. A sibling of the tabs,
-/// never one of them -- it does not participate in [ShopFilter] at all.
+/// never one of them -- it does not participate in [ShopFilterController] at all.
 class _AddShopPill extends StatelessWidget {
   const _AddShopPill({required this.tooltip, required this.onTap});
 

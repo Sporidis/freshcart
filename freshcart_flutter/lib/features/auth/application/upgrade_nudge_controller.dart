@@ -1,7 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-part 'upgrade_nudge_dismissed.g.dart';
+part 'upgrade_nudge_controller.g.dart';
 
 /// Whether the "Secure your lists" nudge has been dismissed.
 ///
@@ -16,7 +16,7 @@ part 'upgrade_nudge_dismissed.g.dart';
 /// preference, not a secret, and the latter is already a dependency only for
 /// what the auth packages need internally for session storage.
 @riverpod
-class UpgradeNudgeDismissed extends _$UpgradeNudgeDismissed {
+class UpgradeNudgeController extends _$UpgradeNudgeController {
   static const _prefsKey = 'upgrade_nudge_dismissed';
 
   @override

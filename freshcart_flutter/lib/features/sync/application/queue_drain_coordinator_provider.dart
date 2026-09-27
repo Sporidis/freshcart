@@ -3,7 +3,7 @@ import 'package:freshcart_flutter/features/sync/application/sync_provider.dart';
 import 'package:freshcart_flutter/features/sync/application/sync_status.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'queue_drain_coordinator.g.dart';
+part 'queue_drain_coordinator_provider.g.dart';
 
 @Riverpod(keepAlive: true)
 void queueDrainCoordinator(Ref ref) {

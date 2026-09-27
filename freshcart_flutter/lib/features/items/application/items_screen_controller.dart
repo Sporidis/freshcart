@@ -3,20 +3,20 @@ import 'dart:async';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/celebration_dismissed_provider.dart';
+import 'package:freshcart_flutter/features/items/application/celebration_controller.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/item_search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_view_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
 import 'package:freshcart_flutter/features/items/application/rearrange_controller.dart';
-import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'items_view_model.g.dart';
+part 'items_screen_controller.g.dart';
 
 /// The view model behind the list detail screen's items: composes the per-list
-/// controllers into one derived [ItemsViewState], and owns the multi-step
+/// controllers into one derived [ItemsScreenState], and owns the multi-step
 /// actions ("delete, then leave selection mode only if that worked").
 ///
 /// It does *not* replace those controllers -- each still owns its one piece
@@ -29,22 +29,22 @@ part 'items_view_model.g.dart';
 /// changed list (freezed equality) simply gets a fresh instance, which is
 /// safe because every piece of mode state lives in its own provider.
 @riverpod
-class ItemsViewModel extends _$ItemsViewModel {
+class ItemsScreenController extends _$ItemsScreenController {
   ListId get _listId => list.id;
 
   ItemsController get _items =>
       ref.read(itemsControllerProvider(_listId).notifier);
 
   @override
-  ItemsViewState build(ShoppingList list) {
+  ItemsScreenState build(ShoppingList list) {
     final listId = list.id;
     final itemsOutcome = ref.watch(itemsControllerProvider(listId));
     final allItems = itemsOutcome.dataOrNull ?? const <ShoppingItem>[];
     final shops =
         ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
-    final shopFilter = ref.watch(shopFilterProvider(listId));
+    final shopFilter = ref.watch(shopFilterControllerProvider(listId));
     final selection = ref.watch(selectionControllerProvider(listId));
-    final search = ref.watch(searchControllerProvider(listId));
+    final search = ref.watch(itemSearchControllerProvider(listId));
     final rearranging = ref.watch(rearrangeControllerProvider(listId));
     final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
 
@@ -56,7 +56,7 @@ class ItemsViewModel extends _$ItemsViewModel {
     ref.listen(itemsControllerProvider(listId), (_, next) {
       final nextItems = next.dataOrNull;
       if (nextItems != null && !_allDone(nextItems)) {
-        ref.read(celebrationDismissedProvider(listId).notifier).reset();
+        ref.read(celebrationControllerProvider(listId).notifier).reset();
       }
     });
 
@@ -81,7 +81,7 @@ class ItemsViewModel extends _$ItemsViewModel {
         if (item.matchesShopFilter(shopFilter)) item,
     ];
 
-    return ItemsViewState(
+    return ItemsScreenState(
       list: list,
       mode: _modeFor(
         rearranging: rearranging,
@@ -102,13 +102,13 @@ class ItemsViewModel extends _$ItemsViewModel {
       me: currentUser == null ? null : list.memberFor(currentUser),
       selection: selection,
       searchQuery: search.query,
-      doneCollapsed: ref.watch(doneSectionCollapsedProvider(listId)),
+      doneCollapsed: ref.watch(doneSectionControllerProvider(listId)),
       // Mutually exclusive with the auto-clear above: two ways of handling
       // the same moment, not layered on top of each other.
       showCelebration:
           !list.clearCheckedAfterShopping &&
           _allDone(allItems) &&
-          !ref.watch(celebrationDismissedProvider(listId)),
+          !ref.watch(celebrationControllerProvider(listId)),
       isLoading: itemsOutcome.isLoading && allItems.isEmpty,
       loadFailure: itemsOutcome.loadFailure,
     );
@@ -169,7 +169,7 @@ class ItemsViewModel extends _$ItemsViewModel {
   Future<Failure?> clearChecked() => _items.clearChecked();
 
   void toggleDoneCollapsed() =>
-      ref.read(doneSectionCollapsedProvider(_listId).notifier).toggle();
+      ref.read(doneSectionControllerProvider(_listId).notifier).toggle();
 
   // ── Adding ──────────────────────────────────────────────────────────────
 
@@ -192,7 +192,7 @@ class ItemsViewModel extends _$ItemsViewModel {
   // ── Rearrange ───────────────────────────────────────────────────────────
 
   /// Enters rearrange mode, or does nothing on the "All" tab (see
-  /// [ItemsViewState.canRearrange]).
+  /// [ItemsScreenState.canRearrange]).
   void startRearrange() {
     if (state.canRearrange) {
       ref.read(rearrangeControllerProvider(_listId).notifier).enter();
@@ -245,11 +245,12 @@ class ItemsViewModel extends _$ItemsViewModel {
   // ── Search ──────────────────────────────────────────────────────────────
 
   void openSearch() =>
-      ref.read(searchControllerProvider(_listId).notifier).open();
+      ref.read(itemSearchControllerProvider(_listId).notifier).open();
 
   void closeSearch() =>
-      ref.read(searchControllerProvider(_listId).notifier).close();
+      ref.read(itemSearchControllerProvider(_listId).notifier).close();
 
-  void updateQuery(String query) =>
-      ref.read(searchControllerProvider(_listId).notifier).updateQuery(query);
+  void updateQuery(String query) => ref
+      .read(itemSearchControllerProvider(_listId).notifier)
+      .updateQuery(query);
 }
