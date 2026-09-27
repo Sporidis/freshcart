@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
-import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// What [ItemSheet] hands back: either the details to save, or a request to
@@ -185,26 +185,11 @@ class _ItemSheetState extends State<ItemSheet> {
           ),
           if (widget.shops.isNotEmpty) ...[
             const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: Text(t.shops.none),
-                  selected: _shopId == null,
-                  onSelected: (_) => setState(() => _shopId = null),
-                ),
-                for (final shop in widget.shops)
-                  ChoiceChip(
-                    avatar: CircleAvatar(
-                      backgroundColor: shop.color.toColor(),
-                      radius: 8,
-                    ),
-                    label: Text(shop.name),
-                    selected: _shopId == shop.id,
-                    onSelected: (_) => setState(() => _shopId = shop.id),
-                  ),
-              ],
+            ShopPicker(
+              shops: widget.shops,
+              t: t,
+              isSelected: (id) => id == _shopId,
+              onSelected: (id) => setState(() => _shopId = id),
             ),
           ],
           const SizedBox(height: 14),
