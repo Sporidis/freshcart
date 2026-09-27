@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_provider.dart';
@@ -99,6 +100,25 @@ class PreferencesSection extends ConsumerWidget {
           onChanged: (value) =>
               ref.read(hapticsControllerProvider.notifier).select(value),
         ),
+        // Dev-only escape hatch, not translated — see
+        // ItemTileV2PlaygroundScreen's own doc comment for why it exists.
+        if (kDebugMode)
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: const Text('Item tile v2 playground (dev)'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.itemTileV2Playground),
+          ),
+        // Dev-only: the same tile against a real list's real data — see
+        // ItemsSectionV2's own doc comment for what it deliberately leaves
+        // out compared to the real ItemsSection.
+        if (kDebugMode)
+          ListTile(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+            title: const Text('Items section v2 (dev, real data)'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => context.push(Routes.itemsSectionV2),
+          ),
       ],
     );
   }

@@ -55,7 +55,12 @@
     "newProductTitle": "Nieuw product",
     "editProductTitle": "Product bewerken",
     "remove": "Verwijderen",
-    "moveTo": "Verplaatsen naar"
+    "moveTo": "Verplaatsen naar",
+    "menuEditDetails": "Details bewerken",
+    "menuMoveToShop": "Naar winkel verplaatsen",
+    "menuRearrangeList": "Lijst herschikken",
+    "menuSelectMore": "Meer selecteren…",
+    "rearrangeHeader": "Sleep om te herschikken"
   },
   "shops": {
     "all": "Alle winkels",
@@ -84,7 +89,8 @@
     "move": "Verplaatsen",
     "retry": "Opnieuw proberen",
     "undo": "Ongedaan maken",
-    "dismiss": "Sluiten"
+    "dismiss": "Sluiten",
+    "done": "Klaar"
   },
   "errors": {
     "network": "Geen verbinding met de server.",

@@ -55,7 +55,12 @@
     "newProductTitle": "Nouveau produit",
     "editProductTitle": "Modifier le produit",
     "remove": "Supprimer",
-    "moveTo": "Déplacer vers"
+    "moveTo": "Déplacer vers",
+    "menuEditDetails": "Modifier les détails",
+    "menuMoveToShop": "Déplacer vers un magasin",
+    "menuRearrangeList": "Réorganiser la liste",
+    "menuSelectMore": "Sélectionner plus…",
+    "rearrangeHeader": "Glisser pour réorganiser"
   },
   "shops": {
     "all": "Tous les magasins",
@@ -84,7 +89,8 @@
     "move": "Déplacer",
     "retry": "Réessayer",
     "undo": "Annuler",
-    "dismiss": "Ignorer"
+    "dismiss": "Ignorer",
+    "done": "Terminé"
   },
   "errors": {
     "network": "Impossible de joindre le serveur.",

@@ -34,6 +34,7 @@ import 'package:go_router/go_router.dart';
 /// here too, but they arrive in phase 6 — this screen is the slot they drop
 /// into, and proving the route, the fetch and the failure paths work is what
 /// phase 5 is for.
+/// TODO: improve UI
 class ListDetailScreen extends ConsumerStatefulWidget {
   /// Creates the detail screen for [listId].
   const ListDetailScreen({required this.listId, super.key});
