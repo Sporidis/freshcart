@@ -7,7 +7,7 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/signed_in_user_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list_summaries_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
@@ -46,7 +46,7 @@ class ListsDrawer extends ConsumerWidget {
     // everyone for the one frame before this resolves, rather than blocking
     // the whole drawer on it; keepAlive means that frame is rare in
     // practice, not just theoretical.
-    final myId = ref.watch(currentUserIdProvider).dataOrNull;
+    final myId = ref.watch(signedInUserIdProvider);
     final loadedLists = lists.dataOrNull;
     // Falls back to an empty map while this is still loading or has failed
     // -- rows simply show without a count for that one frame/load, matching

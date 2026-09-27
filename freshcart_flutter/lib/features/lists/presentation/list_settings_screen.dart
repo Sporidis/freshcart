@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/lists/application/list_membership_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
@@ -126,12 +126,9 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     final loaded = list.dataOrNull;
     if (loaded != null) _seedNameOnce(loaded.name);
 
-    final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
-    // Until the identity resolves, assume membership rather than ownership --
-    // the same default _ListMenu uses, for the same reason: the reversible
-    // action (leave) is the safe one to offer.
-    final isOwner =
-        loaded != null && currentUser != null && loaded.isOwnedBy(currentUser);
+    // False until the identity resolves -- see isListOwner for why that's
+    // the safe default.
+    final isOwner = loaded != null && ref.watch(isListOwnerProvider(loaded));
 
     return Scaffold(
       appBar: AppBar(

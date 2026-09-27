@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -14,10 +15,10 @@ import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items_screen_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
+import 'package:freshcart_flutter/features/lists/application/list_membership_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
@@ -460,10 +461,7 @@ class _MemberAvatar extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
-    final me = currentUser == null
-        ? null
-        : list.members.where((m) => m.userId == currentUser).firstOrNull;
+    final me = ref.watch(myMembershipProvider(list));
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -503,10 +501,7 @@ class _ListMenu extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
-    // Until the identity resolves, assume membership rather than ownership:
-    // the reversible action is the safe default to offer.
-    final isOwner = currentUser != null && list.isOwnedBy(currentUser);
+    final isOwner = ref.watch(isListOwnerProvider(list));
 
     return PopupMenuButton<void>(
       itemBuilder: (context) => [
