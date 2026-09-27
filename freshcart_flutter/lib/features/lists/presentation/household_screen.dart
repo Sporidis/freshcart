@@ -10,7 +10,8 @@ import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/signed_in_user_provider.dart';
+import 'package:freshcart_flutter/features/lists/application/list_membership_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/invite_card.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -68,8 +69,8 @@ class _Household extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final me = ref.watch(currentUserIdProvider).dataOrNull;
-    final iAmOwner = me != null && list.isOwnedBy(me);
+    final me = ref.watch(signedInUserIdProvider);
+    final iAmOwner = ref.watch(isListOwnerProvider(list));
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.screen),

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/celebration_controller.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/item_search_controller.dart';
@@ -10,6 +9,7 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
 import 'package:freshcart_flutter/features/items/application/rearrange_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list_membership_provider.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -46,7 +46,6 @@ class ItemsScreenController extends _$ItemsScreenController {
     final selection = ref.watch(selectionControllerProvider(listId));
     final search = ref.watch(itemSearchControllerProvider(listId));
     final rearranging = ref.watch(rearrangeControllerProvider(listId));
-    final currentUser = ref.watch(currentUserIdProvider).dataOrNull;
 
     // Forgets a "Keep list" dismissal the moment the list stops being fully
     // checked, so the celebration shows again the next time it applies.
@@ -99,7 +98,7 @@ class ItemsScreenController extends _$ItemsScreenController {
       ],
       shops: shops,
       shopFilter: shopFilter,
-      me: currentUser == null ? null : list.memberFor(currentUser),
+      me: ref.watch(myMembershipProvider(list)),
       selection: selection,
       searchQuery: search.query,
       doneCollapsed: ref.watch(doneSectionControllerProvider(listId)),
@@ -234,7 +233,7 @@ class ItemsScreenController extends _$ItemsScreenController {
     return failure;
   }
 
-  /// Retags the selection to [shopId] (null = untagged); same
+  /// Re-tags the selection to [shopId] (null = untagged); same
   /// clear-only-on-success rule as [deleteSelected].
   Future<Failure?> moveSelected(ShopId? shopId) async {
     final failure = await _items.moveSelected(state.selection, shopId);

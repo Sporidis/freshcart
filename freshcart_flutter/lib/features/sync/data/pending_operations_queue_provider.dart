@@ -8,7 +8,3 @@ part 'pending_operations_queue_provider.g.dart';
 @Riverpod(keepAlive: true)
 PendingOperationsQueue pendingOperationsQueue(Ref ref) =>
     PendingOperationsQueue(ref.watch(appDatabaseProvider));
-
-@Riverpod(keepAlive: true)
-Stream<int> queueCount(Ref ref) =>
-    ref.watch(pendingOperationsQueueProvider).watchCount();
