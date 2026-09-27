@@ -43,6 +43,14 @@ immediately before it, not the one that's red.
 
 ## Testing conventions
 
+### `test/` mirrors `lib/`
+
+A test for `lib/<path>/<name>.dart` lives at `test/<path>/<name>_test.dart` -- same
+folders, same file name plus `_test`, so the test for any file is found without
+searching. The exceptions are tests that don't cover one file: cross-screen flow tests
+sit at their feature's root (`test/features/onboarding/getting_in_flow_test.dart`), and
+tests of test helpers sit beside the helper (`test/helpers/`).
+
 ### Fakes and builders live in `freshcart_flutter/test/fakes/`
 
 One fake repository per domain port (`fake_list_repository.dart`,
@@ -68,7 +76,7 @@ DTO → entity mapping itself.
 Nearly every widget test file defines its own local `pump(WidgetTester, {...})` that
 builds a `ProviderContainer` with fakes overridden in, wraps the real `FreshCartApp` (or
 just the one screen under test, for something simpler — see
-`test/features/lists/presentation/household_test.dart` for that lighter version), and
+`test/features/lists/presentation/screens/household_screen_test.dart` for that lighter version), and
 returns the container so the test can read providers directly afterward. Copy the nearest
 existing one in the same feature rather than inventing a new shape — the differences
 between them (whole-app vs. single-screen, `currentUserId` override or not) are there for
