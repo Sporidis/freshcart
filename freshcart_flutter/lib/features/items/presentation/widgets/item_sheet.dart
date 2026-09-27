@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// What [ItemSheet] hands back: either the details to save, or a request to
@@ -196,7 +197,7 @@ class _ItemSheetState extends State<ItemSheet> {
                 for (final shop in widget.shops)
                   ChoiceChip(
                     avatar: CircleAvatar(
-                      backgroundColor: Color(shop.color.argb),
+                      backgroundColor: shop.color.toColor(),
                       radius: 8,
                     ),
                     label: Text(shop.name),

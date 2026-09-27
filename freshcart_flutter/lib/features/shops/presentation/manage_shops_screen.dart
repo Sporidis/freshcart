@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview_controller.dart';
@@ -120,7 +121,7 @@ class _ShopRow extends ConsumerWidget {
                 width: AppSizes.shopDotLarge,
                 height: AppSizes.shopDotLarge,
                 decoration: BoxDecoration(
-                  color: Color(color.argb),
+                  color: color.toColor(),
                   shape: BoxShape.circle,
                 ),
               ),
