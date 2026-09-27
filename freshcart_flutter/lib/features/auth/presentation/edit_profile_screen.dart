@@ -10,8 +10,7 @@ import 'package:freshcart_flutter/core/theme/app_color.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/auth/application/auth_use_case_providers.dart';
-import 'package:freshcart_flutter/features/auth/data/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/profile_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -42,7 +41,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   bool _busyAvatar = false;
   String? _avatarError;
 
-  // `currentUserProvider` is async — it has not necessarily resolved by the
+  // `profileControllerProvider` is async — it has not necessarily resolved by the
   // time `initState` runs, so the field cannot be seeded from a synchronous
   // read here (it would just start empty and never catch up, since a
   // `TextEditingController` set once in `initState` does not react to a
@@ -73,25 +72,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _savingName = true;
       _nameError = null;
     });
-    final result = await ref.read(setDisplayNameUseCaseProvider)(_name.text);
+    final failure = await _profile.setDisplayName(_name.text);
     if (!mounted) return;
-    // Matches `UpgradeNudge`'s own pattern: the port's change stream is not
-    // relied on here, an explicit invalidate after a successful write is.
-    if (result.isOk) ref.invalidate(currentUserProvider);
     setState(() {
       _savingName = false;
-      _nameError = switch (result) {
-        Ok() => null,
-        Err(:final failure) => failure.toMessage(
-          ref.read(translationsProvider),
-        ),
-      };
+      _nameError = failure?.toMessage(ref.read(translationsProvider));
     });
   }
 
-  Future<void> _pickColor(HexColor color) => _runAvatarAction(
-    () => ref.read(authRepositoryProvider).setAvatarColor(color),
-  );
+  ProfileController get _profile =>
+      ref.read(profileControllerProvider.notifier);
+
+  Future<void> _pickColor(HexColor color) =>
+      _runAvatarAction(() => _profile.setAvatarColor(color));
 
   Future<void> _choosePhoto() async {
     // Picking and reading the file happen outside `_runAvatarAction`'s own
@@ -124,40 +117,30 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     }
 
     if (!mounted) return;
-    await _runAvatarAction(
-      () => ref.read(setAvatarPhotoUseCaseProvider)(bytes),
-    );
+    await _runAvatarAction(() => _profile.setAvatarPhoto(bytes));
   }
 
-  Future<void> _removePhoto() => _runAvatarAction(
-    () => ref.read(authRepositoryProvider).clearAvatarPhoto(),
-  );
+  Future<void> _removePhoto() => _runAvatarAction(_profile.clearAvatarPhoto);
 
   Future<void> _runAvatarAction(
-    Future<Result<AuthUser>> Function() action,
+    Future<Failure?> Function() action,
   ) async {
     setState(() {
       _busyAvatar = true;
       _avatarError = null;
     });
-    final result = await action();
+    final failure = await action();
     if (!mounted) return;
-    if (result.isOk) ref.invalidate(currentUserProvider);
     setState(() {
       _busyAvatar = false;
-      _avatarError = switch (result) {
-        Ok() => null,
-        Err(:final failure) => failure.toMessage(
-          ref.read(translationsProvider),
-        ),
-      };
+      _avatarError = failure?.toMessage(ref.read(translationsProvider));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
-    final user = ref.watch(currentUserProvider);
+    final user = ref.watch(profileControllerProvider);
 
     // A failed load is the screen tier here too (see list_settings_screen.dart's
     // identical guard): without a profile there is no form to show, so this
