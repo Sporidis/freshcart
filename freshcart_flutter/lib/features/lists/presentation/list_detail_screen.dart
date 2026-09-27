@@ -26,6 +26,7 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/list_dange
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/shop_filter_bar.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
@@ -539,14 +540,8 @@ class _MoveToShopOutcome {
   final ShopId? shopId;
 }
 
-/// The multi-select "Move" sheet: the same `ChoiceChip` shop picker
-/// `ItemSheet` already uses for one item at a time, offered here for a
-/// whole selection instead. Not extracted into a shared widget between the
-/// two -- `ItemSheet`'s picker is one field among several inside a form
-/// with its own save/remove flow, while this is the sheet's entire content
-/// -- but the same shape (a "No shop" chip first, then one per shop, each
-/// tinted with its own colour) on purpose, so the picture looks the same
-/// wherever it is offered.
+/// The multi-select "Move" sheet: the same [ShopPicker] `ItemSheet` uses
+/// for one item at a time, offered here for a whole selection instead.
 class _MoveToShopSheet extends StatelessWidget {
   const _MoveToShopSheet({required this.shops, required this.t});
 
@@ -564,30 +559,11 @@ class _MoveToShopSheet extends StatelessWidget {
           children: [
             Text(t.items.moveTo, style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: 14),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: Text(t.shops.none),
-                  selected: false,
-                  onSelected: (_) => Navigator.of(
-                    context,
-                  ).pop(const _MoveToShopOutcome(null)),
-                ),
-                for (final shop in shops)
-                  ChoiceChip(
-                    avatar: CircleAvatar(
-                      backgroundColor: shop.color.toColor(),
-                      radius: 8,
-                    ),
-                    label: Text(shop.name),
-                    selected: false,
-                    onSelected: (_) => Navigator.of(
-                      context,
-                    ).pop(_MoveToShopOutcome(shop.id)),
-                  ),
-              ],
+            ShopPicker(
+              shops: shops,
+              t: t,
+              onSelected: (id) =>
+                  Navigator.of(context).pop(_MoveToShopOutcome(id)),
             ),
           ],
         ),
