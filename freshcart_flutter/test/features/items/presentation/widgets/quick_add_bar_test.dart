@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add_bar.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Owns the [AnimationController] a [RevealWaveScope] under test needs, and
