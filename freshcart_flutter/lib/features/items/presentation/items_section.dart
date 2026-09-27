@@ -16,7 +16,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/celebratio
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add_bar.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_results.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

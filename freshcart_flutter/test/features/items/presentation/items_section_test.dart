@@ -9,7 +9,7 @@ import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart'
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add_bar.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/lists/presentation/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
