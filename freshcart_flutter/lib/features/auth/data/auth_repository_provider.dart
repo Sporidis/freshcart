@@ -17,9 +17,17 @@ AuthPort authRepository(Ref ref) =>
 @Riverpod(keepAlive: true)
 Future<Result<AuthUser>> currentUser(Ref ref) async {
   final auth = ref.watch(authRepositoryProvider);
-  final subscription = auth.authStateChanges().listen(
-    (_) => ref.invalidateSelf(),
-  );
+  final result = await auth.signInAnonymously();
+  final current = result.valueOrNull;
+  // Re-read only when the published identity actually differs from the one
+  // this build returned. The port publishes after *every* call -- including
+  // the signInAnonymously() above -- so invalidating on each event re-ran
+  // this build, which published again, which invalidated again: an endless
+  // sign-in loop. Subscribing only after sign-in also means this build's
+  // own publish is never seen (a broadcast stream doesn't replay).
+  final subscription = auth.authStateChanges().listen((user) {
+    if (user != current) ref.invalidateSelf();
+  });
   ref.onDispose(subscription.cancel);
-  return auth.signInAnonymously();
+  return result;
 }
