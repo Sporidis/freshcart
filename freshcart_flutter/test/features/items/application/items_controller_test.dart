@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 
 import '../../../fakes/fake_item_repository.dart';
@@ -176,37 +175,6 @@ void main() {
       expect(failure, isA<ValidationFailure>());
       expect(await itemsOf(container), isEmpty);
     });
-
-    test("flags the new item for its row's entrance flash", () async {
-      repository.byListResult = const Ok(<ShoppingItem>[]);
-      final added = buildItem(name: 'Bread');
-      repository.addResult = Ok(added);
-
-      final container = makeContainer();
-      await itemsOf(container);
-
-      await container
-          .read(itemsControllerProvider(listId).notifier)
-          .add(name: 'Bread');
-
-      expect(container.read(recentlyAddedProvider(listId)), added.id);
-    });
-
-    test(
-      'does not flag a validation failure -- nothing was actually added',
-      () async {
-        repository.byListResult = const Ok(<ShoppingItem>[]);
-
-        final container = makeContainer();
-        await itemsOf(container);
-
-        await container
-            .read(itemsControllerProvider(listId).notifier)
-            .add(name: '   ');
-
-        expect(container.read(recentlyAddedProvider(listId)), isNull);
-      },
-    );
 
     test(
       'replaces the existing row in place when the server merged into it',

@@ -1,19 +1,19 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Which of its mutually exclusive modes the V2 items screen is in.
+/// Which of its mutually exclusive modes the items screen is in.
 ///
 /// One value instead of three independent booleans (rearranging, selecting,
 /// searching) that the UI would otherwise have to rank against each other in
-/// every nested ternary -- the ranking lives once, in `ItemsV2ViewModel`.
-enum ItemsV2Mode { browse, search, select, rearrange }
+/// every nested ternary -- the ranking lives once, in `ItemsViewModel`.
+enum ItemsMode { browse, search, select, rearrange }
 
-/// Everything `ItemsSectionV2` renders, already derived.
+/// Everything `ItemsSection` renders, already derived.
 ///
 /// Pure Dart on purpose (domain types only, [HexColor] rather than Flutter's
 /// `Color`): the screen converts at the last moment, and this stays
 /// unit-testable without a widget tree.
-class ItemsV2ViewState {
-  const ItemsV2ViewState({
+class ItemsViewState {
+  const ItemsViewState({
     required this.list,
     required this.mode,
     required this.allItems,
@@ -26,10 +26,12 @@ class ItemsV2ViewState {
     required this.searchQuery,
     required this.doneCollapsed,
     required this.showCelebration,
+    this.isLoading = false,
+    this.loadFailure,
   });
 
   final ShoppingList list;
-  final ItemsV2Mode mode;
+  final ItemsMode mode;
 
   /// Every item on the list, ignoring the shop filter -- search and the
   /// completion celebration both span all shops.
@@ -49,8 +51,17 @@ class ItemsV2ViewState {
   final String searchQuery;
   final bool doneCollapsed;
 
-  /// Fully checked and not yet dismissed via "Keep list".
+  /// Fully checked, not yet dismissed via "Keep list", and the list isn't
+  /// set to clear itself instead (decisions #79).
   final bool showCelebration;
+
+  /// Items haven't arrived yet -- distinct from "arrived and empty", so the
+  /// screen shows a spinner rather than flashing the empty state.
+  final bool isLoading;
+
+  /// The items failed to load at all (not a failed write -- those come back
+  /// from the action that caused them).
+  final Failure? loadFailure;
 
   bool get isEmpty => openItems.isEmpty && doneItems.isEmpty;
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile_v2/item_row_content.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The row's floating, expanded state once held past the long-press

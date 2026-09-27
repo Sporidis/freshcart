@@ -1,20 +1,22 @@
+import 'dart:async';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/celebration_dismissed_provider.dart';
 import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_v2_view_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_view_state.dart';
 import 'package:freshcart_flutter/features/items/application/rearrange_controller.dart';
 import 'package:freshcart_flutter/features/items/application/search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'items_v2_view_model.g.dart';
+part 'items_view_model.g.dart';
 
-/// The view model behind `ItemsSectionV2`: composes the per-list
-/// controllers into one derived [ItemsV2ViewState], and owns the multi-step
+/// The view model behind the list detail screen's items: composes the per-list
+/// controllers into one derived [ItemsViewState], and owns the multi-step
 /// actions ("delete, then leave selection mode only if that worked").
 ///
 /// It does *not* replace those controllers -- each still owns its one piece
@@ -27,18 +29,17 @@ part 'items_v2_view_model.g.dart';
 /// changed list (freezed equality) simply gets a fresh instance, which is
 /// safe because every piece of mode state lives in its own provider.
 @riverpod
-class ItemsV2ViewModel extends _$ItemsV2ViewModel {
+class ItemsViewModel extends _$ItemsViewModel {
   ListId get _listId => list.id;
 
   ItemsController get _items =>
       ref.read(itemsControllerProvider(_listId).notifier);
 
   @override
-  ItemsV2ViewState build(ShoppingList list) {
+  ItemsViewState build(ShoppingList list) {
     final listId = list.id;
-    final allItems =
-        ref.watch(itemsControllerProvider(listId)).dataOrNull ??
-        const <ShoppingItem>[];
+    final itemsOutcome = ref.watch(itemsControllerProvider(listId));
+    final allItems = itemsOutcome.dataOrNull ?? const <ShoppingItem>[];
     final shops =
         ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
     final shopFilter = ref.watch(shopFilterProvider(listId));
@@ -59,12 +60,28 @@ class ItemsV2ViewModel extends _$ItemsV2ViewModel {
       }
     });
 
+    // "Clear checked after shopping" (decisions #79): the instant the list
+    // *becomes* fully checked while someone is looking at it, clear it
+    // silently. Not on the initial load (no previous snapshot) -- a list
+    // that was already all-done when opened must not wipe itself on arrival.
+    // The preference is checked inside the callback so the listen is
+    // registered unconditionally, as `ref.listen` in build must be.
+    ref.listen(itemsControllerProvider(listId), (previous, next) {
+      if (!list.clearCheckedAfterShopping) return;
+      final before = previous?.dataOrNull;
+      final after = next.dataOrNull;
+      if (before == null || after == null) return;
+      if (!_allDone(before) && _allDone(after)) {
+        unawaited(_items.clearChecked());
+      }
+    });
+
     final visible = [
       for (final item in allItems)
         if (item.matchesShopFilter(shopFilter)) item,
     ];
 
-    return ItemsV2ViewState(
+    return ItemsViewState(
       list: list,
       mode: _modeFor(
         rearranging: rearranging,
@@ -86,30 +103,35 @@ class ItemsV2ViewModel extends _$ItemsV2ViewModel {
       selection: selection,
       searchQuery: search.query,
       doneCollapsed: ref.watch(doneSectionCollapsedProvider(listId)),
+      // Mutually exclusive with the auto-clear above: two ways of handling
+      // the same moment, not layered on top of each other.
       showCelebration:
+          !list.clearCheckedAfterShopping &&
           _allDone(allItems) &&
           !ref.watch(celebrationDismissedProvider(listId)),
+      isLoading: itemsOutcome.isLoading && allItems.isEmpty,
+      loadFailure: itemsOutcome.loadFailure,
     );
   }
 
   static bool _allDone(List<ShoppingItem> items) =>
       items.isNotEmpty && items.every((i) => i.isChecked);
 
-  /// Ranks the three mode flags into the one [ItemsV2Mode] the screen draws.
-  static ItemsV2Mode _modeFor({
+  /// Ranks the three mode flags into the one [ItemsMode] the screen draws.
+  static ItemsMode _modeFor({
     required bool rearranging,
     required bool selecting,
     required bool searching,
   }) {
     switch ((rearranging, selecting, searching)) {
       case (true, _, _):
-        return ItemsV2Mode.rearrange;
+        return ItemsMode.rearrange;
       case (false, true, _):
-        return ItemsV2Mode.select;
+        return ItemsMode.select;
       case (false, false, true):
-        return ItemsV2Mode.search;
+        return ItemsMode.search;
       case (false, false, false):
-        return ItemsV2Mode.browse;
+        return ItemsMode.browse;
     }
   }
 
@@ -170,7 +192,7 @@ class ItemsV2ViewModel extends _$ItemsV2ViewModel {
   // ── Rearrange ───────────────────────────────────────────────────────────
 
   /// Enters rearrange mode, or does nothing on the "All" tab (see
-  /// [ItemsV2ViewState.canRearrange]).
+  /// [ItemsViewState.canRearrange]).
   void startRearrange() {
     if (state.canRearrange) {
       ref.read(rearrangeControllerProvider(_listId).notifier).enter();

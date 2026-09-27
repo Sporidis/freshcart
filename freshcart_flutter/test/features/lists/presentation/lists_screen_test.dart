@@ -482,13 +482,29 @@ void main() {
       await pump(tester);
     }
 
+    // Selection is entered from a row's hold-menu ("Select more…"), not by
+    // long-press directly -- that gesture opens the menu. Held in small
+    // steps: the hold's 450ms threshold timer only fires reliably against
+    // the fake clock when it elapses in several pumps.
+    Future<void> enterSelection(WidgetTester tester, String name) async {
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text(name)),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Select more…'));
+      await tester.pumpAndSettle();
+    }
+
     testWidgets(
-      'long-pressing a row enters selection and shows the contextual bar',
+      "a row's Select more… enters selection and shows the contextual bar",
       (tester) async {
         await openGroceries(tester);
 
-        await tester.longPress(find.text('Milk'));
-        await tester.pumpAndSettle();
+        await enterSelection(tester, 'Milk');
 
         expect(find.text('1 selected'), findsOneWidget);
         expect(find.text('Delete'), findsOneWidget);
@@ -502,8 +518,7 @@ void main() {
     ) async {
       await openGroceries(tester);
 
-      await tester.longPress(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await enterSelection(tester, 'Milk');
       await tester.tap(find.text('Bread'));
       await tester.pumpAndSettle();
 
@@ -515,8 +530,7 @@ void main() {
     ) async {
       await openGroceries(tester);
 
-      await tester.longPress(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await enterSelection(tester, 'Milk');
       expect(find.text('1 selected'), findsOneWidget);
 
       await tester.tap(find.text('Milk'));
@@ -533,8 +547,7 @@ void main() {
     ) async {
       await openGroceries(tester);
 
-      await tester.longPress(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await enterSelection(tester, 'Milk');
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
@@ -553,8 +566,7 @@ void main() {
     ) async {
       await openGroceries(tester);
 
-      await tester.longPress(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await enterSelection(tester, 'Milk');
       await tester.tap(find.byIcon(Icons.close));
       await tester.pumpAndSettle();
 
@@ -574,8 +586,7 @@ void main() {
       shopRepository.byListResult = Ok([bakery]);
       await openGroceries(tester);
 
-      await tester.longPress(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await enterSelection(tester, 'Milk');
       await tester.tap(find.text('Move'));
       await tester.pumpAndSettle();
 
@@ -604,8 +615,7 @@ void main() {
         itemRepository.moveManyResult = const Err(Failure.network('offline'));
         await openGroceries(tester);
 
-        await tester.longPress(find.text('Milk'));
-        await tester.pumpAndSettle();
+        await enterSelection(tester, 'Milk');
         await tester.tap(find.text('Move'));
         await tester.pumpAndSettle();
         await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
@@ -626,8 +636,7 @@ void main() {
       shopRepository.byListResult = Ok([bakery]);
       await openGroceries(tester);
 
-      await tester.longPress(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await enterSelection(tester, 'Milk');
       await tester.tap(find.text('Move'));
       await tester.pumpAndSettle();
       // Tap outside the sheet to dismiss it without choosing.

@@ -4,8 +4,7 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile_v2/item_tile_v2.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/onboarding_screen.dart';
@@ -55,7 +54,6 @@ void main() {
     'shop option': shopOptionPreview,
     'add-a-shop sheet': addShopSheetPreview,
     'item row': itemTilePreview,
-    'item row v2': itemTileV2Preview,
     'completion celebration': completionCelebrationCardPreview,
     'empty · new list': emptyNewListPreview,
     'empty · shop tab': emptyShopTabPreview,

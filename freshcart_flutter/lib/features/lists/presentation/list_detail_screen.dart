@@ -13,10 +13,10 @@ import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/search_controller.dart';
-import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_view_model.dart';
+import 'package:freshcart_flutter/features/items/application/items_view_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -34,7 +34,6 @@ import 'package:go_router/go_router.dart';
 /// here too, but they arrive in phase 6 — this screen is the slot they drop
 /// into, and proving the route, the fetch and the failure paths work is what
 /// phase 5 is for.
-/// TODO: improve UI
 class ListDetailScreen extends ConsumerStatefulWidget {
   /// Creates the detail screen for [listId].
   const ListDetailScreen({required this.listId, super.key});
@@ -107,62 +106,62 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
 
     final loaded = list.dataOrNull;
 
-    final selection = ref.watch(selectionControllerProvider(listId));
-    final selectionMode = selection.isNotEmpty;
-    final selectionNotifier = ref.read(
-      selectionControllerProvider(listId).notifier,
-    );
-    // Only the multi-select "Move" action needs this here -- the item sheet
-    // and shop filter bar each fetch their own copy already.
-    final shops =
-        ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
+    // The header reads the same view model ItemsSection does -- one mode,
+    // so the title, actions and the items area can never disagree about
+    // whether we're selecting, searching or rearranging. Only once the list
+    // has loaded: the view model is keyed by it.
+    final items = loaded == null
+        ? null
+        : ref.watch(itemsViewModelProvider(loaded));
+    final vm = loaded == null
+        ? null
+        : ref.read(itemsViewModelProvider(loaded).notifier);
+    final mode = items?.mode ?? ItemsMode.browse;
 
-    final search = ref.watch(searchControllerProvider(listId));
-    final searchNotifier = ref.read(searchControllerProvider(listId).notifier);
-    // Both clear the field alongside the provider: without it, the next time
-    // search opens it would flash whatever was typed the time before.
+    // Both clear the field alongside the view model: without it, the next
+    // time search opens it would flash whatever was typed the time before.
     void openSearch() {
       _searchField.clear();
-      searchNotifier.open();
+      vm?.openSearch();
     }
 
     void closeSearch() {
       _searchField.clear();
-      searchNotifier.close();
+      vm?.closeSearch();
     }
 
     return Scaffold(
-      // Only once there is a list to switch away from — the drawer's own
-      // content needs nothing else, but opening it over a loading or error
-      // screen would offer a way out of a state that already has one.
-      drawer: loaded == null ? null : ListsDrawer(currentListId: listId),
+      // Only once there is a list to switch away from, and never while
+      // selecting or rearranging -- switching lists mid-way would abandon
+      // that work with no way back to it.
+      drawer:
+          loaded == null ||
+              mode == ItemsMode.select ||
+              mode == ItemsMode.rearrange
+          ? null
+          : ListsDrawer(currentListId: listId),
       appBar: AppBar(
         leading: _buildLeading(
           t: t,
-          selectionMode: selectionMode,
-          searchActive: search.active,
-          onCancelSelection: selectionNotifier.clear,
+          mode: mode,
+          onCancelSelection: () => vm?.clearSelection(),
         ),
         title: _buildTitle(
           context,
           theme: theme,
           t: t,
-          selectionMode: selectionMode,
-          selectionCount: selection.length,
-          search: search,
-          onSearchChanged: searchNotifier.updateQuery,
+          mode: mode,
+          selectionCount: items?.selection.length ?? 0,
+          onSearchChanged: (query) => vm?.updateQuery(query),
           loaded: loaded,
         ),
         actions: _buildActions(
           context,
           t: t,
-          selectionMode: selectionMode,
-          searchActive: search.active,
+          mode: mode,
           loaded: loaded,
-          listId: listId,
-          selection: selection,
-          shops: shops,
-          onClearSelection: selectionNotifier.clear,
+          vm: vm,
+          shops: items?.shops ?? const <Shop>[],
           onOpenSearch: openSearch,
           onCloseSearch: closeSearch,
         ),
@@ -175,7 +174,9 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
         context,
         list: list,
         listId: listId,
-        searchActive: search.active,
+        // Results already span every shop, and rearrange has its own header;
+        // a filter strip has nothing to do in either.
+        showFilter: mode == ItemsMode.browse || mode == ItemsMode.select,
         seed: scopedSeed,
         hapticsOn: hapticsOn,
         revealKey: _revealKey,
@@ -191,11 +192,10 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   /// [Scaffold] falls back to its own drawer hamburger.
   Widget? _buildLeading({
     required Translations t,
-    required bool selectionMode,
-    required bool searchActive,
+    required ItemsMode mode,
     required VoidCallback onCancelSelection,
   }) {
-    if (selectionMode) {
+    if (mode == ItemsMode.select) {
       return IconButton(
         icon: const Icon(Icons.close),
         tooltip: t.common.cancel,
@@ -216,9 +216,8 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     BuildContext context, {
     required ThemeData theme,
     required Translations t,
-    required bool selectionMode,
+    required ItemsMode mode,
     required int selectionCount,
-    required ({bool active, String query}) search,
     required ValueChanged<String> onSearchChanged,
     required ShoppingList? loaded,
   }) {
@@ -232,82 +231,86 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       ),
       switchInCurve: AppMotion.enter,
       switchOutCurve: AppMotion.enter,
-      child: selectionMode
-          ? Text(
-              t.items.selectedCount(n: selectionCount),
-              key: const ValueKey('selection'),
-            )
-          : search.active
-          ? TextField(
-              key: const ValueKey('search'),
-              controller: _searchField,
-              autofocus: true,
-              textInputAction: TextInputAction.search,
-              style: theme.textTheme.bodyLarge,
-              decoration: InputDecoration(
-                hintText: t.search.hint,
-                isDense: true,
-                prefixIcon: Icon(
-                  Icons.search,
-                  size: 18,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 12,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.input),
-                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.input),
-                  borderSide: BorderSide(color: theme.colorScheme.onSurface),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.input),
-                  borderSide: BorderSide(
-                    color: theme.colorScheme.onSurface,
-                    width: 1.5,
-                  ),
-                ),
-              ),
-              onChanged: onSearchChanged,
-            )
-          : KeyedSubtree(
-              key: const ValueKey('normal'),
-              child: loaded == null
-                  ? Text(t.appName)
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // The app's own name as a small kicker over the
-                        // list's, the way the design's every list screen
-                        // carries it — this is whose product this is,
-                        // not what kind of screen it is.
-                        Text(
-                          t.appName,
-                          style: AppTextStyles.labelStrong.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        EditableListTitle(
-                          name: loaded.name,
-                          onRename: (name) async {
-                            final result = await ref
-                                .read(listsControllerProvider.notifier)
-                                .rename(loaded.id, name);
-                            return switch (result) {
-                              Ok<ShoppingList>() => null,
-                              Err<ShoppingList>(:final failure) =>
-                                failure.toMessage(t),
-                            };
-                          },
-                        ),
-                      ],
-                    ),
+      child: switch (mode) {
+        ItemsMode.rearrange => Text(
+          t.items.rearrangeHeader,
+          key: const ValueKey('rearrange'),
+        ),
+        ItemsMode.select => Text(
+          t.items.selectedCount(n: selectionCount),
+          key: const ValueKey('selection'),
+        ),
+        ItemsMode.search => TextField(
+          key: const ValueKey('search'),
+          controller: _searchField,
+          autofocus: true,
+          textInputAction: TextInputAction.search,
+          style: theme.textTheme.bodyLarge,
+          decoration: InputDecoration(
+            hintText: t.search.hint,
+            isDense: true,
+            prefixIcon: Icon(
+              Icons.search,
+              size: 18,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
+            contentPadding: const EdgeInsets.symmetric(
+              vertical: 10,
+              horizontal: 12,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadii.input),
+              borderSide: BorderSide(color: theme.colorScheme.onSurface),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadii.input),
+              borderSide: BorderSide(color: theme.colorScheme.onSurface),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadii.input),
+              borderSide: BorderSide(
+                color: theme.colorScheme.onSurface,
+                width: 1.5,
+              ),
+            ),
+          ),
+          onChanged: onSearchChanged,
+        ),
+        ItemsMode.browse => KeyedSubtree(
+          key: const ValueKey('normal'),
+          child: loaded == null
+              ? Text(t.appName)
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // The app's own name as a small kicker over the
+                    // list's, the way the design's every list screen
+                    // carries it — this is whose product this is,
+                    // not what kind of screen it is.
+                    Text(
+                      t.appName,
+                      style: AppTextStyles.labelStrong.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    EditableListTitle(
+                      name: loaded.name,
+                      onRename: (name) async {
+                        final result = await ref
+                            .read(listsControllerProvider.notifier)
+                            .rename(loaded.id, name);
+                        return switch (result) {
+                          Ok<ShoppingList>() => null,
+                          Err<ShoppingList>(:final failure) =>
+                            failure.toMessage(t),
+                        };
+                      },
+                    ),
+                  ],
+                ),
+        ),
+      },
     );
   }
 
@@ -318,84 +321,59 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   List<Widget> _buildActions(
     BuildContext context, {
     required Translations t,
-    required bool selectionMode,
-    required bool searchActive,
+    required ItemsMode mode,
     required ShoppingList? loaded,
-    required ListId listId,
-    required Set<ItemId> selection,
+    required ItemsViewModel? vm,
     required List<Shop> shops,
-    required VoidCallback onClearSelection,
     required VoidCallback onOpenSearch,
     required VoidCallback onCloseSearch,
   }) {
-    if (selectionMode) {
-      Future<void> handleDelete() async {
-        final failure = await ref
-            .read(itemsControllerProvider(listId).notifier)
-            .removeSelected(selection);
-        if (!context.mounted) return;
-        if (failure == null) {
-          onClearSelection();
-        } else {
-          showFailureSnackBar(context, failure: failure, t: t);
-        }
-      }
+    void report(Failure? failure) {
+      if (failure == null || !context.mounted) return;
+      showFailureSnackBar(context, failure: failure, t: t);
+    }
 
-      Future<void> handleMove() async {
-        // Cancelling (null) leaves the selection exactly as it was -- the
-        // sheet is a detour, not a commitment the moment it opens.
-        final outcome = await showModalBottomSheet<_MoveToShopOutcome>(
-          context: context,
-          isScrollControlled: true,
-          showDragHandle: true,
-          builder: (_) => _MoveToShopSheet(shops: shops, t: t),
-        );
-        if (outcome == null) return;
-        final failure = await ref
-            .read(itemsControllerProvider(listId).notifier)
-            .moveSelected(selection, outcome.shopId);
-        if (!context.mounted) return;
-        if (failure == null) {
-          onClearSelection();
-        } else {
-          // Left selected on failure, per the guide's own acceptance check:
-          // an error is not a reason to lose what was picked.
-          showFailureSnackBar(context, failure: failure, t: t);
-        }
-      }
+    Future<void> handleMove() async {
+      // Cancelling (null) leaves the selection exactly as it was -- the
+      // sheet is a detour, not a commitment the moment it opens.
+      final outcome = await showModalBottomSheet<_MoveToShopOutcome>(
+        context: context,
+        isScrollControlled: true,
+        showDragHandle: true,
+        builder: (_) => _MoveToShopSheet(shops: shops, t: t),
+      );
+      if (outcome == null || vm == null) return;
+      report(await vm.moveSelected(outcome.shopId));
+    }
 
-      return [
+    if (loaded == null || vm == null) return const [];
+    return switch (mode) {
+      ItemsMode.rearrange => [
+        TextButton(onPressed: vm.stopRearrange, child: Text(t.common.done)),
+      ],
+      ItemsMode.select => [
+        TextButton(onPressed: handleMove, child: Text(t.common.move)),
         TextButton(
-          onPressed: handleMove,
-          child: Text(t.common.move),
-        ),
-        TextButton(
-          onPressed: handleDelete,
+          onPressed: () async => report(await vm.deleteSelected()),
           style: TextButton.styleFrom(foregroundColor: AppColors.destructive),
           child: Text(t.common.delete),
         ),
-      ];
-    }
-    if (searchActive) {
+      ],
       // The reference's own search header: the bordered field plus this one
       // text action, no separate leading back-arrow (_buildLeading).
-      return [
-        TextButton(
-          onPressed: onCloseSearch,
-          child: Text(t.common.cancel),
+      ItemsMode.search => [
+        TextButton(onPressed: onCloseSearch, child: Text(t.common.cancel)),
+      ],
+      ItemsMode.browse => [
+        IconButton(
+          icon: const Icon(Icons.search),
+          tooltip: t.search.hint,
+          onPressed: onOpenSearch,
         ),
-      ];
-    }
-    if (loaded == null) return const [];
-    return [
-      IconButton(
-        icon: const Icon(Icons.search),
-        tooltip: t.search.hint,
-        onPressed: onOpenSearch,
-      ),
-      _MemberAvatar(list: loaded),
-      _ListMenu(list: loaded, t: t),
-    ];
+        _MemberAvatar(list: loaded),
+        _ListMenu(list: loaded, t: t),
+      ],
+    };
   }
 
   /// The scaffold body: the loading spinner while the list is still
@@ -406,7 +384,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     BuildContext context, {
     required AsyncOutcome<ShoppingList> list,
     required ListId listId,
-    required bool searchActive,
+    required bool showFilter,
     required Color seed,
     required bool hapticsOn,
     required GlobalKey<ShopThemeRevealState> revealKey,
@@ -427,7 +405,7 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
             AnimatedSize(
               duration: AppMotion.durationFor(context, AppMotion.standard),
               curve: AppMotion.enter,
-              child: searchActive
+              child: !showFilter
                   ? const SizedBox(width: double.infinity)
                   // A plain AnimatedTheme, not ShopThemeReveal: this strip
                   // is small, low-saturation chrome (outline/onSurface
@@ -486,8 +464,6 @@ class _MemberAvatar extends ConsumerWidget {
     final me = currentUser == null
         ? null
         : list.members.where((m) => m.userId == currentUser).firstOrNull;
-    final initial =
-        me?.displayName.characters.firstOrNull?.toUpperCase() ?? '?';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -496,15 +472,17 @@ class _MemberAvatar extends ConsumerWidget {
         onTap: () => context.go(Routes.household(list.id)),
         child: Padding(
           padding: const EdgeInsets.all(6),
-          child: CircleAvatar(
-            radius: 16,
-            backgroundColor: AppColors.ink,
-            foregroundColor: Colors.white,
-            child: Text(
-              initial,
-              style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-            ),
-          ),
+          child: me == null
+              ? const CircleAvatar(radius: 16, child: Text('?'))
+              : UserAvatar(
+                  seed: me.userId.value,
+                  initial:
+                      me.displayName.characters.firstOrNull?.toUpperCase() ??
+                      '?',
+                  photoUrl: me.avatarPhotoUrl,
+                  color: me.avatarColor,
+                  radius: 16,
+                ),
         ),
       ),
     );
