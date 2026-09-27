@@ -11,7 +11,7 @@ import 'package:freshcart_flutter/features/items/application/items_controller.da
 import 'package:freshcart_flutter/features/items/application/recently_added_provider.dart';
 import 'package:freshcart_flutter/features/items/data/item_repository_provider.dart';
 import 'package:freshcart_flutter/features/items/presentation/items_section.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/completion_celebration_card.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile.dart';
@@ -209,7 +209,7 @@ void main() {
       isFalse,
     );
 
-    await tester.tap(find.byKey(ItemTile.checkKey));
+    await tester.tap(find.byKey(ItemTile.checkKey), warnIfMissed: false);
     await tester.pump();
 
     expect(
@@ -254,7 +254,7 @@ void main() {
     ]);
     await pump(tester);
 
-    await tester.tap(find.byKey(ItemTile.checkKey).first);
+    await tester.tap(find.byKey(ItemTile.checkKey).first, warnIfMissed: false);
     await tester.pump();
 
     // Still holding its place: no divider yet.
@@ -273,7 +273,7 @@ void main() {
       items.byListResult = Ok([buildItem(name: 'Milk')]);
       await pump(tester);
 
-      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.tap(find.byKey(ItemTile.checkKey), warnIfMissed: false);
       await tester.pump();
       await tester.pump(RecentlyChecked.holdDuration);
       // Mid-transition: the exiting Open copy and the entering Done copy
@@ -299,19 +299,28 @@ void main() {
       ]);
       await pump(tester);
 
-      await tester.tap(find.byKey(ItemTile.checkKey).at(0));
+      await tester.tap(
+        find.byKey(ItemTile.checkKey).at(0),
+        warnIfMissed: false,
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
 
       // Bread resets the debounce -- Milk must NOT settle on its own,
       // original 600ms-after-its-own-tap schedule.
-      await tester.tap(find.byKey(ItemTile.checkKey).at(1));
+      await tester.tap(
+        find.byKey(ItemTile.checkKey).at(1),
+        warnIfMissed: false,
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byType(DoneDivider), findsNothing);
 
       // Eggs resets it again.
-      await tester.tap(find.byKey(ItemTile.checkKey).at(2));
+      await tester.tap(
+        find.byKey(ItemTile.checkKey).at(2),
+        warnIfMissed: false,
+      );
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 400));
       expect(find.byType(DoneDivider), findsNothing);
@@ -346,7 +355,7 @@ void main() {
       await pump(tester);
       expect(find.byType(DoneDivider), findsOneWidget);
 
-      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.tap(find.byKey(ItemTile.checkKey), warnIfMissed: false);
       // Nowhere near RecentlyChecked.holdDuration -- unchecking must not
       // need to wait it out the way checking does.
       await tester.pump();
@@ -376,7 +385,7 @@ void main() {
       items.byListResult = Ok([buildItem(name: 'Milk')]);
       await pump(tester);
 
-      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.tap(find.byKey(ItemTile.checkKey), warnIfMissed: false);
       await tester.pump();
       await tester.pump(RecentlyChecked.holdDuration);
       // Mid-cascade: moved into `transitioning`, exit under way but not
@@ -387,7 +396,10 @@ void main() {
       expect(find.text('Milk'), findsNWidgets(2));
 
       // Uncheck while still transitioning.
-      await tester.tap(find.byKey(ItemTile.checkKey).first);
+      await tester.tap(
+        find.byKey(ItemTile.checkKey).first,
+        warnIfMissed: false,
+      );
       await tester.pump();
       await tester.pumpAndSettle();
 
@@ -410,7 +422,7 @@ void main() {
       items.byListResult = Ok([buildItem(name: 'Milk')]);
       await pump(tester, reducedMotion: true);
 
-      await tester.tap(find.byKey(ItemTile.checkKey));
+      await tester.tap(find.byKey(ItemTile.checkKey), warnIfMissed: false);
       await tester.pump();
       await tester.pump(RecentlyChecked.holdDuration);
       // AppMotion.micro (120ms), not standard (260ms) -- settled well
@@ -629,7 +641,10 @@ void main() {
         // as an unchecked row would be -- drag Eggs up past it and Bread.
         // Milk stays a member of the open rows the whole time (the existing
         // hold mechanic), so the drag's index math must still land right.
-        await tester.tap(find.byKey(ItemTile.checkKey).first);
+        await tester.tap(
+          find.byKey(ItemTile.checkKey).first,
+          warnIfMissed: false,
+        );
         await tester.pump();
 
         await tester.drag(
@@ -659,7 +674,7 @@ void main() {
     items.saveResult = const Err(Failure.conflict());
     await pump(tester);
 
-    await tester.tap(find.byKey(ItemTile.checkKey));
+    await tester.tap(find.byKey(ItemTile.checkKey), warnIfMissed: false);
     await tester.pump(RecentlyChecked.holdDuration);
     await tester.pumpAndSettle();
 
