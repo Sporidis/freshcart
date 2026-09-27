@@ -14,7 +14,7 @@ import 'package:freshcart_flutter/features/shops/application/controllers/shop_co
 /// Every swatch tap previews immediately behind the sheet rather than waiting
 /// for Save, because the whole question a shop colour answers is "will I spot
 /// this in an aisle?" — and that cannot be judged from a swatch in a modal.
-/// There is nothing to retint behind the sheet for a shop that does not exist
+/// There is nothing to re-tint behind the sheet for a shop that does not exist
 /// yet, so the live preview only fires in edit mode.
 class EditShopSheet extends ConsumerStatefulWidget {
   /// Creates the sheet. Pass `shop: null` to create a new shop instead of
