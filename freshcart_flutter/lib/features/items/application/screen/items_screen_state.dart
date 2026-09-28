@@ -73,6 +73,19 @@ class ItemsScreenState {
       if (i.isChecked) i,
   ];
 
+  /// What was typed, without the stray spaces a keyboard leaves behind.
+  String get trimmedQuery => searchQuery.trim();
+
+  /// Every item whose name contains the query, ignoring case and shop filter
+  /// (§16: search spans all shops).
+  List<ShoppingItem> get searchMatches {
+    final q = trimmedQuery.toLowerCase();
+    return [
+      for (final i in allItems)
+        if (i.name.toLowerCase().contains(q)) i,
+    ];
+  }
+
   bool get isEmpty => _visible.isEmpty;
 
   /// Reordering is scoped to one shop tab -- moving between shops is an

@@ -239,4 +239,7 @@ class ItemsScreenController extends _$ItemsScreenController {
   void updateQuery(String query) => ref
       .read(itemSearchControllerProvider(_listId).notifier)
       .updateQuery(query);
+
+  /// Search's "add" paths: untagged, since search ignores the shop tab.
+  Future<Failure?> addFromSearch(String name) => _items.add(name: name);
 }
