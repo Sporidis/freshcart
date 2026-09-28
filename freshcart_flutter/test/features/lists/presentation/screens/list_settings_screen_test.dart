@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/auth_bootstrap_provider.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
@@ -154,6 +155,53 @@ void main() {
         repository.setClearCheckedAfterShoppingCalls.single.value,
         isTrue,
       );
+    },
+  );
+
+  testWidgets(
+    'a failed Clear checked toggle says so in a snackbar, not silently',
+    (tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.setClearCheckedAfterShoppingResult = const Err(
+        Failure.validation('clearChecked', 'Could not save that'),
+      );
+      await pump(tester, list: list);
+
+      await tester.tap(
+        find.widgetWithText(
+          SwitchListTile,
+          'Clear checked items automatically',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('Could not save that'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'the list disappearing while open replaces the form with the error '
+    'screen, rather than spinning forever',
+    (tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      await pump(tester, list: list);
+      expect(nameField(), findsOneWidget);
+
+      // Pushed into the live stream after arriving, not set up front: the
+      // journey above passes through the list's own detail screen, which
+      // would stop at its own error screen first. This is also the real
+      // case -- someone else deletes the list while it's open here.
+      repository.live.add(const Err(Failure.notFound()));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ErrorScreen), findsOneWidget);
+      expect(nameField(), findsNothing);
     },
   );
 
