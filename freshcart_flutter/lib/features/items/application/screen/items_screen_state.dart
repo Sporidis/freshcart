@@ -17,8 +17,6 @@ class ItemsScreenState {
     required this.list,
     required this.mode,
     required this.allItems,
-    required this.openItems,
-    required this.doneItems,
     required this.shops,
     required this.shopFilter,
     required this.me,
@@ -36,10 +34,6 @@ class ItemsScreenState {
   /// Every item on the list, ignoring the shop filter -- search and the
   /// completion celebration both span all shops.
   final List<ShoppingItem> allItems;
-
-  /// The filtered rows, split the way the screen draws them.
-  final List<ShoppingItem> openItems;
-  final List<ShoppingItem> doneItems;
 
   final List<Shop> shops;
   final ShopId? shopFilter;
@@ -63,7 +57,23 @@ class ItemsScreenState {
   /// from the action that caused them).
   final Failure? loadFailure;
 
-  bool get isEmpty => openItems.isEmpty && doneItems.isEmpty;
+  /// The rows under the shop filter -- unlike [allItems], which ignores it.
+  List<ShoppingItem> get _visible => [
+    for (final i in allItems)
+      if (i.matchesShopFilter(shopFilter)) i,
+  ];
+
+  /// The filtered rows, split the way the screen draws them.
+  List<ShoppingItem> get openItems => [
+    for (final i in _visible)
+      if (!i.isChecked) i,
+  ];
+  List<ShoppingItem> get doneItems => [
+    for (final i in _visible)
+      if (i.isChecked) i,
+  ];
+
+  bool get isEmpty => _visible.isEmpty;
 
   /// Reordering is scoped to one shop tab -- moving between shops is an
   /// edit/move action instead, so on "All" there's nothing to rearrange.
