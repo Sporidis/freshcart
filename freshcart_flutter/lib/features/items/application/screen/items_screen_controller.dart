@@ -75,11 +75,6 @@ class ItemsScreenController extends _$ItemsScreenController {
       }
     });
 
-    final visible = [
-      for (final item in allItems)
-        if (item.matchesShopFilter(shopFilter)) item,
-    ];
-
     return ItemsScreenState(
       list: list,
       mode: _modeFor(
@@ -88,14 +83,6 @@ class ItemsScreenController extends _$ItemsScreenController {
         searching: search.active,
       ),
       allItems: allItems,
-      openItems: [
-        for (final i in visible)
-          if (!i.isChecked) i,
-      ],
-      doneItems: [
-        for (final i in visible)
-          if (i.isChecked) i,
-      ],
       shops: shops,
       shopFilter: shopFilter,
       me: ref.watch(myMembershipProvider(list)),
