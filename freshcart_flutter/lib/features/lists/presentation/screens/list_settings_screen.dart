@@ -3,17 +3,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_membership_provider.dart';
+import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/features/lists/application/screen/list_settings_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
-import 'package:freshcart_flutter/features/shops/application/controllers/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -49,8 +47,11 @@ class ListSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
+  ListSettingsScreenController get _vm =>
+      ref.read(listSettingsScreenControllerProvider(widget.listId).notifier);
+
   late final TextEditingController _name;
-  String? _nameError;
+  Failure? _nameFailure;
   bool _savingName = false;
 
   // Same reasoning as EditProfileScreen's own _nameSeeded: listByIdProvider
@@ -87,62 +88,57 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   Future<void> _saveName() async {
     setState(() {
       _savingName = true;
-      _nameError = null;
+      _nameFailure = null;
     });
-    final result = await ref
-        .read(listsControllerProvider.notifier)
-        .rename(widget.listId, _name.text);
+    final result = await _vm.rename(_name.text);
     if (!mounted) return;
     setState(() {
       _savingName = false;
-      _nameError = switch (result) {
-        Ok() => null,
-        Err(:final failure) => failure.toMessage(
-          ref.read(translationsProvider),
-        ),
-      };
+      _nameFailure = result;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
-    final list = ref.watch(listByIdProvider(widget.listId));
-    final allUserLists =
-        ref.watch(listsControllerProvider).dataOrNull ?? const [];
+    final s = ref.watch(listSettingsScreenControllerProvider(widget.listId));
 
-    final loadFailure = list.loadFailure;
+    void report(Failure? failure) {
+      if (failure == null || !mounted) return;
+      showFailureSnackBar(context, failure: failure, t: t);
+    }
+
+    // A failed load is the screen tier: without the list there is no form
+    // to show, so this replaces the Scaffold rather than spinning forever.
+    final loadFailure = s.loadFailure;
     if (loadFailure != null) {
       return ErrorScreen(
         failure: loadFailure,
         t: t,
         onExit: () {
-          unawaited(ref.read(listsControllerProvider.notifier).refresh());
+          unawaited(_vm.refreshLists());
           context.go(Routes.lists);
         },
       );
     }
 
-    final loaded = list.dataOrNull;
-    if (loaded != null) _seedNameOnce(loaded.name);
-
-    // False until the identity resolves -- see isListOwner for why that's
-    // the safe default.
-    final isOwner = loaded != null && ref.watch(isListOwnerProvider(loaded));
+    // A local, not s.list, so the null check below promotes it.
+    final list = s.list;
+    if (list != null) _seedNameOnce(list.name);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(t.lists.settingsTitle),
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
       ),
-      body: loaded == null
+      body: list == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.screen),
               children: [
                 _ListDropdown(
-                  currentListId: widget.listId,
-                  allUserLists: allUserLists,
+                  currentList: list,
+                  allUserLists: s.allLists,
                   t: t,
                 ),
                 const SizedBox(height: 24),
@@ -155,20 +151,25 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                   key: const Key('listNameField'),
                   controller: _name,
                   enabled: !_savingName,
-                  decoration: InputDecoration(errorText: _nameError),
+                  decoration: InputDecoration(
+                    errorText: _nameFailure?.toMessage(t),
+                  ),
                   onSubmitted: (value) async {
                     await _saveName();
                   },
                 ),
                 const SizedBox(height: 24),
                 _ShopsSection(
-                  listId: widget.listId,
+                  shops: s.shops,
+                  onToggle: (shop) async =>
+                      report(await _vm.toggleShopActive(shop)),
                   t: t,
                 ),
                 const SizedBox(height: 12),
                 _ClearCheckedAfterShoppingOption(
-                  listId: widget.listId,
-                  value: loaded.clearCheckedAfterShopping,
+                  value: list.clearCheckedAfterShopping,
+                  onChanged: (value) async =>
+                      report(await _vm.setClearCheckedAfterShopping(value)),
                   t: t,
                 ),
                 const SizedBox(height: 24),
@@ -176,17 +177,17 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                 // above them" -- the design's own words for this screen.
                 const Divider(),
                 const SizedBox(height: 12),
-                if (isOwner)
+                if (s.isOwner)
                   _SettingsRow(
                     title: t.lists.delete,
                     destructive: true,
-                    onTap: () => confirmDeleteList(context, ref, loaded, t),
+                    onTap: () => confirmDeleteList(context, ref, list, t),
                   )
                 else
                   _SettingsRow(
                     title: t.lists.leave,
                     destructive: true,
-                    onTap: () => confirmLeaveList(context, ref, loaded, t),
+                    onTap: () => confirmLeaveList(context, ref, list, t),
                   ),
               ],
             ),
@@ -194,17 +195,20 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   }
 }
 
-class _ShopsSection extends ConsumerWidget {
-  const _ShopsSection({required this.listId, required this.t});
+class _ShopsSection extends StatelessWidget {
+  const _ShopsSection({
+    required this.shops,
+    required this.onToggle,
+    required this.t,
+  });
 
-  final ListId listId;
+  final List<Shop> shops;
+  final ValueChanged<Shop> onToggle;
   final Translations t;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final allUserShops =
-        ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
-    if (allUserShops.isNotEmpty) {
+  Widget build(BuildContext context) {
+    if (shops.isNotEmpty) {
       return Column(
         children: [
           Text(
@@ -219,13 +223,9 @@ class _ShopsSection extends ConsumerWidget {
           ),
           const SizedBox(height: 6),
           Column(
-            children: allUserShops.map(
+            children: shops.map(
               (shop) {
-                return _ShopOption(
-                  shop: shop,
-                  listId: listId,
-                  t: t,
-                );
+                return _ShopOption(shop: shop, onToggle: onToggle);
               },
             ).toList(),
           ),
@@ -249,23 +249,17 @@ class _ShopsSection extends ConsumerWidget {
   }
 }
 
-class _ShopOption extends ConsumerWidget {
-  const _ShopOption({
-    required this.shop,
-    required this.listId,
-    required this.t,
-  });
+class _ShopOption extends StatelessWidget {
+  const _ShopOption({required this.shop, required this.onToggle});
 
   final Shop shop;
-  final ListId listId;
-  final Translations t;
+  final ValueChanged<Shop> onToggle;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return SwitchListTile(
       value: shop.isActive,
-      onChanged: (_) =>
-          ref.read(shopsControllerProvider(listId).notifier).toggleActive(shop),
+      onChanged: (_) => onToggle(shop),
       title: Text(shop.name),
     );
   }
@@ -275,24 +269,22 @@ class _ShopOption extends ConsumerWidget {
 /// (decisions #64/#69/#79) -- per list, not global, and with a real trigger
 /// behind it: the whole list becoming fully checked, the same moment
 /// `ItemsSection`'s completion celebration already detects.
-class _ClearCheckedAfterShoppingOption extends ConsumerWidget {
+class _ClearCheckedAfterShoppingOption extends StatelessWidget {
   const _ClearCheckedAfterShoppingOption({
-    required this.listId,
     required this.value,
+    required this.onChanged,
     required this.t,
   });
 
-  final ListId listId;
   final bool value;
   final Translations t;
+  final ValueChanged<bool> onChanged;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return SwitchListTile(
       value: value,
-      onChanged: (next) => ref
-          .read(listsControllerProvider.notifier)
-          .setClearCheckedAfterShopping(listId, next),
+      onChanged: onChanged,
       title: Text(t.lists.clearCheckedAfterShopping),
       subtitle: Text(t.lists.clearCheckedAfterShoppingBody),
     );
@@ -301,27 +293,22 @@ class _ClearCheckedAfterShoppingOption extends ConsumerWidget {
 
 class _ListDropdown extends StatelessWidget {
   const _ListDropdown({
-    required this.currentListId,
+    required this.currentList,
     required this.allUserLists,
     required this.t,
   });
 
-  final ListId currentListId;
+  final ShoppingList currentList;
   final List<ShoppingList> allUserLists;
   final Translations t;
 
   @override
   Widget build(BuildContext context) {
-    String? selectedListName;
-    for (final list in allUserLists) {
-      if (list.id == currentListId) {
-        selectedListName = list.name;
-        break;
-      }
-    }
-
+    final currentListId = currentList.id;
     return DropdownMenu<ListId>(
-      key: ValueKey('${currentListId.value}:$selectedListName'),
+      // Keyed on the name too, so a rename rebuilds the menu's own text
+      // field instead of leaving the old name showing.
+      key: ValueKey('${currentListId.value}:${currentList.name}'),
       width: MediaQuery.of(context).size.width * 0.9,
       initialSelection: currentListId,
       label: Text(
