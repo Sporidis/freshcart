@@ -7,16 +7,16 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/providers/recent_names_provider.dart';
+import 'package:freshcart_flutter/features/items/application/screen/items_screen_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Search's pre-typing state (§06, "Recently bought"): browse every distinct
 /// product name this list has had before, grouped by how recently it was
 /// last added -- "the weekly-staples shortcut without building a template
 /// feature," in the design's own words. Each row's "+" re-adds the name with
-/// a pop, the same optimistic [ItemsController.add] the quick-add control
-/// already rides.
+/// a pop, through [ItemsScreenController.addFromSearch] -- the same
+/// optimistic add the quick-add control already rides.
 ///
 /// Rendered inline in `SearchResults` rather than as its own destination:
 /// the interactive prototype never models a separate "Recently bought"
@@ -34,7 +34,7 @@ class SearchRecentlyBought extends ConsumerWidget {
   const SearchRecentlyBought({
     required this.listId,
     required this.t,
-    required this.controller,
+    required this.vm,
     required this.report,
     this.now = DateTime.now,
     super.key,
@@ -44,7 +44,7 @@ class SearchRecentlyBought extends ConsumerWidget {
   final ListId listId;
 
   final Translations t;
-  final ItemsController controller;
+  final ItemsScreenController vm;
   final void Function(Failure?, {VoidCallback? onRetry}) report;
 
   /// Clock used to bucket entries by recency. Defaults to the real wall
@@ -95,8 +95,7 @@ class SearchRecentlyBought extends ConsumerWidget {
           ),
           _ReAddButton(
             tooltip: t.search.addAgain,
-            onPressed: () async =>
-                report(await controller.add(name: entry.name)),
+            onPressed: () async => report(await vm.addFromSearch(entry.name)),
           ),
         ],
       ),

@@ -9,7 +9,6 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/screen/items_screen_controller.dart';
 import 'package:freshcart_flutter/features/items/application/screen/items_screen_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
@@ -135,13 +134,11 @@ class ItemsSection extends ConsumerWidget {
                   // Not 'search' -- the app bar's own search TextField
                   // already owns that key, and both are mounted at once.
                   key: const ValueKey('search-results'),
-                  list: list,
-                  allItems: s.allItems,
-                  query: s.searchQuery,
+                  state: s,
+                  vm: vm,
                   t: t,
-                  controller: ref.read(
-                    itemsControllerProvider(list.id).notifier,
-                  ),
+                  dotFor: dotFor,
+                  onEdit: openEditSheet,
                   report: report,
                 )
               : s.isEmpty
