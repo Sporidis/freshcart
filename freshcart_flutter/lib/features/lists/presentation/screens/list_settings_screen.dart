@@ -181,13 +181,24 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                   _SettingsRow(
                     title: t.lists.delete,
                     destructive: true,
-                    onTap: () => confirmDeleteList(context, ref, list, t),
+                    onTap: () => confirmDeleteList(
+                      context,
+                      list: list,
+                      itemCount: _vm.itemCountForDialog(),
+                      t: t,
+                      delete: _vm.deleteList,
+                    ),
                   )
                 else
                   _SettingsRow(
                     title: t.lists.leave,
                     destructive: true,
-                    onTap: () => confirmLeaveList(context, ref, list, t),
+                    onTap: () => confirmLeaveList(
+                      context,
+                      list: list,
+                      t: t,
+                      leave: _vm.leaveList,
+                    ),
                   ),
               ],
             ),
