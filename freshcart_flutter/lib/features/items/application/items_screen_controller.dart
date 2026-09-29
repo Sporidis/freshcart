@@ -2,13 +2,9 @@ import 'dart:async';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/features/items/application/celebration_controller.dart';
-import 'package:freshcart_flutter/features/items/application/done_section_controller.dart';
-import 'package:freshcart_flutter/features/items/application/item_search_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
-import 'package:freshcart_flutter/features/items/application/rearrange_controller.dart';
-import 'package:freshcart_flutter/features/items/application/selection_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_ui_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
@@ -16,25 +12,31 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'items_screen_controller.g.dart';
 
-/// The view model behind the list detail screen's items: composes the per-list
-/// controllers into one derived [ItemsScreenState], and owns the multi-step
-/// actions ("delete, then leave selection mode only if that worked").
+/// The view model behind the list detail screen's items: composes the
+/// list's items, shops, filter and [ItemsUiController] into one derived
+/// [ItemsScreenState], and owns the multi-step actions ("delete, then leave
+/// selection mode only if that worked").
 ///
-/// It does *not* replace those controllers -- each still owns its one piece
-/// of state -- and it never touches `BuildContext`: sheets, snackbars and
-/// text fields stay in the widget. Actions hand back a [Failure] (or null)
-/// and the screen decides how to show it.
+/// The items widgets talk to this notifier and nothing else, which is why it
+/// also carries one-line forwards: one door per screen beats making every
+/// widget know which of four providers owns which action. It never touches
+/// `BuildContext` -- sheets, snackbars and text fields stay in the widget.
+/// Actions hand back a [Failure] (or null) and the screen decides how to
+/// show it.
 ///
 /// Keyed by the whole [ShoppingList] rather than its id because that's what
 /// the screen is handed, and the header needs its name and members; a
 /// changed list (freezed equality) simply gets a fresh instance, which is
-/// safe because every piece of mode state lives in its own provider.
+/// safe because all mode state lives in [ItemsUiController].
 @riverpod
 class ItemsScreenController extends _$ItemsScreenController {
   ListId get _listId => list.id;
 
   ItemsController get _items =>
       ref.read(itemsControllerProvider(_listId).notifier);
+
+  ItemsUiController get _ui =>
+      ref.read(itemsUiControllerProvider(_listId).notifier);
 
   @override
   ItemsScreenState build(ShoppingList list) {
@@ -44,55 +46,46 @@ class ItemsScreenController extends _$ItemsScreenController {
     final shops =
         ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
     final shopFilter = ref.watch(shopFilterControllerProvider(listId));
-    final selection = ref.watch(selectionControllerProvider(listId));
-    final search = ref.watch(itemSearchControllerProvider(listId));
-    final rearranging = ref.watch(rearrangeControllerProvider(listId));
+    final ui = ref.watch(itemsUiControllerProvider(listId));
 
-    // Forgets a "Keep list" dismissal the moment the list stops being fully
-    // checked, so the celebration shows again the next time it applies.
-    ref.listen(itemsControllerProvider(listId), (_, next) {
-      final nextItems = next.dataOrNull;
-      if (nextItems != null && !_allDone(nextItems)) {
-        ref.read(celebrationControllerProvider(listId).notifier).reset();
-      }
-    });
-
-    // "Clear checked after shopping" (decisions #79): the instant the list
-    // *becomes* fully checked while someone is looking at it, clear it
-    // silently. Not on the initial load (no previous snapshot) -- a list
-    // that was already all-done when opened must not wipe itself on arrival.
-    // The preference is checked inside the callback so the listen is
-    // registered unconditionally, as `ref.listen` in build must be.
     ref.listen(itemsControllerProvider(listId), (previous, next) {
-      if (!list.clearCheckedAfterShopping) return;
       final before = previous?.dataOrNull;
       final after = next.dataOrNull;
-      if (before == null || after == null) return;
-      if (!_allDone(before) && _allDone(after)) {
+      if (after == null) return;
+
+      // Forgets a "Keep list" dismissal the moment the list stops being
+      // fully checked, so the celebration shows again the next time.
+      if (!_allDone(after)) _ui.resetCelebration();
+
+      // "Clear checked after shopping" (decisions #79): the instant the list
+      // *becomes* fully checked while someone is looking at it, clear it
+      // silently. Not on the initial load (no previous snapshot) -- a list
+      // that was already all-done when opened must not wipe itself on
+      // arrival.
+      if (list.clearCheckedAfterShopping &&
+          before != null &&
+          !_allDone(before) &&
+          _allDone(after)) {
         unawaited(_items.clearChecked());
       }
     });
 
     return ItemsScreenState(
       list: list,
-      mode: _modeFor(
-        rearranging: rearranging,
-        selecting: selection.isNotEmpty,
-        searching: search.active,
-      ),
+      mode: _modeFor(ui),
       allItems: allItems,
       shops: shops,
       shopFilter: shopFilter,
       me: ref.watch(myMembershipProvider(list)),
-      selection: selection,
-      searchQuery: search.query,
-      doneCollapsed: ref.watch(doneSectionControllerProvider(listId)),
+      selection: ui.selection,
+      searchQuery: ui.searchQuery,
+      doneCollapsed: ui.doneCollapsed,
       // Mutually exclusive with the auto-clear above: two ways of handling
       // the same moment, not layered on top of each other.
       showCelebration:
           !list.clearCheckedAfterShopping &&
           _allDone(allItems) &&
-          !ref.watch(celebrationControllerProvider(listId)),
+          !ui.celebrationDismissed,
       isLoading: itemsOutcome.isLoading && allItems.isEmpty,
       loadFailure: itemsOutcome.loadFailure,
     );
@@ -101,22 +94,12 @@ class ItemsScreenController extends _$ItemsScreenController {
   static bool _allDone(List<ShoppingItem> items) =>
       items.isNotEmpty && items.every((i) => i.isChecked);
 
-  /// Ranks the three mode flags into the one [ItemsMode] the screen draws.
-  static ItemsMode _modeFor({
-    required bool rearranging,
-    required bool selecting,
-    required bool searching,
-  }) {
-    switch ((rearranging, selecting, searching)) {
-      case (true, _, _):
-        return ItemsMode.rearrange;
-      case (false, true, _):
-        return ItemsMode.select;
-      case (false, false, true):
-        return ItemsMode.search;
-      case (false, false, false):
-        return ItemsMode.browse;
-    }
+  /// Ranks the mode flags into the one [ItemsMode] the screen draws.
+  static ItemsMode _modeFor(ItemsUiState ui) {
+    if (ui.rearranging) return ItemsMode.rearrange;
+    if (ui.selection.isNotEmpty) return ItemsMode.select;
+    if (ui.searchActive) return ItemsMode.search;
+    return ItemsMode.browse;
   }
 
   // ── Rows ────────────────────────────────────────────────────────────────
@@ -152,8 +135,10 @@ class ItemsScreenController extends _$ItemsScreenController {
 
   Future<Failure?> clearChecked() => _items.clearChecked();
 
-  void toggleDoneCollapsed() =>
-      ref.read(doneSectionControllerProvider(_listId).notifier).toggle();
+  void toggleDoneCollapsed() => _ui.toggleDoneCollapsed();
+
+  /// "Keep list" on the completion celebration.
+  void dismissCelebration() => _ui.dismissCelebration();
 
   // ── Adding ──────────────────────────────────────────────────────────────
 
@@ -175,16 +160,12 @@ class ItemsScreenController extends _$ItemsScreenController {
 
   // ── Rearrange ───────────────────────────────────────────────────────────
 
-  /// Enters rearrange mode, or does nothing on the "All" tab (see
-  /// [ItemsScreenState.canRearrange]).
+  /// Enters rearrange mode, if [ItemsScreenState.canRearrange] allows it.
   void startRearrange() {
-    if (state.canRearrange) {
-      ref.read(rearrangeControllerProvider(_listId).notifier).enter();
-    }
+    if (state.canRearrange) _ui.startRearrange();
   }
 
-  void stopRearrange() =>
-      ref.read(rearrangeControllerProvider(_listId).notifier).exit();
+  void stopRearrange() => _ui.stopRearrange();
 
   /// Moves the open row at [oldIndex] to [newIndex].
   ///
@@ -204,11 +185,9 @@ class ItemsScreenController extends _$ItemsScreenController {
 
   // ── Selection ───────────────────────────────────────────────────────────
 
-  void toggleSelection(ItemId id) =>
-      ref.read(selectionControllerProvider(_listId).notifier).toggle(id);
+  void toggleSelection(ItemId id) => _ui.toggleSelection(id);
 
-  void clearSelection() =>
-      ref.read(selectionControllerProvider(_listId).notifier).clear();
+  void clearSelection() => _ui.clearSelection();
 
   /// Deletes the selection; leaves selection mode only on success, so a
   /// failed write never costs the user what they picked.
@@ -228,15 +207,11 @@ class ItemsScreenController extends _$ItemsScreenController {
 
   // ── Search ──────────────────────────────────────────────────────────────
 
-  void openSearch() =>
-      ref.read(itemSearchControllerProvider(_listId).notifier).open();
+  void openSearch() => _ui.openSearch();
 
-  void closeSearch() =>
-      ref.read(itemSearchControllerProvider(_listId).notifier).close();
+  void closeSearch() => _ui.closeSearch();
 
-  void updateQuery(String query) => ref
-      .read(itemSearchControllerProvider(_listId).notifier)
-      .updateQuery(query);
+  void updateQuery(String query) => _ui.updateQuery(query);
 
   /// Search's "add" paths: untagged, since search ignores the shop tab.
   Future<Failure?> addFromSearch(String name) => _items.add(name: name);
