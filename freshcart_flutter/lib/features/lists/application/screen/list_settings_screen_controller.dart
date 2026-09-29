@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
+import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/providers/list_membership_provider.dart';
 import 'package:freshcart_flutter/features/lists/application/screen/list_settings_screen_state.dart';
@@ -54,4 +55,21 @@ class ListSettingsScreenController extends _$ListSettingsScreenController {
   /// Forces a fresh fetch of the user's lists -- the error screen's exit
   /// needs it so `/lists` doesn't redirect straight back to a gone list.
   Future<void> refreshLists() => _lists.refresh();
+
+  /// Deletes this list for everyone on it. Owner only, enforced server-side.
+  Future<Failure?> deleteList() async =>
+      (await _lists.delete(listId)).failureOrNull;
+
+  /// Leaves this list; it carries on for everyone else.
+  Future<Failure?> leaveList() async =>
+      (await _lists.leave(listId)).failureOrNull;
+
+  /// How many products the delete dialog says will go with the list.
+  ///
+  /// Read at the moment of asking rather than kept in the watched state: the
+  /// number is shown once, in a dialog, so watching it would rebuild this
+  /// view model on every item change for nobody. Falls back to 0 if the
+  /// items haven't loaded -- the same as before this moved here.
+  int itemCountForDialog() =>
+      ref.read(itemsControllerProvider(listId)).dataOrNull?.length ?? 0;
 }
