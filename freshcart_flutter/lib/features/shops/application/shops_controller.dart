@@ -1,0 +1,92 @@
+import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_filter_controller.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'shops_controller.g.dart';
+
+/// The shops belonging to one list.
+@riverpod
+class ShopsController extends _$ShopsController {
+  @override
+  Future<Result<List<Shop>>> build(ListId listId) =>
+      ref.watch(shopRepositoryProvider).byList(listId);
+
+  /// Creates a shop and refreshes the collection on success.
+  Future<Result<Shop>> create({
+    required String name,
+    required HexColor color,
+  }) async {
+    final result = await CreateShop(ref.read(shopRepositoryProvider))(
+      listId: listId,
+      name: name,
+      color: color,
+    );
+    if (result.isOk) _refreshIfAlive();
+    return result;
+  }
+
+  /// Renames and/or recolours a shop, refreshing the collection on success.
+  ///
+  /// Recolouring re-seeds the app theme when this shop is the active one, so
+  /// the refresh is what makes the new colour take hold everywhere.
+  Future<Result<Shop>> edit(Shop shop, {String? name, HexColor? color}) async {
+    final result = await EditShop(ref.read(shopRepositoryProvider))(
+      shop,
+      name: name,
+      color: color,
+    );
+    if (result.isOk) _refreshIfAlive();
+    return result;
+  }
+
+  /// Flips whether [shop] shows as a tab in the shop nav, refreshing the
+  /// collection on success.
+  ///
+  /// Turning off the shop the list is currently filtered to also clears that
+  /// filter back to "All" -- its tab is about to disappear, so staying
+  /// filtered to it would narrow the list to a shop with no visible way back.
+  Future<Result<Shop>> toggleActive(Shop shop) async {
+    final result = await ToggleShopActive(ref.read(shopRepositoryProvider))(
+      shop,
+    );
+    if (result.isOk) {
+      _refreshIfAlive();
+      if (result.valueOrNull?.isActive == false &&
+          ref.read(shopFilterControllerProvider(shop.listId)) == shop.id) {
+        ref
+            .read(shopFilterControllerProvider(shop.listId).notifier)
+            .select(null);
+      }
+    }
+    return result;
+  }
+
+  /// How many items are tagged to [id], for the delete sheet to lead with.
+  Future<Result<int>> itemCount(ShopId id) =>
+      ref.read(shopRepositoryProvider).itemCount(id);
+
+  /// Deletes a shop, disposing of its items as [disposition] says.
+  Future<Result<void>> remove(
+    ShopId id, {
+    ShopItemDisposition disposition = ShopItemDisposition.untag,
+    ShopId? moveTo,
+  }) async {
+    final result = await ref
+        .read(shopRepositoryProvider)
+        .remove(id, disposition: disposition, moveTo: moveTo);
+    if (result.isOk) _refreshIfAlive();
+    return result;
+  }
+
+  /// Re-reads this controller's own collection, if it is still alive.
+  ///
+  /// A write can outlive the screen that started it: the household screen
+  /// removes a member and routes away, and nothing there watches this
+  /// provider, so it auto-disposes while the request is still in flight.
+  /// Refreshing a cache that no longer exists is not an error — there is
+  /// simply nothing left to refresh.
+  void _refreshIfAlive() {
+    if (ref.mounted) ref.invalidateSelf();
+  }
+}

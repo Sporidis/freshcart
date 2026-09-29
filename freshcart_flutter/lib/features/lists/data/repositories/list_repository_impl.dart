@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'dart:math';
-
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/list_summary_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/sources/list_realtime_source.dart';
@@ -11,6 +12,9 @@ import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_lists_
 import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'list_repository_impl.g.dart';
 
 /// The Serverpod-backed [ListRepository].
 ///
@@ -280,3 +284,21 @@ class ListRepositoryImpl implements ListRepository {
 
   String _mintTempId() => 'temp-${DateTime.now().microsecondsSinceEpoch}';
 }
+
+/// Supplies the [ListRepository] port.
+///
+/// The provider's type is the *domain port*, not the implementation, so
+/// everything above it depends on the interface and a test can override this
+/// with a fake without the app noticing.
+@Riverpod(keepAlive: true)
+ListRepository listRepository(Ref ref) => ListRepositoryImpl(
+  ref.watch(serverpodClientProvider),
+  ref.watch(pendingOperationsQueueProvider),
+  ref.watch(connectivityAdapterProvider),
+  () =>
+      ref.read(currentUserIdProvider).asData?.value.valueOrNull ??
+      (throw StateError(
+        'currentUserId not resolved — cannot queue an offline add without a known user',
+      )),
+  ref.watch(cachedListsStoreProvider),
+);

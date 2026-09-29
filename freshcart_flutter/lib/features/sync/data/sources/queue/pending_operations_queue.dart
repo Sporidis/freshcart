@@ -1,8 +1,11 @@
 import 'dart:convert';
-
 import 'package:drift/drift.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/database/app_database_provider.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'pending_operations_queue.g.dart';
 
 /// Persists writes that couldn't reach the server, so they survive the app
 /// being killed and can be replayed later (Phase D).
@@ -56,3 +59,8 @@ class PendingOperationsQueue {
     return _db.select(_db.pendingOperations).watch().map((rows) => rows.length);
   }
 }
+
+/// Supplies the [PendingOperationsQueue], backed by [appDatabaseProvider].
+@Riverpod(keepAlive: true)
+PendingOperationsQueue pendingOperationsQueue(Ref ref) =>
+    PendingOperationsQueue(ref.watch(appDatabaseProvider));

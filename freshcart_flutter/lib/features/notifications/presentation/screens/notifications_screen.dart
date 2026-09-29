@@ -6,9 +6,9 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/settings_options/setting_toggle_option.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
-import 'package:freshcart_flutter/features/notifications/application/controllers/list_mute_controller.dart';
-import 'package:freshcart_flutter/features/notifications/application/controllers/notification_preferences_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
+import 'package:freshcart_flutter/features/notifications/application/list_mute_controller.dart';
+import 'package:freshcart_flutter/features/notifications/application/notification_preferences_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Push preferences: the three server-gated moments, and per-list mute
