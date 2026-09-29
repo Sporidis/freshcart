@@ -64,8 +64,7 @@ class CompletionCelebrationCard extends StatefulWidget {
       _CompletionCelebrationCardState();
 }
 
-class _CompletionCelebrationCardState
-    extends State<CompletionCelebrationCard>
+class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _entrance = AnimationController(
     vsync: this,
