@@ -5,7 +5,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
-import 'package:freshcart_flutter/features/auth/application/auth_providers.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:go_router/go_router.dart';
 

@@ -6,7 +6,7 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/lists/application/lists_drawer_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
     show showCreateListDialog, showJoinListDialog;
 import 'package:freshcart_l10n/freshcart_l10n.dart';

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/lists/application/list_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:go_router/go_router.dart';
 
 /// The signed-in member's own avatar, opening Household on tap.

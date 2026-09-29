@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/features/auth/data/sources/current_user_provid
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_providers.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

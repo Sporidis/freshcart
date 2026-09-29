@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_providers.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_tabs_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_tabs/shop_tabs_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 

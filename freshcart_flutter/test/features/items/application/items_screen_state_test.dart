@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';

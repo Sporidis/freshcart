@@ -1,8 +1,8 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_filter_controller.dart';
-import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'shop_tabs_controller.g.dart';

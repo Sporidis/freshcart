@@ -1,9 +1,9 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/features/auth/application/auth_providers.dart';
-import 'package:freshcart_flutter/features/lists/application/last_opened_list_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/list_providers.dart';
-import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'lists_drawer_controller.g.dart';

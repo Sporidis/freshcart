@@ -12,9 +12,9 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_filter_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_providers.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../../fakes/fake_item_repository.dart';
