@@ -3,7 +3,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 
 class CreateListStep extends ConsumerStatefulWidget {
   const CreateListStep({super.key});

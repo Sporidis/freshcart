@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/features/sync/application/sync_providers.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
 class OfflineSyncingBanner extends ConsumerWidget {
   const OfflineSyncingBanner({super.key});

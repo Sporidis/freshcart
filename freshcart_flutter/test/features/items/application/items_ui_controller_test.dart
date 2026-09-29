@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_ui_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_controller.dart';
 
 void main() {
   final listId = ListId('00000000-0000-4000-8000-000000000001');

@@ -1,5 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
 import 'package:meta/meta.dart';
 
 /// The list-level half of `ListDetailScreen`: the route shell, its theming
