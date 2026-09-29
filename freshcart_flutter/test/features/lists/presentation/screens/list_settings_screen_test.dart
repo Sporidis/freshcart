@@ -5,13 +5,12 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/auth_bootstrap_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
-import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/sync_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/sync_status.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
+import 'package:freshcart_flutter/features/sync/application/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

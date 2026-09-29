@@ -1,8 +1,9 @@
 import 'dart:async';
-
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/name_history_entry_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/sources/item_realtime_source.dart';
@@ -11,6 +12,9 @@ import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connec
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'item_repository_impl.g.dart';
 
 /// The Serverpod-backed [ItemRepository].
 class ItemRepositoryImpl implements ItemRepository {
@@ -226,3 +230,17 @@ class ItemRepositoryImpl implements ItemRepository {
 
   String _mintTempId() => 'temp-${DateTime.now().microsecondsSinceEpoch}';
 }
+
+/// Supplies the [ItemRepository] port.
+@Riverpod(keepAlive: true)
+ItemRepository itemRepository(Ref ref) => ItemRepositoryImpl(
+  ref.watch(serverpodClientProvider),
+  ref.watch(pendingOperationsQueueProvider),
+  ref.watch(connectivityAdapterProvider),
+  () =>
+      ref.read(currentUserIdProvider).asData?.value.valueOrNull ??
+      (throw StateError(
+        'currentUserId not resolved — cannot queue an offline add without a known user',
+      )),
+  ref.watch(cachedItemsStoreProvider),
+);

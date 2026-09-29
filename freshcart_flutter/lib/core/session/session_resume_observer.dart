@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 
 /// Refreshes the plain, non-streamed list collection after the app comes
 /// back from the background.

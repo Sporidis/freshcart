@@ -7,8 +7,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/items/application/providers/recent_names_provider.dart';
-import 'package:freshcart_flutter/features/items/application/screen/items_screen_controller.dart';
+import 'package:freshcart_flutter/features/items/application/item_history_providers.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Search's pre-typing state (§06, "Recently bought"): browse every distinct

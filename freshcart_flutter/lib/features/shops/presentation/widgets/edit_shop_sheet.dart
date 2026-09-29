@@ -7,7 +7,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/shops/application/controllers/shop_color_preview_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_color_preview_controller.dart';
 
 /// Renames and recolours a shop, or creates a new one when [shop] is null.
 ///

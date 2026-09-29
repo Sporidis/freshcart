@@ -7,10 +7,10 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/signed_in_user_provider.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/last_opened_list_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_summaries_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/auth_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/last_opened_list_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
     show showCreateListDialog, showJoinListDialog;
 import 'package:go_router/go_router.dart';

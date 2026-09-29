@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/session/session_resume_observer.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 
 /// Counts how many times each provider's build function runs, standing in
 /// for the real repository stack -- this test is about which providers

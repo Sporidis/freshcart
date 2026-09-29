@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/features/auth/application/controllers/profile_controller.dart';
-import 'package:freshcart_flutter/features/auth/application/controllers/upgrade_nudge_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/profile_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/upgrade_nudge_controller.dart';
 
 /// Prompts an anonymous user to attach an email to their account.
 ///

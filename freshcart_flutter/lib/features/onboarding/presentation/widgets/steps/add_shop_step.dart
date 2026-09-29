@@ -6,7 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/onboarding/application/screen/onboarding_controller.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_tabs_preview.dart';

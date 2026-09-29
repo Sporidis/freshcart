@@ -7,10 +7,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/screen/items_screen_controller.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/items/application/items_screen_controller.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
-import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
