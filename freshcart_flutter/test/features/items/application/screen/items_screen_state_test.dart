@@ -108,6 +108,6 @@ void main() {
       expect(state.searchMatches, isEmpty);
     });
 
-    // TODO(human): pin down what an empty or whitespace-only query returns.
+    // TODO: pin down what an empty or whitespace-only query returns.
   });
 }

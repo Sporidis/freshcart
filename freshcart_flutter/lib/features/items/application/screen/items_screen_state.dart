@@ -88,9 +88,8 @@ class ItemsScreenState {
 
   bool get isEmpty => _visible.isEmpty;
 
-  /// Reordering is scoped to one shop tab -- moving between shops is an
-  /// edit/move action instead, so on "All" there's nothing to rearrange.
-  bool get canRearrange => shopFilter != null;
+  /// If rearranging is allowed for the current shop tab (can change so 'all' tab may differ).
+  bool get canRearrange => true;
 
   /// No filter and nothing on the list yet: the add bar's first-run prompt.
   bool get firstRun => shopFilter == null && allItems.isEmpty;

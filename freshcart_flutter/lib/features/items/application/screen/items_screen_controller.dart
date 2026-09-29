@@ -49,9 +49,6 @@ class ItemsScreenController extends _$ItemsScreenController {
 
     // Forgets a "Keep list" dismissal the moment the list stops being fully
     // checked, so the celebration shows again the next time it applies.
-    // Lives here, not in the widget, because it's a rule about the data, not
-    // about what's on screen -- and a listen in `build()` is re-registered
-    // (not stacked) on every rebuild.
     ref.listen(itemsControllerProvider(listId), (_, next) {
       final nextItems = next.dataOrNull;
       if (nextItems != null && !_allDone(nextItems)) {

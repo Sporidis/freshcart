@@ -30,6 +30,10 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// Multi-select and rearrange are both entered from a row's hold-menu
 /// ("Select more…" / "Rearrange list") rather than long-press directly,
 /// since that gesture already opens the menu.
+/// TODO: Implement multi-select and rearrange functionality.
+///       Theme-ing and styling considerations for the items section.
+///       Celebration when all items are completed.
+///       Add avatar for each marked item to indicate the responsible member. (also use picture if available)
 class ItemsSection extends ConsumerWidget {
   const ItemsSection({required this.list, super.key});
 
