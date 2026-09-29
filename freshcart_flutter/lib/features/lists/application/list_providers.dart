@@ -1,6 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/application/auth_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -65,3 +66,23 @@ Future<Map<ListId, ListSummary>> listSummaries(Ref ref) async {
 @riverpod
 Stream<Result<ShoppingList>> listById(Ref ref, ListId listId) =>
     ref.watch(listRepositoryProvider).watch(listId);
+
+/// Where `/lists` should send a signed-in user, or null to stay put -- still
+/// loading, or genuinely no lists (the empty state).
+///
+/// The last opened list wins only while it is still one of the user's
+/// lists: after leaving or deleting it, the stored id points at a list the
+/// server will refuse, and following it would land on the error screen,
+/// whose exit leads straight back here.
+@riverpod
+ListId? listsLandingTarget(Ref ref) {
+  final lists = ref.watch(listsControllerProvider);
+  final lastOpened = ref.watch(lastOpenedListControllerProvider);
+  if (lists.isLoading || lastOpened.isLoading) return null;
+
+  final mine = lists.dataOrNull;
+  if (mine == null || mine.isEmpty) return null;
+
+  final last = lastOpened.value;
+  return mine.any((l) => l.id == last) ? last : mine.first.id;
+}
