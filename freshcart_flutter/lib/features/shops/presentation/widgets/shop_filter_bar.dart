@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
-import 'package:freshcart_flutter/features/items/application/items_controller.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_providers.dart';
-import 'package:freshcart_flutter/features/shops/application/shops_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_tabs_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 
@@ -16,7 +13,7 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_p
 ///
 /// Selecting a tab does two things at once: it narrows the visible items and
 /// it re-themes the app to that shop's colour. Both read the same piece of
-/// state ([shopFilterControllerProvider]), so they cannot disagree -- and a swipe
+/// state ([ShopTabsController]), so they cannot disagree -- and a swipe
 /// across the strip drives that exact same state a tap would, rather than
 /// keeping a second index of its own.
 ///
@@ -42,31 +39,7 @@ class ShopFilterBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final shops =
-        ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
-    // Turned off in List settings: still a real shop (still taggable from
-    // the item sheet), just not a tab here. See Shop.isActive's own doc.
-    final activeShops = [
-      for (final shop in shops)
-        if (shop.isActive) shop,
-    ];
-    final selected = ref.watch(shopFilterControllerProvider(listId));
-
-    // Remaining, not total: the count answers "how much is left to find in
-    // here?", so a checked-off item should make it tick down. Hidden at
-    // zero rather than showing "· 0" -- ShopTabPill's own rule.
-    final items =
-        ref.watch(itemsControllerProvider(listId)).dataOrNull ??
-        const <ShoppingItem>[];
-    int remainingIn(ShopId? shop) => items
-        .where((item) => !item.isChecked && item.matchesShopFilter(shop))
-        .length;
-
-    // The one shared "selection model" both tapping and swiping drive:
-    // null ("All") first, then every shop in list order. A swipe just
-    // steps an index into this and calls the exact select() a tap would --
-    // there is no second, swipe-only copy of "which tab is active".
-    final order = <ShopId?>[null, for (final shop in activeShops) shop.id];
+    final s = ref.watch(shopTabsControllerProvider(listId));
 
     // Set by each pill's onTapDown, read by its own onTap right after --
     // both are recreated together every build, so this is never stale.
@@ -88,12 +61,12 @@ class ShopFilterBar extends ConsumerWidget {
     // directly.
     void select(ShopId? shopId, Offset? origin) {
       revealKey.currentState?.beginReveal(origin ?? fallbackOrigin());
-      ref.read(shopFilterControllerProvider(listId).notifier).select(shopId);
+      ref.read(shopTabsControllerProvider(listId).notifier).select(shopId);
     }
 
     // A swipe has no finger position on the *target* tab to anchor to, so
     // it reveals from whichever screen edge the new tab conceptually slides
-    // in from instead -- forward through `order` from the right, backward
+    // in from instead -- forward (to the right) from the right, backward
     // from the left.
     Offset? edgeOrigin(int delta) {
       final box = revealKey.currentContext?.findRenderObject();
@@ -103,10 +76,8 @@ class ShopFilterBar extends ConsumerWidget {
     }
 
     void step(int delta) {
-      final from = order.indexOf(selected);
-      final current = from == -1 ? 0 : from;
-      final next = (current + delta).clamp(0, order.length - 1);
-      if (next != current) select(order[next], edgeOrigin(delta));
+      final target = s.neighbour(delta);
+      if (target != null) select(target.shopId, edgeOrigin(delta));
     }
 
     return SizedBox(
@@ -131,13 +102,13 @@ class ShopFilterBar extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: ShopTabPill(
                 label: t.shops.all,
-                active: selected == null,
-                count: remainingIn(null),
+                active: s.selected == null,
+                count: s.remainingIn(null),
                 onTapDown: (details) => tapOrigin = details.globalPosition,
                 onTap: () => select(null, tapOrigin),
               ),
             ),
-            for (final shop in activeShops)
+            for (final shop in s.tabs)
               Padding(
                 padding: const EdgeInsets.symmetric(
                   vertical: 8,
@@ -145,11 +116,11 @@ class ShopFilterBar extends ConsumerWidget {
                 ),
                 child: ShopTabPill(
                   label: shop.name,
-                  active: selected == shop.id,
+                  active: s.selected == shop.id,
                   color: Color(
                     ref.watch(effectiveShopColorProvider(shop)).argb,
                   ),
-                  count: remainingIn(shop.id),
+                  count: s.remainingIn(shop.id),
                   onTapDown: (details) => tapOrigin = details.globalPosition,
                   onTap: () => select(shop.id, tapOrigin),
                 ),
@@ -158,7 +129,7 @@ class ShopFilterBar extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
               child: _AddShopPill(
                 tooltip: t.shops.add,
-                onTap: () => addShop(context, ref, listId, shops),
+                onTap: () => addShop(context, ref, listId, s.allShops),
               ),
             ),
           ],
