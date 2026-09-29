@@ -177,6 +177,8 @@ class ItemsSection extends ConsumerWidget {
                         : [for (final shop in s.shops) shop.color.toColor()],
                     t: t,
                     report: report,
+                    onKeep: vm.dismissCelebration,
+                    onClear: vm.clearChecked,
                   ),
                 QuickAddBar(
                   listId: list.id,
