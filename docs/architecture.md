@@ -62,7 +62,7 @@ A ✅ means "this row may depend on this column." Anything not ticked is a viola
 | Use cases (application-agnostic logic)   | `packages/freshcart_domain/.../domain/`            |
 | Repository **implementations**           | `freshcart_flutter/.../features/<f>/data/repositories/` |
 | DTO ↔ entity mappers                     | `freshcart_flutter/.../features/<f>/data/mappers/` |
-| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/{controllers,providers,screen}/` |
+| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/` (flat) |
 | Screens, widgets                         | `freshcart_flutter/.../features/<f>/presentation/{screens,widgets}/` |
 | DB models, endpoints, server ops         | `freshcart_server/`                                |
 | Generated protocol + client              | `freshcart_client/` (never hand-edit)              |
@@ -83,12 +83,13 @@ freshcart_flutter/lib/
 │   ├── di/  error/  l10n/  router/  session/  streaming/  ui/
 │   └── theme/              # tokens/  preferences/  reveal/
 └── features/<feature>/
-    ├── application/
-    │   ├── controllers/    # XController -- Notifiers owning feature state + actions
-    │   ├── providers/      # function providers: derived values, use-case DI
-    │   └── screen/         # XScreenController/XScreenState + per-screen UI state
+    ├── application/        # flat -- the file name says what it is:
+    │                       #   x_controller.dart         Notifier: feature state + actions
+    │                       #   x_screen_controller.dart  screen VM (only where earned)
+    │                       #   x_screen_state.dart       that VM's pure-Dart state
+    │                       #   <feature>_providers.dart  small derived providers, grouped
     ├── data/
-    │   ├── repositories/   # *_repository_impl.dart + *_repository_provider.dart
+    │   ├── repositories/   # *_repository_impl.dart, its DI provider at the bottom
     │   ├── sources/        # realtime sources, adapters, local stores (grouped if many)
     │   └── mappers/        # Dto.toDomain() / Entity.toDto()
     └── presentation/
@@ -97,9 +98,15 @@ freshcart_flutter/lib/
                             # (item_tile/, quick_add/, app_bar/, ...)
 ```
 
-Only the subfolders a feature actually needs exist -- `shops/` has no `screen/`,
-`onboarding/` has no `data/`. Naming inside them follows `CLAUDE.md`'s Riverpod
-naming rule.
+Only the folders a feature actually needs exist -- `onboarding/` has no
+`data/`. `application/` is flat because a feature holds a handful of files
+there, and the name suffix already says which kind each is (decisions #93).
+Naming follows `CLAUDE.md`'s Riverpod naming rule.
+
+Use cases have no providers: a controller builds one where it uses it,
+`AddItem(ref.read(itemRepositoryProvider))(...)`. They are stateless and take
+only a port, so the repository provider is the one DI seam -- and the one
+tests override.
 
 The domain half of `lists` lives in the shared package:
 

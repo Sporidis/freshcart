@@ -2255,3 +2255,50 @@ decides how to show it, which keeps it unit-testable without a widget tree.
 - a snackbar when the "clear checked after shopping" auto-clear (#79) fails -- the rule itself
   moved into the view model and still applies, but a failure now only rolls back silently.
 
+
+## 93. Fewer providers, one notifier per widget, a screen VM only where it earns one
+
+**Problem:** the app layer had grown to 67 `@riverpod` declarations in 39 files, and a simple
+write crossed five hops (widget → screen VM → feature controller → use-case provider → use case →
+repository). Most of the extra hops forwarded calls without adding anything. The rule "a widget
+must never call a feature controller" forced a VM onto every screen, including ones with nothing
+to combine.
+
+**Decision -- the widget rule.** A widget talks to exactly one application notifier (ambient core
+providers such as translations and haptics excepted). A screen gets an `XScreenController` only
+when it combines two or more sources or runs multi-step actions: items, list detail, list
+settings, household, the drawer, the shop tab strip, onboarding, join. Simple screens (manage
+shops, notifications, settings, edit profile) use their one feature controller directly. Shared
+flows that must stay in presentation (`confirmDeleteList`) take their write as a callback instead
+of reading controllers themselves.
+
+**Decision -- no use-case providers.** `AddItem(ref.read(itemRepositoryProvider))(...)` at the call
+site. Use cases are stateless and take only a port, so a provider per use case added a seam that
+no test used: tests override the repository provider, which inline construction still reads.
+
+**Decision -- one UI-state notifier for the items screen.** `ItemsUiController(listId)` replaces
+five one-field notifiers (selection, search, rearrange, Done collapsed, celebration dismissed). It
+stays separate from `ItemsScreenController` for the reason #92 gave: the VM's `build()` re-runs on
+every watched change and would reset state stored on it.
+
+**Decision -- flat `application/`, co-located DI.** `application/{controllers,providers,screen}/`
+collapses into `application/`: a feature holds a handful of files there, and the name suffix
+already says what each is. A repository's DI provider sits at the bottom of its `_impl.dart`. A
+feature's small derived providers share `<feature>_providers.dart`. This bends "one public
+declaration per file" on purpose, because a two-line provider per file was the noise.
+`app_database_provider.dart` stays separate because `app_database.dart` already owns a drift part.
+
+**Decision -- value equality where a VM reads a noisy source.** `ListDetailScreenState` overrides
+`==` (`@immutable`, via a direct `meta` dependency). Its VM reads the items mode and re-runs on every
+item change, and Riverpod 3 notifies only when `previous != next`. That is how the screen avoids
+rebuilding per checkbox without `select`, which `riverpod_annotation` does not export to the
+application layer.
+
+**Fixed along the way:** `/lists` redirected to a stored last-opened list even after the user had
+left or deleted it. That landed on the error screen, whose exit led back to `/lists`, in a loop.
+`listsLandingTarget` now checks that the id is still one of the user's lists.
+`LastOpenedListController.select` also never updated its own state.
+
+**Result:** 67 → 55 `@riverpod` declarations, 39 → 30 application files, 174 → 155 files in
+`lib/`, and 352 → 364 tests.
+Every screen VM now combines or sequences something; none of them only forwards calls.
