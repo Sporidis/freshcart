@@ -40,7 +40,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// trailing button's own fill, which then also answers "is there anything to
 /// commit": grey and muted while the field is empty, shop-coloured the
 /// moment there is text.
-class QuickAddBar extends ConsumerStatefulWidget {
+class QuickAddBar extends StatefulWidget {
   /// Key on the [Transform.scale] the first-run pulse (§11) drives -- a test
   /// scopes to it to read the pulse's live scale, the same role
   /// `ItemTile.checkKey`/`editKey` play for that widget's own rows.
@@ -92,30 +92,19 @@ class QuickAddBar extends ConsumerStatefulWidget {
   final bool firstRun;
 
   @override
-  ConsumerState<QuickAddBar> createState() => _QuickAddBarState();
+  State<QuickAddBar> createState() => _QuickAddBarState();
 }
 
 enum _Phase { collapsed, expanded }
 
-class _QuickAddBarState extends ConsumerState<QuickAddBar>
+class _QuickAddBarState extends State<QuickAddBar>
     with TickerProviderStateMixin {
   static const double _diameter = 56;
-
-  /// How long to wait after the last keystroke before actually asking the
-  /// server for suggestions -- a network call per keystroke would mean
-  /// several in-flight requests racing each other for every word typed.
-  static const Duration _suggestDebounce = Duration(milliseconds: 300);
 
   final TextEditingController _controller = TextEditingController();
   final FocusNode _focus = FocusNode();
   _Phase _phase = _Phase.collapsed;
   bool _busy = false;
-
-  /// The query [itemSuggestionsProvider] is actually watching -- lags the
-  /// live typed text by [_suggestDebounce], and only once it clears the
-  /// same two-character floor the server itself enforces.
-  String _debouncedQuery = '';
-  Timer? _debounce;
 
   /// Drives the roll-out: 0 is the bare circle, 1 is the fully-open pill.
   late final AnimationController _reveal = AnimationController(
@@ -169,24 +158,10 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
     _focus.dispose();
     _reveal.dispose();
     _pulse.dispose();
-    _debounce?.cancel();
     super.dispose();
   }
 
-  void _handleTextChanged() {
-    setState(() {});
-    _debounce?.cancel();
-    final text = _controller.text.trim();
-    if (text.length < 2) {
-      // Below the floor: clear immediately rather than waiting out a debounce
-      // for a query that would come back empty anyway.
-      if (_debouncedQuery.isNotEmpty) setState(() => _debouncedQuery = '');
-      return;
-    }
-    _debounce = Timer(_suggestDebounce, () {
-      if (mounted) setState(() => _debouncedQuery = text);
-    });
-  }
+  void _handleTextChanged() => setState(() {});
 
   bool get _hasText => _controller.text.trim().isNotEmpty;
 
@@ -255,43 +230,16 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
         ? widget.t.items.namePlaceholder
         : widget.t.items.addTo(shop: widget.activeShopName!);
 
-    // Only once the debounce has actually settled on a query -- watching the
-    // provider with the live, pre-debounce text would fire the request (and
-    // the loading state) on every keystroke, the exact thing debouncing is
-    // for.
-    final suggestions = _debouncedQuery.isEmpty
-        ? const <String>[]
-        : ref
-                  .watch(
-                    itemSuggestionsProvider(
-                      listId: widget.listId,
-                      query: _debouncedQuery,
-                    ),
-                  )
-                  .value ??
-              const <String>[];
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(26, 4, 26, 22),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          AnimatedSize(
-            duration: AppMotion.durationFor(context, AppMotion.standard),
-            curve: AppMotion.enter,
-            alignment: Alignment.bottomCenter,
-            child: _phase == _Phase.expanded && suggestions.isNotEmpty
-                ? SuggestionRow(
-                    suggestions: suggestions,
-                    onTap: (suggestion) => setState(() {
-                      _controller.text = suggestion;
-                      _controller.selection = TextSelection.collapsed(
-                        offset: suggestion.length,
-                      );
-                    }),
-                  )
-                : const SizedBox(width: double.infinity),
+          _SuggestionChips(
+            listId: widget.listId,
+            field: _controller,
+            visible: _phase == _Phase.expanded,
           ),
           SizedBox(
             height: _diameter,
@@ -358,79 +306,28 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
                         // fully closed falls back to the plain single-copy
                         // flip, same as before.
                         localReveal: openness <= 0,
-                        child: Builder(
-                          builder: (context) {
-                            // Re-fetched here, inside WaveThemed's own Theme
-                            // override -- see decisions #90: this `context`
-                            // is a descendant of where WaveThemed inserts
-                            // its gated `Theme`, so every colour below
-                            // actually rides the wave rather than the
-                            // ambient one.
-                            final theme = Theme.of(context);
-                            // The pill's own fill: shop-coloured at rest,
-                            // plain surface once open -- "flattens into the
-                            // sheet-adjacent surface" -- one continuous lerp
-                            // riding the same width animation.
-                            final fill = Color.lerp(
-                              theme.colorScheme.primary,
-                              theme.colorScheme.surface,
-                              openness,
-                            )!;
-                            // The same StadiumBorder throughout: at width ==
-                            // diameter its ends meet and it reads as a
-                            // circle, at full width as a pill.
-                            return SizedBox(
-                              width: width,
-                              height: _diameter,
-                              child: Material(
-                                key: const ValueKey('quick-add-pill'),
-                                color: fill,
-                                elevation: 3,
-                                shape: StadiumBorder(
-                                  side: BorderSide(
-                                    color: theme.colorScheme.outlineVariant
-                                        .withValues(
-                                          alpha: openness.clamp(0.0, 1.0),
-                                        ),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    if (openness > 0)
-                                      Expanded(
-                                        // "Placeholder text fades in over the
-                                        // last 40%" (§09) -- the pill needs
-                                        // room first, or it would clip.
-                                        child: Opacity(
-                                          opacity: ((openness - 0.6) / 0.4)
-                                              .clamp(0.0, 1.0),
-                                          child: QuickAddField(
-                                            controller: _controller,
-                                            focusNode: _focus,
-                                            enabled: !_busy,
-                                            placeholder: placeholder,
-                                            showShopDot:
-                                                widget.activeShopName != null,
-                                            onSubmitted: _quickAdd,
-                                          ),
-                                        ),
-                                      ),
-                                    QuickAddButton(
-                                      showsPlus: _showsPlus,
-                                      muted:
-                                          _phase == _Phase.expanded &&
-                                          !_hasText,
-                                      tooltip:
-                                          _phase == _Phase.expanded && !_hasText
-                                          ? widget.t.common.cancel
-                                          : widget.t.items.add,
-                                      onPressed: _busy ? null : _handleIconTap,
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
+                        child: _Pill(
+                          openness: openness,
+                          width: width,
+                          height: _diameter,
+                          field: openness > 0
+                              ? QuickAddField(
+                                  controller: _controller,
+                                  focusNode: _focus,
+                                  enabled: !_busy,
+                                  placeholder: placeholder,
+                                  showShopDot: widget.activeShopName != null,
+                                  onSubmitted: _quickAdd,
+                                )
+                              : null,
+                          button: QuickAddButton(
+                            showsPlus: _showsPlus,
+                            muted: _phase == _Phase.expanded && !_hasText,
+                            tooltip: _phase == _Phase.expanded && !_hasText
+                                ? widget.t.common.cancel
+                                : widget.t.items.add,
+                            onPressed: _busy ? null : _handleIconTap,
+                          ),
                         ),
                       ),
                     ),
@@ -440,6 +337,169 @@ class _QuickAddBarState extends ConsumerState<QuickAddBar>
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// The suggestion chips above the open field (§09, decisions #64).
+///
+/// Its own widget so the debounce lives apart from the roll-out animation:
+/// it listens to the same [field], waits for typing to settle, and only
+/// then asks [itemSuggestionsProvider].
+class _SuggestionChips extends ConsumerStatefulWidget {
+  const _SuggestionChips({
+    required this.listId,
+    required this.field,
+    required this.visible,
+  });
+
+  final ListId listId;
+  final TextEditingController field;
+  final bool visible;
+
+  @override
+  ConsumerState<_SuggestionChips> createState() => _SuggestionChipsState();
+}
+
+class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
+  /// How long to wait after the last keystroke before asking the server --
+  /// a network call per keystroke would mean several in-flight requests
+  /// racing each other for every word typed.
+  static const Duration _debounceDelay = Duration(milliseconds: 300);
+
+  /// The query actually being watched: lags the typed text by
+  /// [_debounceDelay], and only once it clears the same two-character floor
+  /// the server itself enforces.
+  String _query = '';
+  Timer? _debounce;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.field.addListener(_onTextChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.field.removeListener(_onTextChanged);
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onTextChanged() {
+    _debounce?.cancel();
+    final text = widget.field.text.trim();
+    if (text.length < 2) {
+      // Below the floor: clear immediately rather than waiting out a
+      // debounce for a query that would come back empty anyway.
+      if (_query.isNotEmpty) setState(() => _query = '');
+      return;
+    }
+    _debounce = Timer(_debounceDelay, () {
+      if (mounted) setState(() => _query = text);
+    });
+  }
+
+  void _pick(String suggestion) {
+    widget.field
+      ..text = suggestion
+      ..selection = TextSelection.collapsed(offset: suggestion.length);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Watching with the live, pre-debounce text would fire the request on
+    // every keystroke -- the exact thing debouncing is for.
+    final suggestions = _query.isEmpty
+        ? const <String>[]
+        : ref
+                  .watch(
+                    itemSuggestionsProvider(
+                      listId: widget.listId,
+                      query: _query,
+                    ),
+                  )
+                  .value ??
+              const <String>[];
+
+    return AnimatedSize(
+      duration: AppMotion.durationFor(context, AppMotion.standard),
+      curve: AppMotion.enter,
+      alignment: Alignment.bottomCenter,
+      child: widget.visible && suggestions.isNotEmpty
+          ? SuggestionRow(suggestions: suggestions, onTap: _pick)
+          : const SizedBox(width: double.infinity),
+    );
+  }
+}
+
+/// The pill itself at a given [openness]: a shop-coloured circle at 0, a
+/// plain surface pill at 1.
+///
+/// A widget of its own rather than an inline Builder, and still reading
+/// `Theme.of` from its own context: it sits *inside* WaveThemed's gated
+/// Theme (decisions #90), so every colour below rides the wave rather than
+/// the ambient theme.
+class _Pill extends StatelessWidget {
+  const _Pill({
+    required this.openness,
+    required this.width,
+    required this.height,
+    required this.field,
+    required this.button,
+  });
+
+  final double openness;
+  final double width;
+  final double height;
+
+  /// The text field; null while fully collapsed, so WaveThemed can safely
+  /// build this pill twice without attaching one FocusNode twice.
+  final Widget? field;
+  final Widget button;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final field = this.field;
+    // "Flattens into the sheet-adjacent surface" -- one continuous lerp
+    // riding the same width animation.
+    final fill = Color.lerp(
+      theme.colorScheme.primary,
+      theme.colorScheme.surface,
+      openness,
+    )!;
+    // The same StadiumBorder throughout: at width == height its ends meet
+    // and it reads as a circle, at full width as a pill.
+    return SizedBox(
+      width: width,
+      height: height,
+      child: Material(
+        key: const ValueKey('quick-add-pill'),
+        color: fill,
+        elevation: 3,
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: theme.colorScheme.outlineVariant.withValues(
+              alpha: openness.clamp(0.0, 1.0),
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            if (field != null)
+              Expanded(
+                // "Placeholder text fades in over the last 40%" (§09) --
+                // the pill needs room first, or it would clip.
+                child: Opacity(
+                  opacity: ((openness - 0.6) / 0.4).clamp(0.0, 1.0),
+                  child: field,
+                ),
+              ),
+            button,
+          ],
+        ),
       ),
     );
   }
