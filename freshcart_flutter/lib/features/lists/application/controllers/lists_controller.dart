@@ -1,5 +1,4 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_use_case_providers.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -18,14 +17,14 @@ class ListsController extends _$ListsController {
   /// dialog can show a validation message against its own text field instead of
   /// replacing the whole screen with an error.
   Future<Result<ShoppingList>> create(String name) async {
-    final result = await ref.read(createListUseCaseProvider)(name);
+    final result = await CreateList(ref.read(listRepositoryProvider))(name);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
 
   /// Joins a list by code and refreshes the collection on success.
   Future<Result<ShoppingList>> join(String rawCode) async {
-    final result = await ref.read(joinListUseCaseProvider)(rawCode);
+    final result = await JoinList(ref.read(listRepositoryProvider))(rawCode);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
@@ -36,7 +35,7 @@ class ListsController extends _$ListsController {
   /// title is being edited in place, so a rejected name belongs beside that
   /// field, not on top of the screen.
   Future<Result<ShoppingList>> rename(ListId id, String name) async {
-    final result = await ref.read(renameListUseCaseProvider)(id, name);
+    final result = await RenameList(ref.read(listRepositoryProvider))(id, name);
     if (result.isOk) _refreshIfAlive();
     return result;
   }

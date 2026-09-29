@@ -1,8 +1,8 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/auth_use_case_providers.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_use_case_providers.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/onboarding/application/screen/onboarding_state.dart';
-import 'package:freshcart_flutter/features/shops/application/providers/shop_use_case_providers.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'onboarding_controller.g.dart';
@@ -95,7 +95,7 @@ class OnboardingController extends _$OnboardingController {
 
     // Trimming and length are the use case's business now, not this
     // controller's — the wizard just hands over what the user typed.
-    final result = await ref.read(setDisplayNameUseCaseProvider)(
+    final result = await SetDisplayName(ref.read(authRepositoryProvider))(
       state.displayName,
     );
     if (result case Err(:final failure)) {
@@ -103,7 +103,7 @@ class OnboardingController extends _$OnboardingController {
       return Err(failure);
     }
 
-    final listResult = await ref.read(createListUseCaseProvider)(
+    final listResult = await CreateList(ref.read(listRepositoryProvider))(
       state.listName,
     );
     if (listResult case Err(:final failure)) {
@@ -113,7 +113,7 @@ class OnboardingController extends _$OnboardingController {
     final list = (listResult as Ok<ShoppingList>).value;
 
     for (final shop in state.selectedShops) {
-      final shopResult = await ref.read(createShopUseCaseProvider)(
+      final shopResult = await CreateShop(ref.read(shopRepositoryProvider))(
         listId: list.id,
         name: shop.name,
         color: shop.color,

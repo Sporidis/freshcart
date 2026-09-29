@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/providers/item_use_case_providers.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -153,7 +152,8 @@ class ItemsController extends _$ItemsController {
       // The same entity method the server's answer will agree with, so the
       // local guess and the eventual truth are computed one way.
       item.toggleChecked(by: userId, at: DateTime.now().toUtc()),
-      () => ref.read(toggleItemCheckedUseCaseProvider)(item, by: userId),
+      () =>
+          ToggleItemChecked(ref.read(itemRepositoryProvider))(item, by: userId),
     );
   }
 
@@ -183,7 +183,7 @@ class ItemsController extends _$ItemsController {
 
     return _optimistically(
       optimistic,
-      () => ref.read(editItemUseCaseProvider)(
+      () => EditItem(ref.read(itemRepositoryProvider))(
         item,
         name: name,
         quantity: quantity,
@@ -211,7 +211,7 @@ class ItemsController extends _$ItemsController {
 
     return _optimistically(
       optimistic,
-      () => ref.read(reorderItemUseCaseProvider)(
+      () => ReorderItem(ref.read(itemRepositoryProvider))(
         item,
         before: before,
         after: after,
@@ -234,7 +234,7 @@ class ItemsController extends _$ItemsController {
     ShopId? shopId,
     String? noteText,
   }) async {
-    final result = await ref.read(addItemUseCaseProvider)(
+    final result = await AddItem(ref.read(itemRepositoryProvider))(
       listId: listId,
       name: name,
       quantity: quantity,

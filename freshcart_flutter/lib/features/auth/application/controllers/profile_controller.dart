@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/auth_use_case_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -39,13 +38,13 @@ class ProfileController extends _$ProfileController {
   }
 
   Future<Failure?> setDisplayName(String name) =>
-      _write(() => ref.read(setDisplayNameUseCaseProvider)(name));
+      _write(() => SetDisplayName(ref.read(authRepositoryProvider))(name));
 
   Future<Failure?> setAvatarColor(HexColor color) =>
       _write(() => _auth.setAvatarColor(color));
 
   Future<Failure?> setAvatarPhoto(Uint8List bytes) =>
-      _write(() => ref.read(setAvatarPhotoUseCaseProvider)(bytes));
+      _write(() => SetAvatarPhoto(ref.read(authRepositoryProvider))(bytes));
 
   Future<Failure?> clearAvatarPhoto() => _write(_auth.clearAvatarPhoto);
 

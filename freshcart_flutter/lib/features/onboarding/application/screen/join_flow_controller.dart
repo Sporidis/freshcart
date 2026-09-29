@@ -1,6 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/auth_use_case_providers.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_use_case_providers.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_provider.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
 import 'package:freshcart_flutter/features/onboarding/application/screen/join_flow_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -51,7 +51,7 @@ class JoinFlowController extends _$JoinFlowController {
   Future<Result<void>> submit() async {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
-    final nameResult = await ref.read(setDisplayNameUseCaseProvider)(
+    final nameResult = await SetDisplayName(ref.read(authRepositoryProvider))(
       state.displayName,
     );
     if (nameResult case Err(:final failure)) {
@@ -59,7 +59,9 @@ class JoinFlowController extends _$JoinFlowController {
       return Err(failure);
     }
 
-    final joinResult = await ref.read(joinListUseCaseProvider)(state.code);
+    final joinResult = await JoinList(ref.read(listRepositoryProvider))(
+      state.code,
+    );
     if (joinResult case Err(:final failure)) {
       state = state.copyWith(isSubmitting: false, error: failure);
       return Err(failure);
