@@ -1,6 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/features/shops/application/providers/shop_use_case_providers.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -18,7 +17,7 @@ class ShopsController extends _$ShopsController {
     required String name,
     required HexColor color,
   }) async {
-    final result = await ref.read(createShopUseCaseProvider)(
+    final result = await CreateShop(ref.read(shopRepositoryProvider))(
       listId: listId,
       name: name,
       color: color,
@@ -32,7 +31,7 @@ class ShopsController extends _$ShopsController {
   /// Recolouring re-seeds the app theme when this shop is the active one, so
   /// the refresh is what makes the new colour take hold everywhere.
   Future<Result<Shop>> edit(Shop shop, {String? name, HexColor? color}) async {
-    final result = await ref.read(editShopUseCaseProvider)(
+    final result = await EditShop(ref.read(shopRepositoryProvider))(
       shop,
       name: name,
       color: color,
@@ -48,7 +47,9 @@ class ShopsController extends _$ShopsController {
   /// filter back to "All" -- its tab is about to disappear, so staying
   /// filtered to it would narrow the list to a shop with no visible way back.
   Future<Result<Shop>> toggleActive(Shop shop) async {
-    final result = await ref.read(toggleShopActiveUseCaseProvider)(shop);
+    final result = await ToggleShopActive(ref.read(shopRepositoryProvider))(
+      shop,
+    );
     if (result.isOk) {
       _refreshIfAlive();
       if (result.valueOrNull?.isActive == false &&
