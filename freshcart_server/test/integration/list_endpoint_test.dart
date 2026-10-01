@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
+import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:test/test.dart';
 
 import 'test_tools/serverpod_test_tools.dart';
@@ -12,6 +14,16 @@ void main() {
   /// account here.
   final aliceId = const Uuid().v4();
   final bobId = const Uuid().v4();
+
+  // withServerpod does not run the server's run(); the members group below
+  // creates real auth users, which needs the auth services set up the same
+  // way production does (same as account_link_test).
+  setUpAll(
+    () => AuthServices.set(
+      tokenManagerBuilders: AuthConfiguration.tokenManagerBuilders,
+      identityProviderBuilders: AuthConfiguration.identityProviderBuilders,
+    ),
+  );
 
   withServerpod('Given ListEndpoint', (sessionBuilder, endpoints) {
     TestSessionBuilder as(String userId) => sessionBuilder.copyWith(
@@ -394,7 +406,19 @@ void main() {
       ListMember memberIn(ShoppingList list, String userId) => list.members!
           .firstWhere((m) => m.userId == UuidValue.withValidation(userId));
 
+      /// A real auth user. A made-up id is fine for lists, but a profile row
+      /// has a foreign key onto the auth module's user table -- every real
+      /// caller exists there, so these tests' callers have to as well.
+      Future<String> aUser() async {
+        final user = await AuthServices.instance.authUsers.create(
+          sessionBuilder.build(),
+        );
+        return user.id.uuid;
+      }
+
       test('a rename after joining shows on the list', () async {
+        final aliceId = await aUser();
+        final bobId = await aUser();
         await endpoints.profile.setDisplayName(as(bobId), 'Bob');
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
         await endpoints.list.join(as(bobId), list.joinCode);
@@ -406,6 +430,7 @@ void main() {
       });
 
       test('an avatar colour picked after joining shows on the list', () async {
+        final aliceId = await aUser();
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
 
         await endpoints.profile.setAvatarColor(as(aliceId), 0xFF2456A6);
@@ -415,12 +440,15 @@ void main() {
       });
 
       test('someone with no profile yet still gets a name', () async {
+        final aliceId = await aUser();
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
 
         expect(memberIn(list, aliceId).displayName, 'Someone');
       });
 
       test('a profile change is broadcast to everyone watching', () async {
+        final aliceId = await aUser();
+        final bobId = await aUser();
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
         await endpoints.list.join(as(bobId), list.joinCode);
 
@@ -440,6 +468,7 @@ void main() {
 
       test('a new photo gets a new URL, so image caches cannot serve the '
           'old one', () async {
+        final aliceId = await aUser();
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
         final photo = ByteData.view(Uint8List.fromList([1, 2, 3]).buffer);
 
