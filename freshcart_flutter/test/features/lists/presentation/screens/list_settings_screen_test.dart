@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/features/auth/data/sources/current_user_provid
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -207,6 +208,29 @@ void main() {
   // No "Household" or "Manage shops" row exists in the current
   // ListSettingsScreen (its own doc comment describes them, but nothing
   // implements them yet) — removed rather than testing UI that isn't there.
+
+  testWidgets('Add shop opens the create sheet, with the existing shops', (
+    tester,
+  ) async {
+    final list = buildList(name: 'Groceries', members: [buildMember()]);
+    final colruyt = Shop(
+      id: ShopId('s1'),
+      listId: list.id,
+      name: 'Colruyt',
+      color: HexColor.fromArgb(0xFFE8791A),
+    );
+    shopRepository.byListResult = Ok([colruyt]);
+    await pump(tester, list: list);
+
+    final addShop = find.widgetWithText(TextButton, 'Add shop');
+    await tester.ensureVisible(addShop);
+    await tester.tap(addShop);
+    await tester.pumpAndSettle();
+
+    final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+    expect(sheet.shop, isNull, reason: 'create mode, not editing anything');
+    expect(sheet.siblings, [colruyt], reason: 'for the clash warning');
+  });
 
   testWidgets('an owner sees Delete list, not Leave list', (tester) async {
     await pump(

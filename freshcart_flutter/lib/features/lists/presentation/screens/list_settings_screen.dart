@@ -12,6 +12,7 @@ import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/lists/application/list_settings_screen/list_settings_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -163,6 +164,9 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                   shops: s.shops,
                   onToggle: (shop) async =>
                       report(await _vm.toggleShopActive(shop)),
+                  // The same create flow as ManageShopsScreen's FAB and the
+                  // shop tab strip's "+" pill -- one flow, every entry point.
+                  onAdd: () => addShop(context, ref, widget.listId, s.shops),
                   t: t,
                 ),
                 const SizedBox(height: 12),
@@ -210,11 +214,13 @@ class _ShopsSection extends StatelessWidget {
   const _ShopsSection({
     required this.shops,
     required this.onToggle,
+    required this.onAdd,
     required this.t,
   });
 
   final List<Shop> shops;
   final ValueChanged<Shop> onToggle;
+  final VoidCallback onAdd;
   final Translations t;
 
   @override
@@ -242,9 +248,7 @@ class _ShopsSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           TextButton(
-            onPressed: () {
-              //TODO: Add logic to add a shop here
-            },
+            onPressed: onAdd,
             child: Text(
               t.shops.add,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
