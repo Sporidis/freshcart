@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -24,6 +26,14 @@ class ShopPicker extends StatelessWidget {
   final Translations t;
   final bool Function(ShopId? shopId)? isSelected;
 
+  /// A background's contrasting foreground -- the same formula
+  /// `AppTheme`/`ShopTabPill` use for the same reason (arbitrary shop
+  /// colours, not a matched M3 pair, so estimate rather than assume).
+  static Color _onColorFor(Color background) =>
+      ThemeData.estimateBrightnessForColor(background) == Brightness.dark
+      ? Colors.white
+      : AppColors.ink;
+
   @override
   Widget build(BuildContext context) {
     return Wrap(
@@ -37,9 +47,15 @@ class ShopPicker extends StatelessWidget {
         ),
         for (final shop in shops)
           ChoiceChip(
+            // Active: white, matching the fill's own contrast -- inactive:
+            // the shop's literal colour. Same inversion rule ShopTabPill's
+            // own dot already follows, so a selected chip's dot never sits
+            // at the same hue as the chip's own selected-colour fill.
             avatar: CircleAvatar(
-              backgroundColor: shop.color.toColor(),
-              radius: 8,
+              backgroundColor: (isSelected?.call(shop.id) ?? false)
+                  ? _onColorFor(shop.color.toColor())
+                  : shop.color.toColor(),
+              radius: AppSizes.tabDot / 2,
             ),
             label: Text(shop.name),
             selected: isSelected?.call(shop.id) ?? false,

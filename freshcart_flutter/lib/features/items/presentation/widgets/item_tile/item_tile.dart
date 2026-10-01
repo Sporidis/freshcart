@@ -26,6 +26,7 @@ class ItemTile extends StatefulWidget {
     this.onRearrange,
     this.dragHandle,
     this.checkedByMember,
+    this.highlightQuery,
     super.key,
   });
 
@@ -105,6 +106,10 @@ class ItemTile extends StatefulWidget {
   /// the note is the shopper's own instruction and stays visible even after
   /// the item is in the trolley.
   final ListMember? checkedByMember;
+
+  /// Search's query, passed straight through to [ItemRowContent] -- see its
+  /// own doc comment. Null everywhere this row isn't a search result.
+  final String? highlightQuery;
 
   @override
   State<ItemTile> createState() => _ItemTileState();
@@ -328,6 +333,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
           onQuantityChanged: widget.onQuantityChanged,
           t: widget.t,
           checkedByMember: widget.checkedByMember,
+          highlightQuery: widget.highlightQuery,
         ),
       );
     }
@@ -358,6 +364,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               dragHandle: widget.dragHandle,
               t: widget.t,
               checkedByMember: widget.checkedByMember,
+              highlightQuery: widget.highlightQuery,
             ),
           ),
         ),

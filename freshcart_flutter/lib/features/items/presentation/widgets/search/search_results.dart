@@ -95,6 +95,7 @@ class SearchResults extends StatelessWidget {
               await vm.setQuantity(item, quantity),
             ),
             onEdit: () => onEdit(item),
+            highlightQuery: trimmed,
           ),
       ],
     );

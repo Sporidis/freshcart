@@ -23,6 +23,7 @@ class ItemRowContent extends StatelessWidget {
     this.shopColor,
     this.dragHandle,
     this.checkedByMember,
+    this.highlightQuery,
     super.key,
   });
 
@@ -43,6 +44,35 @@ class ItemRowContent extends StatelessWidget {
   /// Who checked this item off, if anyone. A note always wins over showing
   /// this -- see `ItemTile.checkedByMember`.
   final ListMember? checkedByMember;
+
+  /// Search's query (Motion spec §16: "matching substrings are weight-600
+  /// rather than highlighted"), or null outside search -- every other caller
+  /// of this row just gets a plain name.
+  final String? highlightQuery;
+
+  /// The name, in weight-600 where it matches [highlightQuery] -- a plain
+  /// [Text] when there's nothing to match (the overwhelmingly common case,
+  /// so it stays the cheap path).
+  Widget _nameText(TextStyle? style) {
+    final query = highlightQuery?.trim();
+    if (query == null || query.isEmpty) return Text(item.name, style: style);
+    final name = item.name;
+    final index = name.toLowerCase().indexOf(query.toLowerCase());
+    if (index < 0) return Text(name, style: style);
+    return Text.rich(
+      TextSpan(
+        style: style,
+        children: [
+          TextSpan(text: name.substring(0, index)),
+          TextSpan(
+            text: name.substring(index, index + query.length),
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          TextSpan(text: name.substring(index + query.length)),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -80,7 +110,7 @@ class ItemRowContent extends StatelessWidget {
                 StrikeThrough(
                   progress: strikeProgress,
                   color: muted,
-                  child: Text(item.name, style: theme.textTheme.bodyLarge),
+                  child: _nameText(theme.textTheme.bodyLarge),
                 ),
                 ?_buildSubtitle(muted),
               ],
