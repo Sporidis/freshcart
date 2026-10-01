@@ -238,13 +238,22 @@ class _ListTitle extends ConsumerWidget {
   final Translations t;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => EditableListTitle(
-    name: list.name,
-    onRename: (name) async {
-      final failure = await ref
-          .read(listDetailScreenControllerProvider(list.id).notifier)
-          .rename(name);
-      return failure?.toMessage(t);
-    },
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Renaming is owner-only (§15's permissions table: it's one of the
+    // things listed under what the owner can do *beyond* a member) --
+    // ListMenu already reads the same field for its own Delete/Leave split.
+    final isOwner = ref.watch(
+      listDetailScreenControllerProvider(list.id).select((s) => s.isOwner),
+    );
+    return EditableListTitle(
+      name: list.name,
+      enabled: isOwner,
+      onRename: (name) async {
+        final failure = await ref
+            .read(listDetailScreenControllerProvider(list.id).notifier)
+            .rename(name);
+        return failure?.toMessage(t);
+      },
+    );
+  }
 }

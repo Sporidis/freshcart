@@ -3,21 +3,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
+import '../../../../fakes/fake_auth_repository.dart';
 import '../../../../fakes/fake_list_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);
 
   late FakeListRepository repository;
+  late FakeAuthRepository auth;
   const me = 'user-me';
 
-  setUp(() => repository = FakeListRepository());
-  tearDown(() => repository.dispose());
+  setUp(() {
+    repository = FakeListRepository();
+    // The new drawer header reads the signed-in profile (name, avatar) --
+    // unrelated to currentUserIdProvider below, which only decides list
+    // membership, so a mismatched id between the two is fine for these
+    // tests; none of them assert on the header itself.
+    auth = FakeAuthRepository();
+  });
+  tearDown(() async {
+    await repository.dispose();
+    await auth.dispose();
+  });
 
   Future<ProviderContainer> pump(
     WidgetTester tester, {
@@ -26,6 +39,7 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         listRepositoryProvider.overrideWithValue(repository),
+        authRepositoryProvider.overrideWithValue(auth),
         currentUserIdProvider.overrideWith((ref) async => Ok(UserId(me))),
       ],
     );
@@ -198,5 +212,83 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(repository.joinCalls, [JoinCode.parse('ABC23').valueOrNull]);
+  });
+
+  group('header (Flow 10)', () {
+    testWidgets('shows the signed-in profile and a lists/people summary', (
+      tester,
+    ) async {
+      repository.myListsResult = Ok([
+        buildList(
+          name: 'Weekly Groceries',
+          members: [buildMember(userId: me)],
+        ),
+        buildList(
+          id: '00000000-0000-4000-8000-000000000002',
+          name: 'Camping Trip',
+          members: [
+            buildMember(userId: me),
+            buildMember(userId: 'user-sam', displayName: 'Sam'),
+          ],
+        ),
+      ]);
+      await pump(tester);
+
+      // FakeAuthRepository's own default identity.
+      expect(find.text('Nikolaos'), findsOneWidget);
+      // 2 lists; 2 distinct people across them (me + Sam), not 3 -- the
+      // viewer is only counted once even though they're on both lists.
+      expect(find.text('2 lists · 2 members'), findsOneWidget);
+    });
+  });
+
+  group('long-press to rename (Motion & Interaction Spec §13)', () {
+    testWidgets(
+      "the owner's own list becomes an inline field, and submitting renames it",
+      (tester) async {
+        final listId = ListId('00000000-0000-4000-8000-000000000001');
+        repository.myListsResult = Ok([
+          buildList(
+            id: listId.value,
+            name: 'Weekly Groceries',
+            ownerId: me,
+            members: [buildMember(userId: me, role: MemberRole.owner)],
+          ),
+        ]);
+        await pump(tester, currentId: listId);
+
+        await tester.longPress(find.text('Weekly Groceries'));
+        await tester.pump();
+
+        await tester.enterText(find.byType(TextField), 'Groceries');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        expect(repository.renameCalls, [(id: listId, name: 'Groceries')]);
+      },
+    );
+
+    testWidgets("a list the viewer doesn't own never opens a field", (
+      tester,
+    ) async {
+      // ownerId defaults to 'user-1', not `me` -- the viewer is a regular
+      // member here, not the owner.
+      repository.myListsResult = Ok([
+        buildList(
+          name: 'Weekly Groceries',
+          members: [
+            buildMember(userId: 'user-1', displayName: 'Owner'),
+            buildMember(userId: me, role: MemberRole.member),
+          ],
+        ),
+      ]);
+      await pump(tester);
+
+      await tester.longPress(find.text('Weekly Groceries'));
+      await tester.pump();
+
+      expect(find.byType(TextField), findsNothing);
+      expect(repository.renameCalls, isEmpty);
+    });
   });
 }

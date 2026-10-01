@@ -10,6 +10,10 @@
       "one": "{{n}} lid",
       "other": "{{n}} leden"
     },
+    "countLabel": {
+      "one": "{{n}} lijst",
+      "other": "{{n}} lijsten"
+    },
     "itemsLeft": {
       "one": "{{n}} over",
       "other": "{{n}} over"
