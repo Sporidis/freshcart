@@ -30,10 +30,6 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// Multi-select and rearrange are both entered from a row's hold-menu
 /// ("Select more…" / "Rearrange list") rather than long-press directly,
 /// since that gesture already opens the menu.
-/// TODO: Implement multi-select and rearrange functionality.
-///       Theme-ing and styling considerations for the items section.
-///       Celebration when all items are completed.
-///       Add avatar for each marked item to indicate the responsible member. (also use picture if available)
 class ItemsSection extends ConsumerWidget {
   const ItemsSection({required this.list, super.key});
 
@@ -71,6 +67,7 @@ class ItemsSection extends ConsumerWidget {
       ItemsSectionState(isEmpty: true) => _ItemsEmptyState(
         shop: s.activeShop,
         t: t,
+        onAdd: () => unawaited(flows.addWithDetails('')),
       ),
       _ => _ItemList(
         state: s,
@@ -338,12 +335,21 @@ class _ItemList extends StatelessWidget {
 /// draws them differently (an empty shop tab names the shop and
 /// tints to its colour; an empty list points at adding the first item).
 class _ItemsEmptyState extends StatelessWidget {
-  const _ItemsEmptyState({required this.shop, required this.t});
+  const _ItemsEmptyState({
+    required this.shop,
+    required this.t,
+    required this.onAdd,
+  });
 
   /// The filtered-to shop, or null on "All" (or a filter whose shop hasn't
   /// loaded) -- both of which get the generic copy.
   final Shop? shop;
   final Translations t;
+
+  /// Opens the add flow, pre-filled to the active shop filter. Only offered
+  /// on the shop-tab empty -- the brand-new-list empty has no action, just
+  /// the FAB pulsing (Motion spec §11).
+  final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
@@ -361,6 +367,15 @@ class _ItemsEmptyState extends StatelessWidget {
               title: t.items.emptyShopTitle(shop: shop.name),
               body: t.items.emptyShopBody,
               tint: shop.color.toColor(),
+              // Shop-tinted automatically: this empty state sits inside the
+              // shop's own AnimatedTheme (list_detail_screen.dart, decisions
+              // #73), so a plain FilledButton already reads as
+              // colorScheme.primary = the shop's colour, same as the design's
+              // tinted "Add a product" pill.
+              action: FilledButton(
+                onPressed: onAdd,
+                child: Text(t.items.emptyShopAction),
+              ),
             ),
     );
   }

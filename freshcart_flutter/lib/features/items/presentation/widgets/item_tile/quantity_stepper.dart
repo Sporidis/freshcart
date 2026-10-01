@@ -19,9 +19,9 @@ class QuantityStepper extends StatelessWidget {
   final VoidCallback? onDecrement;
   final VoidCallback? onIncrement;
 
-  // A 26px tap target, not IconButton's default 48px -- the pill reads much
-  // more slender at this size, matching the design.
-  static const _circleSize = 26.0;
+  // 30px, per Flow 03's hold-menu stepper -- not IconButton's default 48px,
+  // which would read far too chunky for an inline pill control.
+  static const _circleSize = 30.0;
 
   @override
   Widget build(BuildContext context) {
