@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
@@ -63,25 +65,44 @@ class ShopTabPill extends StatefulWidget {
 
 class _ShopTabPillState extends State<ShopTabPill>
     with SingleTickerProviderStateMixin {
-  // TODO(human): a small scale "kick" -- 1.0 -> ~1.08 -> 1.0 -- that plays
-  // once each time this pill is tapped, so the tapped chip visibly
-  // "launches" the theme-reveal wave it anchors (decisions #88). Mirror
-  // item_tile.dart's `_iconPop`/`_iconPopOvershoot` pattern:
-  //  - an `AnimationController` (`AppMotion.quick` is a reasonable
-  //    duration)
-  //  - a two-stage `TweenSequence<double>` for the scale itself
-  //    (item_tile.dart's own overshoot tween is a direct template)
-  //  - `.forward(from: 0)` it inside `_handleTap` below, before calling
-  //    `widget.onTap`
-  //  - wrap the `AnimatedContainer` in `build()` with a `ScaleTransition`
-  //    (or an `AnimatedBuilder` + `Transform.scale`) driven by it
-  //  - dispose the controller in `dispose()`
-  //
-  // Worth deciding for yourself: every other animation in this file reads
-  // `AppMotion.durationFor`/`curveFor` for reduced motion -- does the kick
-  // skip entirely under reduced motion, or just lose its overshoot?
+  /// A one-shot scale "kick" on tap -- 1.0 -> 1.08 -> 1.0 -- so the tapped
+  /// pill visibly launches the theme-reveal wave it anchors (decisions
+  /// #88). Same two-stage overshoot shape as the app's other pops.
+  late final AnimationController _kick = AnimationController(
+    vsync: this,
+    duration: AppMotion.quick,
+  );
+
+  static const double _kickPeak = 1.08;
+
+  late final Animation<double> _kickScale = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 1,
+        end: _kickPeak,
+      ).chain(CurveTween(curve: AppMotion.enter)),
+      weight: 1,
+    ),
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: _kickPeak,
+        end: 1,
+      ).chain(CurveTween(curve: AppMotion.press)),
+      weight: 1,
+    ),
+  ]).animate(_kick);
+
+  @override
+  void dispose() {
+    _kick.dispose();
+    super.dispose();
+  }
 
   void _handleTap() {
+    // Skipped outright under reduced motion rather than softened: the kick
+    // *is* the overshoot, so a version without one would be no motion at
+    // all, just a 180 ms delay before nothing.
+    if (!AppMotion.reduced(context)) unawaited(_kick.forward(from: 0));
     widget.onTap?.call();
   }
 
@@ -97,50 +118,53 @@ class _ShopTabPillState extends State<ShopTabPill>
         ? widget.label
         : '${widget.label} · ${widget.count}';
 
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: _handleTap,
-        onTapDown: widget.onTapDown,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-        child: AnimatedContainer(
-          duration: AppMotion.durationFor(context, AppMotion.quick),
-          curve: AppMotion.enter,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: widget.active ? fill : Colors.transparent,
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: widget.active
-                ? null
-                : Border.all(color: theme.colorScheme.outlineVariant),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.color != null) ...[
-                Container(
-                  width: AppSizes.tabDot,
-                  height: AppSizes.tabDot,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    // Active: white, matching the fill's own contrast --
-                    // inactive: the shop's literal colour (component
-                    // library: "inactive pills keep a small shop-colour
-                    // dot").
-                    color: widget.active ? onFill : widget.color,
+    return ScaleTransition(
+      scale: _kickScale,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: _handleTap,
+          onTapDown: widget.onTapDown,
+          borderRadius: BorderRadius.circular(AppRadii.pill),
+          child: AnimatedContainer(
+            duration: AppMotion.durationFor(context, AppMotion.quick),
+            curve: AppMotion.enter,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: widget.active ? fill : Colors.transparent,
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              border: widget.active
+                  ? null
+                  : Border.all(color: theme.colorScheme.outlineVariant),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.color != null) ...[
+                  Container(
+                    width: AppSizes.tabDot,
+                    height: AppSizes.tabDot,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      // Active: white, matching the fill's own contrast --
+                      // inactive: the shop's literal colour (component
+                      // library: "inactive pills keep a small shop-colour
+                      // dot").
+                      color: widget.active ? onFill : widget.color,
+                    ),
                   ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  style:
+                      (widget.active
+                              ? theme.textTheme.labelLarge
+                              : theme.textTheme.labelMedium)
+                          ?.copyWith(color: widget.active ? onFill : null),
                 ),
-                const SizedBox(width: 6),
               ],
-              Text(
-                label,
-                style:
-                    (widget.active
-                            ? theme.textTheme.labelLarge
-                            : theme.textTheme.labelMedium)
-                        ?.copyWith(color: widget.active ? onFill : null),
-              ),
-            ],
+            ),
           ),
         ),
       ),
