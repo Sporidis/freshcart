@@ -205,7 +205,8 @@
     "sampleItem2": "Pâtes",
     "sampleItem3": "Tomates",
     "sampleItem4": "Café en grains",
-    "sampleActivity": "{{name}} a ajouté {{item}}"
+    "sampleActivity": "{{name}} a ajouté {{item}}",
+    "sampleMemberName": "Sam"
   },
   "onboarding": {
     "stepOf": "Étape {{step}} sur {{total}}",
@@ -215,6 +216,7 @@
     "listTitle": "Nommez votre première liste",
     "listSubtitle": "Vous pourrez en ajouter d'autres plus tard — un barbecue, un voyage, de grosses courses.",
     "listPlaceholder": "p. ex. Courses de la semaine",
+    "defaultListName": "Courses de la semaine",
     "shopSheetBody": "Donnez-lui un nom et choisissez une couleur pour son onglet.",
     "shopPlaceholder": "p. ex. Marché local",
     "suggestionHousehold": "Foyer",

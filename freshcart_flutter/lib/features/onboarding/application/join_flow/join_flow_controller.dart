@@ -27,11 +27,22 @@ class JoinFlowController extends _$JoinFlowController {
     state = state.copyWith(code: value, clearError: true);
   }
 
-  /// Advances from the name step to the code step. Plain and synchronous —
-  /// unlike [submit], nothing is written anywhere yet.
-  void continueFromName() {
-    if (state.step != JoinFlowStep.name) return;
+  /// Advances from the name step to the code step if the name is valid;
+  /// otherwise records why in [JoinFlowState.error] and stays put. Same
+  /// always-pressable rule as `OnboardingController.continueIfValid`.
+  ///
+  /// Plain and synchronous — unlike [submit], nothing is written anywhere
+  /// yet. Returns whether it advanced.
+  bool continueFromName() {
+    if (state.step != JoinFlowStep.name) return false;
+    if (AuthUser.validateDisplayName(state.displayName) case Err(
+      :final failure,
+    )) {
+      state = state.copyWith(error: failure);
+      return false;
+    }
     state = state.copyWith(step: JoinFlowStep.code, clearError: true);
+    return true;
   }
 
   /// Returns to the previous step, if any.
@@ -49,6 +60,13 @@ class JoinFlowController extends _$JoinFlowController {
   /// generic "something went wrong". On success, advances to
   /// [JoinFlowStep.confirmation] itself.
   Future<Result<void>> submit() async {
+    // A malformed code is caught here, before anything is written: without
+    // this, an incomplete code would still save the display name to the
+    // server first, only to fail on the join right after it.
+    if (JoinCode.parse(state.code) case Err(:final failure)) {
+      state = state.copyWith(error: failure);
+      return Err(failure);
+    }
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     final nameResult = await SetDisplayName(ref.read(authRepositoryProvider))(

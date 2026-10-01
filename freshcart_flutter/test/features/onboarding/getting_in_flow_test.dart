@@ -101,7 +101,7 @@ void main() {
       expect(find.text('What should we call you?'), findsOneWidget);
       // The join flow's own name step, not onboarding's — distinguished by
       // there being no step indicator above it.
-      expect(find.text('Step 1 of 4'), findsNothing);
+      expect(find.text('Step 1 of 3'), findsNothing);
     });
   });
 
@@ -118,14 +118,14 @@ void main() {
         await tester.pumpAndSettle();
 
         // Step 1: name.
-        expect(find.text('Step 1 of 4'), findsOneWidget);
+        expect(find.text('Step 1 of 3'), findsOneWidget);
         await tester.enterText(find.byType(TextField).first, 'Alex');
         await tester.pumpAndSettle();
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
 
         // Step 2: list name.
-        expect(find.text('Step 2 of 4'), findsOneWidget);
+        expect(find.text('Step 2 of 3'), findsOneWidget);
         await tester.enterText(
           find.byType(TextField).first,
           'Weekly Groceries',
@@ -136,7 +136,7 @@ void main() {
 
         // Step 3: shops — the two presets start selected, so Continue
         // submits straight away.
-        expect(find.text('Step 3 of 4'), findsOneWidget);
+        expect(find.text('Step 3 of 3'), findsOneWidget);
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
 
@@ -144,8 +144,10 @@ void main() {
         expect(lists.createCalls, ['Weekly Groceries']);
         expect(shops.createCalls, hasLength(2));
 
-        // Step 4: invite — shows the real list's join code.
-        expect(find.text('Step 4 of 4'), findsOneWidget);
+        // Invite — shows the real list's join code. Unnumbered: it comes
+        // after the list exists and is optional, so the rail is gone.
+        expect(find.textContaining('Step '), findsNothing);
+        expect(find.text('Shopping with someone?'), findsOneWidget);
         expect(find.text('ABC23'), findsOneWidget);
 
         await tester.tap(find.text('Start my list'));
@@ -178,13 +180,88 @@ void main() {
 
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
-      expect(find.text('Step 3 of 4'), findsOneWidget);
+      expect(find.text('Step 3 of 3'), findsOneWidget);
 
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
       expect(lists.createCalls, hasLength(1));
-      expect(find.text('Step 4 of 4'), findsOneWidget);
+      expect(find.text('Shopping with someone?'), findsOneWidget);
+    });
+
+    testWidgets('Continue is there before anything is typed, and pressing it '
+        'says what is missing instead of advancing', (tester) async {
+      await pump(tester, isNewIdentity: true);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Continue'), findsOneWidget);
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Step 1 of 3'), findsOneWidget);
+      expect(find.text('Please enter your name to continue'), findsOneWidget);
+
+      // The next keystroke clears it.
+      await tester.enterText(find.byType(TextField).first, 'A');
+      await tester.pumpAndSettle();
+      expect(find.text('Please enter your name to continue'), findsNothing);
+    });
+
+    testWidgets('Back on the first step returns to Welcome', (tester) async {
+      await pump(tester, isNewIdentity: true);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.text('I have an invite code'), findsOneWidget);
+    });
+
+    testWidgets('the list step arrives pre-filled, so Continue is one tap', (
+      tester,
+    ) async {
+      await pump(tester, isNewIdentity: true);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Alex');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.widgetWithText(TextField, 'Weekly Groceries'),
+        findsOneWidget,
+      );
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Step 3 of 3'), findsOneWidget);
+    });
+
+    testWidgets('picking a shop adds its pill to the tabs preview, and '
+        'unpicking removes it', (tester) async {
+      await pump(tester, isNewIdentity: true);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Alex');
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      // Delhaize is offered but not preselected: only its option row.
+      expect(find.text('Delhaize'), findsOneWidget);
+
+      await tester.tap(find.text('Delhaize'));
+      await tester.pumpAndSettle();
+      expect(find.text('Delhaize'), findsNWidgets(2));
+
+      await tester.tap(find.text('Delhaize').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Delhaize'), findsOneWidget);
     });
   });
 

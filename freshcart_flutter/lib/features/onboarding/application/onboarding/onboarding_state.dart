@@ -85,18 +85,4 @@ class OnboardingState {
 
   bool isShopSelected(String name) =>
       selectedShops.any((shop) => shop.name == name);
-
-  /// Whether the current step's answer is good enough to move on.
-  ///
-  /// Delegates to the domain's own validators rather than restating their
-  /// rules: this only decides whether to *enable* the button, and if the
-  /// enabling rule and the writing rule disagree the user gets a button that
-  /// does nothing. The use cases enforce; this merely predicts.
-  bool get canContinue => switch (step) {
-    OnboardingStep.displayName => AuthUser.validateDisplayName(
-      displayName,
-    ).isOk,
-    OnboardingStep.createList => ShoppingList.validateName(listName).isOk,
-    OnboardingStep.addShop || OnboardingStep.invite => true,
-  };
 }

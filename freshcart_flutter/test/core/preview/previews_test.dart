@@ -14,7 +14,10 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_s
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/join_code_input.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_continue_button.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/name_with_avatar_field.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_footer.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_indicator.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/add_shop_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/create_list_step.dart';
@@ -48,7 +51,10 @@ void main() {
     'step 3 · shops': addShopStepPreview,
     'step 4 · invite': inviteStepPreview,
     'step indicator': onboardingStepIndicatorPreview,
-    'continue button': onboardingContinueButtonPreview,
+    'footer': onboardingFooterPreview,
+    'primary button': onboardingPrimaryButtonPreview,
+    'step header': onboardingStepHeaderPreview,
+    'name with avatar': nameWithAvatarFieldPreview,
     'join flow': joinFlowScreenPreview,
     'join code input': joinCodeInputPreview,
     'shop option': shopOptionPreview,

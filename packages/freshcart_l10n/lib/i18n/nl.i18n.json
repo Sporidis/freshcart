@@ -205,7 +205,8 @@
     "sampleItem2": "Pasta",
     "sampleItem3": "Tomaten",
     "sampleItem4": "Koffiebonen",
-    "sampleActivity": "{{name}} voegde {{item}} toe"
+    "sampleActivity": "{{name}} voegde {{item}} toe",
+    "sampleMemberName": "Sam"
   },
   "onboarding": {
     "stepOf": "Stap {{step}} van {{total}}",
@@ -215,6 +216,7 @@
     "listTitle": "Geef je eerste lijst een naam",
     "listSubtitle": "Je kan er later meer toevoegen — een bbq, een tripje, een grote boodschap.",
     "listPlaceholder": "bv. Wekelijkse boodschappen",
+    "defaultListName": "Wekelijkse boodschappen",
     "shopSheetBody": "Geef de winkel een naam en kies een kleur voor het tabblad.",
     "shopPlaceholder": "bv. Buurtwinkel",
     "suggestionHousehold": "Huishouden",

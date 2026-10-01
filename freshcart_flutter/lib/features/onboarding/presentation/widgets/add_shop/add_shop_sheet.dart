@@ -88,25 +88,25 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
             Wrap(
               spacing: AppSpacing.gap,
               runSpacing: AppSpacing.gapSmall,
-              children: AppColors.presetShopColors
-                  .map(
-                    (color) => ColorChoice(
-                      color: color,
-                      label: t.shops.colorLabel,
-                      selected: color == _selectedColor,
-                      onTap: () => setState(() => _selectedColor = color),
-                    ),
-                  )
-                  .toList(),
+              children: [
+                for (final (index, color) in AppColors.presetShopColors.indexed)
+                  ColorChoice(
+                    color: color,
+                    // Numbered, so a screen reader can tell eight otherwise
+                    // identically-announced swatches apart.
+                    label: '${t.shops.colorLabel} ${index + 1}',
+                    selected: color == _selectedColor,
+                    onTap: () => setState(() => _selectedColor = color),
+                  ),
+              ],
             ),
             const SizedBox(height: AppSpacing.sheetH),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: canSubmit ? _submit : null,
-                icon: const Icon(Icons.add),
-                label: Text(t.shops.add),
-              ),
+            // The app's themed primary (ink, full width), the same button
+            // every other Getting-in screen uses for its main action.
+            ElevatedButton.icon(
+              onPressed: canSubmit ? _submit : null,
+              icon: const Icon(Icons.add),
+              label: Text(t.shops.add),
             ),
           ],
         ),

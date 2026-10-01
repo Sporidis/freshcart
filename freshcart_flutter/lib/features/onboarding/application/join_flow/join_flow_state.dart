@@ -52,14 +52,4 @@ class JoinFlowState {
       joinedList: joinedList ?? this.joinedList,
     );
   }
-
-  /// Whether the current step's answer is good enough to move on. Mirrors
-  /// [OnboardingState.canContinue]'s own rule: delegate to the domain's
-  /// validators rather than restate them, and use this only to enable the
-  /// button — the use cases still enforce the rule for real.
-  bool get canContinue => switch (step) {
-    JoinFlowStep.name => AuthUser.validateDisplayName(displayName).isOk,
-    JoinFlowStep.code => JoinCode.parse(code).isOk,
-    JoinFlowStep.confirmation => true,
-  };
 }

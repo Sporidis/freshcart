@@ -205,7 +205,8 @@
     "sampleItem2": "Pasta",
     "sampleItem3": "Tomatoes",
     "sampleItem4": "Coffee beans",
-    "sampleActivity": "{{name}} added {{item}}"
+    "sampleActivity": "{{name}} added {{item}}",
+    "sampleMemberName": "Sam"
   },
   "onboarding": {
     "stepOf": "Step {{step}} of {{total}}",
@@ -215,6 +216,7 @@
     "listTitle": "Name your first list",
     "listSubtitle": "You can add more later — a BBQ, a trip, a big shop.",
     "listPlaceholder": "e.g. Weekly Groceries",
+    "defaultListName": "Weekly Groceries",
     "shopSheetBody": "Give it a name and choose a colour for its tab.",
     "shopPlaceholder": "e.g. Local Market",
     "suggestionHousehold": "Household",

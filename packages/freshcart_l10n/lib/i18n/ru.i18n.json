@@ -223,7 +223,8 @@
     "sampleItem2": "Паста",
     "sampleItem3": "Помидоры",
     "sampleItem4": "Кофе в зёрнах",
-    "sampleActivity": "{{name}} добавил(а) «{{item}}»"
+    "sampleActivity": "{{name}} добавил(а) «{{item}}»",
+    "sampleMemberName": "Саша"
   },
   "onboarding": {
     "stepOf": "Шаг {{step}} из {{total}}",
@@ -233,6 +234,7 @@
     "listTitle": "Назовите свой первый список",
     "listSubtitle": "Позже можно добавить ещё — на шашлыки, поездку, большую закупку.",
     "listPlaceholder": "напр. Еженедельные покупки",
+    "defaultListName": "Покупки на неделю",
     "shopSheetBody": "Дайте магазину название и выберите цвет вкладки.",
     "shopPlaceholder": "напр. Рынок у дома",
     "suggestionHousehold": "Дом",

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
@@ -30,6 +31,7 @@ class JoinCodeInput extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.autofocus = false,
+    this.hasError = false,
     super.key,
   });
 
@@ -41,6 +43,11 @@ class JoinCodeInput extends StatefulWidget {
 
   /// Whether to grab focus and the keyboard as soon as this builds.
   final bool autofocus;
+
+  /// Draws every box's border in the error colour -- the boxes are the
+  /// field, so they carry the field's error state (Motion spec §07: "border
+  /// lerps to AppColors.destructive").
+  final bool hasError;
 
   @override
   State<JoinCodeInput> createState() => _JoinCodeInputState();
@@ -89,6 +96,7 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
                     child: _CodeBox(
                       character: index < text.length ? text[index] : '',
                       active: _focus.hasFocus && index == activeIndex,
+                      hasError: widget.hasError,
                     ),
                   ),
                 ],
@@ -127,10 +135,15 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
 }
 
 class _CodeBox extends StatelessWidget {
-  const _CodeBox({required this.character, required this.active});
+  const _CodeBox({
+    required this.character,
+    required this.active,
+    required this.hasError,
+  });
 
   final String character;
   final bool active;
+  final bool hasError;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +153,9 @@ class _CodeBox extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.input),
         border: Border.all(
-          color: active
+          color: hasError
+              ? AppColors.destructive
+              : active
               ? theme.colorScheme.primary
               : theme.colorScheme.outlineVariant,
           width: active ? 2 : 1.5,
@@ -149,8 +164,10 @@ class _CodeBox extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         character,
+        // No tracking: each character sits alone in its own box, so the
+        // code style's letter-spacing would only push it off-centre.
         style: AppTextStyles.codeLarge.copyWith(
-          fontSize: 22,
+          letterSpacing: 0,
           color: theme.colorScheme.onSurface,
         ),
       ),

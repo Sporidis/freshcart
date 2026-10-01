@@ -2455,3 +2455,27 @@ the side effects can't disagree about what "finished" means.
 listened to, if the listener needs the *transition*. Put it somewhere that doesn't rebuild on that
 provider. Three new widget tests cover the real flows: re-celebrating after Keep list, auto-clear
 on finishing, and no auto-clear for a list that opens already finished.
+
+## 100. Onboarding: Continue never hides, and Invite is not a numbered step
+
+**Problem:** the wizard's Continue button shrank away whenever the current answer was invalid, so
+a brand-new user's very first question showed a text field and nothing to press. Its step rail
+also counted Invite as "Step 4 of 4", although Invite comes after the list already exists and its
+own copy says "You can do this any time".
+
+**Decision:** Continue is always on screen and always pressable (Motion spec §07: "stays fixed").
+Pressing it with a bad answer calls `continueIfValid()`, which puts the domain validator's
+`Failure` into state and stays on the step. The field shows it inline and shakes
+(`ShakeOnError`), and the next keystroke clears it through the existing `clearError: true`. The
+join flow follows the same rule. The rail counts only the three questions that build the list,
+and collapses away on Invite, as in the design's own Step 4 frame.
+
+**Why not disable the button instead?** A disabled button says "not yet" without saying why.
+The always-on button plus an inline error tells the user what is missing at the moment they try
+to move on, and never while they are still typing.
+
+**Shared pieces this pulled out:** `CheckCircle` and `DashedOutlinePainter` moved to `core/ui`.
+Onboarding's shop picker and "add a shop" row are the same components as the item row's check
+and the shop strip's "+", so they now share one implementation instead of copies. The
+"Your tabs will look like this" preview draws the real `ShopTabPill`, so the promise in its label
+can't drift from the real strip.

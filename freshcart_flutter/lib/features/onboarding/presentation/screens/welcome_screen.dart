@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +8,9 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -19,6 +24,13 @@ class WelcomeScreen extends ConsumerWidget {
   /// Creates the welcome screen.
   const WelcomeScreen({super.key});
 
+  /// Welcome's own, wider side margin (the design's 28 px) -- the mark, the
+  /// headline and both exits all hang off the same left edge.
+  static const double _sideInset = 28;
+
+  /// The mark's size once it has landed here from the splash tile.
+  static const double _markSize = 28;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
@@ -31,12 +43,36 @@ class WelcomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 40),
+            // The landing spot for the splash's Hero: without a matching
+            // tag here, the "mark flies to Welcome" moment was only a fade.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                _sideInset,
+                AppSpacing.gap,
+                _sideInset,
+                0,
+              ),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Hero(
+                  tag: BasketMark.heroTag,
+                  child: BasketMark(
+                    size: _markSize,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
             Expanded(
               child: _ListPreviewScene(t: t, backgroundColor: bg),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(28, 0, 28, 8),
+              padding: const EdgeInsets.fromLTRB(
+                _sideInset,
+                0,
+                _sideInset,
+                AppSpacing.gapSmall,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -52,19 +88,9 @@ class WelcomeScreen extends ConsumerWidget {
                     ),
                   ),
                   const SizedBox(height: 22),
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeight,
-                    child: FilledButton(
-                      onPressed: () => context.go(Routes.onboarding),
-                      style: FilledButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadii.button),
-                        ),
-                        textStyle: AppTextStyles.bodyStrong,
-                      ),
-                      child: Text(t.welcome.getStarted),
-                    ),
+                  OnboardingPrimaryButton(
+                    label: t.welcome.getStarted,
+                    onPressed: () => context.go(Routes.onboarding),
                   ),
                   const SizedBox(height: 16),
                   Center(
@@ -107,7 +133,7 @@ class _ListPreviewScene extends StatelessWidget {
             right: -46,
             top: 40,
             child: Transform.rotate(
-              angle: -4 * 3.14159265 / 180,
+              angle: -4 * math.pi / 180,
               child: _ListPreviewCard(t: t),
             ),
           ),
@@ -293,10 +319,10 @@ class _ActivityBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Whoever added the sample item — a stand-in household member, not a
-    // real user, so this is the one place in the app a display name is
-    // hardcoded rather than read from a session.
-    const sampleMemberName = 'koliiin';
+    // Whoever added the sample item -- a stand-in household member, not a
+    // real user. Localised like the rest of the mock list, so the bubble
+    // reads as a plausible housemate in every locale.
+    final sampleMemberName = t.welcome.sampleMemberName;
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -331,16 +357,12 @@ class _ActivityBubble extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const CircleAvatar(
+          CircleAvatar(
             radius: 11,
             backgroundColor: AppColors.success,
             child: Text(
-              'K',
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
+              initialFor(sampleMemberName),
+              style: AppTextStyles.captionStrong.copyWith(color: Colors.white),
             ),
           ),
           const SizedBox(width: 7),
