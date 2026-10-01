@@ -223,13 +223,13 @@ class _ShopsSection extends StatelessWidget {
       return Column(
         children: [
           Text(
-            'Shops on this list'.toUpperCase(),
+            t.lists.shopsOnList.toUpperCase(),
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
-            'Each becomes a tab. Colours are shared across all your lists.',
+            t.lists.shopsOnListBody,
             style: Theme.of(context).textTheme.bodySmall,
           ),
           const SizedBox(height: 6),
@@ -246,7 +246,7 @@ class _ShopsSection extends StatelessWidget {
               //TODO: Add logic to add a shop here
             },
             child: Text(
-              'Add a shop',
+              t.shops.add,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: Colors.blue,
