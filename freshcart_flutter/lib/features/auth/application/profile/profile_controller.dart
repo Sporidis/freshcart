@@ -11,7 +11,7 @@ part 'profile_controller.g.dart';
 /// Screens never call the [AuthPort] themselves: each action here returns a
 /// [Failure] (or null on success) and keeps this provider's state in step,
 /// so the widget only decides how to *show* the outcome -- a message, a
-/// navigation -- the same split `ItemsScreenController` makes.
+/// navigation -- the same split `ItemsSectionController` makes.
 @Riverpod(keepAlive: true)
 class ProfileController extends _$ProfileController {
   AuthPort get _auth => ref.read(authRepositoryProvider);

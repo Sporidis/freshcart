@@ -9,8 +9,8 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
@@ -23,7 +23,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// with the completion celebration and the add control floating on top.
 ///
 /// Pure UI: every derivation and multi-step action lives in
-/// [ItemsScreenController]. What stays here is what needs a `BuildContext` --
+/// [ItemsSectionController]. What stays here is what needs a `BuildContext` --
 /// sheets and snackbars. The header (title, selection and search actions)
 /// belongs to `ListDetailScreen`, which reads the same view model.
 ///
@@ -42,22 +42,22 @@ class ItemsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final s = ref.watch(itemsScreenControllerProvider(list));
-    final vm = ref.read(itemsScreenControllerProvider(list).notifier);
+    final s = ref.watch(itemsSectionControllerProvider(list));
+    final vm = ref.read(itemsSectionControllerProvider(list).notifier);
     final flows = _ItemFlows(context: context, s: s, vm: vm, t: t);
 
     Color? dotFor(ShopId? shopId) => s.shopFor(shopId)?.color.toColor();
 
     final body = switch (s) {
-      ItemsScreenState(loadFailure: final failure?) => Center(
+      ItemsSectionState(loadFailure: final failure?) => Center(
         child: Text(failure.toMessage(t)),
       ),
-      ItemsScreenState(isLoading: true) => const Center(
+      ItemsSectionState(isLoading: true) => const Center(
         child: CircularProgressIndicator(),
       ),
       // Search bypasses the shop filter and the open/done split entirely
       // (§16: "one flat list across all shops").
-      ItemsScreenState(mode: ItemsMode.search) => SearchResults(
+      ItemsSectionState(mode: ItemsMode.search) => SearchResults(
         // Not 'search' -- the app bar's own search TextField already owns
         // that key, and both are mounted at once.
         key: const ValueKey('search-results'),
@@ -68,7 +68,7 @@ class ItemsSection extends ConsumerWidget {
         onEdit: flows.edit,
         report: flows.report,
       ),
-      ItemsScreenState(isEmpty: true) => _ItemsEmptyState(
+      ItemsSectionState(isEmpty: true) => _ItemsEmptyState(
         shop: s.activeShop,
         t: t,
       ),
@@ -116,8 +116,8 @@ class _ItemFlows {
   });
 
   final BuildContext context;
-  final ItemsScreenState s;
-  final ItemsScreenController vm;
+  final ItemsSectionState s;
+  final ItemsSectionController vm;
   final Translations t;
 
   /// A failed write is the snackbar tier: the screen behind it is still
@@ -201,8 +201,8 @@ class _FloatingCluster extends StatelessWidget {
     required this.t,
   });
 
-  final ItemsScreenState s;
-  final ItemsScreenController vm;
+  final ItemsSectionState s;
+  final ItemsSectionController vm;
   final _ItemFlows flows;
   final Translations t;
 
@@ -255,8 +255,8 @@ class _ItemList extends StatelessWidget {
     required this.onEdit,
   });
 
-  final ItemsScreenState state;
-  final ItemsScreenController vm;
+  final ItemsSectionState state;
+  final ItemsSectionController vm;
   final Translations t;
   final Color? Function(ShopId?) dotFor;
   final void Function(Failure?, {VoidCallback? onRetry}) report;

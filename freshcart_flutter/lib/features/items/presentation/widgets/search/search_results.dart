@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -33,12 +33,12 @@ class SearchResults extends StatelessWidget {
     super.key,
   });
 
-  /// The items screen's derived state: the query, its matches (across every
+  /// The items section's derived state: the query, its matches (across every
   /// shop and checked state), and the list for member names.
-  final ItemsScreenState state;
+  final ItemsSectionState state;
 
   /// Every action goes through the view model, same as the normal rows.
-  final ItemsScreenController vm;
+  final ItemsSectionController vm;
 
   final Translations t;
   final void Function(Failure?, {VoidCallback? onRetry}) report;

@@ -7,7 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
@@ -95,11 +95,11 @@ void main() {
       // watches) would otherwise be torn down before the tap below; holding
       // a listener keeps them alive, the same way an open screen would.
       final subscription = container.listen(
-        itemsScreenControllerProvider(list),
+        itemsSectionControllerProvider(list),
         (_, _) {},
       );
       addTearDown(subscription.close);
-      final vm = container.read(itemsScreenControllerProvider(list).notifier);
+      final vm = container.read(itemsSectionControllerProvider(list).notifier);
       final t = container.read(translationsProvider);
 
       await tester.pumpWidget(
