@@ -6,7 +6,6 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
@@ -70,7 +69,6 @@ class OnboardingFooter extends ConsumerWidget {
       onboardingControllerProvider.select((s) => s.selectedShops),
     );
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final isShopStep = step == OnboardingStep.addShop;
     final duration = AppMotion.durationFor(context, AppMotion.standard);
 
@@ -79,7 +77,7 @@ class OnboardingFooter extends ConsumerWidget {
       curve: AppMotion.enter,
       decoration: BoxDecoration(
         color: isShopStep
-            ? (isDark ? AppColors.subtleDark : AppColors.subtleLight)
+            ? theme.colorScheme.surfaceContainer
             : theme.colorScheme.surface.withValues(alpha: 0),
         border: Border(
           top: BorderSide(

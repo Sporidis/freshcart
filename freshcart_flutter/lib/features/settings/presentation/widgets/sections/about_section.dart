@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
@@ -40,11 +40,7 @@ class AboutSection extends ConsumerWidget {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: Text(t.common.cancel),
               ),
-              FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.destructive,
-                  foregroundColor: Colors.white,
-                ),
+              DestructiveButton(
                 onPressed: () => Navigator.of(context).pop(true),
                 child: Text(t.settings.signOut),
               ),
@@ -76,7 +72,7 @@ class AboutSection extends ConsumerWidget {
         SettingRow(
           title: t.settings.signOut,
           titleStyle: AppTextStyles.body.copyWith(
-            color: AppColors.destructive,
+            color: Theme.of(context).colorScheme.error,
           ),
           trailing: Text(
             t.settings.appVersion(version: '1.0.0'),

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/check_circle.dart';
@@ -119,13 +120,13 @@ Widget shopOptionPreview() => previewPiece(
     children: [
       ShopOption(
         name: 'Albert Heijn',
-        color: const Color(0xFF2456A6),
+        color: AppColors.swatchBlue,
         selected: true,
         onTap: () {},
       ),
       ShopOption(
         name: 'Delhaize',
-        color: const Color(0xFFC0392B),
+        color: AppColors.swatchRed,
         selected: false,
         onTap: () {},
       ),

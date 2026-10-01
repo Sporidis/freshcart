@@ -35,8 +35,7 @@ class WelcomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
-    final isDark = theme.brightness == Brightness.dark;
-    final bg = isDark ? AppColors.subtleDark : AppColors.subtleLight;
+    final bg = theme.colorScheme.surfaceContainer;
 
     return Scaffold(
       backgroundColor: bg,
@@ -178,7 +177,6 @@ class _ListPreviewCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     final rows = [
       (t.welcome.sampleItem1, AppColors.info, true),
       (t.welcome.sampleItem2, AppColors.swatchOrange, false),
@@ -204,7 +202,7 @@ class _ListPreviewCard extends StatelessWidget {
         // its fill sits to what's behind it (see OutlinedButton/input
         // fields in AppTheme._build, same AppColors.border* tokens).
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          color: theme.colorScheme.outline,
         ),
         boxShadow: const [
           BoxShadow(
@@ -324,7 +322,6 @@ class _ActivityBubble extends StatelessWidget {
     // reads as a plausible housemate in every locale.
     final sampleMemberName = t.welcome.sampleMemberName;
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
@@ -344,7 +341,7 @@ class _ActivityBubble extends StatelessWidget {
         // close to this screen's own background to read as "a card" from
         // fill colour and a barely-visible-on-dark shadow alone.
         border: Border.all(
-          color: isDark ? AppColors.borderDark : AppColors.borderLight,
+          color: theme.colorScheme.outline,
         ),
         boxShadow: const [
           BoxShadow(

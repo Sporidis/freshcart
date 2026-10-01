@@ -174,7 +174,7 @@ class _CodeStep extends ConsumerWidget {
                     child: Text(
                       errorText,
                       style: AppTextStyles.captionStrong.copyWith(
-                        color: AppColors.destructive,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     ),
                   ),

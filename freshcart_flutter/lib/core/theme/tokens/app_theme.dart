@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 
 /// Basket type scale. Sizes and weights match the design one-for-one:
-/// 28/26 titles · 22 sheet titles · 16-17 body · 14-15 secondary · 12-13 caption.
+/// 28/26 titles · 22 sheet titles · 19 card title · 16-17 body ·
+/// 14-15 secondary · 12-13 caption.
 class AppTextStyles {
   AppTextStyles._();
 
@@ -28,6 +29,15 @@ class AppTextStyles {
   static const TextStyle sheetTitle = TextStyle(
     fontFamily: fontFamily,
     fontSize: 22,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.2,
+  );
+
+  /// The one raised card's headline and the splash wordmark: a step
+  /// between body (16) and sheet titles (22).
+  static const TextStyle cardTitle = TextStyle(
+    fontFamily: fontFamily,
+    fontSize: 19,
     fontWeight: FontWeight.w700,
     letterSpacing: -0.2,
   );
@@ -100,20 +110,40 @@ class AppRadii {
   AppRadii._();
   static const double sheet = 24; // bottom sheets
   static const double celebration = 20; // the one raised card
+  static const double dialog = 16;
   static const double card = 14; // rows, list cards, buttons
   static const double button = 14;
   static const double input = 12;
   static const double snackbar = 12;
   static const double pill = 999; // tabs, chips, avatars
+
+  /// The splash's app-icon tile: the iOS squircle proportion (~24% of its
+  /// 86px side), not a UI radius -- it has to read as *the app icon*.
+  static const double appIcon = 21;
 }
 
+/// The 4-pt spacing scale (decisions #105).
+///
+/// Layout spacing -- screen gutters, gaps between sections and rows, sheet
+/// insets -- comes from here. A component's own internal geometry (a pill's
+/// 9×3 padding, a stepper's 2px ring) stays a literal private to that
+/// widget: it belongs to the component's shape, not to the system, and a
+/// token per pixel value would be noise rather than a scale.
 class AppSpacing {
   AppSpacing._();
-  static const double screen = 20; // horizontal screen padding
-  static const double sheetH = 20;
-  static const double gap = 12;
-  static const double gapSmall = 8;
-  static const double rowVertical = 13;
+  static const double xs = 4;
+  static const double sm = 8;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 20;
+  static const double xxl = 24;
+
+  // Semantic aliases -- what most call sites should actually reach for.
+  static const double screen = xl; // horizontal screen padding
+  static const double sheetH = xl;
+  static const double gap = md;
+  static const double gapSmall = sm;
+  static const double rowVertical = 13; // design-exact; keeps rows at 44+
   static const double minTapTarget = 44;
 }
 
@@ -173,7 +203,10 @@ class AppTheme {
   /// tone, the two are no longer a matched pair, and pairing arbitrary text
   /// with the wrong one of them risks real contrast failures, not just a
   /// slightly-off hue.
-  static Color _onColorFor(Color background) =>
+  ///
+  /// Public because a shop pill paints the literal shop colour outside any
+  /// [forShop] subtree and needs the exact same rule.
+  static Color onColorFor(Color background) =>
       ThemeData.estimateBrightnessForColor(background) == Brightness.dark
       ? Colors.white
       : AppColors.ink;
@@ -227,7 +260,7 @@ class AppTheme {
     final onNeutralPrimary = isDark ? AppColors.ink : Colors.white;
     final scheme = generatedScheme.copyWith(
       primary: primary,
-      onPrimary: isNeutralTheme ? onNeutralPrimary : _onColorFor(primary),
+      onPrimary: isNeutralTheme ? onNeutralPrimary : onColorFor(primary),
       secondary: isNeutralTheme ? ink : generatedScheme.secondary,
       onSecondary: isNeutralTheme ? onNeutralPrimary : null,
       tertiary: isNeutralTheme ? ink : generatedScheme.tertiary,
@@ -450,7 +483,9 @@ class AppTheme {
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.dialog),
+        ),
         titleTextStyle: AppTextStyles.sheetTitle.copyWith(
           color: ink,
           fontSize: 18,

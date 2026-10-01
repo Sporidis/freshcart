@@ -51,14 +51,6 @@ class ShopTabPill extends StatefulWidget {
   /// centre.
   final GestureTapDownCallback? onTapDown;
 
-  /// A background's contrasting foreground -- the same formula
-  /// `AppTheme.forShop` uses for the same reason (arbitrary shop colours,
-  /// not a matched M3 pair, so estimate rather than assume).
-  static Color _onColorFor(Color background) =>
-      ThemeData.estimateBrightnessForColor(background) == Brightness.dark
-      ? Colors.white
-      : AppColors.ink;
-
   @override
   State<ShopTabPill> createState() => _ShopTabPillState();
 }
@@ -113,7 +105,7 @@ class _ShopTabPillState extends State<ShopTabPill>
     // colour does (`AppTheme`'s local `ink` var) -- not a literal constant,
     // so the All tab still reads correctly in dark mode.
     final fill = widget.color ?? theme.colorScheme.onSurface;
-    final onFill = ShopTabPill._onColorFor(fill);
+    final onFill = AppTheme.onColorFor(fill);
     final label = (widget.count == null || widget.count == 0)
         ? widget.label
         : '${widget.label} · ${widget.count}';
@@ -192,14 +184,14 @@ Widget shopTabPillShopPreview() => previewPiece(
       ShopTabPill(
         label: 'Colruyt',
         active: true,
-        color: Color(0xFFE8791A),
+        color: AppColors.swatchOrange,
         count: 4,
       ),
       SizedBox(width: 8),
       ShopTabPill(
         label: 'Colruyt',
         active: false,
-        color: Color(0xFFE8791A),
+        color: AppColors.swatchOrange,
       ),
     ],
   ),

@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
+import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 
 /// What the user chose to do with a shop's products.
 typedef ShopDeletion = ({ShopItemDisposition disposition, ShopId? moveTo});
@@ -105,10 +105,10 @@ class DeleteShopSheet extends ConsumerWidget {
             const Divider(),
             const SizedBox(height: AppSpacing.gap),
             _Option(
-              leading: const Icon(
+              leading: Icon(
                 Icons.delete_outline,
                 size: AppSizes.quantityIcon,
-                color: AppColors.destructive,
+                color: Theme.of(context).colorScheme.error,
               ),
               title: t.shops.deleteItemsToo,
               subtitle: t.shops.deleteItemsBody(n: itemCount),
@@ -121,11 +121,7 @@ class DeleteShopSheet extends ConsumerWidget {
           ] else
             // The design's destructive button: red, named for exactly what
             // it deletes -- not the ink primary every safe action uses.
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.destructive,
-                foregroundColor: Colors.white,
-              ),
+            DestructiveButton.block(
               onPressed: () => Navigator.of(context).pop((
                 disposition: ShopItemDisposition.untag,
                 moveTo: null,
@@ -188,11 +184,15 @@ class _Option extends StatelessWidget {
             ),
             decoration: BoxDecoration(
               color: destructive
-                  ? AppColors.destructive.withValues(alpha: _washAlpha)
+                  ? Theme.of(
+                      context,
+                    ).colorScheme.error.withValues(alpha: _washAlpha)
                   : null,
               border: Border.all(
                 color: destructive
-                    ? AppColors.destructive.withValues(alpha: _borderAlpha)
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.error.withValues(alpha: _borderAlpha)
                     : theme.colorScheme.outlineVariant,
               ),
               borderRadius: BorderRadius.circular(AppRadii.card),
@@ -208,7 +208,9 @@ class _Option extends StatelessWidget {
                       Text(
                         title,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          color: destructive ? AppColors.destructive : null,
+                          color: destructive
+                              ? Theme.of(context).colorScheme.error
+                              : null,
                         ),
                       ),
                       Text(subtitle, style: theme.textTheme.bodySmall),

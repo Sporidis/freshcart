@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
@@ -235,7 +234,7 @@ class _ItemSheetState extends State<ItemSheet> {
               child: TextButton(
                 onPressed: _remove,
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.destructive,
+                  foregroundColor: Theme.of(context).colorScheme.error,
                 ),
                 child: Text(t.items.remove),
               ),
