@@ -89,7 +89,7 @@ class _Household extends StatelessWidget {
             canManage: s.canManage(member),
             vm: vm,
           ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xxl),
         Text(
           t.household.invite.toUpperCase(),
           style: AppTextStyles.eyebrow.copyWith(

@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
@@ -156,7 +157,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
                     child: Text(t.lists.create),
                   ),
                 ),
-                const SizedBox(height: 9),
+                const SizedBox(height: AppSpacing.sm),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton(

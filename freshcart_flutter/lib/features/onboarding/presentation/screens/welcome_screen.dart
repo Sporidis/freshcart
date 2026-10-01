@@ -79,19 +79,19 @@ class WelcomeScreen extends ConsumerWidget {
                     t.welcome.headline,
                     style: Theme.of(context).textTheme.displayLarge,
                   ),
-                  const SizedBox(height: 9),
+                  const SizedBox(height: AppSpacing.sm),
                   Text(
                     t.welcome.subhead,
                     style: AppTextStyles.secondary.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: AppSpacing.xxl),
                   OnboardingPrimaryButton(
                     label: t.welcome.getStarted,
                     onPressed: () => context.go(Routes.onboarding),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.lg),
                   Center(
                     child: TextButton(
                       onPressed: () => context.go(Routes.join),
@@ -193,7 +193,7 @@ class _ListPreviewCard extends StatelessWidget {
         // the active theme, which is why it stayed bright white in dark
         // mode instead of following the screen around it.
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadii.celebration),
         // surfaceDark and this screen's own subtleDark background are only
         // a couple of RGB units apart -- a shadow alone (which barely reads
         // against a dark background anyway) left the card blending into

@@ -55,16 +55,16 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
-          AppSpacing.screen,
-          AppSpacing.gapSmall,
-          AppSpacing.screen,
-          bottomInset + AppSpacing.screen,
+          AppSpacing.sheetH,
+          0,
+          AppSpacing.sheetH,
+          bottomInset + AppSpacing.xl,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t.shops.add, style: theme.textTheme.headlineMedium),
+            Text(t.shops.add, style: theme.textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.gapSmall),
             Text(
               t.onboarding.shopSheetBody,

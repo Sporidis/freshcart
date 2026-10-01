@@ -127,9 +127,9 @@ class _DrawerHeader extends ConsumerWidget {
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.screen,
-          16,
+          AppSpacing.lg,
           AppSpacing.screen,
-          16,
+          AppSpacing.lg,
         ),
         child: Row(
           children: [

@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:go_router/go_router.dart';
@@ -61,7 +62,7 @@ class SplashScreen extends ConsumerWidget {
                 height: 86,
                 decoration: BoxDecoration(
                   color: tile,
-                  borderRadius: BorderRadius.circular(21),
+                  borderRadius: BorderRadius.circular(AppRadii.appIcon),
                 ),
                 alignment: Alignment.center,
                 // The mark itself is the Hero; the tile around it is not —
@@ -74,12 +75,7 @@ class SplashScreen extends ConsumerWidget {
               const SizedBox(height: 18),
               Text(
                 t.appName,
-                style: TextStyle(
-                  color: tile,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
+                style: AppTextStyles.cardTitle.copyWith(color: tile),
               ),
               const SizedBox(height: 62),
               const _PulsingDots(),

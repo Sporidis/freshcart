@@ -135,7 +135,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
         AppSpacing.sheetH,
         0,
         AppSpacing.sheetH,
-        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.screen,
+        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
