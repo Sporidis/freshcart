@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
 /// One tab in the shop strip: "All" or a single shop, active or not.
 ///
@@ -110,52 +111,56 @@ class _ShopTabPillState extends State<ShopTabPill>
         ? widget.label
         : '${widget.label} · ${widget.count}';
 
-    return ScaleTransition(
-      scale: _kickScale,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: _handleTap,
-          onTapDown: widget.onTapDown,
-          borderRadius: BorderRadius.circular(AppRadii.pill),
-          child: AnimatedContainer(
-            duration: AppMotion.durationFor(context, AppMotion.quick),
-            curve: AppMotion.enter,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: widget.active ? fill : Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadii.pill),
-              border: widget.active
-                  ? null
-                  : Border.all(color: theme.colorScheme.outlineVariant),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (widget.color != null) ...[
-                  Container(
-                    width: AppSizes.tabDot,
-                    height: AppSizes.tabDot,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      // Active: white, matching the fill's own contrast --
-                      // inactive: the shop's literal colour (component
-                      // library: "inactive pills keep a small shop-colour
-                      // dot").
-                      color: widget.active ? onFill : widget.color,
+    return TapTarget(
+      onTap: _handleTap,
+      onTapDown: widget.onTapDown,
+      child: ScaleTransition(
+        scale: _kickScale,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: _handleTap,
+            onTapDown: widget.onTapDown,
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            child: AnimatedContainer(
+              duration: AppMotion.durationFor(context, AppMotion.quick),
+              curve: AppMotion.enter,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: widget.active ? fill : Colors.transparent,
+                borderRadius: BorderRadius.circular(AppRadii.pill),
+                border: widget.active
+                    ? null
+                    : Border.all(color: theme.colorScheme.outlineVariant),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (widget.color != null) ...[
+                    Container(
+                      width: AppSizes.tabDot,
+                      height: AppSizes.tabDot,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        // Active: white, matching the fill's own contrast --
+                        // inactive: the shop's literal colour (component
+                        // library: "inactive pills keep a small shop-colour
+                        // dot").
+                        color: widget.active ? onFill : widget.color,
+                      ),
                     ),
+                    const SizedBox(width: 6),
+                  ],
+                  Text(
+                    label,
+                    style:
+                        (widget.active
+                                ? theme.textTheme.labelLarge
+                                : theme.textTheme.labelMedium)
+                            ?.copyWith(color: widget.active ? onFill : null),
                   ),
-                  const SizedBox(width: 6),
                 ],
-                Text(
-                  label,
-                  style:
-                      (widget.active
-                              ? theme.textTheme.labelLarge
-                              : theme.textTheme.labelMedium)
-                          ?.copyWith(color: widget.active ? onFill : null),
-                ),
-              ],
+              ),
             ),
           ),
         ),
