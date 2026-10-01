@@ -125,8 +125,7 @@
     "body": "Nasa device na ito lang ang iyong account. Mag-link ng email para hindi mawala ang iyong mga listahan.",
     "action": "I-link ang email",
     "emailLabel": "Email",
-    "passwordLabel": "Password",
-    "linked": "Protektado na ang iyong account."
+    "passwordLabel": "Password"
   },
   "household": {
     "title": "Sambahayan",
@@ -167,6 +166,7 @@
     "manageShops": "Pamahalaan ang mga tindahan",
     "household": "Sambahayan",
     "preferences": "Mga Kagustuhan",
+    "about": "Tungkol",
     "appearance": "Hitsura",
     "currentAppearance": "{{mode}}",
     "appearanceSystem": "Systema",
@@ -176,10 +176,14 @@
     "notifications": "Mga Notification",
     "haptics": "Haptics",
     "largerListText": "Mas malaking teksto ng listahan",
+    "largerListTextBody": "Mas madaling basahin kahit nakaunat ang braso sa tindahan",
     "reduceMotion": "Bawasan ang animation",
+    "reduceMotionBody": "Sumusunod sa setting ng iyong system",
     "on": "Bukas",
     "off": "Sarado",
     "helpFeedback": "Tulong at feedback",
+    "signOutConfirmTitle": "Mag-sign out?",
+    "signOutConfirmBody": "Nasa device na ito lang ang iyong mga listahan. Kapag nag-sign out ka nang hindi nagli-link ng email, tuluyan na itong mawawala.",
     "termsOfService": "Mga Tuntunin ng Serbisyo",
     "signOut": "Mag-sign out",
     "appVersion": "Bersyon ng app: {{version}}"
@@ -187,6 +191,7 @@
   "profile": {
     "title": "I-edit ang profile",
     "nameLabel": "Ipinapakitang pangalan",
+    "nameHelper": "Makikita ng lahat sa iyong sambahayan ang pangalang ito.",
     "colorLabel": "Kulay ng avatar",
     "photoLabel": "Larawan ng avatar",
     "choosePhoto": "Pumili ng larawan",

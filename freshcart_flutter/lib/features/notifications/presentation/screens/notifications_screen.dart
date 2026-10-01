@@ -6,7 +6,9 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/notifications/application/list_mute/list_mute_controller.dart';
 import 'package:freshcart_flutter/features/notifications/application/notifications_screen/notifications_screen_controller.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_toggle_option.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/settings_section.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Push preferences: the three server-gated moments, and per-list mute
@@ -42,46 +44,42 @@ class NotificationsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
-          Text(
-            t.notifications.push.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          SettingsSection(
+            label: t.notifications.push,
+            children: [
+              if (preferences == null)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: AppSpacing.screen),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else ...[
+                SettingToggleOption(
+                  title: t.notifications.itemAdded,
+                  description: t.notifications.itemAddedBody,
+                  value: preferences.itemAdded,
+                  onChanged: (v) async => report(await vm.setItemAdded(v)),
+                ),
+                SettingToggleOption(
+                  title: t.notifications.memberJoined,
+                  value: preferences.memberJoined,
+                  onChanged: (v) async => report(await vm.setMemberJoined(v)),
+                ),
+                SettingToggleOption(
+                  title: t.notifications.listFinished,
+                  description: t.notifications.listFinishedBody,
+                  value: preferences.listFinished,
+                  onChanged: (v) async => report(await vm.setListFinished(v)),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 8),
-          if (preferences == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else ...[
-            SettingToggleOption(
-              title: t.notifications.itemAdded,
-              description: t.notifications.itemAddedBody,
-              value: preferences.itemAdded,
-              onChanged: (v) async => report(await vm.setItemAdded(v)),
-            ),
-            SettingToggleOption(
-              title: t.notifications.memberJoined,
-              value: preferences.memberJoined,
-              onChanged: (v) async => report(await vm.setMemberJoined(v)),
-            ),
-            SettingToggleOption(
-              title: t.notifications.listFinished,
-              description: t.notifications.listFinishedBody,
-              value: preferences.listFinished,
-              onChanged: (v) async => report(await vm.setListFinished(v)),
-            ),
-          ],
-          const SizedBox(height: 24),
-          Text(
-            t.notifications.perList.toUpperCase(),
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: AppSpacing.screen),
+          SettingsSection(
+            label: t.notifications.perList,
+            children: [
+              for (final list in s.lists) _ListMuteRow(list: list, t: t),
+            ],
           ),
-          const SizedBox(height: 8),
-          for (final list in s.lists) _ListMuteRow(list: list, t: t),
         ],
       ),
     );
@@ -100,37 +98,24 @@ class _ListMuteRow extends ConsumerWidget {
     final muted = ref.watch(listMuteControllerProvider(list.id)).value ?? false;
     final muteColor = theme.colorScheme.onSurface.withValues(alpha: 0.45);
 
-    return InkWell(
+    return SettingRow(
       onTap: () => ref
           .read(listMuteControllerProvider(list.id).notifier)
           .setMuted(!muted),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 11),
-        child: Row(
-          children: [
-            Container(
-              width: 8,
-              height: 8,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: muted ? muteColor : theme.colorScheme.onSurface,
-              ),
-            ),
-            Expanded(
-              child: Text(
-                list.name,
-                style: AppTextStyles.body.copyWith(
-                  color: muted ? muteColor : theme.colorScheme.onSurface,
-                ),
-              ),
-            ),
-            Text(
-              muted ? t.notifications.muted : t.notifications.on,
-              style: theme.textTheme.bodySmall?.copyWith(color: muteColor),
-            ),
-          ],
+      leading: Container(
+        width: AppSizes.tabDot,
+        height: AppSizes.tabDot,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: muted ? muteColor : theme.colorScheme.onSurface,
         ),
+      ),
+      title: list.name,
+      titleStyle: AppTextStyles.body.copyWith(
+        color: muted ? muteColor : theme.colorScheme.onSurface,
+      ),
+      trailing: SettingValueText(
+        muted ? t.notifications.muted : t.notifications.on,
       ),
     );
   }

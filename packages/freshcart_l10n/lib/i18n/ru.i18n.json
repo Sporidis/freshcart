@@ -133,8 +133,7 @@
     "body": "Ваша учётная запись существует только на этом устройстве. Привяжите почту, чтобы не потерять списки.",
     "action": "Привязать почту",
     "emailLabel": "Электронная почта",
-    "passwordLabel": "Пароль",
-    "linked": "Учётная запись защищена."
+    "passwordLabel": "Пароль"
   },
   "household": {
     "title": "Дом",
@@ -185,6 +184,7 @@
     "manageShops": "Управлять магазинами",
     "household": "Дом",
     "preferences": "Предпочтения",
+    "about": "О приложении",
     "appearance": "Внешний вид",
     "currentAppearance": "{{mode}}",
     "appearanceSystem": "Системная",
@@ -194,10 +194,14 @@
     "notifications": "Уведомления",
     "haptics": "Тактильная отдача",
     "largerListText": "Крупный текст списка",
+    "largerListTextBody": "Легче читать на расстоянии вытянутой руки",
     "reduceMotion": "Меньше анимации",
+    "reduceMotionBody": "Следует системной настройке",
     "on": "Вкл",
     "off": "Выкл",
     "helpFeedback": "Помощь и отзывы",
+    "signOutConfirmTitle": "Выйти?",
+    "signOutConfirmBody": "Ваши списки хранятся только на этом устройстве. Если выйти, не привязав почту, они будут потеряны навсегда.",
     "termsOfService": "Условия использования",
     "signOut": "Выйти",
     "appVersion": "Версия приложения: {{version}}"
@@ -205,6 +209,7 @@
   "profile": {
     "title": "Изменить профиль",
     "nameLabel": "Отображаемое имя",
+    "nameHelper": "Это имя видят все в вашем доме.",
     "colorLabel": "Цвет аватара",
     "photoLabel": "Фото аватара",
     "choosePhoto": "Выбрать фото",

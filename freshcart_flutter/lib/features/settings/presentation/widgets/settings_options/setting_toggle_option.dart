@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
 
 /// A settings row backed by a switch, with an optional description line.
+///
+/// The whole row toggles, not just the switch -- the switch is the smallest
+/// thing in the row, and a 44 px row that only reacts on its far-right
+/// corner reads as broken.
 class SettingToggleOption extends StatelessWidget {
   const SettingToggleOption({
-    super.key,
     required this.title,
     required this.value,
     required this.onChanged,
     this.description,
+    super.key,
   });
 
   final String title;
@@ -17,20 +22,15 @@ class SettingToggleOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SwitchListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: Border(
-        bottom: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 1,
-        ),
+    // One announcement ("Haptics, switch, on"), not a label and a separate
+    // unlabeled switch.
+    return MergeSemantics(
+      child: SettingRow(
+        title: title,
+        subtitle: description,
+        onTap: () => onChanged(!value),
+        trailing: Switch(value: value, onChanged: onChanged),
       ),
-      title: Text(title),
-      subtitle: description != null
-          ? Text(description!, style: Theme.of(context).textTheme.bodySmall)
-          : null,
-      value: value,
-      onChanged: onChanged,
     );
   }
 }

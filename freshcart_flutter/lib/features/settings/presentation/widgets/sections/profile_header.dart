@@ -3,13 +3,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Settings screen's own header: avatar, name, email, and the door into
+/// The Settings screen's own header: avatar, name, and -- once the account
+/// is linked -- the email securing it, plus the door into
 /// [EditProfileScreen].
+///
+/// The email lives here and only here. It used to show in this header *and*
+/// in a "Your account is secured" card right below it; now a linked account
+/// has no card at all, and a small verified tick beside the address says
+/// the same thing in one place.
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({required this.user, required this.t, super.key});
 
@@ -18,37 +26,58 @@ class ProfileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user.dataOrNull?.displayName ?? '';
+    final theme = Theme.of(context);
+    final account = user.dataOrNull;
+    final displayName = account?.displayName ?? '';
+    final email = account?.email;
+    final linked = account != null && !account.isAnonymous && email != null;
+
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         UserAvatar(
-          seed: user.dataOrNull?.id.value ?? '',
+          seed: account?.id.value ?? '',
           initial: initialFor(displayName),
-          photoUrl: user.dataOrNull?.avatarPhotoUrl,
-          color: user.dataOrNull?.avatarColor,
-          radius: 24,
+          photoUrl: account?.avatarPhotoUrl,
+          color: account?.avatarColor,
+          radius: AppSizes.avatarLarge / 2,
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: AppSpacing.gap),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(displayName, style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 4),
-              if (user.dataOrNull?.email?.isNotEmpty ?? false)
-                Text(
-                  user.dataOrNull?.email ?? '',
-                  style: Theme.of(context).textTheme.bodySmall,
+              Text(displayName, style: theme.textTheme.titleMedium),
+              if (linked)
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.verified,
+                      size: AppSizes.shopDotLarge,
+                      color: AppColors.success,
+                    ),
+                    const SizedBox(width: AppSpacing.gapSmall / 2),
+                    Flexible(
+                      child: Text(
+                        email,
+                        style: theme.textTheme.bodySmall,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
                 ),
             ],
           ),
         ),
-        const SizedBox(width: 12),
+        // A text link in the drawer's action style (ink, bold), not a
+        // default TextButton -- it is one more door, not a button competing
+        // with the rows below.
         TextButton(
-          child: Text(t.settings.editProfile),
           onPressed: () => context.push(Routes.editProfile),
+          style: TextButton.styleFrom(
+            foregroundColor: theme.colorScheme.primary,
+            textStyle: AppTextStyles.labelStrong,
+          ),
+          child: Text(t.settings.editProfile),
         ),
       ],
     );

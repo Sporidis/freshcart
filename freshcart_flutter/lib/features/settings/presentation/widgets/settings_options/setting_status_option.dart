@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
 
 /// A settings row that only reports a value — no switch, no tap target.
 ///
@@ -10,29 +11,22 @@ import 'package:flutter/material.dart';
 /// tappable because they are; this one deliberately doesn't.
 class SettingStatusOption extends StatelessWidget {
   const SettingStatusOption({
-    super.key,
     required this.title,
     required this.status,
+    this.description,
+    super.key,
   });
 
   final String title;
   final String status;
 
+  /// Says where the value comes from ("Follows your system setting").
+  final String? description;
+
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: Border(
-        bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
-      ),
-      title: Text(title),
-      trailing: Text(
-        status,
-        style: theme.textTheme.bodyMedium?.copyWith(
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SettingRow(
+    title: title,
+    subtitle: description,
+    trailing: SettingValueText(status),
+  );
 }

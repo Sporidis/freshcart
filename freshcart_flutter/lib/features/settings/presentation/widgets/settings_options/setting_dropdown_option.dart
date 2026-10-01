@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_option.dart';
 
-/// A settings row that opens a dialog to pick one of [options].
+/// A settings row showing its current choice, which opens a dialog to pick
+/// one of [options].
+///
+/// Looks exactly like any other [SettingOption] -- value then chevron --
+/// because to the person tapping it, it is one: a row that opens something.
 class SettingDropdownOption<T> extends StatelessWidget {
   const SettingDropdownOption({
-    super.key,
     required this.title,
     required this.value,
     required this.options,
     required this.onChanged,
+    super.key,
   });
 
   final String title;
@@ -15,42 +20,32 @@ class SettingDropdownOption<T> extends StatelessWidget {
   final Map<T, String> options;
   final ValueChanged<T> onChanged;
 
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      style: ListTileStyle.list,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: Border(
-        bottom: BorderSide(
-          color: Theme.of(context).colorScheme.outlineVariant,
-          width: 1,
-        ),
+  Future<void> _pick(BuildContext context) async {
+    final chosen = await showDialog<T>(
+      context: context,
+      builder: (context) => SimpleDialog(
+        title: Text(title),
+        children: [
+          for (final MapEntry(:key, value: label) in options.entries)
+            SimpleDialogOption(
+              onPressed: () => Navigator.of(context).pop(key),
+              child: Row(
+                children: [
+                  Expanded(child: Text(label)),
+                  if (key == value) const Icon(Icons.check),
+                ],
+              ),
+            ),
+        ],
       ),
-      title: Text(title),
-      trailing: Text(options[value] ?? value.toString()),
-      onTap: () async {
-        final chosen = await showDialog<T>(
-          context: context,
-          builder: (context) => SimpleDialog(
-            title: Text(title),
-            children: options.entries
-                .map(
-                  (entry) => ListTile(
-                    title: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(entry.value),
-                    ),
-                    trailing: entry.key == value
-                        ? const Icon(Icons.check)
-                        : null,
-                    onTap: () => Navigator.of(context).pop(entry.key),
-                  ),
-                )
-                .toList(),
-          ),
-        );
-        if (chosen != null) onChanged(chosen);
-      },
     );
+    if (chosen != null) onChanged(chosen);
   }
+
+  @override
+  Widget build(BuildContext context) => SettingOption(
+    title: title,
+    value: options[value] ?? value.toString(),
+    onTap: () => _pick(context),
+  );
 }

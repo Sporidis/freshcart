@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_toggle_option.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../../fakes/fake_list_repository.dart';
@@ -101,9 +102,9 @@ void main() {
 
         expect(
           tester
-              .widget<SwitchListTile>(
+              .widget<SettingToggleOption>(
                 find.widgetWithText(
-                  SwitchListTile,
+                  SettingToggleOption,
                   'Someone adds an item',
                 ),
               )
@@ -112,16 +113,19 @@ void main() {
         );
         expect(
           tester
-              .widget<SwitchListTile>(
-                find.widgetWithText(SwitchListTile, 'Someone joins a list'),
+              .widget<SettingToggleOption>(
+                find.widgetWithText(
+                  SettingToggleOption,
+                  'Someone joins a list',
+                ),
               )
               .value,
           isFalse,
         );
         expect(
           tester
-              .widget<SwitchListTile>(
-                find.widgetWithText(SwitchListTile, 'A list is finished'),
+              .widget<SettingToggleOption>(
+                find.widgetWithText(SettingToggleOption, 'A list is finished'),
               )
               .value,
           isFalse,

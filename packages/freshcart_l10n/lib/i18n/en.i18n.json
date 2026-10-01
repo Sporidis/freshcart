@@ -125,8 +125,7 @@
     "body": "Your account only exists on this device. Link an email so you do not lose your lists.",
     "action": "Link email",
     "emailLabel": "Email",
-    "passwordLabel": "Password",
-    "linked": "Your account is secured."
+    "passwordLabel": "Password"
   },
   "household": {
     "title": "Household",
@@ -167,6 +166,7 @@
     "manageShops": "Manage shops",
     "household": "Household",
     "preferences": "Preferences",
+    "about": "About",
     "appearance": "Appearance",
     "currentAppearance": "{{mode}}",
     "appearanceSystem": "System",
@@ -176,10 +176,14 @@
     "notifications": "Notifications",
     "haptics": "Haptics",
     "largerListText": "Larger list text",
+    "largerListTextBody": "Easier to read at arm's length in the aisle",
     "reduceMotion": "Reduce motion",
+    "reduceMotionBody": "Follows your system setting",
     "on": "On",
     "off": "Off",
     "helpFeedback": "Help & feedback",
+    "signOutConfirmTitle": "Sign out?",
+    "signOutConfirmBody": "Your lists only exist on this device. Signing out without linking an email loses them for good.",
     "termsOfService": "Terms of Service",
     "signOut": "Sign out",
     "appVersion": "App version: {{version}}"
@@ -187,6 +191,7 @@
   "profile": {
     "title": "Edit profile",
     "nameLabel": "Display name",
+    "nameHelper": "Everyone in your household sees this name.",
     "colorLabel": "Avatar colour",
     "photoLabel": "Avatar photo",
     "choosePhoto": "Choose photo",
