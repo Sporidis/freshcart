@@ -113,7 +113,7 @@ abstract class ShoppingList
   @override
   _i1.UuidValue? id;
 
-  /// Human-readable list name.
+  /// Readable list name.
   String name;
 
   /// The short code someone types to join this list.
@@ -413,7 +413,7 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
 
   late final ShoppingListUpdateTable updateTable;
 
-  /// Human-readable list name.
+  /// Readable list name.
   late final _i1.ColumnString name;
 
   /// The short code someone types to join this list.

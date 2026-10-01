@@ -1,8 +1,11 @@
 import 'dart:convert';
-
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/database/app_database_provider.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'cached_items_store.g.dart';
 
 /// Persists the last-known items of one list, so
 /// `ItemRealtimeSource.watchByList` has something to show when the very
@@ -55,3 +58,8 @@ class CachedItemsStore {
     ];
   }
 }
+
+/// Supplies the [CachedItemsStore], backed by [appDatabaseProvider].
+@Riverpod(keepAlive: true)
+CachedItemsStore cachedItemsStore(Ref ref) =>
+    CachedItemsStore(ref.watch(appDatabaseProvider));

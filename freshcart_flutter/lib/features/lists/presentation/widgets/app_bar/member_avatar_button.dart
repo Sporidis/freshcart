@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_membership_provider.dart';
+import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:go_router/go_router.dart';
 
 /// The signed-in member's own avatar, opening Household on tap.
@@ -32,9 +33,7 @@ class MemberAvatarButton extends ConsumerWidget {
               ? const CircleAvatar(radius: 16, child: Text('?'))
               : UserAvatar(
                   seed: me.userId.value,
-                  initial:
-                      me.displayName.characters.firstOrNull?.toUpperCase() ??
-                      '?',
+                  initial: initialFor(me.displayName),
                   photoUrl: me.avatarPhotoUrl,
                   color: me.avatarColor,
                   radius: 16,

@@ -4,13 +4,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/auth_bootstrap_provider.dart';
+import 'package:freshcart_flutter/core/ui/error_screen.dart';
+import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_provider.dart';
-import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/sync_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/sync_status.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -157,9 +158,79 @@ void main() {
     },
   );
 
+  testWidgets(
+    'a failed Clear checked toggle says so in a snackbar, not silently',
+    (tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.setClearCheckedAfterShoppingResult = const Err(
+        Failure.validation('clearChecked', 'Could not save that'),
+      );
+      await pump(tester, list: list);
+
+      await tester.tap(
+        find.widgetWithText(
+          SwitchListTile,
+          'Clear checked items automatically',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(SnackBar),
+          matching: find.text('Could not save that'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
+    'the list disappearing while open replaces the form with the error '
+    'screen, rather than spinning forever',
+    (tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      await pump(tester, list: list);
+      expect(nameField(), findsOneWidget);
+
+      // Pushed into the live stream after arriving, not set up front: the
+      // journey above passes through the list's own detail screen, which
+      // would stop at its own error screen first. This is also the real
+      // case -- someone else deletes the list while it's open here.
+      repository.live.add(const Err(Failure.notFound()));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(ErrorScreen), findsOneWidget);
+      expect(nameField(), findsNothing);
+    },
+  );
+
   // No "Household" or "Manage shops" row exists in the current
   // ListSettingsScreen (its own doc comment describes them, but nothing
   // implements them yet) — removed rather than testing UI that isn't there.
+
+  testWidgets('Add shop opens the create sheet, with the existing shops', (
+    tester,
+  ) async {
+    final list = buildList(name: 'Groceries', members: [buildMember()]);
+    final colruyt = Shop(
+      id: ShopId('s1'),
+      listId: list.id,
+      name: 'Colruyt',
+      color: HexColor.fromArgb(0xFFE8791A),
+    );
+    shopRepository.byListResult = Ok([colruyt]);
+    await pump(tester, list: list);
+
+    final addShop = find.widgetWithText(TextButton, 'Add shop');
+    await tester.ensureVisible(addShop);
+    await tester.tap(addShop);
+    await tester.pumpAndSettle();
+
+    final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+    expect(sheet.shop, isNull, reason: 'create mode, not editing anything');
+    expect(sheet.siblings, [colruyt], reason: 'for the clash warning');
+  });
 
   testWidgets('an owner sees Delete list, not Leave list', (tester) async {
     await pump(

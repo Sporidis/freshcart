@@ -3,16 +3,16 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/signed_in_user_provider.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_membership_provider.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
+import 'package:freshcart_flutter/features/lists/application/household_screen/household_screen_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/household_screen/household_screen_state.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/invite_card.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
@@ -31,9 +31,10 @@ class HouseholdScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final list = ref.watch(listByIdProvider(listId));
+    final s = ref.watch(householdScreenControllerProvider(listId));
+    final vm = ref.read(householdScreenControllerProvider(listId).notifier);
 
-    final failure = list.loadFailure;
+    final failure = s.loadFailure;
     if (failure != null) {
       return ErrorScreen(
         failure: failure,
@@ -43,34 +44,39 @@ class HouseholdScreen extends ConsumerWidget {
         // list comes first in the cached collection, so a stale cache
         // still holding this now-gone list would just bounce back here.
         onExit: () {
-          unawaited(ref.read(listsControllerProvider.notifier).refresh());
+          unawaited(vm.refreshLists());
           context.go(Routes.lists);
         },
       );
     }
 
-    final loaded = list.dataOrNull;
+    final list = s.list;
 
     return Scaffold(
       appBar: AppBar(title: Text(t.household.title)),
-      body: loaded == null
+      body: list == null
           ? const Center(child: CircularProgressIndicator())
-          : _Household(list: loaded, t: t),
+          : _Household(list: list, s: s, vm: vm, t: t),
     );
   }
 }
 
-class _Household extends ConsumerWidget {
-  const _Household({required this.list, required this.t});
+class _Household extends StatelessWidget {
+  const _Household({
+    required this.list,
+    required this.s,
+    required this.vm,
+    required this.t,
+  });
 
   final ShoppingList list;
+  final HouseholdScreenState s;
+  final HouseholdScreenController vm;
   final Translations t;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final me = ref.watch(signedInUserIdProvider);
-    final iAmOwner = ref.watch(isListOwnerProvider(list));
 
     return ListView(
       padding: const EdgeInsets.all(AppSpacing.screen),
@@ -78,13 +84,10 @@ class _Household extends ConsumerWidget {
         for (final member in list.members)
           _MemberRow(
             member: member,
-            list: list,
             t: t,
-            isMe: member.userId == me,
-            // Only the owner is offered the destructive verbs, and never
-            // against themselves — the server enforces both, this only keeps
-            // the UI from offering what it knows will be refused.
-            canManage: iAmOwner && member.userId != me,
+            isMe: s.isMe(member),
+            canManage: s.canManage(member),
+            vm: vm,
           ),
         const SizedBox(height: 24),
         Text(
@@ -100,27 +103,20 @@ class _Household extends ConsumerWidget {
   }
 }
 
-class _MemberRow extends ConsumerWidget {
+class _MemberRow extends StatelessWidget {
   const _MemberRow({
     required this.member,
-    required this.list,
     required this.t,
     required this.isMe,
     required this.canManage,
+    required this.vm,
   });
 
   final ListMember member;
-  final ShoppingList list;
   final Translations t;
   final bool isMe;
   final bool canManage;
-
-  /// A stable colour per member, so the same person is the same colour
-  /// everywhere without storing one.
-  Color get _avatarColor {
-    const palette = AppColors.presetShopColors;
-    return palette[member.userId.value.hashCode.abs() % palette.length];
-  }
+  final HouseholdScreenController vm;
 
   String get _tag => switch ((isMe, member.isOwner)) {
     (true, true) => t.household.youOwner,
@@ -130,25 +126,22 @@ class _MemberRow extends ConsumerWidget {
   };
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initial = member.displayName.trim().isEmpty
-        ? '?'
-        : member.displayName.trim()[0].toUpperCase();
+    final initial = initialFor(member.displayName);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowVertical),
       child: Row(
         children: [
-          CircleAvatar(
+          // The shared avatar, so a member's photo or chosen colour shows here
+          // exactly as in the drawer (decisions #65).
+          UserAvatar(
+            seed: member.userId.value,
+            initial: initial,
+            photoUrl: member.avatarPhotoUrl,
+            color: member.avatarColor,
             radius: 20,
-            backgroundColor: isMe ? AppColors.ink : _avatarColor,
-            child: Text(
-              initial,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-              ),
-            ),
           ),
           const SizedBox(width: 13),
           Expanded(
@@ -170,11 +163,11 @@ class _MemberRow extends ConsumerWidget {
             PopupMenuButton<void>(
               itemBuilder: (context) => [
                 PopupMenuItem<void>(
-                  onTap: () => _confirmTransfer(context, ref),
+                  onTap: () => _confirmTransfer(context),
                   child: Text(t.household.makeOwner),
                 ),
                 PopupMenuItem<void>(
-                  onTap: () => _confirmRemove(context, ref),
+                  onTap: () => _confirmRemove(context),
                   child: Text(t.household.removeMember),
                 ),
               ],
@@ -184,7 +177,7 @@ class _MemberRow extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmRemove(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmRemove(BuildContext context) async {
     final ok = await _confirm(
       context,
       title: t.household.removeTitle(name: member.displayName),
@@ -193,16 +186,12 @@ class _MemberRow extends ConsumerWidget {
       destructive: true,
     );
     if (!ok || !context.mounted) return;
-    final result = await ref
-        .read(listsControllerProvider.notifier)
-        .removeMember(list.id, member.userId);
-    if (!context.mounted) return;
-    if (result case Err<void>(:final failure)) {
-      showFailureSnackBar(context, failure: failure, t: t);
-    }
+    final failure = await vm.removeMember(member);
+    if (failure == null || !context.mounted) return;
+    showFailureSnackBar(context, failure: failure, t: t);
   }
 
-  Future<void> _confirmTransfer(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmTransfer(BuildContext context) async {
     // Spelled out rather than confirmed with a bare "OK": handing over
     // ownership also takes it away from you, which the title alone does not
     // say.
@@ -214,13 +203,9 @@ class _MemberRow extends ConsumerWidget {
       destructive: false,
     );
     if (!ok || !context.mounted) return;
-    final result = await ref
-        .read(listsControllerProvider.notifier)
-        .transferOwnership(list.id, member.userId);
-    if (!context.mounted) return;
-    if (result case Err<ShoppingList>(:final failure)) {
-      showFailureSnackBar(context, failure: failure, t: t);
-    }
+    final failure = await vm.transferOwnership(member);
+    if (failure == null || !context.mounted) return;
+    showFailureSnackBar(context, failure: failure, t: t);
   }
 
   Future<bool> _confirm(

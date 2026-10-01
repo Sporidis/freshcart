@@ -8,8 +8,8 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/onboarding/application/screen/onboarding_controller.dart';
-import 'package:freshcart_flutter/features/onboarding/application/screen/onboarding_state.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 
 class OnboardingContinueButton extends ConsumerWidget {
   const OnboardingContinueButton({super.key});

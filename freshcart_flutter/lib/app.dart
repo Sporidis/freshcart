@@ -7,7 +7,7 @@ import 'package:freshcart_flutter/core/theme/preferences/appearance_controller.d
 import 'package:freshcart_flutter/core/theme/preferences/large_text_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/queue_drain_coordinator_provider.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
 /// The largest text scale "Larger list text" applies, deliberately modest —
 /// the design's own note is "easier to read at arm's length," not a full

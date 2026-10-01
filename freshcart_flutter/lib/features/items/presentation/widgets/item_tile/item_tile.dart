@@ -212,6 +212,48 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     widget.onToggle();
   }
 
+  // ── Press and hold ──────────────────────────────────────────────────────
+  // A tap checks the row; holding past [_longPressThreshold] opens the menu
+  // instead. Timers rather than a LongPressGestureRecognizer so the tap and
+  // the hold can share one gesture and the "keep holding" tell can start
+  // partway through.
+
+  void _onPressStart() {
+    _longPressTimer?.cancel();
+    _longPressTimer = Timer(_longPressThreshold, () {
+      _pressTellTimer?.cancel();
+      _pressScaleController.animateTo(1, curve: AppMotion.pop);
+      _openMenu();
+    });
+    // The "keep holding" tell: a subtle press-down 300ms into the hold --
+    // "has 300ms passed" is a plain wall-clock question independent of
+    // whatever the lift animation is doing.
+    _pressTellTimer?.cancel();
+    _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
+      _pressScaleController.animateTo(0.97);
+    });
+  }
+
+  void _onPressCancel() {
+    _longPressTimer?.cancel();
+    _pressTellTimer?.cancel();
+    _pressScaleController.animateTo(1, curve: AppMotion.pop);
+  }
+
+  void _onPressEnd() {
+    _pressTellTimer?.cancel();
+    _pressScaleController.animateTo(1, curve: AppMotion.pop);
+    // Still pending means the hold threshold never fired — a real tap,
+    // released early — so this is where checking happens. Once it has
+    // fired, `_openMenu` already ran and owns this gesture instead.
+    if (_longPressTimer?.isActive ?? false) {
+      _longPressTimer!.cancel();
+      _setChecked(!_isChecked);
+    }
+  }
+
+  // ── Menu overlay ────────────────────────────────────────────────────────
+
   void _openMenu() {
     if (_menuEntry != null) return;
     _animationController.forward(from: 0);
@@ -291,38 +333,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     }
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: (_) {
-        _longPressTimer?.cancel();
-        _longPressTimer = Timer(_longPressThreshold, () {
-          _pressTellTimer?.cancel();
-          _pressScaleController.animateTo(1, curve: AppMotion.pop);
-          _openMenu();
-        });
-        // The "keep holding" tell: a subtle press-down 300ms into the hold,
-        // matching item_tile.dart's own _pressScale/_pressTellTimer split --
-        // "has 300ms passed" is a plain wall-clock question independent of
-        // whatever the lift animation is doing.
-        _pressTellTimer?.cancel();
-        _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
-          _pressScaleController.animateTo(0.97);
-        });
-      },
-      onTapCancel: () {
-        _longPressTimer?.cancel();
-        _pressTellTimer?.cancel();
-        _pressScaleController.animateTo(1, curve: AppMotion.pop);
-      },
-      onTapUp: (_) {
-        _pressTellTimer?.cancel();
-        _pressScaleController.animateTo(1, curve: AppMotion.pop);
-        // Still pending means the hold threshold never fired — a real tap,
-        // released early — so this is where checking happens. Once it has
-        // fired, `_openMenu` already ran and owns this gesture instead.
-        if (_longPressTimer?.isActive ?? false) {
-          _longPressTimer!.cancel();
-          _setChecked(!_isChecked);
-        }
-      },
+      onTapDown: (_) => _onPressStart(),
+      onTapCancel: _onPressCancel,
+      onTapUp: (_) => _onPressEnd(),
       // Kept mounted (not removed from the list) while the menu is open, so
       // the list never reflows or loses scroll position — just hidden.
       child: AnimatedBuilder(

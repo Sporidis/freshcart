@@ -1,7 +1,11 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/features/shops/data/mappers/shop_mapper.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+
+part 'shop_repository_impl.g.dart';
 
 /// The Serverpod-backed [ShopRepository].
 class ShopRepositoryImpl implements ShopRepository {
@@ -62,3 +66,8 @@ class ShopRepositoryImpl implements ShopRepository {
     }
   }
 }
+
+/// Supplies the [ShopRepository] port.
+@Riverpod(keepAlive: true)
+ShopRepository shopRepository(Ref ref) =>
+    ShopRepositoryImpl(ref.watch(serverpodClientProvider));

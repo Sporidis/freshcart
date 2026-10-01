@@ -121,7 +121,7 @@ full story); the short version, so you don't rediscover them the hard way:
   pure Dart, no Flutter or Serverpod imports, ever (`docs/architecture.md`).
 - **A repository implementation, or a client DTO ↔ domain mapper** →
   `freshcart_flutter/lib/features/<feature>/data/`.
-- **A Riverpod provider or controller** → `.../application/`.
+- **A Riverpod provider or controller** → `.../application/<unit>/`, one folder per unit.
 - **A screen or widget** → `.../presentation/`, `widgets/` for anything not a full screen.
 - **A server-side model, endpoint, or business rule** → `freshcart_server/lib/src/<feature>/`.
 - **"Why does this exist / why not the obvious alternative"** →

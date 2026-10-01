@@ -7,12 +7,11 @@ part 'list_member.freezed.dart';
 
 /// One person's membership of a shopping list.
 ///
-/// [displayName] is denormalised on purpose: a list shows "Mom added milk"
-/// without a second lookup, and the name survives even if that account is
-/// later upgraded from anonymous to Google. [avatarColor] and
-/// [avatarPhotoUrl] follow the exact same reasoning (`docs/decisions.md`
-/// #65) — snapshotted at join time, not kept live in sync with a later
-/// profile edit, same as [displayName] already is.
+/// [displayName], [avatarColor] and [avatarPhotoUrl] carry the member's
+/// profile *as it is now*: the server fills them in live on every read and
+/// re-broadcasts the list when any of them change (`docs/decisions.md` #98),
+/// so a list shows "Mom added milk" with Mom's current name and photo,
+/// without the client looking her up separately.
 @freezed
 abstract class ListMember with _$ListMember {
   /// Creates a membership record.

@@ -1,57 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/pending_write_count_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/sync_provider.dart';
-import 'package:freshcart_flutter/features/sync/application/providers/sync_status.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
+/// The strip above the list that says the device is offline, or still
+/// pushing queued writes. Which of the two (if either) is decided by
+/// [syncBannerProvider]; this only draws it.
 class OfflineSyncingBanner extends ConsumerWidget {
   const OfflineSyncingBanner({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(syncProvider).value;
-    final pendingCount = ref.watch(pendingWriteCountProvider).value ?? 0;
-    final isSyncing = status == SyncStatus.online && pendingCount > 0;
-
-    if (status != SyncStatus.offline && !isSyncing) {
-      return const SizedBox.shrink();
-    }
-
-    if (isSyncing) {
-      return _SyncingBanner(pendingCount: pendingCount);
-    }
-
-    return const _OfflineBanner();
-  }
-}
-
-class _SyncingBanner extends StatelessWidget {
-  final int pendingCount;
-
-  const _SyncingBanner({required this.pendingCount});
-
-  @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return _BuildBanner(
-      color: Colors.grey,
-      icon: Icons.sync,
-      message: 'Syncing $pendingCount changes...',
-    );
-  }
-}
-
-class _OfflineBanner extends StatelessWidget {
-  const _OfflineBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return const _BuildBanner(
-      color: Colors.grey,
-      icon: Icons.wifi_off,
-      message: 'Offline - changes will sync',
-    );
+    final t = ref.watch(translationsProvider);
+    return switch (ref.watch(syncBannerProvider)) {
+      SyncBannerHidden() => const SizedBox.shrink(),
+      SyncBannerOffline() => _BuildBanner(
+        color: Colors.grey,
+        icon: Icons.wifi_off,
+        message: t.sync.offline,
+      ),
+      SyncBannerSyncing(:final pending) => _BuildBanner(
+        color: Colors.grey,
+        icon: Icons.sync,
+        message: t.sync.syncing(n: pending),
+      ),
+    };
   }
 }
 

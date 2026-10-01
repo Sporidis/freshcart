@@ -2255,3 +2255,181 @@ decides how to show it, which keeps it unit-testable without a widget tree.
 - a snackbar when the "clear checked after shopping" auto-clear (#79) fails -- the rule itself
   moved into the view model and still applies, but a failure now only rolls back silently.
 
+
+## 93. Fewer providers, one notifier per widget, a screen VM only where it earns one
+
+**Problem:** the app layer had grown to 67 `@riverpod` declarations in 39 files, and a simple
+write crossed five hops (widget → screen VM → feature controller → use-case provider → use case →
+repository). Most of the extra hops forwarded calls without adding anything. The rule "a widget
+must never call a feature controller" forced a VM onto every screen, including ones with nothing
+to combine.
+
+**Decision -- the widget rule.** A widget talks to exactly one application notifier (ambient core
+providers such as translations and haptics excepted). A screen gets an `XScreenController` only
+when it combines two or more sources or runs multi-step actions: items, list detail, list
+settings, household, the drawer, the shop tab strip, onboarding, join. Simple screens (manage
+shops, notifications, settings, edit profile) use their one feature controller directly. Shared
+flows that must stay in presentation (`confirmDeleteList`) take their write as a callback instead
+of reading controllers themselves.
+
+**Decision -- no use-case providers.** `AddItem(ref.read(itemRepositoryProvider))(...)` at the call
+site. Use cases are stateless and take only a port, so a provider per use case added a seam that
+no test used: tests override the repository provider, which inline construction still reads.
+
+**Decision -- one UI-state notifier for the items screen.** `ItemsUiController(listId)` replaces
+five one-field notifiers (selection, search, rearrange, Done collapsed, celebration dismissed). It
+stays separate from `ItemsScreenController` for the reason #92 gave: the VM's `build()` re-runs on
+every watched change and would reset state stored on it.
+
+**Decision -- flat `application/`, co-located DI.** `application/{controllers,providers,screen}/`
+collapses into `application/`: a feature holds a handful of files there, and the name suffix
+already says what each is. A repository's DI provider sits at the bottom of its `_impl.dart`. A
+feature's small derived providers share `<feature>_providers.dart`. This bends "one public
+declaration per file" on purpose, because a two-line provider per file was the noise.
+`app_database_provider.dart` stays separate because `app_database.dart` already owns a drift part.
+
+**Decision -- value equality where a VM reads a noisy source.** `ListDetailScreenState` overrides
+`==` (`@immutable`, via a direct `meta` dependency). Its VM reads the items mode and re-runs on every
+item change, and Riverpod 3 notifies only when `previous != next`. That is how the screen avoids
+rebuilding per checkbox without `select`, which `riverpod_annotation` does not export to the
+application layer.
+
+**Fixed along the way:** `/lists` redirected to a stored last-opened list even after the user had
+left or deleted it. That landed on the error screen, whose exit led back to `/lists`, in a loop.
+`listsLandingTarget` now checks that the id is still one of the user's lists.
+`LastOpenedListController.select` also never updated its own state.
+
+**Result:** 67 → 55 `@riverpod` declarations, 39 → 30 application files, 174 → 155 files in
+`lib/`, and 352 → 364 tests.
+Every screen VM now combines or sequences something; none of them only forwards calls.
+
+## 94. `application/` groups each unit into its own folder
+
+**Problem:** every `@riverpod` file carries a generated `.g.dart`, and a screen VM also has a
+`_state.dart`. Flat, the 30 application files were 54 on disk. A screen VM's three files sat
+among its neighbours' files, and the `.g.dart` files doubled the listing.
+
+**Decision:** one folder per unit, named after the file minus `_controller` / `_providers` /
+`_state`: `items_screen/{items_screen_controller, items_screen_controller.g, items_screen_state}.dart`.
+A folder is made even when it holds only a source file and its `.g.dart`, so the rule has no exceptions.
+
+**Why this is not the layout #93 removed:** #93 removed folders split by *kind*
+(`controllers/`, `providers/`, `screen/`), which put a VM and its state in different folders. This
+groups by *unit*, so everything one notifier owns sits together. The name suffixes still say which
+kind each file is.
+
+## 95. Names that hold up when you guess: `ItemsSectionController`, and a `settings` feature
+
+**Problem:** two names sent readers to the wrong place. `ItemsScreenController` suggested an
+items screen, but there is none. The items render as `ItemsSection` inside `ListDetailScreen`,
+which also reads this VM (via `ListDetailAppBar`). And `auth` owned `SettingsScreen` and its
+sections, although theme, language, about, and lists-and-shops have nothing to do with
+authentication.
+
+**Decision:** rename the VM to `ItemsSectionController` / `ItemsSectionState`, since it backs a
+section, not a route. Move `SettingsScreen`, `sections/` and `settings_options/` into a new
+`settings` feature, which has presentation only because it composes other features' controllers.
+`auth` keeps identity: the repository, `ProfileController`, `EditProfileScreen` and the upgrade
+nudge. The dependency goes one way, `settings → auth`. `notifications` reuses
+`settings_options/`, which puts it downstream of `settings` as well.
+
+**Check:** a file should be findable from its class name without searching. Features stay
+domain slices, not screens. The router is the screen map.
+
+## 96. Photo picking moves behind `AvatarPhotoSource`; edit profile gets a view model
+
+**Problem:** `EditProfileScreen` called `ImagePicker` itself and ran the whole photo flow in the
+widget: pick, read the bytes, catch platform exceptions, upload. That was platform I/O in
+presentation, a multi-step action outside any notifier, and nothing a test could reach without a
+real gallery. Errors were also stored already translated, so a language switch left them in the
+old language.
+
+**Decision -- a data source, not a domain port.** `AvatarPhotoSource` (`auth/data/sources/`) is an
+interface with one `image_picker` implementation, following `PushTokenSource`. `pick()` returns
+`Result<Uint8List?>`: bytes, `Ok(null)` for a cancelled pick, or `Err` for a platform failure, so
+nothing above it needs a `try/catch`. It stays out of domain because picking a photo has no
+business meaning. The business rule, the size cap, already lives in `AuthUser.validateAvatarPhoto`
+and is applied by `SetAvatarPhoto`. The general rule: a platform capability with no domain meaning
+is a data source the VM uses directly; one that is part of a domain concept sits behind a domain
+port, the way `PushPort` wraps `PushTokenSource`.
+
+**Decision -- edit profile gets a screen VM.** This reverses #93's listing of edit profile as a
+simple screen. `choosePhoto` is now a multi-step action (pick, then upload), which is #93's own
+test for a VM. `EditProfileScreenController` derives `user` and `loadFailure` from the profile,
+and the widget talks only to it. The saving flags and failures stay in the widget's `State`, for
+the reason #92 and #93 gave: `build()` re-runs whenever the profile publishes, including the
+publish a save triggers, and would reset a flag mid-save. Failures are stored as `Failure` and
+translated in `build`.
+
+**Fixed along the way:** a widget test faked a profile change by pumping a second
+`ProviderContainer`. That only worked while the screen depended on the keep-alive
+`ProfileController`. It now publishes through the fake port's `authStateChanges()`, the way a real
+change arrives.
+
+## 97. Presentation audit: rules out of widgets, and a `clockProvider` seam
+
+**Problem:** an audit of every screen and widget against #93 found widgets that decided or
+computed things. One was a real bug: Settings marked the *first* list "Open now", while the app
+opens to the *last-opened* one (`listsLandingTarget`). The widget had rebuilt a rule that already
+existed and got it wrong. Other leaks: the offline banner combined two providers into
+"syncing = online and writes queued", with English-only strings. The list header renamed through
+a second notifier. The upgrade nudge's visibility rule sat in the widget. Recency bucketing and
+the onboarding preset shops lived in widget files, and the presets also existed in the controller.
+Notifications and Settings each combined two or more sources without a VM, and the notification
+toggles dropped the `Failure` their writes returned.
+
+**Decision -- each rule moves to the layer that owns it.**
+- `SettingsScreenController` and `NotificationsScreenController` combine their sources (#93's
+  test). "Open now" reads `listsLandingTargetProvider`, so it cannot drift from where `/lists`
+  lands.
+- The banner's three cases become `syncBannerProvider`, which returns a sealed `SyncBanner`, so
+  the widget's `switch` is exhaustive and only draws. `showUpgradeNudgeProvider` does the same for
+  the nudge.
+- Rename goes through `ListDetailScreenController.rename`, and the title is its own small
+  widget, so the app bar keeps one notifier.
+- `presetShops` and `OnboardingState.shopOptions` are the one source for the add-shop step.
+
+**Decision -- `clockProvider` instead of a `now` constructor parameter.** Bucketing "Recently
+bought" by age moved into `recentlyBoughtProvider`. A provider can't take a clock argument, because
+a new `DateTime` on every build would be a new family key each time. So "now" is injected the
+Riverpod way: a keep-alive `clockProvider` that tests override with a fixed time. Reach for it
+wherever a provider compares against the current time, not `DateTime.now()`.
+
+**Small shared helpers:** `initialFor` (grapheme-safe, replacing seven copies where most did
+`trim()[0]` and split emoji) and `WidgetRef.haptic` (the "haptics on unless turned off" default
+in one place, replacing four copies).
+
+## 98. List members are read live from their profile, not snapshotted at join
+
+**Problem:** changing your photo, name or avatar colour didn't show on lists you were already on.
+You only appeared updated on lists you created *after* the change. The cause was that
+`ListMember` stored copies of `displayName`, `avatarColorArgb` and `avatarPhotoUrl`, taken at
+join time and never updated. That copy was never a recorded decision; it existed only in code
+comments, which cited #65 (a drawer change). Its stated reason, "the name survives an account
+upgrade", doesn't hold: `MemberProfile`'s `authUserId` never changes on upgrade. A second cause
+made photos stale even with fresh data: every upload overwrote `avatars/<id>.jpg`, so the public
+URL never changed, and `NetworkImage` (like any image cache or CDN) keys on the URL.
+
+**Decision -- one source of truth.** The three fields become `!persist` on `ListMember`: still on
+the wire, no longer stored (migration `20261001150005278` drops the columns). `_withMembers`, which
+every list read and broadcast already goes through, fills them in from `MemberProfile`. That's one
+batched `inSet` query per list, not one per member. **Rejected:** keeping the copies and rewriting
+them on every profile change. Reads stay one query, but it keeps two copies of the same data that
+can drift apart again, which is how this bug happened.
+
+**Decision -- profile changes are broadcast.** `ProfileEndpoint` re-announces every list the
+caller is on after a name, colour or photo change, so everyone watching one of those lists sees it
+right away. It lives in the endpoint, not `ProfileService`: profiles don't know lists exist, and
+the endpoint is what connects the two.
+
+**Decision -- each upload gets its own URL.** Photos are stored at
+`avatars/<id>-<microseconds>.jpg`. The row is updated *before* the previous file is deleted, so a
+failure partway through never leaves the row pointing at a missing file.
+
+**Offline sync is unaffected.** The client caches the domain `ListMember`, whose shape didn't
+change, and `ListRealtimeSource` writes every live snapshot through to that cache. A broadcast
+profile change therefore also refreshes what an offline cold start shows. Offline, the photo URL
+can't load, and `UserAvatar` already falls back to colour and initial.
+
+**Not live:** the drawer's other-member avatars come from `myLists`, a fetch rather than a stream.
+They update on the next fetch (opening the app, returning to `/lists`), not instantly.

@@ -7,17 +7,17 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/items/application/screen/items_screen_controller.dart';
-import 'package:freshcart_flutter/features/items/application/screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/move_to_shop_sheet.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/list_menu.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/member_avatar_button.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The list screen's app bar, in whichever of the four [ItemsMode]s the
-/// items are in -- read from the same [ItemsScreenController] the items
+/// items are in -- read from the same [ItemsSectionController] the items
 /// area uses, so the header and the rows can never disagree.
 ///
 /// [list] is null while the list is still loading: the bar then shows just
@@ -46,10 +46,10 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
     final list = this.list;
     final items = list == null
         ? null
-        : ref.watch(itemsScreenControllerProvider(list));
+        : ref.watch(itemsSectionControllerProvider(list));
     final vm = list == null
         ? null
-        : ref.read(itemsScreenControllerProvider(list).notifier);
+        : ref.read(itemsSectionControllerProvider(list).notifier);
     final mode = items?.mode ?? ItemsMode.browse;
 
     void report(Failure? failure) {
@@ -142,8 +142,8 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
     required ThemeData theme,
     required Translations t,
     required ItemsMode mode,
-    required ItemsScreenState? items,
-    required ItemsScreenController? vm,
+    required ItemsSectionState? items,
+    required ItemsSectionController? vm,
   }) {
     final list = this.list;
     return AnimatedSwitcher(
@@ -219,23 +219,32 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    EditableListTitle(
-                      name: list.name,
-                      onRename: (name) async {
-                        final result = await ref
-                            .read(listsControllerProvider.notifier)
-                            .rename(list.id, name);
-                        return switch (result) {
-                          Ok<ShoppingList>() => null,
-                          Err<ShoppingList>(:final failure) =>
-                            failure.toMessage(t),
-                        };
-                      },
-                    ),
+                    _ListTitle(list: list, t: t),
                   ],
                 ),
         ),
       },
     );
   }
+}
+
+/// The tap-to-rename title. Its own widget so the rename goes through
+/// [ListDetailScreenController] -- the app bar around it already talks to
+/// the items view model, and a widget gets one notifier.
+class _ListTitle extends ConsumerWidget {
+  const _ListTitle({required this.list, required this.t});
+
+  final ShoppingList list;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => EditableListTitle(
+    name: list.name,
+    onRename: (name) async {
+      final failure = await ref
+          .read(listDetailScreenControllerProvider(list.id).notifier)
+          .rename(name);
+      return failure?.toMessage(t);
+    },
+  );
 }

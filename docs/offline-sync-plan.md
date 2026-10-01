@@ -12,7 +12,7 @@ This plan assumes the conclusions from the conversation that produced it:
 - The offline banner is driven by a **stream of ambient state**, not a `Failure`. A `Failure`
   is the outcome of one call; "you're offline, 3 pending" has to be true before any call is
   made.
-- The optimistic-update machinery already in `ItemsController` (`freshcart_flutter/lib/features/items/application/items_controller.dart`)
+- The optimistic-update machinery already in `ItemsController` (`freshcart_flutter/lib/features/items/application/items/items_controller.dart`)
   is the right thing to extend, not replace — but it currently assumes a rollback resolves in
   seconds and lives in a `Map` field that dies with the provider. Offline needs the same shape
   of idea to survive an app restart, which is a bigger structural change than it first looks.

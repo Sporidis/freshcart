@@ -9,9 +9,8 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/screen/items_screen_controller.dart';
-import 'package:freshcart_flutter/features/items/application/screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
@@ -24,13 +23,17 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// with the completion celebration and the add control floating on top.
 ///
 /// Pure UI: every derivation and multi-step action lives in
-/// [ItemsScreenController]. What stays here is what needs a `BuildContext` --
+/// [ItemsSectionController]. What stays here is what needs a `BuildContext` --
 /// sheets and snackbars. The header (title, selection and search actions)
 /// belongs to `ListDetailScreen`, which reads the same view model.
 ///
 /// Multi-select and rearrange are both entered from a row's hold-menu
 /// ("Select more…" / "Rearrange list") rather than long-press directly,
 /// since that gesture already opens the menu.
+/// TODO: Implement multi-select and rearrange functionality.
+///       Theme-ing and styling considerations for the items section.
+///       Celebration when all items are completed.
+///       Add avatar for each marked item to indicate the responsible member. (also use picture if available)
 class ItemsSection extends ConsumerWidget {
   const ItemsSection({required this.list, super.key});
 
@@ -39,122 +42,52 @@ class ItemsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final s = ref.watch(itemsScreenControllerProvider(list));
-    final vm = ref.read(itemsScreenControllerProvider(list).notifier);
+    final s = ref.watch(itemsSectionControllerProvider(list));
+    final vm = ref.read(itemsSectionControllerProvider(list).notifier);
+    final flows = _ItemFlows(context: context, s: s, vm: vm, t: t);
 
-    void report(Failure? failure, {VoidCallback? onRetry}) {
-      if (failure == null || !context.mounted) return;
-      // A failed write is the snackbar tier: the screen behind it is still
-      // usable, so it gets a message and a way to retry, not a replacement.
-      showFailureSnackBar(context, failure: failure, t: t, onRetry: onRetry);
-    }
+    Color? dotFor(ShopId? shopId) => s.shopFor(shopId)?.color.toColor();
 
-    Color? dotFor(ShopId? shopId) {
-      final shop = s.shopFor(shopId);
-      return shop?.color.toColor();
-    }
-
-    Future<void> openEditSheet(ShoppingItem item) async {
-      final outcome = await showModalBottomSheet<ItemSheetOutcome>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (_) => ItemSheet.edit(item: item, shops: s.shops, t: t),
-      );
-      switch (outcome) {
-        case null:
-          return;
-        case ItemSheetRemove():
-          report(await vm.remove(item));
-        case ItemSheetSave(
-          :final name,
-          :final quantity,
-          :final shopId,
-          :final noteText,
-        ):
-          report(
-            await vm.edit(
-              item,
-              name: name,
-              quantity: quantity,
-              shopId: shopId,
-              noteText: noteText,
-            ),
-          );
-      }
-    }
-
-    // QuickAddBar's onOpenDetails contract: return whether something was
-    // actually added, so it knows whether to clear/collapse itself or leave
-    // the typed text in place for a retry.
-    Future<bool> openAddSheet(String initialName) async {
-      final outcome = await showModalBottomSheet<ItemSheetOutcome>(
-        context: context,
-        isScrollControlled: true,
-        showDragHandle: true,
-        builder: (_) => ItemSheet.add(
-          initialName: initialName,
-          shops: s.shops,
-          t: t,
-          initialShopId: s.shopFilter,
-        ),
-      );
-      if (outcome is! ItemSheetSave) return false;
-      final failure = await vm.add(
-        name: outcome.name,
-        quantity: outcome.quantity,
-        shopId: outcome.shopId,
-        noteText: outcome.noteText,
-      );
-      report(failure);
-      return failure == null;
-    }
-
-    Future<bool> quickAdd(String name) async {
-      final failure = await vm.quickAdd(name);
-      report(failure);
-      return failure == null;
-    }
-
-    final loadFailure = s.loadFailure;
+    final body = switch (s) {
+      ItemsSectionState(loadFailure: final failure?) => Center(
+        child: Text(failure.toMessage(t)),
+      ),
+      ItemsSectionState(isLoading: true) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+      // Search bypasses the shop filter and the open/done split entirely
+      // (§16: "one flat list across all shops").
+      ItemsSectionState(mode: ItemsMode.search) => SearchResults(
+        // Not 'search' -- the app bar's own search TextField already owns
+        // that key, and both are mounted at once.
+        key: const ValueKey('search-results'),
+        state: s,
+        vm: vm,
+        t: t,
+        dotFor: dotFor,
+        onEdit: flows.edit,
+        report: flows.report,
+      ),
+      ItemsSectionState(isEmpty: true) => _ItemsEmptyState(
+        shop: s.activeShop,
+        t: t,
+      ),
+      _ => _ItemList(
+        state: s,
+        vm: vm,
+        t: t,
+        dotFor: dotFor,
+        report: flows.report,
+        onEdit: flows.edit,
+      ),
+    };
 
     // A Stack, not a docked bottom bar: the design's FAB floats over the
     // list rather than shrinking it to make room. _ItemList carries its own
     // bottom padding so its last rows clear the floating cluster.
     return Stack(
       children: [
-        Positioned.fill(
-          child: loadFailure != null
-              ? Center(child: Text(loadFailure.toMessage(t)))
-              : s.isLoading
-              ? const Center(child: CircularProgressIndicator())
-              // Search bypasses the shop filter and the open/done split
-              // entirely (§16: "one flat list across all shops").
-              : s.mode == ItemsMode.search
-              ? SearchResults(
-                  // Not 'search' -- the app bar's own search TextField
-                  // already owns that key, and both are mounted at once.
-                  key: const ValueKey('search-results'),
-                  list: list,
-                  allItems: s.allItems,
-                  query: s.searchQuery,
-                  t: t,
-                  controller: ref.read(
-                    itemsControllerProvider(list.id).notifier,
-                  ),
-                  report: report,
-                )
-              : s.isEmpty
-              ? _ItemsEmptyState(shop: s.activeShop, t: t)
-              : _ItemList(
-                  state: s,
-                  vm: vm,
-                  t: t,
-                  dotFor: dotFor,
-                  report: report,
-                  onEdit: openEditSheet,
-                ),
-        ),
+        Positioned.fill(child: body),
         // Neither the celebration nor the add control has anything to do
         // while selecting, searching or rearranging -- selection has its own
         // contextual bar in the app bar, and search offers its own "Add to
@@ -164,30 +97,140 @@ class ItemsSection extends ConsumerWidget {
             left: 0,
             right: 0,
             bottom: 0,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (s.showCelebration)
-                  CompletionCelebrationCard(
-                    list: list,
-                    itemCount: s.allItems.length,
-                    shopColors: s.shops.isEmpty
-                        ? AppColors.presetShopColors
-                        : [for (final shop in s.shops) shop.color.toColor()],
-                    t: t,
-                    report: report,
-                  ),
-                QuickAddBar(
-                  listId: list.id,
-                  t: t,
-                  activeShopName: s.activeShop?.name,
-                  firstRun: s.firstRun,
-                  onQuickAdd: quickAdd,
-                  onOpenDetails: openAddSheet,
-                ),
-              ],
-            ),
+            child: _FloatingCluster(s: s, vm: vm, flows: flows, t: t),
           ),
+      ],
+    );
+  }
+}
+
+/// The flows that need a `BuildContext` -- sheets and snackbars -- on top of
+/// the view model's actions. Rebuilt with the widget, so it always sees the
+/// current state.
+class _ItemFlows {
+  const _ItemFlows({
+    required this.context,
+    required this.s,
+    required this.vm,
+    required this.t,
+  });
+
+  final BuildContext context;
+  final ItemsSectionState s;
+  final ItemsSectionController vm;
+  final Translations t;
+
+  /// A failed write is the snackbar tier: the screen behind it is still
+  /// usable, so it gets a message and a way to retry, not a replacement.
+  void report(Failure? failure, {VoidCallback? onRetry}) {
+    if (failure == null || !context.mounted) return;
+    showFailureSnackBar(context, failure: failure, t: t, onRetry: onRetry);
+  }
+
+  Future<void> edit(ShoppingItem item) async {
+    final outcome = await showModalBottomSheet<ItemSheetOutcome>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => ItemSheet.edit(item: item, shops: s.shops, t: t),
+    );
+    switch (outcome) {
+      case null:
+        return;
+      case ItemSheetRemove():
+        report(await vm.remove(item));
+      case ItemSheetSave(
+        :final name,
+        :final quantity,
+        :final shopId,
+        :final noteText,
+      ):
+        report(
+          await vm.edit(
+            item,
+            name: name,
+            quantity: quantity,
+            shopId: shopId,
+            noteText: noteText,
+          ),
+        );
+    }
+  }
+
+  /// QuickAddBar's onOpenDetails contract: returns whether something was
+  /// actually added, so it knows whether to clear/collapse itself or leave
+  /// the typed text in place for a retry.
+  Future<bool> addWithDetails(String initialName) async {
+    final outcome = await showModalBottomSheet<ItemSheetOutcome>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (_) => ItemSheet.add(
+        initialName: initialName,
+        shops: s.shops,
+        t: t,
+        initialShopId: s.shopFilter,
+      ),
+    );
+    if (outcome is! ItemSheetSave) return false;
+    final failure = await vm.add(
+      name: outcome.name,
+      quantity: outcome.quantity,
+      shopId: outcome.shopId,
+      noteText: outcome.noteText,
+    );
+    report(failure);
+    return failure == null;
+  }
+
+  /// Same contract as [addWithDetails].
+  Future<bool> quickAdd(String name) async {
+    final failure = await vm.quickAdd(name);
+    report(failure);
+    return failure == null;
+  }
+}
+
+/// What floats above the rows in browse mode: the completion celebration
+/// (when it applies) and the add control.
+class _FloatingCluster extends StatelessWidget {
+  const _FloatingCluster({
+    required this.s,
+    required this.vm,
+    required this.flows,
+    required this.t,
+  });
+
+  final ItemsSectionState s;
+  final ItemsSectionController vm;
+  final _ItemFlows flows;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (s.showCelebration)
+          CompletionCelebrationCard(
+            list: s.list,
+            itemCount: s.allItems.length,
+            shopColors: s.shops.isEmpty
+                ? AppColors.presetShopColors
+                : [for (final shop in s.shops) shop.color.toColor()],
+            t: t,
+            report: flows.report,
+            onKeep: vm.dismissCelebration,
+            onClear: vm.clearChecked,
+          ),
+        QuickAddBar(
+          listId: s.list.id,
+          t: t,
+          activeShopName: s.activeShop?.name,
+          firstRun: s.firstRun,
+          onQuickAdd: flows.quickAdd,
+          onOpenDetails: flows.addWithDetails,
+        ),
       ],
     );
   }
@@ -212,8 +255,8 @@ class _ItemList extends StatelessWidget {
     required this.onEdit,
   });
 
-  final ItemsScreenState state;
-  final ItemsScreenController vm;
+  final ItemsSectionState state;
+  final ItemsSectionController vm;
   final Translations t;
   final Color? Function(ShopId?) dotFor;
   final void Function(Failure?, {VoidCallback? onRetry}) report;

@@ -29,7 +29,7 @@ That is _not_ a license to add complexity for its own sake — see the scope rul
    `application/` or `presentation/`. This mapping is the whole point of the layering; do
    not "save time" by skipping it.
 3. **Feature-first, not layer-first.** Code is organized by feature (`lists`, `items`,
-   `shops`, `auth`, `notifications`), and within a feature by layer.
+   `shops`, `auth`, `settings`, `notifications`), and within a feature by layer.
 4. **Plan before you build.** For any phase or non-trivial change, write the plan (files,
    layering, acceptance check) and confirm it fits these rules _before_ generating code.
 5. **Each phase must compile and pass its checks before the next begins.** Run the phase's
@@ -131,12 +131,25 @@ flowchart TD
   `JoinList`). Repository interfaces end in `Repository`; implementations in
   `RepositoryImpl`. Mappers are `X.toDomain()` / `X.toDto()` extensions.
 - **Riverpod naming:** a Notifier class (state + methods) is `XController`; a
-  screen-level Notifier that only composes other providers is `XScreenController`,
-  its state `XScreenState`. A function provider (derived value or DI wiring, no
-  methods) has no suffix. Files are named after their main declaration
-  (`x_controller.dart` / `x_provider.dart`).
-- **Files:** one public declaration per file where practical. Feature layout in
-  `docs/architecture.md`.
+  screen-level Notifier that composes other providers is `XScreenController`,
+  its state `XScreenState`. A Notifier backing an embedded section rather
+  than a whole route is `XSectionController`, its state `XSectionState`
+  (`ItemsSectionController`). A function provider (derived value or DI wiring, no
+  methods) has no suffix. Notifiers get their own file (`x_controller.dart`);
+  a feature's small derived providers share one `<feature>_providers.dart`; a
+  repository's DI provider sits at the bottom of its `_impl.dart`. Use cases
+  have **no** providers -- build them at the call site from the repository
+  provider.
+- **One notifier per widget; a screen VM only when it earns it.** A widget
+  reads and acts through exactly one application notifier (ambient core ones
+  -- translations, haptics, theme prefs -- don't count). A screen gets an
+  `XScreenController` only when it combines 2+ sources or runs multi-step
+  actions; otherwise it uses its one feature controller directly. Don't add a
+  VM that only forwards calls. Dialogs/sheets/snackbars stay in the widget;
+  the write behind them comes from the notifier (or as a callback).
+- **Files:** one public declaration per file where practical (the grouped
+  `_providers.dart` files above are the deliberate exception). Feature layout
+  in `docs/architecture.md`.
 - **No secrets in the repo.** Firebase config, Serverpod passwords, service keys stay in
   ignored config/`.env`. Never commit `google-services.json` / `GoogleService-Info.plist`.
 - **Commits:** Conventional Commits (`feat:`, `fix:`, `refactor:`, `test:`, `docs:`,

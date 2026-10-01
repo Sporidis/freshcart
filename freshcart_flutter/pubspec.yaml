@@ -46,6 +46,7 @@ dependencies:
     path: ../packages/freshcart_l10n
   go_router: ^18.0.1
   image_picker: ^1.2.3
+  meta: ^1.19.0
   path_provider: ^2.1.6
   riverpod_annotation: ^4.0.7
   serverpod_auth_idp_flutter: 3.4.13
