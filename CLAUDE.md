@@ -29,7 +29,7 @@ That is _not_ a license to add complexity for its own sake — see the scope rul
    `application/` or `presentation/`. This mapping is the whole point of the layering; do
    not "save time" by skipping it.
 3. **Feature-first, not layer-first.** Code is organized by feature (`lists`, `items`,
-   `shops`, `auth`, `notifications`), and within a feature by layer.
+   `shops`, `auth`, `settings`, `notifications`), and within a feature by layer.
 4. **Plan before you build.** For any phase or non-trivial change, write the plan (files,
    layering, acceptance check) and confirm it fits these rules _before_ generating code.
 5. **Each phase must compile and pass its checks before the next begins.** Run the phase's
@@ -132,7 +132,9 @@ flowchart TD
   `RepositoryImpl`. Mappers are `X.toDomain()` / `X.toDto()` extensions.
 - **Riverpod naming:** a Notifier class (state + methods) is `XController`; a
   screen-level Notifier that composes other providers is `XScreenController`,
-  its state `XScreenState`. A function provider (derived value or DI wiring, no
+  its state `XScreenState`. A Notifier backing an embedded section rather
+  than a whole route is `XSectionController`, its state `XSectionState`
+  (`ItemsSectionController`). A function provider (derived value or DI wiring, no
   methods) has no suffix. Notifiers get their own file (`x_controller.dart`);
   a feature's small derived providers share one `<feature>_providers.dart`; a
   repository's DI provider sits at the bottom of its `_impl.dart`. Use cases

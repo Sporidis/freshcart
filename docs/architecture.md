@@ -62,7 +62,7 @@ A ✅ means "this row may depend on this column." Anything not ticked is a viola
 | Use cases (application-agnostic logic)   | `packages/freshcart_domain/.../domain/`            |
 | Repository **implementations**           | `freshcart_flutter/.../features/<f>/data/repositories/` |
 | DTO ↔ entity mappers                     | `freshcart_flutter/.../features/<f>/data/mappers/` |
-| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/` (flat) |
+| Riverpod providers/controllers           | `freshcart_flutter/.../features/<f>/application/<unit>/` |
 | Screens, widgets                         | `freshcart_flutter/.../features/<f>/presentation/{screens,widgets}/` |
 | DB models, endpoints, server ops         | `freshcart_server/`                                |
 | Generated protocol + client              | `freshcart_client/` (never hand-edit)              |
@@ -83,11 +83,11 @@ freshcart_flutter/lib/
 │   ├── di/  error/  l10n/  router/  session/  streaming/  ui/
 │   └── theme/              # tokens/  preferences/  reveal/
 └── features/<feature>/
-    ├── application/        # flat -- the file name says what it is:
-    │                       #   x_controller.dart         Notifier: feature state + actions
-    │                       #   x_screen_controller.dart  screen VM (only where earned)
-    │                       #   x_screen_state.dart       that VM's pure-Dart state
-    │                       #   <feature>_providers.dart  small derived providers, grouped
+    ├── application/        # one folder per unit, its .g.dart beside it:
+    │                       #   x/x_controller.dart              Notifier: feature state + actions
+    │                       #   x_screen/x_screen_controller.dart  screen VM (only where earned)
+    │                       #   x_screen/x_screen_state.dart       that VM's pure-Dart state
+    │                       #   <feature>/<feature>_providers.dart small derived providers, grouped
     ├── data/
     │   ├── repositories/   # *_repository_impl.dart, its DI provider at the bottom
     │   ├── sources/        # realtime sources, adapters, local stores (grouped if many)
@@ -99,8 +99,9 @@ freshcart_flutter/lib/
 ```
 
 Only the folders a feature actually needs exist -- `onboarding/` has no
-`data/`. `application/` is flat because a feature holds a handful of files
-there, and the name suffix already says which kind each is (decisions #93).
+`data/`. `application/` has one folder per unit -- a notifier or providers
+file, its generated part, and a screen VM's state -- named after the file minus
+its `_controller` / `_providers` / `_state` suffix (decisions #94).
 Naming follows `CLAUDE.md`'s Riverpod naming rule.
 
 Use cases have no providers: a controller builds one where it uses it,

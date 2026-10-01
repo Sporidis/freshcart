@@ -236,7 +236,7 @@ Future<Failure?> deleteList() async =>
 
 **How to choose the key:** use what the screen is _given_. `ListSettingsScreen`
 gets a `ListId` from the route → key by `ListId`. `ItemsSection` is handed an
-already-loaded `ShoppingList` → `ItemsScreenController` is keyed by `ShoppingList`.
+already-loaded `ShoppingList` → `ItemsSectionController` is keyed by `ShoppingList`.
 
 ### 4.5 Turning async data into plain fields
 
@@ -352,7 +352,7 @@ A `!` on state is a crash waiting for the one frame you were wrong.
 
 ```dart
 final ItemsController vm;          // ❌ compiles (same method names!) but skips the VM
-final ItemsScreenController vm;    // ✅
+final ItemsSectionController vm;    // ✅
 ```
 
 Typing a parameter as the VM is how the compiler enforces "presentation only
@@ -465,14 +465,14 @@ Their methods **take ids** and return `Result<T>` or `Failure?`. Many screens us
 | `activeShopColorProvider(listId)`           | `shop_providers.dart`         | colour of the selected shop tab (the theme tint)         |
 | `syncProvider`, `pendingWriteCountProvider` | `sync_providers.dart`         | online/offline status, writes waiting to sync            |
 
-### Screen VMs — "what this screen needs" (`*_screen_controller.dart`)
+### Screen & section VMs — "what this screen needs" (`*_screen_controller.dart`, `*_section_controller.dart`)
 
 Their methods **don't take ids** and return `Failure?`. One screen (or panel) each,
 and only where they earn it.
 
 | VM                                     | Used by                                                | State                                                                       | Methods                                                                                                                                                                                                                                                                                                  |
 | -------------------------------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `ItemsScreenController(list)`          | `ItemsSection`, `ListDetailAppBar`                     | list, `mode`, items, shops, filter, selection, search, celebration, loading | `toggle`, `setQuantity`, `edit`, `remove`, `swipeDelete`, `clearChecked`, `toggleDoneCollapsed`, `dismissCelebration`, `quickAdd`, `add`, `addFromSearch`, `startRearrange`, `stopRearrange`, `reorderOpen`, `toggleSelection`, `clearSelection`, `deleteSelected`, `moveSelected`, `openSearch`, `closeSearch`, `updateQuery` |
+| `ItemsSectionController(list)`         | `ItemsSection`, `ListDetailAppBar`                     | list, `mode`, items, shops, filter, selection, search, celebration, loading | `toggle`, `setQuantity`, `edit`, `remove`, `swipeDelete`, `clearChecked`, `toggleDoneCollapsed`, `dismissCelebration`, `quickAdd`, `add`, `addFromSearch`, `startRearrange`, `stopRearrange`, `reorderOpen`, `toggleSelection`, `clearSelection`, `deleteSelected`, `moveSelected`, `openSearch`, `closeSearch`, `updateQuery` |
 | `ListDetailScreenController(listId)`   | `ListDetailScreen`, `ListMenu`                         | list, isOwner, activeShopColor, mode, loading, loadFailure                  | `deleteList`, `leaveList`, `refreshLists`, `itemCountForDialog`                                                                                                                                                                                                                                          |
 | `ListSettingsScreenController(listId)` | `ListSettingsScreen`                                   | list, allLists, shops, isOwner, loading, loadFailure                        | `rename`, `toggleShopActive`, `setClearCheckedAfterShopping`, `refreshLists`, `deleteList`, `leaveList`, `itemCountForDialog`                                                                                                                                                                            |
 | `HouseholdScreenController(listId)`    | `HouseholdScreen`                                      | list, me, isOwner, loadFailure (+ `isMe`, `canManage`)                      | `removeMember`, `transferOwnership`, `refreshLists`                                                                                                                                                                                                                                                      |

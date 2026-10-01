@@ -2303,6 +2303,39 @@ left or deleted it. That landed on the error screen, whose exit led back to `/li
 `lib/`, and 352 → 364 tests.
 Every screen VM now combines or sequences something; none of them only forwards calls.
 
+## 94. `application/` groups each unit into its own folder
+
+**Problem:** every `@riverpod` file carries a generated `.g.dart`, and a screen VM also has a
+`_state.dart`. Flat, the 30 application files were 54 on disk. A screen VM's three files sat
+among its neighbours' files, and the `.g.dart` files doubled the listing.
+
+**Decision:** one folder per unit, named after the file minus `_controller` / `_providers` /
+`_state`: `items_screen/{items_screen_controller, items_screen_controller.g, items_screen_state}.dart`.
+A folder is made even when it holds only a source file and its `.g.dart`, so the rule has no exceptions.
+
+**Why this is not the layout #93 removed:** #93 removed folders split by *kind*
+(`controllers/`, `providers/`, `screen/`), which put a VM and its state in different folders. This
+groups by *unit*, so everything one notifier owns sits together. The name suffixes still say which
+kind each file is.
+
+## 95. Names that hold up when you guess: `ItemsSectionController`, and a `settings` feature
+
+**Problem:** two names sent readers to the wrong place. `ItemsScreenController` suggested an
+items screen, but there is none. The items render as `ItemsSection` inside `ListDetailScreen`,
+which also reads this VM (via `ListDetailAppBar`). And `auth` owned `SettingsScreen` and its
+sections, although theme, language, about, and lists-and-shops have nothing to do with
+authentication.
+
+**Decision:** rename the VM to `ItemsSectionController` / `ItemsSectionState`, since it backs a
+section, not a route. Move `SettingsScreen`, `sections/` and `settings_options/` into a new
+`settings` feature, which has presentation only because it composes other features' controllers.
+`auth` keeps identity: the repository, `ProfileController`, `EditProfileScreen` and the upgrade
+nudge. The dependency goes one way, `settings → auth`. `notifications` reuses
+`settings_options/`, which puts it downstream of `settings` as well.
+
+**Check:** a file should be findable from its class name without searching. Features stay
+domain slices, not screens. The router is the screen map.
+
 ## 96. Photo picking moves behind `AvatarPhotoSource`; edit profile gets a view model
 
 **Problem:** `EditProfileScreen` called `ImagePicker` itself and ran the whole photo flow in the
