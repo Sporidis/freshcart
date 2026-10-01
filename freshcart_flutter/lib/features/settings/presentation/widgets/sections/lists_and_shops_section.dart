@@ -10,15 +10,15 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
 /// The Settings screen's "Lists & shops" group: doors into managing lists,
-/// shops, and the household for [firstList].
-class ListsAndShopsSection extends ConsumerWidget {
+/// shops, and the household for [allUserLists].
+class ListsAndShopsSection extends StatelessWidget {
   const ListsAndShopsSection({required this.t, this.allUserLists, super.key});
 
   final Translations t;
   final List<ShoppingList>? allUserLists;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -30,6 +30,7 @@ class ListsAndShopsSection extends ConsumerWidget {
         if (allUserLists != null && allUserLists!.isNotEmpty) ...[
           for (final list in allUserLists!)
             _ListOption(
+              t: t,
               id: list.id,
               onTap: () => context.push(Routes.listSettings(list.id)),
               isOpen: list.id == allUserLists!.first.id,
@@ -54,11 +55,13 @@ class ListsAndShopsSection extends ConsumerWidget {
 
 class _ListOption extends ConsumerWidget {
   const _ListOption({
+    required this.t,
     required this.id,
     required this.onTap,
     this.isOpen = false,
   });
 
+  final Translations t;
   final ListId id;
   final VoidCallback onTap;
   final bool isOpen;
