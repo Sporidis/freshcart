@@ -110,7 +110,7 @@ abstract class ShoppingList implements _i1.SerializableModel {
   /// the id will be null.
   _i1.UuidValue? id;
 
-  /// Human-readable list name.
+  /// Readable list name.
   String name;
 
   /// The short code someone types to join this list.
