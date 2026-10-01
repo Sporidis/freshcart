@@ -531,6 +531,67 @@ void main() {
     );
   });
 
+  group('swipe to delete', () {
+    Future<void> openGroceries(WidgetTester tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+      itemRepository.byListResult = Ok([
+        buildItem(name: 'Milk'),
+        buildItem(id: '00000000-0000-4000-8000-0000000000a2', name: 'Bread'),
+      ]);
+      await pump(tester);
+    }
+
+    // Right-to-left, well past the 40% threshold.
+    Future<void> swipeAway(WidgetTester tester, String name) async {
+      await tester.drag(find.text(name), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a swiped row goes at once, with an Undo that brings it back '
+        'and deletes nothing', (tester) async {
+      await openGroceries(tester);
+      await swipeAway(tester, 'Milk');
+
+      expect(find.text('Milk'), findsNothing);
+      expect(find.text('Milk removed'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      // Past the whole undo window: the cancelled delete never lands.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(itemRepository.removedIds, isEmpty);
+    });
+
+    testWidgets('left alone, the delete lands once the undo window ends', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+      await swipeAway(tester, 'Milk');
+      expect(itemRepository.removedIds, isEmpty, reason: 'held, not sent');
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(itemRepository.removedIds, hasLength(1));
+    });
+
+    testWidgets('a short swipe springs back and deletes nothing', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+      await tester.drag(find.text('Milk'), const Offset(-120, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Milk removed'), findsNothing);
+    });
+  });
+
   group('multi-select', () {
     Future<void> openGroceries(WidgetTester tester) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
@@ -602,6 +663,19 @@ void main() {
       // back, and the row underneath is untouched.
       expect(find.text('1 selected'), findsNothing);
       expect(find.text('Milk'), findsOneWidget);
+    });
+
+    testWidgets('rows do not swipe while selecting -- taps own them', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+      await enterSelection(tester, 'Milk');
+
+      await tester.drag(find.text('Bread'), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bread'), findsOneWidget);
+      expect(find.text('Bread removed'), findsNothing);
     });
 
     testWidgets('Delete removes the selected rows and exits the mode', (

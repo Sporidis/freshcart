@@ -1,18 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/dashed_add_row.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_state.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
@@ -115,39 +112,11 @@ class _ShopRow extends ConsumerStatefulWidget {
 }
 
 class _ShopRowState extends ConsumerState<_ShopRow> {
-  /// The spec's swipe numbers (§10): commit at 40% of the width, the trash
-  /// icon grows from 70% to full size over the first 30%, and pops past
-  /// full size the moment the threshold is crossed.
-  static const double _threshold = 0.4;
-  static const double _growUntil = 0.3;
-  static const double _iconMin = 0.7;
-  static const double _iconPop = 1.15;
-
   /// The preview border's weight -- heavier than the resting hairline, so
   /// the row behind the sheet visibly answers each swatch tap.
   static const double _previewBorder = 1.5;
 
-  double _progress = 0;
-  bool _reached = false;
-
   Shop get shop => widget.shop;
-
-  void _onSwipeUpdate(DismissUpdateDetails details) {
-    if (details.reached && !details.previousReached) {
-      // The pre-commit warning (§10): felt at the crossing, not on release.
-      ref.haptic(HapticFeedback.mediumImpact);
-    }
-    setState(() {
-      _progress = details.progress;
-      _reached = details.reached;
-    });
-  }
-
-  double get _iconScale {
-    if (_reached) return _iconPop;
-    final grown = (_progress / _growUntil).clamp(0.0, 1.0);
-    return _iconMin + (1 - _iconMin) * grown;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -160,89 +129,60 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
     // the row being edited takes it as its border, tying it to the sheet.
     final previewing = color != shop.color;
 
-    return Semantics(
-      // A swipe is invisible to a screen reader and unreachable by
-      // keyboard; this is the same action, reachable both ways.
-      customSemanticsActions: {
-        CustomSemanticsAction(label: t.shops.delete): () => _delete(t),
+    return SwipeToDelete(
+      dismissKey: ValueKey('dismiss-${shop.id.value}'),
+      semanticLabel: t.shops.delete,
+      borderRadius: BorderRadius.circular(AppRadii.card),
+      // Never dismisses on its own: a shop's products need a decision
+      // first, so a committed swipe opens the delete sheet and the row
+      // springs back. If the shop is deleted, the list rebuilds without it.
+      onSwipe: () async {
+        await _delete(t);
+        return false;
       },
-      child: Dismissible(
-        key: ValueKey('dismiss-${shop.id.value}'),
-        direction: DismissDirection.endToStart,
-        dismissThresholds: const {DismissDirection.endToStart: _threshold},
-        onUpdate: _onSwipeUpdate,
-        // Never dismisses on its own: a shop's products need a decision
-        // first, so crossing the threshold opens the delete sheet, and the
-        // row springs back. If the shop is deleted, the list rebuilds
-        // without it.
-        confirmDismiss: (_) async {
-          await _delete(t);
-          return false;
-        },
-        background: DecoratedBox(
-          decoration: BoxDecoration(
-            color: AppColors.destructive,
-            borderRadius: BorderRadius.circular(AppRadii.card),
-          ),
-          child: Align(
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.screen,
-              ),
-              child: AnimatedScale(
-                scale: _iconScale,
-                duration: AppMotion.durationFor(context, AppMotion.micro),
-                curve: AppMotion.curveFor(context, AppMotion.pop),
-                child: const Icon(Icons.delete_outline, color: Colors.white),
-              ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: () => _edit(t),
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          child: AnimatedContainer(
+            duration: AppMotion.durationFor(context, AppMotion.standard),
+            curve: AppMotion.enter,
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSpacing.gap,
+              vertical: AppSpacing.rowVertical,
             ),
-          ),
-        ),
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: () => _edit(t),
-            borderRadius: BorderRadius.circular(AppRadii.card),
-            child: AnimatedContainer(
-              duration: AppMotion.durationFor(context, AppMotion.standard),
-              curve: AppMotion.enter,
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.gap,
-                vertical: AppSpacing.rowVertical,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border.all(
+                color: previewing
+                    ? color.toColor()
+                    : theme.colorScheme.outlineVariant,
+                width: previewing ? _previewBorder : 1,
               ),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
-                border: Border.all(
-                  color: previewing
-                      ? color.toColor()
-                      : theme.colorScheme.outlineVariant,
-                  width: previewing ? _previewBorder : 1,
+              borderRadius: BorderRadius.circular(AppRadii.card),
+            ),
+            child: Row(
+              children: [
+                AnimatedContainer(
+                  duration: AppMotion.durationFor(
+                    context,
+                    AppMotion.standard,
+                  ),
+                  curve: AppMotion.enter,
+                  width: AppSizes.shopDotLarge,
+                  height: AppSizes.shopDotLarge,
+                  decoration: BoxDecoration(
+                    color: color.toColor(),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-                borderRadius: BorderRadius.circular(AppRadii.card),
-              ),
-              child: Row(
-                children: [
-                  AnimatedContainer(
-                    duration: AppMotion.durationFor(
-                      context,
-                      AppMotion.standard,
-                    ),
-                    curve: AppMotion.enter,
-                    width: AppSizes.shopDotLarge,
-                    height: AppSizes.shopDotLarge,
-                    decoration: BoxDecoration(
-                      color: color.toColor(),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.gap),
-                  Expanded(
-                    child: Text(shop.name, style: theme.textTheme.titleMedium),
-                  ),
-                  Icon(Icons.chevron_right, color: theme.colorScheme.outline),
-                ],
-              ),
+                const SizedBox(width: AppSpacing.gap),
+                Expanded(
+                  child: Text(shop.name, style: theme.textTheme.titleMedium),
+                ),
+                Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+              ],
             ),
           ),
         ),

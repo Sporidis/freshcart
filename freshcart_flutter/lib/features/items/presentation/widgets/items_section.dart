@@ -9,9 +9,11 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/delete_item_with_undo.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
@@ -273,35 +275,59 @@ class _ItemList extends StatelessWidget {
   Widget build(BuildContext context) {
     final selectionMode = state.mode == ItemsMode.select;
 
+    void deleteWithUndo(ShoppingItem item) => deleteItemWithUndo(
+      context,
+      item: item,
+      delete: vm.swipeDelete,
+      t: t,
+    );
+
     Widget tileFor(
       ShoppingItem item, {
       bool selectable = false,
       int? index,
-    }) => ItemTile(
-      t: t,
+    }) => SwipeToDelete(
+      // The row's key lives on this outermost widget: ReorderableListView
+      // requires it on each direct child, and this is that child.
       key: ValueKey(item.id.value),
-      item: item,
-      shopColor: dotFor(item.shopId),
-      onToggle: () async => report(await vm.toggle(item)),
-      onEdit: () => onEdit(item),
-      onDelete: () => vm.swipeDelete(item),
-      onQuantityChanged: (quantity) async =>
-          report(await vm.setQuantity(item, quantity)),
-      selected: selectable && state.selection.contains(item.id),
-      selectionMode: selectable && selectionMode,
-      onSelectionToggle: selectable ? () => vm.toggleSelection(item.id) : null,
-      onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
-      // On "All", the menu's "Rearrange list" row just closes the menu.
-      onRearrange: selectable && state.canRearrange ? vm.startRearrange : null,
-      dragHandle: index == null
-          ? null
-          : ReorderableDragStartListener(
-              index: index,
-              child: const Icon(Icons.drag_handle, size: 16),
-            ),
-      checkedByMember: item.checkedBy == null
-          ? null
-          : state.list.memberFor(item.checkedBy!),
+      dismissKey: ValueKey('swipe-${item.id.value}'),
+      semanticLabel: t.common.delete,
+      // Off in multi-select and rearrange: the horizontal swipe must not
+      // race the reorder drag or the selection taps (Motion spec §10).
+      enabled: !selectionMode && state.mode != ItemsMode.rearrange,
+      // Undo, not a confirm: the row goes now, the snackbar can bring it
+      // back for as long as the delete is actually held.
+      onSwipe: () async => true,
+      onDismissed: () => deleteWithUndo(item),
+      child: ItemTile(
+        t: t,
+        item: item,
+        shopColor: dotFor(item.shopId),
+        onToggle: () async => report(await vm.toggle(item)),
+        onEdit: () => onEdit(item),
+        onDelete: () => deleteWithUndo(item),
+        onQuantityChanged: (quantity) async =>
+            report(await vm.setQuantity(item, quantity)),
+        selected: selectable && state.selection.contains(item.id),
+        selectionMode: selectable && selectionMode,
+        onSelectionToggle: selectable
+            ? () => vm.toggleSelection(item.id)
+            : null,
+        onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
+        // On "All", the menu's "Rearrange list" row just closes the menu.
+        onRearrange: selectable && state.canRearrange
+            ? vm.startRearrange
+            : null,
+        dragHandle: index == null
+            ? null
+            : ReorderableDragStartListener(
+                index: index,
+                child: const Icon(Icons.drag_handle, size: 16),
+              ),
+        checkedByMember: item.checkedBy == null
+            ? null
+            : state.list.memberFor(item.checkedBy!),
+      ),
     );
 
     final open = state.openItems;
