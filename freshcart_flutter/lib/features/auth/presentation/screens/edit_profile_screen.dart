@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
@@ -14,11 +15,9 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// Edits the signed-in user's own profile: display name, avatar colour, and
 /// an optional avatar photo.
 ///
-/// Temporarily reached from [SettingsScreen] — its real home, a profile row
-/// on a restructured Settings screen, is a later build-order item
-/// (`docs/design-gap-plan.md` §5). This screen and its route exist now so the
-/// feature is actually usable in the meantime rather than stranded behind a
-/// navigation change that has not landed yet (`docs/decisions.md` #66).
+/// Reached from the Settings profile header's Edit link (Flow 10). Laid out
+/// the way the design orders it: the avatar first, since the household
+/// recognises you by it, then its colour, then the name.
 class EditProfileScreen extends ConsumerStatefulWidget {
   /// Creates the screen.
   const EditProfileScreen({super.key});
@@ -82,6 +81,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _savingName = false;
       _nameFailure = failure;
     });
+    // Save is the header's "done" action, so a successful one closes the
+    // screen; a failed one stays, with its message inline on the field.
+    if (failure == null) await Navigator.of(context).maybePop();
   }
 
   /// Runs one avatar action from the VM, owning only the busy flag and the
@@ -126,16 +128,53 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       appBar: AppBar(
         title: Text(t.profile.title),
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+        // Save lives in the header (Flow 10): it only ever applies the name
+        // -- colour and photo save the moment they are picked -- so it is a
+        // "done with the name" action, not a form submit at the bottom.
+        actions: [
+          if (user != null)
+            Padding(
+              padding: const EdgeInsets.only(right: AppSpacing.gapSmall),
+              child: TextButton(
+                onPressed: _savingName ? null : _saveName,
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.primary,
+                  textStyle: AppTextStyles.labelStrong,
+                ),
+                child: Text(t.common.save),
+              ),
+            ),
+        ],
       ),
       body: user == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.screen),
               children: [
-                _AvatarPreview(
-                  user: user,
+                // The avatar follows the name field as it is typed, so the
+                // preview is always what the household will actually see.
+                ValueListenableBuilder(
+                  valueListenable: _nameController,
+                  builder: (context, value, _) =>
+                      _AvatarPreview(user: user, name: value.text),
                 ),
-                const SizedBox(height: 24),
+                _PhotoActions(
+                  user: user,
+                  busy: _busyAvatar,
+                  t: t,
+                  onChoosePhoto: () => _runAvatarAction(_vm.choosePhoto),
+                  onRemovePhoto: () => _runAvatarAction(_vm.removePhoto),
+                ),
+                const SizedBox(height: AppSpacing.gap),
+                _ColorSection(
+                  user: user,
+                  busy: _busyAvatar,
+                  failure: _avatarFailure,
+                  t: t,
+                  onPickColor: (color) =>
+                      _runAvatarAction(() => _vm.setAvatarColor(color)),
+                ),
+                const SizedBox(height: AppSpacing.screen),
                 _NameSection(
                   nameController: _nameController,
                   nameError: _nameFailure?.toMessage(t),
@@ -143,89 +182,92 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   onSaveName: _saveName,
                   t: t,
                 ),
-                const SizedBox(height: 24),
-                _AvatarSection(
-                  user: user,
-                  busyAvatar: _busyAvatar,
-                  avatarFailure: _avatarFailure,
-                  t: t,
-                  onPickColor: (color) =>
-                      _runAvatarAction(() => _vm.setAvatarColor(color)),
-                  onChoosePhoto: () => _runAvatarAction(_vm.choosePhoto),
-                  onRemovePhoto: () => _runAvatarAction(_vm.removePhoto),
-                ),
               ],
             ),
     );
   }
 }
 
-class _AvatarSection extends StatelessWidget {
-  const _AvatarSection({
+/// Choose / remove photo, as quiet text actions directly under the avatar
+/// they change -- the photo is part of the avatar, not a separate form
+/// section competing with the name.
+class _PhotoActions extends StatelessWidget {
+  const _PhotoActions({
     required this.user,
-    required this.busyAvatar,
+    required this.busy,
     required this.t,
-    required this.onPickColor,
     required this.onChoosePhoto,
     required this.onRemovePhoto,
-    required this.avatarFailure,
   });
 
   final AuthUser user;
-  final bool busyAvatar;
+  final bool busy;
   final Translations t;
-  final ValueChanged<HexColor> onPickColor;
   final VoidCallback onChoosePhoto;
   final VoidCallback onRemovePhoto;
-  final Failure? avatarFailure;
+
+  @override
+  Widget build(BuildContext context) {
+    final style = TextButton.styleFrom(
+      foregroundColor: Theme.of(context).colorScheme.primary,
+      textStyle: AppTextStyles.labelStrong,
+    );
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextButton(
+          onPressed: busy ? null : onChoosePhoto,
+          style: style,
+          child: Text(t.profile.choosePhoto),
+        ),
+        if (user.avatarPhotoUrl != null)
+          TextButton(
+            onPressed: busy ? null : onRemovePhoto,
+            style: style,
+            child: Text(t.profile.removePhoto),
+          ),
+      ],
+    );
+  }
+}
+
+/// "Your colour on shared lists": centred under the avatar it recolours,
+/// as in the design, so cause and effect sit on one axis.
+class _ColorSection extends StatelessWidget {
+  const _ColorSection({
+    required this.user,
+    required this.busy,
+    required this.failure,
+    required this.t,
+    required this.onPickColor,
+  });
+
+  final AuthUser user;
+  final bool busy;
+  final Failure? failure;
+  final Translations t;
+  final ValueChanged<HexColor> onPickColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final current = user.avatarColor;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(t.profile.colorLabel, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final swatch in AppColors.presetShopColors)
-              _ColorSwatch(
-                key: ValueKey('avatar-swatch-${swatch.toARGB32()}'),
-                color: swatch,
-                selected: user.avatarColor?.argb == swatch.toARGB32(),
-                onTap: busyAvatar
-                    ? null
-                    : () => onPickColor(HexColor.fromArgb(swatch.toARGB32())),
-              ),
-          ],
+        const SizedBox(height: AppSpacing.gapSmall),
+        ColorSwatchPicker(
+          colors: AppColors.presetShopColors,
+          selected: current == null ? null : Color(current.argb),
+          alignment: WrapAlignment.center,
+          keyPrefix: 'avatar-swatch-',
+          semanticLabel: t.profile.colorLabel,
+          onSelected: busy
+              ? null
+              : (color) => onPickColor(HexColor.fromArgb(color.toARGB32())),
         ),
-        const SizedBox(height: 24),
-        Text(t.profile.photoLabel, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 10),
-        Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: busyAvatar ? null : onChoosePhoto,
-                child: Text(t.profile.choosePhoto),
-              ),
-            ),
-            if (user.avatarPhotoUrl != null) ...[
-              const SizedBox(width: 12),
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: busyAvatar ? null : onRemovePhoto,
-                  child: Text(t.profile.removePhoto),
-                ),
-              ),
-            ],
-          ],
-        ),
-        if (avatarFailure case final failure?) ...[
-          const SizedBox(height: 10),
+        if (failure case final failure?) ...[
+          const SizedBox(height: AppSpacing.gapSmall),
           Text(
             failure.toMessage(t),
             style: theme.textTheme.bodySmall?.copyWith(
@@ -260,95 +302,43 @@ class _NameSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(t.profile.nameLabel, style: theme.textTheme.bodySmall),
-        const SizedBox(height: 10),
+        const SizedBox(height: AppSpacing.gapSmall),
         TextField(
           controller: nameController,
           enabled: !savingName,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => onSaveName(),
           decoration: InputDecoration(errorText: nameError),
         ),
-        const SizedBox(height: 10),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: savingName ? null : onSaveName,
-            child: Text(t.common.save),
-          ),
-        ),
+        const SizedBox(height: AppSpacing.gapSmall),
+        Text(t.profile.nameHelper, style: theme.textTheme.bodySmall),
       ],
     );
   }
 }
 
 class _AvatarPreview extends StatelessWidget {
-  const _AvatarPreview({
-    required this.user,
-  });
+  const _AvatarPreview({required this.user, required this.name});
 
   final AuthUser user;
 
+  /// The name as currently typed, not as saved -- see the builder above.
+  final String name;
+
+  /// The design's 88 px profile avatar: the largest one in the app, since
+  /// this is the one screen that is *about* it.
+  static const double _size = 88;
+
   @override
   Widget build(BuildContext context) {
-    final initial = initialFor(user.displayName);
-
     return Center(
       child: UserAvatar(
         seed: user.id.value,
-        initial: initial,
+        initial: initialFor(name),
         photoUrl: user.avatarPhotoUrl,
         color: user.avatarColor,
-        radius: 40,
-      ),
-    );
-  }
-}
-
-/// A single tappable colour circle — the same shape `EditShopSheet`'s own
-/// swatch picker uses, kept as its own small copy rather than a shared
-/// import across features for one widget this size.
-class _ColorSwatch extends StatelessWidget {
-  const _ColorSwatch({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-    super.key,
-  });
-
-  final Color color;
-  final bool selected;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = Theme.of(context).colorScheme.onSurface;
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: Container(
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: selected ? Border.all(color: ink, width: 2.5) : null,
-          ),
-          child: selected
-              ? const Center(
-                  child: SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                )
-              : null,
-        ),
+        radius: _size / 2,
       ),
     );
   }
