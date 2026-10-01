@@ -211,6 +211,71 @@ void main() {
   );
 
   testWidgets(
+    'checking off the last item brings up the celebration -- the moment '
+    'itself, not only a list that opens already done',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+
+      await pump(tester);
+      expect(find.byType(CompletionCelebrationCard), findsNothing);
+
+      await tester.tap(find.text('Milk'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'after Keep list, unchecking and re-completing the list celebrates again',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+
+      await pump(tester);
+      expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+
+      await tester.tap(find.text('Keep list'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CompletionCelebrationCard), findsNothing);
+
+      // Uncheck, then check again: a fresh completion.
+      await tester.tap(find.text('Milk'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Milk'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'with Clear checked after shopping on, finishing the list clears it '
+    'instead of celebrating',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+      items.clearCheckedResult = const Ok(1);
+
+      await pump(tester, list: buildList(clearCheckedAfterShopping: true));
+      await tester.tap(find.text('Milk'));
+      await tester.pumpAndSettle();
+
+      expect(items.clearCheckedCallCount, 1);
+      expect(find.byType(CompletionCelebrationCard), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a list that opens already finished does not clear itself on arrival',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+
+      await pump(tester, list: buildList(clearCheckedAfterShopping: true));
+
+      expect(items.clearCheckedCallCount, 0);
+    },
+  );
+
+  testWidgets(
     'holding a row opens its menu; Select more… enters multi-select seeded '
     'with it, and the contextual bar can Move or Delete the selection',
     (tester) async {

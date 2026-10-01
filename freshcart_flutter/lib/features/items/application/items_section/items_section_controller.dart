@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_controller.dart';
+import 'package:freshcart_flutter/features/items/application/list_completion/list_completion_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
@@ -48,27 +49,10 @@ class ItemsSectionController extends _$ItemsSectionController {
     final shopFilter = ref.watch(shopFilterControllerProvider(listId));
     final ui = ref.watch(itemsUiControllerProvider(listId));
 
-    ref.listen(itemsControllerProvider(listId), (previous, next) {
-      final before = previous?.dataOrNull;
-      final after = next.dataOrNull;
-      if (after == null) return;
-
-      // Forgets a "Keep list" dismissal the moment the list stops being
-      // fully checked, so the celebration shows again the next time.
-      if (!_allDone(after)) _ui.resetCelebration();
-
-      // "Clear checked after shopping" (decisions #79): the instant the list
-      // *becomes* fully checked while someone is looking at it, clear it
-      // silently. Not on the initial load (no previous snapshot) -- a list
-      // that was already all-done when opened must not wipe itself on
-      // arrival.
-      if (list.clearCheckedAfterShopping &&
-          before != null &&
-          !_allDone(before) &&
-          _allDone(after)) {
-        unawaited(_items.clearChecked());
-      }
-    });
+    // The (in)completion side effects -- forgetting "Keep list", the
+    // auto-clear -- live in their own provider; see [listCompletion] for
+    // why they can't be a listener here.
+    ref.watch(listCompletionProvider(list));
 
     return ItemsSectionState(
       list: list,
@@ -84,15 +68,12 @@ class ItemsSectionController extends _$ItemsSectionController {
       // the same moment, not layered on top of each other.
       showCelebration:
           !list.clearCheckedAfterShopping &&
-          _allDone(allItems) &&
+          allChecked(allItems) &&
           !ui.celebrationDismissed,
       isLoading: itemsOutcome.isLoading && allItems.isEmpty,
       loadFailure: itemsOutcome.loadFailure,
     );
   }
-
-  static bool _allDone(List<ShoppingItem> items) =>
-      items.isNotEmpty && items.every((i) => i.isChecked);
 
   /// Ranks the mode flags into the one [ItemsMode] the screen draws.
   static ItemsMode _modeFor(ItemsUiState ui) {

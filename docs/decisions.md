@@ -2433,3 +2433,25 @@ can't load, and `UserAvatar` already falls back to colour and initial.
 
 **Not live:** the drawer's other-member avatars come from `myLists`, a fetch rather than a stream.
 They update on the next fetch (opening the app, returning to `/lists`), not instantly.
+
+## 99. "List just finished" side effects get their own provider
+
+**Problem:** after "Keep list", the completion celebration never came back for that list, even
+after unchecking and finishing it again. "Clear checked after shopping" (#79) never cleared
+anything either. Both rules lived in a `ref.listen(itemsControllerProvider(...))` inside
+`ItemsSectionController.build()`, which also `ref.watch`es the same items. Every item change
+rebuilds the controller through the watch, and Riverpod replaces listeners registered in `build()`
+on each rebuild. So the listener was always swapped out before it could see a change, and it never
+fired once (confirmed by instrumenting it). No test caught this: the existing celebration test
+opened a list that was *already* finished, and auto-clear only had a test for its settings toggle.
+
+**Decision:** move both rules into `listCompletion`, a side-effect-only function provider in the
+same shape as `queueDrainCoordinator`. It `listen`s and watches nothing, so it never rebuilds on
+item changes and its listener keeps the "before" it compares against. `ItemsSectionController`
+watches it only to keep it alive. `allChecked` lives beside it, so the VM's `showCelebration` and
+the side effects can't disagree about what "finished" means.
+
+**The rule this leaves:** never `ref.listen` inside a `build()` that also watches the provider being
+listened to, if the listener needs the *transition*. Put it somewhere that doesn't rebuild on that
+provider. Three new widget tests cover the real flows: re-celebrating after Keep list, auto-clear
+on finishing, and no auto-clear for a list that opens already finished.
