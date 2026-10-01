@@ -20,6 +20,8 @@ class EditableListTitle extends StatefulWidget {
     required this.name,
     required this.onRename,
     this.enabled = true,
+    this.tapToEdit = true,
+    this.style,
     super.key,
   });
 
@@ -33,11 +35,25 @@ class EditableListTitle extends StatefulWidget {
   /// Whether renaming is offered at all.
   final bool enabled;
 
+  /// Whether tapping the title itself starts editing (the app bar's own
+  /// behaviour -- there, nothing else on the title competes for the tap).
+  /// False when some other gesture on the same element already means
+  /// something else (the drawer row's tap opens the list) -- editing then
+  /// starts only through [EditableListTitleState.startEditing], called
+  /// externally via a [GlobalKey] from whatever gesture *does* mean "rename"
+  /// there (the drawer's long-press).
+  final bool tapToEdit;
+
+  /// The text style for both the static title and the field. Defaults to
+  /// the app bar's own title style, which is all every caller but the
+  /// drawer needs.
+  final TextStyle? style;
+
   @override
-  State<EditableListTitle> createState() => _EditableListTitleState();
+  State<EditableListTitle> createState() => EditableListTitleState();
 }
 
-class _EditableListTitleState extends State<EditableListTitle> {
+class EditableListTitleState extends State<EditableListTitle> {
   final FocusNode _focus = FocusNode();
 
   /// Lives as long as the widget does, rather than being created per edit.
@@ -72,7 +88,11 @@ class _EditableListTitleState extends State<EditableListTitle> {
     unawaited(_commit());
   }
 
-  void _startEditing() {
+  /// Starts editing, same as tapping the title does when [tapToEdit] is
+  /// true. Public so a caller that suppresses that tap (passing
+  /// `tapToEdit: false`) can trigger it from its own gesture instead, via a
+  /// `GlobalKey<EditableListTitleState>`.
+  void startEditing() {
     if (!widget.enabled) return;
     _controller
       ..text = widget.name
@@ -105,22 +125,28 @@ class _EditableListTitleState extends State<EditableListTitle> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final style = widget.style ?? Theme.of(context).appBarTheme.titleTextStyle;
 
     return AnimatedSwitcher(
       duration: AppMotion.durationFor(context, AppMotion.quick),
       child: !_editing
-          ? InkWell(
-              key: const ValueKey('title'),
-              onTap: _startEditing,
-              child: Text(widget.name, style: theme.appBarTheme.titleTextStyle),
-            )
+          ? (widget.tapToEdit
+                ? InkWell(
+                    key: const ValueKey('title'),
+                    onTap: startEditing,
+                    child: Text(widget.name, style: style),
+                  )
+                : Text(
+                    widget.name,
+                    key: const ValueKey('title'),
+                    style: style,
+                  ))
           : TextField(
               key: const ValueKey('field'),
               controller: _controller,
               focusNode: _focus,
               enabled: !_saving,
-              style: theme.appBarTheme.titleTextStyle,
+              style: style,
               decoration: const InputDecoration(
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(

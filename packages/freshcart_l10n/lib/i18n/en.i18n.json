@@ -10,6 +10,10 @@
       "one": "{{n}} member",
       "other": "{{n}} members"
     },
+    "countLabel": {
+      "one": "{{n}} list",
+      "other": "{{n}} lists"
+    },
     "itemsLeft": {
       "one": "{{n}} left",
       "other": "{{n}} left"

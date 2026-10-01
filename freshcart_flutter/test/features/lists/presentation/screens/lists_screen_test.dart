@@ -284,7 +284,10 @@ void main() {
       repository.myListsResult = Ok([list]);
       repository.byIdResult = Ok(list);
 
-      await pump(tester);
+      // Renaming is owner-only (§15) -- buildMember()'s own default id is
+      // the owner buildList() defaults to, so this is "me, renaming my own
+      // list," not a permissions edge case.
+      await pump(tester, currentUserId: 'user-1');
 
       // The header title itself became the field -- no sheet, no dialog.
       await tester.tap(find.text('Groceries'));
@@ -312,7 +315,8 @@ void main() {
         Failure.validation('name', 'That name is too long'),
       );
 
-      await pump(tester);
+      // Same reason as the test above: rename is owner-only (§15).
+      await pump(tester, currentUserId: 'user-1');
 
       await tester.tap(find.text('Groceries'));
       await tester.pumpAndSettle();

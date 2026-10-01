@@ -10,6 +10,10 @@
       "one": "{{n}} miyembro",
       "other": "{{n}} na miyembro"
     },
+    "countLabel": {
+      "one": "{{n}} listahan",
+      "other": "{{n}} na listahan"
+    },
     "itemsLeft": {
       "one": "{{n}} natitira",
       "other": "{{n}} natitira"
