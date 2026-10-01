@@ -166,6 +166,35 @@ void main() {
         expect(find.text('Give the list a name'), findsOneWidget);
       },
     );
+    testWidgets('opens the new list, and remembers it as last opened', (
+      tester,
+    ) async {
+      final weekend = buildList(
+        id: '00000000-0000-4000-8000-0000000000aa',
+        name: 'Weekend',
+      );
+      repository
+        ..createResult = Ok(weekend)
+        ..byIdResult = Ok(weekend);
+      await pump(tester);
+
+      await tester.tap(find.text('New list'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Weekend');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      // On the new list's detail screen, not left on the lists screen.
+      expect(
+        find.descendant(
+          of: find.byType(EditableListTitle),
+          matching: find.text('Weekend'),
+        ),
+        findsOneWidget,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('last_opened_list_id'), weekend.id.value);
+    });
   });
 
   group('joining by code', () {
@@ -181,6 +210,35 @@ void main() {
 
       expect(repository.joinCalls.single.value, 'ABC23');
       expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('opens the joined list, and remembers it as last opened', (
+      tester,
+    ) async {
+      final shared = buildList(
+        id: '00000000-0000-4000-8000-0000000000bb',
+        name: 'Shared',
+      );
+      repository
+        ..joinResult = Ok(shared)
+        ..byIdResult = Ok(shared);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.group_add_outlined));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'abc23');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(EditableListTitle),
+          matching: find.text('Shared'),
+        ),
+        findsOneWidget,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('last_opened_list_id'), shared.id.value);
     });
 
     testWidgets('rejects a malformed code without a round trip', (

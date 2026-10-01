@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/name_prompt_dialog.dart';
@@ -199,19 +200,23 @@ Future<void> showCreateListDialog(
   BuildContext context,
   ProviderContainer container,
   Translations t,
-) => showDialog<bool>(
-  context: context,
-  builder: (context) => NamePromptDialog(
-    title: t.lists.create,
-    label: t.lists.title,
-    submitLabel: t.common.save,
-    cancelLabel: t.common.cancel,
-    onSubmit: (value) async => container
-        .read(listsControllerProvider.notifier)
-        .create(value)
-        .then((r) => r.map<void>((_) {})),
-  ),
-);
+) async {
+  ShoppingList? created;
+  await showDialog<bool>(
+    context: context,
+    builder: (context) => NamePromptDialog(
+      title: t.lists.create,
+      label: t.lists.title,
+      submitLabel: t.common.save,
+      cancelLabel: t.common.cancel,
+      onSubmit: (value) async => container
+          .read(listsControllerProvider.notifier)
+          .create(value)
+          .then((r) => r.map<void>((list) => created = list)),
+    ),
+  );
+  if (created case final list?) await _openNewList(container, list.id);
+}
 
 /// Opens the "Join a list" dialog. Top-level for the same reason as
 /// [showCreateListDialog], and takes a [ProviderContainer] for the same
@@ -220,20 +225,37 @@ Future<void> showJoinListDialog(
   BuildContext context,
   ProviderContainer container,
   Translations t,
-) => showDialog<bool>(
-  context: context,
-  builder: (context) => NamePromptDialog(
-    title: t.lists.join,
-    label: t.lists.joinCodeLabel,
-    submitLabel: t.common.save,
-    cancelLabel: t.common.cancel,
-    capitalization: TextCapitalization.characters,
-    onSubmit: (value) async => container
-        .read(listsControllerProvider.notifier)
-        .join(value)
-        .then((r) => r.map<void>((_) {})),
-  ),
-);
+) async {
+  ShoppingList? joined;
+  await showDialog<bool>(
+    context: context,
+    builder: (context) => NamePromptDialog(
+      title: t.lists.join,
+      label: t.lists.joinCodeLabel,
+      submitLabel: t.common.save,
+      cancelLabel: t.common.cancel,
+      capitalization: TextCapitalization.characters,
+      onSubmit: (value) async => container
+          .read(listsControllerProvider.notifier)
+          .join(value)
+          .then((r) => r.map<void>((list) => joined = list)),
+    ),
+  );
+  if (joined case final list?) await _openNewList(container, list.id);
+}
+
+/// Takes the user straight into a list they just created or joined -- the
+/// whole point of making one is to start filling it.
+///
+/// Through the router itself, not a `BuildContext`: by now the widget that
+/// opened the dialog may be gone (the drawer closes before the dialog even
+/// opens), the same lifecycle problem the [ProviderContainer] parameter
+/// already solves. Also remembered as the last-opened list, exactly as
+/// opening it from the drawer is, so a cold start comes back here too.
+Future<void> _openNewList(ProviderContainer container, ListId id) async {
+  container.read(appRouterProvider).go(Routes.listDetail(id));
+  await container.read(lastOpenedListControllerProvider.notifier).select(id);
+}
 
 class _Message extends StatelessWidget {
   const _Message({
