@@ -1,22 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/signed_in_user_provider.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/last_opened_list_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/providers/list_summaries_provider.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
     show showCreateListDialog, showJoinListDialog;
+import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
 // No @Preview here: this widget's only content comes from
-// listsControllerProvider, which reaches the real ListRepository.
+// listsDrawerControllerProvider, which reaches the real ListRepository.
 // previewApp deliberately takes no overrides (see preview_harness.dart), so
 // showing this with real-looking data needs an in-memory fake living in
 // lib/ — the same gap already noted for screen-level previews, not
@@ -39,36 +37,12 @@ class ListsDrawer extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
-    final lists = ref.watch(listsControllerProvider);
-
-    // "The avatars of who else is in them" (design's own words) -- excludes
-    // the viewer's own row from each list's stack. Falls back to showing
-    // everyone for the one frame before this resolves, rather than blocking
-    // the whole drawer on it; keepAlive means that frame is rare in
-    // practice, not just theoretical.
-    final myId = ref.watch(signedInUserIdProvider);
-    final loadedLists = lists.dataOrNull;
-    // Falls back to an empty map while this is still loading or has failed
-    // -- rows simply show without a count for that one frame/load, matching
-    // how the member-avatar fallback right above already handles its own
-    // slower-resolving data.
-    final summaries =
-        ref.watch(listSummariesProvider).value ?? const <ListId, ListSummary>{};
-
-    String subtitleFor(ShoppingList list) {
-      final summary = summaries[list.id];
-      if (summary == null) {
-        return t.lists.memberCount(n: list.members.length);
-      }
-      return summary.allDone
-          ? t.lists.allDone
-          : t.lists.itemsLeft(n: summary.remaining);
-    }
+    final rows = ref.watch(listsDrawerControllerProvider);
 
     Future<void> openList(ListId id) async {
       Navigator.of(context).pop();
       if (id != currentListId) context.go(Routes.listDetail(id));
-      await ref.read(lastOpenedListControllerProvider.notifier).select(id);
+      await ref.read(listsDrawerControllerProvider.notifier).openList(id);
     }
 
     return Drawer(
@@ -86,89 +60,95 @@ class ListsDrawer extends ConsumerWidget {
               child: Text(t.lists.title, style: theme.textTheme.headlineSmall),
             ),
             Expanded(
-              // A load failure here is not worth its own screen tier — the
-              // drawer just falls back to "nothing to switch to", and the
-              // list already open keeps working regardless.
-              child: loadedLists == null
+              child: rows == null
                   ? const SizedBox.shrink()
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 4,
-                      ),
-                      children: [
-                        for (final list in loadedLists)
-                          _ListRow(
-                            list: list,
-                            isCurrent: list.id == currentListId,
-                            subtitleLabel: subtitleFor(list),
-                            othersInList: myId == null
-                                ? list.members
-                                : [
-                                    for (final member in list.members)
-                                      if (member.userId != myId) member,
-                                  ],
-                            onTap: () => openList(list.id),
-                          ),
-                        // Inline, not tucked into the footer below: the
-                        // design draws these as part of the scrollable list
-                        // of lists itself, not alongside Settings -- they add
-                        // to *this* collection, so they read as one more
-                        // thing you can do with it, not an unrelated
-                        // app-level action.
-                        _InlineAction(
-                          icon: Icons.add,
-                          label: t.lists.create,
-                          onTap: () async {
-                            // Grabbed before the pop below, not a WidgetRef
-                            // -- popping the drawer unmounts this widget, and
-                            // by the time the dialog's onSubmit actually runs
-                            // (once someone types a name), a ref captured
-                            // from an unmounted widget would already be
-                            // unsafe to read. See showCreateListDialog's own
-                            // doc.
-                            final container = ProviderScope.containerOf(
-                              context,
-                              listen: false,
-                            );
-                            Navigator.of(context).pop();
-                            await showCreateListDialog(context, container, t);
-                          },
-                        ),
-                        _InlineAction(
-                          icon: Icons.group_add_outlined,
-                          label: t.lists.join,
-                          onTap: () async {
-                            final container = ProviderScope.containerOf(
-                              context,
-                              listen: false,
-                            );
-                            Navigator.of(context).pop();
-                            await showJoinListDialog(context, container, t);
-                          },
-                        ),
-                      ],
+                  : _ListRows(
+                      rows: rows,
+                      currentListId: currentListId,
+                      t: t,
+                      onOpen: openList,
                     ),
             ),
             const Divider(height: 1),
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Column(
-                children: [
-                  _DrawerAction(
-                    icon: Icons.settings_outlined,
-                    label: t.settings.title,
-                    onTap: () async {
-                      Navigator.of(context).pop();
-                      await context.push(Routes.settings);
-                    },
-                  ),
-                ],
+              child: _DrawerAction(
+                icon: Icons.settings_outlined,
+                label: t.settings.title,
+                onTap: () async {
+                  Navigator.of(context).pop();
+                  await context.push(Routes.settings);
+                },
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The scrollable part: one row per list, then the inline create/join rows.
+class _ListRows extends StatelessWidget {
+  const _ListRows({
+    required this.rows,
+    required this.currentListId,
+    required this.t,
+    required this.onOpen,
+  });
+
+  final List<ListsDrawerRow> rows;
+  final ListId currentListId;
+  final Translations t;
+  final void Function(ListId id) onOpen;
+
+  String _subtitle(ListsDrawerRow row) {
+    final summary = row.summary;
+    if (summary == null) return t.lists.memberCount(n: row.list.members.length);
+    return summary.allDone
+        ? t.lists.allDone
+        : t.lists.itemsLeft(n: summary.remaining);
+  }
+
+  /// Pops the drawer, then opens [dialog]. The container is grabbed *before*
+  /// the pop, not a WidgetRef: popping unmounts the drawer, and by the time
+  /// the dialog's onSubmit runs (once someone types), a ref from an
+  /// unmounted widget is unsafe to read. See showCreateListDialog's doc.
+  Future<void> _popThen(
+    BuildContext context,
+    Future<void> Function(BuildContext, ProviderContainer, Translations) dialog,
+  ) async {
+    final container = ProviderScope.containerOf(context, listen: false);
+    Navigator.of(context).pop();
+    await dialog(context, container, t);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      children: [
+        for (final row in rows)
+          _ListRow(
+            list: row.list,
+            isCurrent: row.list.id == currentListId,
+            subtitleLabel: _subtitle(row),
+            othersInList: row.othersInList,
+            onTap: () => onOpen(row.list.id),
+          ),
+        // Inline, not in the footer: the design draws these as part of the
+        // scrollable list of lists itself -- they add to *this* collection.
+        _InlineAction(
+          icon: Icons.add,
+          label: t.lists.create,
+          onTap: () => _popThen(context, showCreateListDialog),
+        ),
+        _InlineAction(
+          icon: Icons.group_add_outlined,
+          label: t.lists.join,
+          onTap: () => _popThen(context, showJoinListDialog),
+        ),
+      ],
     );
   }
 }
@@ -201,9 +181,7 @@ class _ListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initial = list.name.trim().isEmpty
-        ? '?'
-        : list.name.trim()[0].toUpperCase();
+    final initial = initialFor(list.name);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -317,9 +295,7 @@ class _MemberAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = member.displayName.trim().isEmpty
-        ? '?'
-        : member.displayName.trim()[0].toUpperCase();
+    final initial = initialFor(member.displayName);
     return UserAvatar(
       seed: member.userId.value,
       initial: initial,

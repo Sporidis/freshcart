@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -41,9 +41,7 @@ class _InviteCardState extends ConsumerState<InviteCard> {
 
   Future<void> _copy() async {
     await Clipboard.setData(ClipboardData(text: widget.joinCode));
-    if (ref.read(hapticsControllerProvider).value ?? true) {
-      unawaited(HapticFeedback.lightImpact());
-    }
+    ref.haptic(HapticFeedback.lightImpact);
     if (!mounted) return;
     setState(() => _copied = true);
     _reset?.cancel();

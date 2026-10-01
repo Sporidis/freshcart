@@ -5,15 +5,20 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/clock/clock_provider.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../../fakes/fake_item_repository.dart';
+import '../../../../../fakes/fake_list_repository.dart';
+import '../../../../../fakes/fake_shop_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);
@@ -80,22 +85,24 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           itemRepositoryProvider.overrideWithValue(repository),
+          // The view model's build() watches the list's shops too.
+          shopRepositoryProvider.overrideWithValue(FakeShopRepository()),
           currentUserIdProvider.overrideWith((ref) async => Ok(me)),
+          clockProvider.overrideWithValue(now),
         ],
       );
       addTearDown(container.dispose);
       container.read(localeControllerProvider.notifier).select(AppLocale.en);
-      // itemsControllerProvider is autoDispose; holding a listener keeps it
-      // alive across the tap below, the same way an open screen would (see
-      // items_controller_test.dart's identical pattern).
+      final list = buildList(id: listId.value);
+      // The view model (and the autoDispose itemsControllerProvider it
+      // watches) would otherwise be torn down before the tap below; holding
+      // a listener keeps them alive, the same way an open screen would.
       final subscription = container.listen(
-        itemsControllerProvider(listId),
+        itemsSectionControllerProvider(list),
         (_, _) {},
       );
       addTearDown(subscription.close);
-      final controller = container.read(
-        itemsControllerProvider(listId).notifier,
-      );
+      final vm = container.read(itemsSectionControllerProvider(list).notifier);
       final t = container.read(translationsProvider);
 
       await tester.pumpWidget(
@@ -106,9 +113,8 @@ void main() {
               body: SearchRecentlyBought(
                 listId: listId,
                 t: t,
-                controller: controller,
+                vm: vm,
                 report: (_, {onRetry}) {},
-                now: now,
               ),
             ),
           ),

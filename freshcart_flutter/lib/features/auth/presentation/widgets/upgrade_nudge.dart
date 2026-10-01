@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
+import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/features/auth/application/controllers/profile_controller.dart';
-import 'package:freshcart_flutter/features/auth/application/controllers/upgrade_nudge_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_providers.dart';
 
 /// Prompts an anonymous user to attach an email to their account.
 ///
@@ -25,17 +26,7 @@ class UpgradeNudge extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final user = ref.watch(profileControllerProvider);
-    final dismissed = ref.watch(upgradeNudgeControllerProvider);
-
-    // Say nothing until the identity is known: a nudge that flickers in and
-    // out on every rebuild is worse than no nudge.
-    final isAnonymous = user.dataOrNull?.isAnonymous ?? false;
-    // Same discipline for the dismissed flag: assume dismissed while it is
-    // still loading from disk, rather than flash the banner for one frame
-    // on every cold start before quietly taking it away again.
-    final isDismissed = dismissed.hasValue ? dismissed.requireValue : true;
-    if (!isAnonymous || isDismissed) return const SizedBox.shrink();
+    if (!ref.watch(showUpgradeNudgeProvider)) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
     // The neutral surfaceContainerHighest, not secondaryContainer: the same
@@ -96,7 +87,7 @@ class LinkEmailDialog extends ConsumerStatefulWidget {
 class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
-  String? _error;
+  Failure? _failure;
   bool _busy = false;
 
   @override
@@ -109,7 +100,7 @@ class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
   Future<void> _submit() async {
     setState(() {
       _busy = true;
-      _error = null;
+      _failure = null;
     });
     final failure = await ref
         .read(profileControllerProvider.notifier)
@@ -121,7 +112,7 @@ class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
     } else {
       setState(() {
         _busy = false;
-        _error = failure.toMessage(ref.read(translationsProvider));
+        _failure = failure;
       });
     }
   }
@@ -141,7 +132,9 @@ class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: t.account.emailLabel,
-              errorText: _error,
+              // Translated here, not when stored: a language switch while
+              // the dialog is open re-renders the error in the new locale.
+              errorText: _failure?.toMessage(t),
             ),
           ),
           const SizedBox(height: 8),

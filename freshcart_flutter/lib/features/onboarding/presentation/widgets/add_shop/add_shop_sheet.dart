@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-class AddShopSheet extends StatefulWidget {
+class AddShopSheet extends ConsumerStatefulWidget {
   const AddShopSheet({required this.onAdd, super.key});
 
   final void Function(String name, HexColor color) onAdd;
 
   @override
-  State<AddShopSheet> createState() => _AddShopSheetState();
+  ConsumerState<AddShopSheet> createState() => _AddShopSheetState();
 }
 
-class _AddShopSheetState extends State<AddShopSheet> {
+class _AddShopSheetState extends ConsumerState<AddShopSheet> {
   late final TextEditingController _nameController;
   Color _selectedColor = AppColors.swatchGreen;
 
@@ -45,6 +47,7 @@ class _AddShopSheetState extends State<AddShopSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final t = ref.watch(translationsProvider);
     final theme = Theme.of(context);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     final canSubmit = _nameController.text.trim().isNotEmpty;
@@ -61,24 +64,26 @@ class _AddShopSheetState extends State<AddShopSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Add a shop', style: theme.textTheme.headlineMedium),
+            Text(t.shops.add, style: theme.textTheme.headlineMedium),
             const SizedBox(height: AppSpacing.gapSmall),
             Text(
-              'Give it a name and choose a colour for its tab.',
+              t.onboarding.shopSheetBody,
               style: theme.textTheme.bodyMedium,
             ),
             const SizedBox(height: AppSpacing.gap),
-            Text('Shop name', style: theme.textTheme.labelMedium),
+            Text(t.shops.nameLabel, style: theme.textTheme.labelMedium),
             const SizedBox(height: AppSpacing.gapSmall),
             TextField(
               controller: _nameController,
               autofocus: true,
               textInputAction: TextInputAction.done,
               onSubmitted: canSubmit ? (_) => _submit() : null,
-              decoration: const InputDecoration(hintText: 'e.g. Local Market'),
+              decoration: InputDecoration(
+                hintText: t.onboarding.shopPlaceholder,
+              ),
             ),
             const SizedBox(height: AppSpacing.gap),
-            Text('Tab colour', style: theme.textTheme.labelMedium),
+            Text(t.shops.colorLabel, style: theme.textTheme.labelMedium),
             const SizedBox(height: AppSpacing.gapSmall),
             Wrap(
               spacing: AppSpacing.gap,
@@ -87,6 +92,7 @@ class _AddShopSheetState extends State<AddShopSheet> {
                   .map(
                     (color) => ColorChoice(
                       color: color,
+                      label: t.shops.colorLabel,
                       selected: color == _selectedColor,
                       onTap: () => setState(() => _selectedColor = color),
                     ),
@@ -99,7 +105,7 @@ class _AddShopSheetState extends State<AddShopSheet> {
               child: FilledButton.icon(
                 onPressed: canSubmit ? _submit : null,
                 icon: const Icon(Icons.add),
-                label: const Text('Add shop'),
+                label: Text(t.shops.add),
               ),
             ),
           ],
@@ -112,12 +118,16 @@ class _AddShopSheetState extends State<AddShopSheet> {
 class ColorChoice extends StatelessWidget {
   const ColorChoice({
     required this.color,
+    required this.label,
     required this.selected,
     required this.onTap,
     super.key,
   });
 
   final Color color;
+
+  /// What a screen reader announces for this swatch.
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
@@ -126,7 +136,7 @@ class ColorChoice extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Tab colour',
+      label: label,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),

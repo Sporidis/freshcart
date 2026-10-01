@@ -1,15 +1,19 @@
 import 'dart:async';
 import 'dart:typed_data';
-
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart'
+    hide AuthUser;
+
+part 'auth_repository_impl.g.dart';
+
 // Imported for the `client.auth` extension only. The auth module ships its
 // own AuthUser, which would otherwise collide with the domain entity of the
 // same name — a good illustration of why the domain owns its own types.
-import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart'
-    hide AuthUser;
 
 /// The Serverpod-backed [AuthPort].
 ///
@@ -117,3 +121,8 @@ class AuthRepositoryImpl implements AuthPort {
     }
   }
 }
+
+/// Supplies the [AuthPort].
+@Riverpod(keepAlive: true)
+AuthPort authRepository(Ref ref) =>
+    AuthRepositoryImpl(ref.watch(serverpodClientProvider));

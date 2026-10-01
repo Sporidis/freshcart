@@ -22,6 +22,8 @@
     "rename": "Palitan ang pangalan",
     "clearCheckedAfterShopping": "Awtomatikong burahin ang mga nachekong item",
     "clearCheckedAfterShoppingBody": "Binubura ang mga nachekong item kapag nacheck na lahat sa listahan.",
+    "shopsOnList": "Mga tindahan sa listahang ito",
+    "shopsOnListBody": "Bawat isa ay nagiging tab. Pareho ang mga kulay sa lahat ng iyong listahan.",
     "leave": "Umalis sa listahan",
     "leaveConfirmTitle": "Aalis sa listahang ito?",
     "leaveConfirmBody": "Hindi mo na makikita ang {{name}}. Mananatili ito sa iba.",
@@ -203,6 +205,8 @@
     "listTitle": "Pangalanan ang unang listahan mo",
     "listSubtitle": "Puwede kang magdagdag pa mamaya — isang BBQ, biyahe, malaking grocery.",
     "listPlaceholder": "hal. Lingguhang Grocery",
+    "shopSheetBody": "Bigyan ito ng pangalan at pumili ng kulay para sa tab nito.",
+    "shopPlaceholder": "hal. Palengke",
     "suggestionHousehold": "Sambahayan",
     "suggestionBigShop": "Malaking grocery",
     "suggestionBbq": "BBQ",
@@ -239,5 +243,12 @@
     "perList": "Bawat listahan",
     "on": "Naka-on",
     "muted": "Naka-mute"
+  },
+  "sync": {
+    "offline": "Offline – masi-sync ang mga pagbabago mamaya",
+    "syncing": {
+      "one": "Sini-sync ang {{n}} pagbabago…",
+      "other": "Sini-sync ang {{n}} pagbabago…"
+    }
   }
 }

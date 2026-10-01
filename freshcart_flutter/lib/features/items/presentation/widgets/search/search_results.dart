@@ -4,15 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
-import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
-import 'package:freshcart_flutter/features/shops/application/controllers/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Search's results list (§16): one flat list across every shop, regardless
@@ -24,53 +21,50 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// not split into open/done, and none of [ItemTile]'s selection or drag
 /// wiring applies here -- keeping it its own small widget is plainer than
 /// growing the other one's branching further.
-class SearchResults extends ConsumerWidget {
-  /// Creates the results list for [query] against every item on [list].
+class SearchResults extends StatelessWidget {
+  /// Creates the results list for [state]'s query.
   const SearchResults({
-    required this.list,
-    required this.allItems,
-    required this.query,
+    required this.state,
+    required this.vm,
     required this.t,
-    required this.controller,
+    required this.dotFor,
+    required this.onEdit,
     required this.report,
     super.key,
   });
 
-  /// The list being searched, for member names and its id.
-  final ShoppingList list;
+  /// The items section's derived state: the query, its matches (across every
+  /// shop and checked state), and the list for member names.
+  final ItemsSectionState state;
 
-  /// Every item on the list, unfiltered by shop or checked state -- search
-  /// looks across all of it.
-  final List<ShoppingItem> allItems;
-
-  /// What has been typed so far.
-  final String query;
+  /// Every action goes through the view model, same as the normal rows.
+  final ItemsSectionController vm;
 
   final Translations t;
-  final ItemsController controller;
   final void Function(Failure?, {VoidCallback? onRetry}) report;
 
+  /// Called when the user wants to edit [item].
+  final void Function(ShoppingItem item) onEdit;
+
+  /// The shop dot's colour for a row, or `null` for an untagged item.
+  final Color? Function(ShopId? shopId) dotFor;
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final trimmed = query.trim();
+  Widget build(BuildContext context) {
+    final trimmed = state.trimmedQuery;
     // Nothing typed yet: not a blank canvas any more -- §06's "Recently
     // bought" is exactly the browseable "everything, grouped" view for this
     // moment, distinct from the shop tabs' own purpose (browsing this list's
     // *current* items, not its history).
     if (trimmed.isEmpty) {
       return SearchRecentlyBought(
-        listId: list.id,
+        listId: state.list.id,
         t: t,
-        controller: controller,
+        vm: vm,
         report: report,
       );
     }
-
-    final lower = trimmed.toLowerCase();
-    final matches = [
-      for (final item in allItems)
-        if (item.name.toLowerCase().contains(lower)) item,
-    ];
+    final matches = state.searchMatches;
 
     if (matches.isEmpty) {
       return EmptyState(
@@ -79,18 +73,9 @@ class SearchResults extends ConsumerWidget {
         body: t.search.noResultsBody,
         action: _AddToListButton(
           label: t.search.addAction(query: trimmed),
-          onPressed: () async => report(await controller.add(name: trimmed)),
+          onPressed: () async => report(await vm.addFromSearch(trimmed)),
         ),
       );
-    }
-
-    final shops =
-        ref.watch(shopsControllerProvider(list.id)).dataOrNull ??
-        const <Shop>[];
-    Color? dotFor(ShopId? shopId) {
-      if (shopId == null) return null;
-      final shop = shops.where((s) => s.id == shopId).firstOrNull;
-      return shop?.color.toColor();
     }
 
     return ListView(
@@ -103,47 +88,13 @@ class SearchResults extends ConsumerWidget {
             shopColor: dotFor(item.shopId),
             checkedByMember: item.checkedBy == null
                 ? null
-                : list.memberFor(item.checkedBy!),
-            onToggle: () async => report(await controller.toggle(item)),
-            onDelete: () => controller.swipeDelete(item),
+                : state.list.memberFor(item.checkedBy!),
+            onToggle: () async => report(await vm.toggle(item)),
+            onDelete: () => vm.swipeDelete(item),
             onQuantityChanged: (quantity) async => report(
-              await controller.edit(
-                item,
-                name: item.name,
-                quantity: quantity,
-                shopId: item.shopId,
-                noteText: item.note?.text,
-              ),
+              await vm.setQuantity(item, quantity),
             ),
-            onEdit: () async {
-              final outcome = await showModalBottomSheet<ItemSheetOutcome>(
-                context: context,
-                isScrollControlled: true,
-                showDragHandle: true,
-                builder: (_) => ItemSheet.edit(item: item, shops: shops, t: t),
-              );
-              switch (outcome) {
-                case null:
-                  return;
-                case ItemSheetRemove():
-                  report(await controller.remove(item));
-                case ItemSheetSave(
-                  :final name,
-                  :final quantity,
-                  :final shopId,
-                  :final noteText,
-                ):
-                  report(
-                    await controller.edit(
-                      item,
-                      name: name,
-                      quantity: quantity,
-                      shopId: shopId,
-                      noteText: noteText,
-                    ),
-                  );
-              }
-            },
+            onEdit: () => onEdit(item),
           ),
       ],
     );
@@ -171,9 +122,7 @@ class _AddToListButtonState extends ConsumerState<_AddToListButton> {
   Future<void> _handleTap() async {
     if (_busy) return;
     setState(() => _busy = true);
-    if (ref.read(hapticsControllerProvider).value ?? true) {
-      unawaited(HapticFeedback.lightImpact());
-    }
+    ref.haptic(HapticFeedback.lightImpact);
     await widget.onPressed();
     if (mounted) setState(() => _busy = false);
   }

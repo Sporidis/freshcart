@@ -22,6 +22,8 @@
     "rename": "Renommer",
     "clearCheckedAfterShopping": "Effacer les produits cochés automatiquement",
     "clearCheckedAfterShoppingBody": "Efface les produits cochés une fois toute la liste cochée.",
+    "shopsOnList": "Magasins de cette liste",
+    "shopsOnListBody": "Chacun devient un onglet. Les couleurs sont partagées entre toutes vos listes.",
     "leave": "Quitter la liste",
     "leaveConfirmTitle": "Quitter cette liste ?",
     "leaveConfirmBody": "Vous ne verrez plus {{name}}. Les autres la conservent.",
@@ -203,6 +205,8 @@
     "listTitle": "Nommez votre première liste",
     "listSubtitle": "Vous pourrez en ajouter d'autres plus tard — un barbecue, un voyage, de grosses courses.",
     "listPlaceholder": "p. ex. Courses de la semaine",
+    "shopSheetBody": "Donnez-lui un nom et choisissez une couleur pour son onglet.",
+    "shopPlaceholder": "p. ex. Marché local",
     "suggestionHousehold": "Foyer",
     "suggestionBigShop": "Grosses courses",
     "suggestionBbq": "Barbecue",
@@ -239,5 +243,12 @@
     "perList": "Par liste",
     "on": "Actives",
     "muted": "Muette"
+  },
+  "sync": {
+    "offline": "Hors ligne – les modifications seront synchronisées",
+    "syncing": {
+      "one": "Synchronisation de {{n}} modification…",
+      "other": "Synchronisation de {{n}} modifications…"
+    }
   }
 }

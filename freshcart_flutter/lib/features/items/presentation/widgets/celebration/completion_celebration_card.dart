@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/widget_previews.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/items/application/controllers/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/screen/celebration_controller.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/confetti_burst.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -20,7 +17,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// Reduced motion (`AppMotion.reduced`) turns the spring pop into a plain,
 /// static appearance and skips the confetti burst entirely, per the spec's
 /// own fallback note for this exact card.
-class CompletionCelebrationCard extends ConsumerStatefulWidget {
+class CompletionCelebrationCard extends StatefulWidget {
   /// Creates the card for [list], which currently has [itemCount] items, all
   /// checked.
   const CompletionCelebrationCard({
@@ -29,6 +26,8 @@ class CompletionCelebrationCard extends ConsumerStatefulWidget {
     required this.shopColors,
     required this.t,
     required this.report,
+    required this.onKeep,
+    required this.onClear,
     super.key,
   });
 
@@ -54,13 +53,18 @@ class CompletionCelebrationCard extends ConsumerStatefulWidget {
   /// this screen does — see `ItemsSection`'s own `report`.
   final void Function(Failure? failure) report;
 
+  /// "Keep list": hide the card, leave the items alone.
+  final VoidCallback onKeep;
+
+  /// "Clear checked": remove every checked item.
+  final Future<Failure?> Function() onClear;
+
   @override
-  ConsumerState<CompletionCelebrationCard> createState() =>
+  State<CompletionCelebrationCard> createState() =>
       _CompletionCelebrationCardState();
 }
 
-class _CompletionCelebrationCardState
-    extends ConsumerState<CompletionCelebrationCard>
+class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
     with SingleTickerProviderStateMixin {
   late final AnimationController _entrance = AnimationController(
     vsync: this,
@@ -101,9 +105,6 @@ class _CompletionCelebrationCardState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = widget.t;
-    final controller = ref.read(
-      itemsControllerProvider(widget.list.id).notifier,
-    );
 
     return FadeTransition(
       opacity: _entrance,
@@ -154,20 +155,14 @@ class _CompletionCelebrationCardState
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => ref
-                          .read(
-                            celebrationControllerProvider(
-                              widget.list.id,
-                            ).notifier,
-                          )
-                          .dismiss(),
+                      onPressed: widget.onKeep,
                       child: Text(t.items.keepList),
                     ),
                   ),
                   Expanded(
                     child: FilledButton(
                       onPressed: () async =>
-                          widget.report(await controller.clearChecked()),
+                          widget.report(await widget.onClear()),
                       child: Text(t.items.clearChecked),
                     ),
                   ),
@@ -193,6 +188,8 @@ Widget completionCelebrationCardPreview() => previewPiece(
     shopColors: const [Colors.orange, Colors.teal, Colors.purple],
     t: previewTranslations,
     report: (_) {},
+    onKeep: () {},
+    onClear: () async => null,
   ),
   padding: EdgeInsets.zero,
 );

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,7 +7,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
-import 'package:freshcart_flutter/features/auth/application/providers/is_new_identity_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:go_router/go_router.dart';
 
@@ -143,14 +145,8 @@ class _PulsingDotsState extends State<_PulsingDots>
   }
 }
 
-double _sine(double phase) =>
-    // 2π · phase, without importing dart:math just for one call site.
-    _sin(phase * 6.283185307179586);
-
-// A tiny Taylor-series stand-in would drift; this is dart:math's own,
-// aliased so the file's only import list stays about Flutter and the app.
-double _sin(double x) =>
-    (x - (x * x * x) / 6 + (x * x * x * x * x) / 120).clamp(-1.0, 1.0);
+/// One full sine wave per unit of [phase].
+double _sine(double phase) => math.sin(phase * 2 * math.pi);
 
 @Preview(group: 'Onboarding', name: 'Splash', size: previewPhone)
 Widget splashScreenPreview() => previewApp(const SplashScreen());

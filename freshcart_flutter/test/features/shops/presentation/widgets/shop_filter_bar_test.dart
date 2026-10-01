@@ -5,10 +5,11 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_provider.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
-import 'package:freshcart_flutter/features/shops/application/controllers/shops_controller.dart';
-import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_provider.dart';
+import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
+import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
+import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filter_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

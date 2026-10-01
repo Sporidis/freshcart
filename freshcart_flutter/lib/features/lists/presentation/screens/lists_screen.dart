@@ -8,8 +8,8 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/last_opened_list_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
+import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/name_prompt_dialog.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
@@ -75,42 +75,13 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
     final t = ref.watch(translationsProvider);
     final lists = ref.watch(listsControllerProvider);
 
-    void maybeRedirect() {
-      // Only redirect if this route is currently visible.
+    // Where to land is decided in `listsLandingTarget`; this only performs
+    // the navigation, and only while this route is the visible one.
+    ref.listen(listsLandingTargetProvider, (_, target) {
+      if (target == null) return;
       if (!(ModalRoute.of(context)?.isCurrent ?? false)) return;
-
-      // Only redirect if there are lists available.
-      final lists = ref.read(listsControllerProvider);
-      if (lists.isLoading) return;
-
-      if (lists.value case Ok<List<ShoppingList>>(
-        value: final items,
-      ) when items.isNotEmpty) {
-        final lastOpened = ref.read(lastOpenedListControllerProvider);
-        if (lastOpened.isLoading) return;
-        context.go(Routes.listDetail(lastOpened.value ?? items.first.id));
-      }
-    }
-
-    ref.listen<AsyncValue<Result<List<ShoppingList>>>>(
-      listsControllerProvider,
-      (
-        previous,
-        next,
-      ) {
-        maybeRedirect();
-      },
-    );
-
-    ref.listen<AsyncValue<ListId?>>(
-      lastOpenedListControllerProvider,
-      (
-        previous,
-        next,
-      ) {
-        maybeRedirect();
-      },
-    );
+      context.go(Routes.listDetail(target));
+    });
 
     return Scaffold(
       appBar: AppBar(

@@ -1,10 +1,9 @@
-import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// Shakes its child once each time [errorText] becomes non-null.
@@ -57,9 +56,7 @@ class _ShakeOnErrorState extends ConsumerState<ShakeOnError>
         widget.errorText != null && widget.errorText != oldWidget.errorText;
     if (!(appeared || changed)) return;
     if (!widget.shake || AppMotion.reduced(context)) return;
-    if (ref.read(hapticsControllerProvider).value ?? true) {
-      unawaited(HapticFeedback.vibrate());
-    }
+    ref.haptic(HapticFeedback.vibrate);
     _controller.forward(from: 0);
   }
 

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/settings_options/setting_toggle_option.dart';
-import 'package:freshcart_flutter/features/lists/application/controllers/lists_controller.dart';
-import 'package:freshcart_flutter/features/notifications/application/controllers/list_mute_controller.dart';
-import 'package:freshcart_flutter/features/notifications/application/controllers/notification_preferences_controller.dart';
+import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/features/notifications/application/list_mute/list_mute_controller.dart';
+import 'package:freshcart_flutter/features/notifications/application/notifications_screen/notifications_screen_controller.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_toggle_option.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Push preferences: the three server-gated moments, and per-list mute
@@ -27,14 +26,14 @@ class NotificationsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final lists =
-        ref.watch(listsControllerProvider).dataOrNull ?? const <ShoppingList>[];
-    final preferences =
-        ref.watch(notificationPreferencesControllerProvider).value ??
-        const NotificationPreferences();
-    final notifier = ref.read(
-      notificationPreferencesControllerProvider.notifier,
-    );
+    final s = ref.watch(notificationsScreenControllerProvider);
+    final vm = ref.read(notificationsScreenControllerProvider.notifier);
+    final preferences = s.preferences;
+
+    void report(Failure? failure) {
+      if (failure == null || !context.mounted) return;
+      showFailureSnackBar(context, failure: failure, t: t);
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -51,23 +50,30 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          SettingToggleOption(
-            title: t.notifications.itemAdded,
-            description: t.notifications.itemAddedBody,
-            value: preferences.itemAdded,
-            onChanged: notifier.setItemAdded,
-          ),
-          SettingToggleOption(
-            title: t.notifications.memberJoined,
-            value: preferences.memberJoined,
-            onChanged: notifier.setMemberJoined,
-          ),
-          SettingToggleOption(
-            title: t.notifications.listFinished,
-            description: t.notifications.listFinishedBody,
-            value: preferences.listFinished,
-            onChanged: notifier.setListFinished,
-          ),
+          if (preferences == null)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else ...[
+            SettingToggleOption(
+              title: t.notifications.itemAdded,
+              description: t.notifications.itemAddedBody,
+              value: preferences.itemAdded,
+              onChanged: (v) async => report(await vm.setItemAdded(v)),
+            ),
+            SettingToggleOption(
+              title: t.notifications.memberJoined,
+              value: preferences.memberJoined,
+              onChanged: (v) async => report(await vm.setMemberJoined(v)),
+            ),
+            SettingToggleOption(
+              title: t.notifications.listFinished,
+              description: t.notifications.listFinishedBody,
+              value: preferences.listFinished,
+              onChanged: (v) async => report(await vm.setListFinished(v)),
+            ),
+          ],
           const SizedBox(height: 24),
           Text(
             t.notifications.perList.toUpperCase(),
@@ -76,7 +82,7 @@ class NotificationsScreen extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 8),
-          for (final list in lists) _ListMuteRow(list: list, t: t),
+          for (final list in s.lists) _ListMuteRow(list: list, t: t),
         ],
       ),
     );
