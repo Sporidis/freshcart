@@ -2537,3 +2537,43 @@ than the section labels above them. Settings also had two smaller issues:
     for screen readers), never blocked.
   - The row being edited takes the previewed colour as its border.
   - The FAB gave way to the shared dashed "add another" row.
+
+## 103. Item swipe-to-delete restored, with its undo actually wired
+
+**Problem:** the redesigned item row (`edcba5e`) dropped swipe-to-delete, though the upgrade guide
+lists it as an interaction to keep. Separately, `swipeDelete` hands back an undo action that every
+caller (the hold menu, search results) discarded. A deleted item was hidden, then removed four
+seconds later with no snackbar and no way back.
+
+**Decision:** one `core/ui/SwipeToDelete` widget implements Motion spec §10 for both item rows
+and shop rows (#102). Its `onSwipe` result says whether the row goes (items) or springs back
+(shops, whose sheet decides). Every item delete, whether swiped or from the hold menu, in the list
+or in search, goes through `deleteItemWithUndo`. It shows "Milk removed · Undo" for exactly
+`swipeUndoWindow`, so the snackbar never offers an undo that has already expired. The swipe is off
+in multi-select and rearrange modes, as the spec requires.
+
+## 104. List settings: doors not copies, a name that cannot be lost, and leaving still confirms
+
+**Problem:**
+- **Two missing doors.** The screen's doc promised rows into Household and Manage shops; neither
+  existed.
+- **A disappearing "Add shop".** The shops section, including its "Add shop" button, vanished on
+  a list with no shops.
+- **A typable switcher.** The list switcher was a Material `DropdownMenu`, which is a text field
+  underneath.
+- **A lost name.** The name field only saved on the keyboard's submit key, so typing a name and
+  pressing Back silently dropped it.
+
+**Decision:**
+- **Doors, not copies.** Household and shop management are rows that open the existing screens
+  (#69). "Shops on this list" keeps its switches, now with each shop's dot, an always-present
+  "Add shop" row, and "Rename shops & colours".
+- **The name saves three ways:** on submit, on blur, and on the way out. `PopScope` owns the
+  save when leaving, and the blur listener only acts while the route is current and no save is
+  running. Without both guards a single edit saved twice; tests caught each case.
+- **The "Managing" card expands in place,** as the design draws it.
+- **Leaving still confirms, deliberately overriding the design's "leaving does not confirm".**
+  It can't be undone without a fresh invite code from someone still on the list, so it keeps
+  the pause, now in destructive red like delete.
+- **Shared avatars.** `MemberAvatarStack` moved to `core/ui`, shared by the drawer and the
+  Household row.

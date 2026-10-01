@@ -82,7 +82,14 @@ Future<void> confirmLeaveList(
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(t.common.cancel),
         ),
+        // Destructive red, like delete: leaving cannot be undone without a
+        // fresh invite code from someone still on the list. (The design
+        // skips this confirm; we keep it -- decisions #104.)
         FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.destructive,
+            foregroundColor: Colors.white,
+          ),
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(t.lists.leave),
         ),

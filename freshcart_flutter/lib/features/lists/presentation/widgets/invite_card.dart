@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -53,12 +54,19 @@ class _InviteCardState extends ConsumerState<InviteCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.gap,
+        AppSpacing.gapSmall,
+        AppSpacing.gapSmall,
+        AppSpacing.gapSmall,
+      ),
+      // The app's own subtle surface, not a translucent M3 container role
+      // that tints differently depending on the seed behind it.
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.4,
-        ),
+        color: isDark ? AppColors.subtleDark : AppColors.subtleLight,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadii.input),
       ),
       child: Row(
@@ -77,10 +85,13 @@ class _InviteCardState extends ConsumerState<InviteCard> {
             icon: AnimatedSwitcher(
               duration: AppMotion.durationFor(context, AppMotion.quick),
               child: _copied
-                  ? Icon(
+                  ? const Icon(
                       Icons.check_circle,
-                      key: const ValueKey('copied'),
-                      color: theme.colorScheme.tertiary,
+                      key: ValueKey('copied'),
+                      // The app's success green -- `tertiary` is a hue M3
+                      // derives from the seed, which for this ink theme is
+                      // an arbitrary colour, not "done".
+                      color: AppColors.success,
                     )
                   : const Icon(Icons.copy_outlined, key: ValueKey('copy')),
             ),

@@ -22,6 +22,9 @@
     "emptyTitle": "No lists yet",
     "emptyBody": "Start one for your household, or join a list someone shared with you.",
     "settingsTitle": "List settings",
+    "managing": "Managing",
+    "renameShops": "Rename shops & colours",
+    "behaviour": "Behaviour",
     "nameLabel": "List name",
     "rename": "Rename",
     "clearCheckedAfterShopping": "Clear checked items automatically",
@@ -131,6 +134,7 @@
   },
   "household": {
     "title": "Household",
+    "inviteSomeone": "Invite someone",
     "you": "You",
     "owner": "Owner",
     "youOwner": "You · Owner",
