@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
@@ -197,10 +196,10 @@ class _ListRow extends StatelessWidget {
         leading: CircleAvatar(
           radius: 18,
           backgroundColor: isCurrent
-              ? AppColors.ink
+              ? theme.colorScheme.primary
               : theme.colorScheme.outlineVariant,
           foregroundColor: isCurrent
-              ? Colors.white
+              ? theme.colorScheme.onPrimary
               : theme.colorScheme.onSurface,
           child: Text(initial, style: AppTextStyles.bodyStrong),
         ),

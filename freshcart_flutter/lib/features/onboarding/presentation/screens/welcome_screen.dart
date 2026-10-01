@@ -40,7 +40,10 @@ class WelcomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.welcome.headline, style: AppTextStyles.largeTitle),
+                  Text(
+                    t.welcome.headline,
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
                   const SizedBox(height: 9),
                   Text(
                     t.welcome.subhead,

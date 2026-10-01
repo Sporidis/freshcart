@@ -253,7 +253,7 @@ class _ShopsSection extends StatelessWidget {
               t.shops.add,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Colors.blue,
+                color: Theme.of(context).colorScheme.primary,
               ),
             ),
           ),
