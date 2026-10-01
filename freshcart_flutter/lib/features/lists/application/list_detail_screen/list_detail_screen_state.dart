@@ -1,9 +1,9 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:meta/meta.dart';
 
 /// The list-level half of `ListDetailScreen`: the route shell, its theming
-/// and the header menu. The rows are `ItemsScreenState`'s business.
+/// and the header menu. The rows are `ItemsSectionState`'s business.
 ///
 /// Pure Dart on purpose (domain types only, [HexColor] rather than Flutter's
 /// `Color`), same as the other screen states.

@@ -4,12 +4,12 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/sections/about_section.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/sections/account_card.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/sections/lists_and_shops_section.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/sections/preferences_section.dart';
-import 'package:freshcart_flutter/features/auth/presentation/widgets/sections/profile_header.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/about_section.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/account_card.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/lists_and_shops_section.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/preferences_section.dart';
+import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/profile_header.dart';
 
 /// Account-level settings, reached from the drawer.
 class SettingsScreen extends ConsumerWidget {

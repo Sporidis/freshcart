@@ -8,14 +8,14 @@ import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Search's pre-typing state (§06, "Recently bought"): browse every distinct
 /// product name this list has had before, grouped by how recently it was
 /// last added -- "the weekly-staples shortcut without building a template
 /// feature," in the design's own words. Each row's "+" re-adds the name with
-/// a pop, through [ItemsScreenController.addFromSearch] -- the same
+/// a pop, through [ItemsSectionController.addFromSearch] -- the same
 /// optimistic add the quick-add control already rides.
 ///
 /// Rendered inline in `SearchResults` rather than as its own destination:
@@ -44,7 +44,7 @@ class SearchRecentlyBought extends ConsumerWidget {
   final ListId listId;
 
   final Translations t;
-  final ItemsScreenController vm;
+  final ItemsSectionController vm;
   final void Function(Failure?, {VoidCallback? onRetry}) report;
 
   /// Clock used to bucket entries by recency. Defaults to the real wall

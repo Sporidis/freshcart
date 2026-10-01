@@ -1,8 +1,8 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_state.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
@@ -15,7 +15,7 @@ part 'list_detail_screen_controller.g.dart';
 /// list, whether you own it, the active shop colour and the items mode, plus
 /// the list-level actions (delete, leave).
 ///
-/// The rows have their own view model, `ItemsScreenController`; this one
+/// The rows have their own view model, `ItemsSectionController`; this one
 /// only reads its mode.
 @riverpod
 class ListDetailScreenController extends _$ListDetailScreenController {
@@ -32,7 +32,7 @@ class ListDetailScreenController extends _$ListDetailScreenController {
       activeShopColor: ref.watch(activeShopColorProvider(listId)),
       mode: list == null
           ? ItemsMode.browse
-          : ref.watch(itemsScreenControllerProvider(list)).mode,
+          : ref.watch(itemsSectionControllerProvider(list)).mode,
       isLoading: outcome.isLoading && list == null,
       loadFailure: outcome.loadFailure,
     );

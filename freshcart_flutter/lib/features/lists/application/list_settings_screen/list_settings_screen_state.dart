@@ -2,7 +2,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 
 /// Everything `ListSettingsScreen` renders, already derived.
 ///
-/// Pure Dart on purpose, same as `ItemsScreenState`: domain types only, so
+/// Pure Dart on purpose, same as `ItemsSectionState`: domain types only, so
 /// it stays unit-testable without a widget tree. The name field's draft,
 /// saving flag and error are *not* here -- they belong to the text field in
 /// the widget, and this state is rebuilt whenever the list changes (which,

@@ -3,18 +3,18 @@ import 'dart:async';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_screen/items_screen_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'items_screen_controller.g.dart';
+part 'items_section_controller.g.dart';
 
 /// The view model behind the list detail screen's items: composes the
 /// list's items, shops, filter and [ItemsUiController] into one derived
-/// [ItemsScreenState], and owns the multi-step actions ("delete, then leave
+/// [ItemsSectionState], and owns the multi-step actions ("delete, then leave
 /// selection mode only if that worked").
 ///
 /// The items widgets talk to this notifier and nothing else, which is why it
@@ -29,7 +29,7 @@ part 'items_screen_controller.g.dart';
 /// changed list (freezed equality) simply gets a fresh instance, which is
 /// safe because all mode state lives in [ItemsUiController].
 @riverpod
-class ItemsScreenController extends _$ItemsScreenController {
+class ItemsSectionController extends _$ItemsSectionController {
   ListId get _listId => list.id;
 
   ItemsController get _items =>
@@ -39,7 +39,7 @@ class ItemsScreenController extends _$ItemsScreenController {
       ref.read(itemsUiControllerProvider(_listId).notifier);
 
   @override
-  ItemsScreenState build(ShoppingList list) {
+  ItemsSectionState build(ShoppingList list) {
     final listId = list.id;
     final itemsOutcome = ref.watch(itemsControllerProvider(listId));
     final allItems = itemsOutcome.dataOrNull ?? const <ShoppingItem>[];
@@ -70,7 +70,7 @@ class ItemsScreenController extends _$ItemsScreenController {
       }
     });
 
-    return ItemsScreenState(
+    return ItemsSectionState(
       list: list,
       mode: _modeFor(ui),
       allItems: allItems,
@@ -160,7 +160,7 @@ class ItemsScreenController extends _$ItemsScreenController {
 
   // ── Rearrange ───────────────────────────────────────────────────────────
 
-  /// Enters rearrange mode, if [ItemsScreenState.canRearrange] allows it.
+  /// Enters rearrange mode, if [ItemsSectionState.canRearrange] allows it.
   void startRearrange() {
     if (state.canRearrange) _ui.startRearrange();
   }

@@ -1,7 +1,6 @@
 import 'package:flutter/widgets.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/auth/presentation/screens/edit_profile_screen.dart';
-import 'package:freshcart_flutter/features/auth/presentation/screens/settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_settings_screen.dart';
@@ -11,6 +10,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/screens/join_
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/onboarding_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/welcome_screen.dart';
+import 'package:freshcart_flutter/features/settings/presentation/screens/settings_screen.dart';
 import 'package:freshcart_flutter/features/shops/presentation/screens/manage_shops_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

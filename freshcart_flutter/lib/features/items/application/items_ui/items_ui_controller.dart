@@ -3,10 +3,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'items_ui_controller.g.dart';
 
-/// The items screen's own UI state for one list: which mode it is in, and
+/// The items section's own UI state for one list: which mode it is in, and
 /// the little facts about *this list right now* that must survive a rebuild.
 ///
-/// Its own provider rather than fields on `ItemsScreenController`: that view
+/// Its own provider rather than fields on `ItemsSectionController`: that view
 /// model's `build()` re-runs whenever anything it watches changes (a live
 /// item update, a shop edit), which would silently reset a flag stored on it
 /// -- mid-drag, mid-selection, mid-typing. Provider state, not widget state,
@@ -78,7 +78,7 @@ class ItemsUiController extends _$ItemsUiController {
 }
 
 /// See [ItemsUiController]. Raw facts only -- ranking them into one
-/// `ItemsMode` is `ItemsScreenController`'s job.
+/// `ItemsMode` is `ItemsSectionController`'s job.
 class ItemsUiState {
   const ItemsUiState({
     this.selection = const {},
