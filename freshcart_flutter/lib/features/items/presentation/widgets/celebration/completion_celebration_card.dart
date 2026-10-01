@@ -121,7 +121,7 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
             AppSpacing.screen,
             AppSpacing.gap,
           ),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadii.celebration),
@@ -139,9 +139,9 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
               Text(
                 t.items.celebrateCount(n: widget.itemCount),
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyStrong.copyWith(fontSize: 19),
+                style: AppTextStyles.cardTitle,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 t.items.celebrateBody(list: widget.list.name),
                 textAlign: TextAlign.center,
@@ -149,7 +149,7 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Row(
                 spacing: 9,
                 children: [

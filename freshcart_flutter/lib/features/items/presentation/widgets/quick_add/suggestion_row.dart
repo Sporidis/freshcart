@@ -18,7 +18,7 @@ class SuggestionRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: SizedBox(
         height: 34,
         child: ListView.separated(

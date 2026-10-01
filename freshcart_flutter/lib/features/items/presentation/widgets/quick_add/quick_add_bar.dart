@@ -529,7 +529,7 @@ class _DuplicateCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Material(
         color: theme.colorScheme.surface,
         elevation: 2,
@@ -632,7 +632,7 @@ class _Pill extends StatelessWidget {
       height: height,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(height / 2),
+          borderRadius: BorderRadius.circular(AppRadii.pill),
           boxShadow: [
             BoxShadow(
               color: shadowColor,

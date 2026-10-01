@@ -56,7 +56,7 @@ class DeleteShopSheet extends ConsumerWidget {
         AppSpacing.sheetH,
         0,
         AppSpacing.sheetH,
-        AppSpacing.screen,
+        AppSpacing.xl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

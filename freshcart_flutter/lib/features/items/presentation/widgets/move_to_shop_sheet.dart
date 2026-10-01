@@ -37,13 +37,21 @@ class _MoveToShopSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sheetH),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.sheetH,
+          0,
+          AppSpacing.sheetH,
+          AppSpacing.xl,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(t.items.moveTo, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 14),
+            Text(
+              t.items.moveTo,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
+            const SizedBox(height: AppSpacing.gap),
             ShopPicker(
               shops: shops,
               t: t,

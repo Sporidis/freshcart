@@ -94,7 +94,7 @@ class SearchRecentlyBought extends ConsumerWidget {
     );
 
     return ListView(
-      padding: const EdgeInsets.only(bottom: 24),
+      padding: const EdgeInsets.only(bottom: AppSpacing.xxl),
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(

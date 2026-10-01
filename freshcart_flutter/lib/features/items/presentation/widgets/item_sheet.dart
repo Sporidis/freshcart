@@ -148,9 +148,9 @@ class _ItemSheetState extends State<ItemSheet> {
     return Padding(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.sheetH,
-        8,
+        0,
         AppSpacing.sheetH,
-        MediaQuery.viewInsetsOf(context).bottom + 30,
+        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -228,7 +228,7 @@ class _ItemSheetState extends State<ItemSheet> {
             ),
           ),
           if (widget.isEditing) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: AppSpacing.sm),
             SizedBox(
               width: double.infinity,
               child: TextButton(
