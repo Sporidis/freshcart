@@ -54,9 +54,15 @@ class FakePushRepository implements PushPort {
   /// below so a test can read what the last write actually produced.
   NotificationPreferences preferences = const NotificationPreferences();
 
+  /// When set, [notificationPreferences] fails with it instead.
+  Failure? preferencesFailure;
+
   @override
   Future<Result<NotificationPreferences>> notificationPreferences() async =>
-      Ok(preferences);
+      switch (preferencesFailure) {
+        final failure? => Err(failure),
+        null => Ok(preferences),
+      };
 
   @override
   Future<Result<NotificationPreferences>> setItemAddedNotificationsEnabled(

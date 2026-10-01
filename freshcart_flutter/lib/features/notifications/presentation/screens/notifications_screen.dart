@@ -47,6 +47,9 @@ class NotificationsScreen extends ConsumerWidget {
           SettingsSection(
             label: t.notifications.push,
             children: [
+              // TODO(human): when s.preferencesFailure is non-null, show the
+              // failure and a Retry (vm.retryPreferences) instead of the
+              // spinner below -- see the Learn by Doing note.
               if (preferences == null)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.screen),
