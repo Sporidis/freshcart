@@ -1,7 +1,6 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
-import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Shopping lists: create, read, join, rename, leave, delete.
@@ -28,30 +27,12 @@ class ListEndpoint extends Endpoint {
   ) => ListService.summaries(session, listIds, session.requireUserId);
 
   /// Creates a list owned by the caller.
-  Future<ShoppingList> create(Session session, String name) async {
-    final userId = session.requireUserId;
-    return ListService.create(
-      session,
-      userId,
-      name,
-      await ProfileService.displayNameFor(session, userId),
-      await ProfileService.avatarColorArgbFor(session, userId),
-      await ProfileService.avatarPhotoUrlFor(session, userId),
-    );
-  }
+  Future<ShoppingList> create(Session session, String name) =>
+      ListService.create(session, session.requireUserId, name);
 
   /// Joins the list matching [joinCode].
-  Future<ShoppingList> join(Session session, String joinCode) async {
-    final userId = session.requireUserId;
-    return ListService.join(
-      session,
-      userId,
-      joinCode,
-      await ProfileService.displayNameFor(session, userId),
-      await ProfileService.avatarColorArgbFor(session, userId),
-      await ProfileService.avatarPhotoUrlFor(session, userId),
-    );
-  }
+  Future<ShoppingList> join(Session session, String joinCode) =>
+      ListService.join(session, session.requireUserId, joinCode);
 
   /// Renames a list the caller owns.
   Future<ShoppingList> rename(

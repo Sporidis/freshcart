@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:freshcart_server/src/auth/business/account_link_service.dart';
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -38,26 +39,47 @@ class ProfileEndpoint extends Endpoint {
       ProfileService.displayNameFor(session, session.requireUserId);
 
   /// Sets the caller's display name.
-  Future<MemberProfile> setDisplayName(Session session, String displayName) =>
-      ProfileService.setDisplayName(
-        session,
-        session.requireUserId,
-        displayName,
-      );
+  Future<MemberProfile> setDisplayName(
+    Session session,
+    String displayName,
+  ) => _thenAnnounce(
+    session,
+    ProfileService.setDisplayName(session, session.requireUserId, displayName),
+  );
 
   /// Sets the caller's avatar colour.
   Future<MemberProfile> setAvatarColor(Session session, int avatarColorArgb) =>
-      ProfileService.setAvatarColor(
+      _thenAnnounce(
         session,
-        session.requireUserId,
-        avatarColorArgb,
+        ProfileService.setAvatarColor(
+          session,
+          session.requireUserId,
+          avatarColorArgb,
+        ),
       );
 
   /// Uploads and sets the caller's avatar photo.
   Future<MemberProfile> setAvatarPhoto(Session session, ByteData bytes) =>
-      ProfileService.setAvatarPhoto(session, session.requireUserId, bytes);
+      _thenAnnounce(
+        session,
+        ProfileService.setAvatarPhoto(session, session.requireUserId, bytes),
+      );
 
   /// Removes the caller's avatar photo, if they have one.
-  Future<MemberProfile?> clearAvatarPhoto(Session session) =>
-      ProfileService.clearAvatarPhoto(session, session.requireUserId);
+  Future<MemberProfile?> clearAvatarPhoto(Session session) => _thenAnnounce(
+    session,
+    ProfileService.clearAvatarPhoto(session, session.requireUserId),
+  );
+
+  /// Waits for a profile [write], then re-broadcasts every list the caller is
+  /// on -- their name and avatar are read live into each list's members, so
+  /// anyone watching one of those lists should see the change now.
+  ///
+  /// Here, not in [ProfileService]: profiles don't know lists exist; it is
+  /// the endpoint that ties "a profile changed" to "lists should hear".
+  Future<T> _thenAnnounce<T>(Session session, Future<T> write) async {
+    final result = await write;
+    await ListService.announceMemberChanged(session, session.requireUserId);
+    return result;
+  }
 }

@@ -2,6 +2,7 @@ import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/common/business/join_code_generator.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
+import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Business operations on shopping lists.
@@ -69,17 +70,10 @@ abstract final class ListService {
   }
 
   /// Creates a list owned by [userId], with [userId] as its first member.
-  ///
-  /// [avatarColorArgb] and [avatarPhotoUrl] are snapshotted onto the new
-  /// membership row exactly like [displayName] already is -- see
-  /// `ListMember`'s own doc comment.
   static Future<ShoppingList> create(
     Session session,
     UuidValue userId,
     String name,
-    String displayName,
-    int? avatarColorArgb,
-    String? avatarPhotoUrl,
   ) async {
     return session.db
         .transaction((transaction) async {
@@ -101,9 +95,6 @@ abstract final class ListService {
             ListMember(
               listId: list.id!,
               userId: userId,
-              displayName: displayName,
-              avatarColorArgb: avatarColorArgb,
-              avatarPhotoUrl: avatarPhotoUrl,
               role: MemberRole.owner,
               joinedAt: DateTime.now().toUtc(),
             ),
@@ -122,9 +113,6 @@ abstract final class ListService {
     Session session,
     UuidValue userId,
     String rawCode,
-    String displayName,
-    int? avatarColorArgb,
-    String? avatarPhotoUrl,
   ) async {
     final parsed = domain.JoinCode.parse(rawCode);
     final code = switch (parsed) {
@@ -150,9 +138,6 @@ abstract final class ListService {
         ListMember(
           listId: list.id!,
           userId: userId,
-          displayName: displayName,
-          avatarColorArgb: avatarColorArgb,
-          avatarPhotoUrl: avatarPhotoUrl,
           role: MemberRole.member,
           joinedAt: DateTime.now().toUtc(),
         ),
@@ -165,7 +150,7 @@ abstract final class ListService {
         session,
         list.id!,
         newMemberId: userId,
-        newMemberName: displayName,
+        newMemberName: await ProfileService.displayNameFor(session, userId),
         listName: list.name,
       );
     }
@@ -387,6 +372,11 @@ abstract final class ListService {
     return membership;
   }
 
+  /// [list] with its members attached, each one's name, colour and photo
+  /// filled in live from their `MemberProfile` -- every list read and every
+  /// broadcast goes through here, so nobody is ever shown as they were when
+  /// they joined (docs/decisions.md #98). Two queries per list, not one per
+  /// member.
   static Future<ShoppingList> _withMembers(
     Session session,
     ShoppingList list,
@@ -396,7 +386,44 @@ abstract final class ListService {
       where: (t) => t.listId.equals(list.id!),
       orderBy: (t) => t.joinedAt,
     );
-    return list.copyWith(members: members);
+    final profiles = await ProfileService.profilesFor(session, {
+      for (final m in members) m.userId,
+    });
+    return list.copyWith(
+      members: [
+        for (final m in members)
+          m.copyWith(
+            displayName:
+                profiles[m.userId]?.displayName ??
+                ProfileService.fallbackDisplayName,
+            avatarColorArgb: profiles[m.userId]?.avatarColorArgb,
+            avatarPhotoUrl: await ProfileService.photoUrlFor(
+              session,
+              profiles[m.userId]?.avatarPhotoPath,
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// Re-broadcasts every list [userId] is on, after they changed how they
+  /// look to others (name, colour, photo) -- so everyone watching one of
+  /// those lists sees the change now, not on their next reload.
+  ///
+  /// Fire-and-forget like [_announce]: the profile write has already
+  /// succeeded, and a dropped broadcast only delays the update until the
+  /// next read.
+  static Future<void> announceMemberChanged(
+    Session session,
+    UuidValue userId,
+  ) async {
+    final memberships = await ListMember.db.find(
+      session,
+      where: (t) => t.userId.equals(userId),
+    );
+    for (final m in memberships) {
+      await _announce(session, m.listId);
+    }
   }
 
   static Future<String> _uniqueJoinCode(

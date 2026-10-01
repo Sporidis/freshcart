@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
@@ -385,6 +387,76 @@ void main() {
               .asFuture<void>(),
           throwsA(isA<NotAMemberException>()),
         );
+      });
+    });
+
+    group('members show who they are now, not who they were at join', () {
+      ListMember memberIn(ShoppingList list, String userId) => list.members!
+          .firstWhere((m) => m.userId == UuidValue.withValidation(userId));
+
+      test('a rename after joining shows on the list', () async {
+        await endpoints.profile.setDisplayName(as(bobId), 'Bob');
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        await endpoints.profile.setDisplayName(as(bobId), 'Robert');
+
+        final read = await endpoints.list.byId(as(aliceId), list.id!);
+        expect(memberIn(read, bobId).displayName, 'Robert');
+      });
+
+      test('an avatar colour picked after joining shows on the list', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+        await endpoints.profile.setAvatarColor(as(aliceId), 0xFF2456A6);
+
+        final read = await endpoints.list.byId(as(aliceId), list.id!);
+        expect(memberIn(read, aliceId).avatarColorArgb, 0xFF2456A6);
+      });
+
+      test('someone with no profile yet still gets a name', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+        expect(memberIn(list, aliceId).displayName, 'Someone');
+      });
+
+      test('a profile change is broadcast to everyone watching', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(as(bobId), list.joinCode);
+
+        final events = <ShoppingList>[];
+        final subscription = endpoints.list
+            .watchList(as(aliceId), list.id!)
+            .listen(events.add);
+        addTearDown(subscription.cancel);
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        await endpoints.profile.setDisplayName(as(bobId), 'Robert');
+        await Future<void>.delayed(const Duration(milliseconds: 100));
+
+        expect(events, isNotEmpty);
+        expect(memberIn(events.last, bobId).displayName, 'Robert');
+      });
+
+      test('a new photo gets a new URL, so image caches cannot serve the '
+          'old one', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final photo = ByteData.view(Uint8List.fromList([1, 2, 3]).buffer);
+
+        await endpoints.profile.setAvatarPhoto(as(aliceId), photo);
+        final first = memberIn(
+          await endpoints.list.byId(as(aliceId), list.id!),
+          aliceId,
+        ).avatarPhotoUrl;
+        await endpoints.profile.setAvatarPhoto(as(aliceId), photo);
+        final second = memberIn(
+          await endpoints.list.byId(as(aliceId), list.id!),
+          aliceId,
+        ).avatarPhotoUrl;
+
+        expect(first, isNotNull);
+        expect(second, isNotNull);
+        expect(second, isNot(first));
       });
     });
   });

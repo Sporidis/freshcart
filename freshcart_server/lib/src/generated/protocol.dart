@@ -298,24 +298,6 @@ class Protocol extends _i1.SerializationManagerServer {
           dartType: 'UuidValue',
         ),
         _i2.ColumnDefinition(
-          name: 'displayName',
-          columnType: _i2.ColumnType.text,
-          isNullable: false,
-          dartType: 'String',
-        ),
-        _i2.ColumnDefinition(
-          name: 'avatarColorArgb',
-          columnType: _i2.ColumnType.bigint,
-          isNullable: true,
-          dartType: 'int?',
-        ),
-        _i2.ColumnDefinition(
-          name: 'avatarPhotoUrl',
-          columnType: _i2.ColumnType.text,
-          isNullable: true,
-          dartType: 'String?',
-        ),
-        _i2.ColumnDefinition(
           name: 'role',
           columnType: _i2.ColumnType.text,
           isNullable: false,
