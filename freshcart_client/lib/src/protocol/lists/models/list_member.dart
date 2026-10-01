@@ -20,7 +20,7 @@ abstract class ListMember implements _i1.SerializableModel {
     this.id,
     required this.listId,
     required this.userId,
-    required this.displayName,
+    this.displayName,
     this.avatarColorArgb,
     this.avatarPhotoUrl,
     required this.role,
@@ -31,7 +31,7 @@ abstract class ListMember implements _i1.SerializableModel {
     _i1.UuidValue? id,
     required _i1.UuidValue listId,
     required _i1.UuidValue userId,
-    required String displayName,
+    String? displayName,
     int? avatarColorArgb,
     String? avatarPhotoUrl,
     required _i2.MemberRole role,
@@ -45,7 +45,7 @@ abstract class ListMember implements _i1.SerializableModel {
           : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       listId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['listId']),
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
-      displayName: jsonSerialization['displayName'] as String,
+      displayName: jsonSerialization['displayName'] as String?,
       avatarColorArgb: jsonSerialization['avatarColorArgb'] as int?,
       avatarPhotoUrl: jsonSerialization['avatarPhotoUrl'] as String?,
       role: _i2.MemberRole.fromJson((jsonSerialization['role'] as String)),
@@ -66,17 +66,18 @@ abstract class ListMember implements _i1.SerializableModel {
   /// The member's `authUserId`.
   _i1.UuidValue userId;
 
-  /// Denormalised from `UserProfile` so rendering a list needs no second
-  /// lookup, and so a name survives even after an account upgrade.
-  String displayName;
+  /// Filled in live from the member's `MemberProfile` every time a list is
+  /// read (`ListService._withMembers`), never stored on this row: a copy
+  /// taken at join time went stale the moment someone renamed themselves or
+  /// changed their photo (docs/decisions.md #98). Always set by the server
+  /// on the way out; nullable only because a row read straight from the
+  /// table does not have it yet.
+  String? displayName;
 
-  /// Denormalised the same way as `displayName`, for the same reason: a
-  /// snapshot taken at join time, not kept live in sync with a later
-  /// profile edit.
+  /// The member's chosen avatar colour, live -- see [displayName].
   int? avatarColorArgb;
 
-  /// Also denormalised at join time -- already the resolved public URL, not
-  /// a storage path, since this row has no reason to ever recompute it.
+  /// The member's avatar photo as a public URL, live -- see [displayName].
   String? avatarPhotoUrl;
 
   _i2.MemberRole role;
@@ -103,7 +104,7 @@ abstract class ListMember implements _i1.SerializableModel {
       if (id != null) 'id': id?.toJson(),
       'listId': listId.toJson(),
       'userId': userId.toJson(),
-      'displayName': displayName,
+      if (displayName != null) 'displayName': displayName,
       if (avatarColorArgb != null) 'avatarColorArgb': avatarColorArgb,
       if (avatarPhotoUrl != null) 'avatarPhotoUrl': avatarPhotoUrl,
       'role': role.toJson(),
@@ -124,7 +125,7 @@ class _ListMemberImpl extends ListMember {
     _i1.UuidValue? id,
     required _i1.UuidValue listId,
     required _i1.UuidValue userId,
-    required String displayName,
+    String? displayName,
     int? avatarColorArgb,
     String? avatarPhotoUrl,
     required _i2.MemberRole role,
@@ -148,7 +149,7 @@ class _ListMemberImpl extends ListMember {
     Object? id = _Undefined,
     _i1.UuidValue? listId,
     _i1.UuidValue? userId,
-    String? displayName,
+    Object? displayName = _Undefined,
     Object? avatarColorArgb = _Undefined,
     Object? avatarPhotoUrl = _Undefined,
     _i2.MemberRole? role,
@@ -158,7 +159,7 @@ class _ListMemberImpl extends ListMember {
       id: id is _i1.UuidValue? ? id : this.id,
       listId: listId ?? this.listId,
       userId: userId ?? this.userId,
-      displayName: displayName ?? this.displayName,
+      displayName: displayName is String? ? displayName : this.displayName,
       avatarColorArgb: avatarColorArgb is int?
           ? avatarColorArgb
           : this.avatarColorArgb,

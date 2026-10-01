@@ -6,7 +6,10 @@ extension ListMemberDtoX on dto.ListMember {
   /// Converts to the domain [ListMember].
   ListMember toDomain() => ListMember(
     userId: UserId(userId.uuid),
-    displayName: displayName,
+    // Always filled in by the server (live from the member's profile); the
+    // wire type is only nullable because the column is no longer stored.
+    // Empty draws as "?" rather than inventing a name the server never sent.
+    displayName: displayName ?? '',
     role: role.toDomain(),
     joinedAt: joinedAt,
     avatarColor: avatarColorArgb == null

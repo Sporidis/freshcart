@@ -1,0 +1,90 @@
+{
+  "__className__": "serverpod.DatabaseMigration",
+  "actions": [
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "freshcart_list_member",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "displayName",
+          "avatarColorArgb",
+          "avatarPhotoUrl"
+        ],
+        "modifyColumns": [],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"displayName\" of table \"freshcart_list_member\" will be dropped.",
+            "table": "freshcart_list_member",
+            "columns": [
+              "displayName"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"avatarColorArgb\" of table \"freshcart_list_member\" will be dropped.",
+            "table": "freshcart_list_member",
+            "columns": [
+              "avatarColorArgb"
+            ],
+            "destrucive": true
+          },
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"avatarPhotoUrl\" of table \"freshcart_list_member\" will be dropped.",
+            "table": "freshcart_list_member",
+            "columns": [
+              "avatarPhotoUrl"
+            ],
+            "destrucive": true
+          }
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"displayName\" of table \"freshcart_list_member\" will be dropped.",
+      "table": "freshcart_list_member",
+      "columns": [
+        "displayName"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"avatarColorArgb\" of table \"freshcart_list_member\" will be dropped.",
+      "table": "freshcart_list_member",
+      "columns": [
+        "avatarColorArgb"
+      ],
+      "destrucive": true
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"avatarPhotoUrl\" of table \"freshcart_list_member\" will be dropped.",
+      "table": "freshcart_list_member",
+      "columns": [
+        "avatarPhotoUrl"
+      ],
+      "destrucive": true
+    }
+  ],
+  "migrationApiVersion": 1
+}

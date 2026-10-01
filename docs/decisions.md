@@ -2398,3 +2398,38 @@ wherever a provider compares against the current time, not `DateTime.now()`.
 **Small shared helpers:** `initialFor` (grapheme-safe, replacing seven copies where most did
 `trim()[0]` and split emoji) and `WidgetRef.haptic` (the "haptics on unless turned off" default
 in one place, replacing four copies).
+
+## 98. List members are read live from their profile, not snapshotted at join
+
+**Problem:** changing your photo, name or avatar colour didn't show on lists you were already on.
+You only appeared updated on lists you created *after* the change. The cause was that
+`ListMember` stored copies of `displayName`, `avatarColorArgb` and `avatarPhotoUrl`, taken at
+join time and never updated. That copy was never a recorded decision; it existed only in code
+comments, which cited #65 (a drawer change). Its stated reason, "the name survives an account
+upgrade", doesn't hold: `MemberProfile`'s `authUserId` never changes on upgrade. A second cause
+made photos stale even with fresh data: every upload overwrote `avatars/<id>.jpg`, so the public
+URL never changed, and `NetworkImage` (like any image cache or CDN) keys on the URL.
+
+**Decision -- one source of truth.** The three fields become `!persist` on `ListMember`: still on
+the wire, no longer stored (migration `20261001150005278` drops the columns). `_withMembers`, which
+every list read and broadcast already goes through, fills them in from `MemberProfile`. That's one
+batched `inSet` query per list, not one per member. **Rejected:** keeping the copies and rewriting
+them on every profile change. Reads stay one query, but it keeps two copies of the same data that
+can drift apart again, which is how this bug happened.
+
+**Decision -- profile changes are broadcast.** `ProfileEndpoint` re-announces every list the
+caller is on after a name, colour or photo change, so everyone watching one of those lists sees it
+right away. It lives in the endpoint, not `ProfileService`: profiles don't know lists exist, and
+the endpoint is what connects the two.
+
+**Decision -- each upload gets its own URL.** Photos are stored at
+`avatars/<id>-<microseconds>.jpg`. The row is updated *before* the previous file is deleted, so a
+failure partway through never leaves the row pointing at a missing file.
+
+**Offline sync is unaffected.** The client caches the domain `ListMember`, whose shape didn't
+change, and `ListRealtimeSource` writes every live snapshot through to that cache. A broadcast
+profile change therefore also refreshes what an offline cold start shows. Offline, the photo URL
+can't load, and `UserAvatar` already falls back to colour and initial.
+
+**Not live:** the drawer's other-member avatars come from `myLists`, a fetch rather than a stream.
+They update on the next fetch (opening the app, returning to `/lists`), not instantly.
