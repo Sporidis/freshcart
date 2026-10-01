@@ -2302,3 +2302,33 @@ left or deleted it. That landed on the error screen, whose exit led back to `/li
 **Result:** 67 → 55 `@riverpod` declarations, 39 → 30 application files, 174 → 155 files in
 `lib/`, and 352 → 364 tests.
 Every screen VM now combines or sequences something; none of them only forwards calls.
+
+## 96. Photo picking moves behind `AvatarPhotoSource`; edit profile gets a view model
+
+**Problem:** `EditProfileScreen` called `ImagePicker` itself and ran the whole photo flow in the
+widget: pick, read the bytes, catch platform exceptions, upload. That was platform I/O in
+presentation, a multi-step action outside any notifier, and nothing a test could reach without a
+real gallery. Errors were also stored already translated, so a language switch left them in the
+old language.
+
+**Decision -- a data source, not a domain port.** `AvatarPhotoSource` (`auth/data/sources/`) is an
+interface with one `image_picker` implementation, following `PushTokenSource`. `pick()` returns
+`Result<Uint8List?>`: bytes, `Ok(null)` for a cancelled pick, or `Err` for a platform failure, so
+nothing above it needs a `try/catch`. It stays out of domain because picking a photo has no
+business meaning. The business rule, the size cap, already lives in `AuthUser.validateAvatarPhoto`
+and is applied by `SetAvatarPhoto`. The general rule: a platform capability with no domain meaning
+is a data source the VM uses directly; one that is part of a domain concept sits behind a domain
+port, the way `PushPort` wraps `PushTokenSource`.
+
+**Decision -- edit profile gets a screen VM.** This reverses #93's listing of edit profile as a
+simple screen. `choosePhoto` is now a multi-step action (pick, then upload), which is #93's own
+test for a VM. `EditProfileScreenController` derives `user` and `loadFailure` from the profile,
+and the widget talks only to it. The saving flags and failures stay in the widget's `State`, for
+the reason #92 and #93 gave: `build()` re-runs whenever the profile publishes, including the
+publish a save triggers, and would reset a flag mid-save. Failures are stored as `Failure` and
+translated in `build`.
+
+**Fixed along the way:** a widget test faked a profile change by pumping a second
+`ProviderContainer`. That only worked while the screen depended on the keep-alive
+`ProfileController`. It now publishes through the fake port's `authStateChanges()`, the way a real
+change arrives.
