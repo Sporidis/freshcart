@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
@@ -47,8 +47,13 @@ class ItemsSection extends ConsumerWidget {
     Color? dotFor(ShopId? shopId) => s.shopFor(shopId)?.color.toColor();
 
     final body = switch (s) {
-      ItemsSectionState(loadFailure: final failure?) => Center(
-        child: Text(failure.toMessage(t)),
+      ItemsSectionState(loadFailure: final failure?) => FailureState(
+        failure: failure,
+        t: t,
+        action: ElevatedButton(
+          onPressed: vm.retryLoad,
+          child: Text(t.common.retry),
+        ),
       ),
       ItemsSectionState(isLoading: true) => const Center(
         child: CircularProgressIndicator(),

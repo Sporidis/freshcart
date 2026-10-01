@@ -4,11 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
@@ -109,10 +109,9 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
         AsyncLoading<Result<List<ShoppingList>>>(value: null) => const Center(
           child: CircularProgressIndicator(),
         ),
-        AsyncError<Result<List<ShoppingList>>>() => _Message(
-          text: t.errors.unexpected,
-          onRetry: () => ref.read(listsControllerProvider.notifier).refresh(),
-          retryLabel: t.common.retry,
+        AsyncError<Result<List<ShoppingList>>>() => _failure(
+          const Failure.unexpected(),
+          t,
         ),
         // Covers both a settled AsyncData and an AsyncLoading that's
         // refreshing with a previous value still attached -- .value is
@@ -128,13 +127,18 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
     );
   }
 
+  Widget _failure(Failure failure, Translations t) => FailureState(
+    failure: failure,
+    t: t,
+    action: ElevatedButton(
+      onPressed: () => ref.read(listsControllerProvider.notifier).refresh(),
+      child: Text(t.common.retry),
+    ),
+  );
+
   Widget _buildOutcome(Result<List<ShoppingList>> value, Translations t) =>
       switch (value) {
-        Err<List<ShoppingList>>(:final failure) => _Message(
-          text: failure.toMessage(t),
-          onRetry: () => ref.read(listsControllerProvider.notifier).refresh(),
-          retryLabel: t.common.retry,
-        ),
+        Err<List<ShoppingList>>(:final failure) => _failure(failure, t),
         Ok<List<ShoppingList>>(value: final items) when items.isEmpty =>
           EmptyState(
             icon: Icons.checklist_outlined,
@@ -256,31 +260,4 @@ Future<void> showJoinListDialog(
 Future<void> _openNewList(ProviderContainer container, ListId id) async {
   container.read(appRouterProvider).go(Routes.listDetail(id));
   await container.read(lastOpenedListControllerProvider.notifier).select(id);
-}
-
-class _Message extends StatelessWidget {
-  const _Message({
-    required this.text,
-    required this.onRetry,
-    required this.retryLabel,
-  });
-
-  final String text;
-  final VoidCallback onRetry;
-  final String retryLabel;
-
-  @override
-  Widget build(BuildContext context) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(32),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(text, textAlign: TextAlign.center),
-          const SizedBox(height: 16),
-          FilledButton.tonal(onPressed: onRetry, child: Text(retryLabel)),
-        ],
-      ),
-    ),
-  );
 }
