@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_option.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
 
 /// A settings row showing its current choice, which opens a dialog to pick
 /// one of [options].

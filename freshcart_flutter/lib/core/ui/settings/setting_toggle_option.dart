@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 
 /// A settings row backed by a switch, with an optional description line.
 ///
