@@ -20,18 +20,8 @@ part 'onboarding_controller.g.dart';
 @riverpod
 class OnboardingController extends _$OnboardingController {
   @override
-  OnboardingState build() => OnboardingState(
-    selectedShops: [
-      OnboardingShopDraft(
-        name: 'Albert Heijn',
-        color: HexColor.fromArgb(0xFF2456A6),
-      ),
-      OnboardingShopDraft(
-        name: 'Colruyt',
-        color: HexColor.fromArgb(0xFFE8791A),
-      ),
-    ],
-  );
+  OnboardingState build() =>
+      OnboardingState(selectedShops: presetShops.take(2).toList());
 
   void updateDisplayName(String value) {
     state = state.copyWith(displayName: value, clearError: true);

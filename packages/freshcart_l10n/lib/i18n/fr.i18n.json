@@ -243,5 +243,12 @@
     "perList": "Par liste",
     "on": "Actives",
     "muted": "Muette"
+  },
+  "sync": {
+    "offline": "Hors ligne – les modifications seront synchronisées",
+    "syncing": {
+      "one": "Synchronisation de {{n}} modification…",
+      "other": "Synchronisation de {{n}} modifications…"
+    }
   }
 }

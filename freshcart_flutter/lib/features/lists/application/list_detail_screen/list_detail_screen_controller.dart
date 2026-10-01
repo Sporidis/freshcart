@@ -13,7 +13,7 @@ part 'list_detail_screen_controller.g.dart';
 
 /// The view model behind `ListDetailScreen` and its header menu: the live
 /// list, whether you own it, the active shop colour and the items mode, plus
-/// the list-level actions (delete, leave).
+/// the list-level actions (rename, delete, leave).
 ///
 /// The rows have their own view model, `ItemsSectionController`; this one
 /// only reads its mode.
@@ -37,6 +37,10 @@ class ListDetailScreenController extends _$ListDetailScreenController {
       loadFailure: outcome.loadFailure,
     );
   }
+
+  /// Renames this list -- the header's tap-to-edit title.
+  Future<Failure?> rename(String name) async =>
+      (await _lists.rename(listId, name)).failureOrNull;
 
   /// Deletes this list for everyone on it. Owner only, enforced server-side.
   Future<Failure?> deleteList() async =>

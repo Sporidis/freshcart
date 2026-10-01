@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
@@ -180,9 +181,7 @@ class _ListRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initial = list.name.trim().isEmpty
-        ? '?'
-        : list.name.trim()[0].toUpperCase();
+    final initial = initialFor(list.name);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
@@ -296,9 +295,7 @@ class _MemberAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = member.displayName.trim().isEmpty
-        ? '?'
-        : member.displayName.trim()[0].toUpperCase();
+    final initial = initialFor(member.displayName);
     return UserAvatar(
       seed: member.userId.value,
       initial: initial,

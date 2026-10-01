@@ -1,4 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/clock/clock_provider.dart';
+import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -53,3 +55,13 @@ Future<List<NameHistoryEntry>> recentNames(Ref ref, ListId listId) async {
     Err<List<NameHistoryEntry>>() => const [],
   };
 }
+
+/// [recentNamesProvider], grouped into "This week" / "Last week" /
+/// "Earlier" against [clockProvider] -- what `SearchRecentlyBought` draws.
+/// Empty buckets all round while loading, the same "nothing to show yet" a
+/// brand-new list gets.
+@riverpod
+RecencyBuckets recentlyBought(Ref ref, ListId listId) => bucketByRecency(
+  ref.watch(recentNamesProvider(listId)).value ?? const <NameHistoryEntry>[],
+  ref.watch(clockProvider)(),
+);

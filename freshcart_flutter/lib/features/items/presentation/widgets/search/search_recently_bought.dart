@@ -4,10 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
+import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -36,7 +37,6 @@ class SearchRecentlyBought extends ConsumerWidget {
     required this.t,
     required this.vm,
     required this.report,
-    this.now = DateTime.now,
     super.key,
   });
 
@@ -47,21 +47,13 @@ class SearchRecentlyBought extends ConsumerWidget {
   final ItemsSectionController vm;
   final void Function(Failure?, {VoidCallback? onRetry}) report;
 
-  /// Clock used to bucket entries by recency. Defaults to the real wall
-  /// clock; tests override it so fixtures anchored to a fixed date stay
-  /// correct regardless of when the test actually runs.
-  final DateTime Function() now;
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final entries =
-        ref.watch(recentNamesProvider(listId)).value ??
-        const <NameHistoryEntry>[];
+    final buckets = ref.watch(recentlyBoughtProvider(listId));
     // A brand-new list, or one where nothing has ever been added, simply has
     // no history yet -- not an error state, just nothing to show.
-    if (entries.isEmpty) return const SizedBox.shrink();
+    if (buckets.isEmpty) return const SizedBox.shrink();
 
-    final buckets = bucketByRecency(entries, now());
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurface.withValues(alpha: 0.42);
 
@@ -135,40 +127,6 @@ class SearchRecentlyBought extends ConsumerWidget {
   }
 }
 
-/// [NameHistoryEntry] grouped by recency; see [bucketByRecency].
-typedef RecencyBuckets = ({
-  List<NameHistoryEntry> thisWeek,
-  List<NameHistoryEntry> lastWeek,
-  List<NameHistoryEntry> earlier,
-});
-
-/// Buckets [entries] into "this week" / "last week" / "earlier" using
-/// rolling 7-day windows measured back from [now], not calendar-week
-/// boundaries -- the app ships five locales with different week-start
-/// conventions (some start Monday, some Sunday), and a rolling window means
-/// the same label reads the same regardless of which day a calendar week is
-/// considered to start on.
-///
-/// [entries] is expected already ordered by [NameHistoryEntry.lastUsedAt]
-/// descending (what [recentNamesProvider] returns) -- bucketing is a single
-/// pass that preserves that order within each group, not a sort of its own.
-RecencyBuckets bucketByRecency(List<NameHistoryEntry> entries, DateTime now) {
-  final thisWeek = <NameHistoryEntry>[];
-  final lastWeek = <NameHistoryEntry>[];
-  final earlier = <NameHistoryEntry>[];
-  for (final entry in entries) {
-    final age = now.difference(entry.lastUsedAt);
-    if (age <= const Duration(days: 7)) {
-      thisWeek.add(entry);
-    } else if (age <= const Duration(days: 14)) {
-      lastWeek.add(entry);
-    } else {
-      earlier.add(entry);
-    }
-  }
-  return (thisWeek: thisWeek, lastWeek: lastWeek, earlier: earlier);
-}
-
 /// The circular "+" that re-adds a name, with the design's own "pop" on tap
 /// (§06: "Each + re-adds with a pop") -- the same overshoot-then-settle
 /// shape `ItemTile`'s own `_iconPop` already uses for its swipe-to-delete
@@ -212,9 +170,7 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
     if (_busy) return;
     setState(() => _busy = true);
     unawaited(_pop.forward(from: 0));
-    if (ref.read(hapticsControllerProvider).value ?? true) {
-      unawaited(HapticFeedback.lightImpact());
-    }
+    ref.haptic(HapticFeedback.lightImpact);
     await widget.onPressed();
     if (mounted) setState(() => _busy = false);
   }

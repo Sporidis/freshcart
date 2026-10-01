@@ -243,5 +243,12 @@
     "perList": "Per lijst",
     "on": "Aan",
     "muted": "Gedempt"
+  },
+  "sync": {
+    "offline": "Offline – wijzigingen worden later gesynchroniseerd",
+    "syncing": {
+      "one": "{{n}} wijziging synchroniseren…",
+      "other": "{{n}} wijzigingen synchroniseren…"
+    }
   }
 }

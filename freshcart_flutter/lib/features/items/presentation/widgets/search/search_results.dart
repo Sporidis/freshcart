@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
@@ -122,9 +122,7 @@ class _AddToListButtonState extends ConsumerState<_AddToListButton> {
   Future<void> _handleTap() async {
     if (_busy) return;
     setState(() => _busy = true);
-    if (ref.read(hapticsControllerProvider).value ?? true) {
-      unawaited(HapticFeedback.lightImpact());
-    }
+    ref.haptic(HapticFeedback.lightImpact);
     await widget.onPressed();
     if (mounted) setState(() => _busy = false);
   }
