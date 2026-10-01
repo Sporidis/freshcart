@@ -2505,3 +2505,35 @@ than the section labels above them. Settings also had two smaller issues:
   as #56 requires.
 - **One swatch picker.** Shop and avatar colours share `core/ui/ColorSwatchPicker`, which
   replaced three copies.
+
+## 102. Deleting a shop is a swipe that opens the delete sheet; the shop picker is the tab pill
+
+**Problem:**
+- **Delete was too easy to hit.** Every Manage shops row had a small ink trash icon beside its edit
+  chevron, so deleting a shop was one tap away and looked no more serious than editing it.
+- **The destructive choices didn't look destructive.** Inside the delete sheet, "Delete products
+  too" was one of three identical cards. The empty-shop confirm used the same ink primary button
+  as "Save changes".
+- **The picker hid the colour it was picking.** `ShopPicker`'s `ChoiceChip`s drew a checkmark
+  over the shop's dot on an ink fill, so a picked shop lost its colour.
+
+**Decision:**
+- **Delete is a right-to-left swipe** on the row, using the Motion spec's §10 numbers:
+  - commits at 40% of the row's width;
+  - the trash icon grows from 0.7 to 1.0 over the first 30%;
+  - `mediumImpact` fires and the icon pops to 1.15 as the threshold is crossed.
+
+  Unlike the spec's item swipe, crossing the threshold **opens the delete sheet** instead of
+  deleting. A shop's products need a decision first, so the sheet is the confirmation and the row
+  springs back. A `CustomSemanticsAction` makes the same action reachable for screen readers and
+  keyboards, which can't swipe.
+- **The delete sheet separates safe from destructive.** The safe options come first, each with a
+  chevron. A divider follows, then the destructive option, tinted red with no chevron. The
+  empty-shop confirm is a red button named for what it deletes ("Delete Colruyt").
+- **`ShopPicker` is built from `ShopTabPill`**, so a picked shop is filled with its own colour,
+  exactly like its tab. "No shop" behaves like "All".
+- **Smaller changes:**
+  - Colours another shop already uses are marked on the swatch (a hollow ring, and "Used by…"
+    for screen readers), never blocked.
+  - The row being edited takes the previewed colour as its border.
+  - The FAB gave way to the shared dashed "add another" row.
