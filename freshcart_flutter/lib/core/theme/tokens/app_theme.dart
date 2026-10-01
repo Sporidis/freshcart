@@ -460,6 +460,21 @@ class AppTheme {
         ),
       ),
 
+      // The list's overflow menu (ListMenu). Left unthemed, PopupMenuButton
+      // falls back to Material 3 defaults -- a tinted surface, its own
+      // elevation shadow, 4px corners -- the one overlay in the app that
+      // wouldn't match the zero-elevation, ink-on-paper language every other
+      // surface (dialog, sheet, snackbar) is pinned to above.
+      popupMenuTheme: PopupMenuThemeData(
+        color: surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+        ),
+        textStyle: AppTextStyles.body.copyWith(color: ink),
+      ),
+
       drawerTheme: DrawerThemeData(
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,

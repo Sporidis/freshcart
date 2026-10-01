@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_tabs/shop_tabs_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
@@ -96,41 +97,39 @@ class ShopFilterBar extends ConsumerWidget {
         },
         child: ListView(
           scrollDirection: Axis.horizontal,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          // Horizontal matches the screen's own edge inset (Theme Reference
+          // §05); the inter-pill gap is an explicit SizedBox rather than
+          // doubled-up per-pill padding, so it reads as the design's own
+          // `gap: 8px` instead of two 4px halves that happen to add up.
+          padding: const EdgeInsets.symmetric(
+            vertical: 8,
+            horizontal: AppSpacing.screen,
+          ),
           children: [
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: ShopTabPill(
-                label: t.shops.all,
-                active: s.selected == null,
-                count: s.remainingIn(null),
-                onTapDown: (details) => tapOrigin = details.globalPosition,
-                onTap: () => select(null, tapOrigin),
-              ),
+            ShopTabPill(
+              label: t.shops.all,
+              active: s.selected == null,
+              count: s.remainingIn(null),
+              onTapDown: (details) => tapOrigin = details.globalPosition,
+              onTap: () => select(null, tapOrigin),
             ),
-            for (final shop in s.tabs)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8,
-                  horizontal: 4,
+            for (final shop in s.tabs) ...[
+              const SizedBox(width: AppSpacing.gapSmall),
+              ShopTabPill(
+                label: shop.name,
+                active: s.selected == shop.id,
+                color: Color(
+                  ref.watch(effectiveShopColorProvider(shop)).argb,
                 ),
-                child: ShopTabPill(
-                  label: shop.name,
-                  active: s.selected == shop.id,
-                  color: Color(
-                    ref.watch(effectiveShopColorProvider(shop)).argb,
-                  ),
-                  count: s.remainingIn(shop.id),
-                  onTapDown: (details) => tapOrigin = details.globalPosition,
-                  onTap: () => select(shop.id, tapOrigin),
-                ),
+                count: s.remainingIn(shop.id),
+                onTapDown: (details) => tapOrigin = details.globalPosition,
+                onTap: () => select(shop.id, tapOrigin),
               ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-              child: _AddShopPill(
-                tooltip: t.shops.add,
-                onTap: () => addShop(context, ref, listId, s.allShops),
-              ),
+            ],
+            const SizedBox(width: AppSpacing.gapSmall),
+            _AddShopPill(
+              tooltip: t.shops.add,
+              onTap: () => addShop(context, ref, listId, s.allShops),
             ),
           ],
         ),

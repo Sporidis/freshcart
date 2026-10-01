@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/checked_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/check_circle.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
@@ -45,9 +46,13 @@ class ItemRowContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurfaceVariant;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppSpacing.rowVertical,
+        horizontal: 16,
+      ),
       child: Row(
         children: [
           if (dragHandle != null) ...[dragHandle!, const SizedBox(width: 8)],
@@ -56,17 +61,17 @@ class ItemRowContent extends StatelessWidget {
             onChanged: onChanged,
             fillProgress: fillProgress,
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.gap),
           Container(
             decoration: BoxDecoration(
               color: shopColor ?? Colors.transparent,
               shape: BoxShape.circle,
             ),
-            width: 10,
-            height: 10,
+            width: AppSizes.shopDot,
+            height: AppSizes.shopDot,
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(width: AppSpacing.gap),
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -75,10 +80,7 @@ class ItemRowContent extends StatelessWidget {
                 StrikeThrough(
                   progress: strikeProgress,
                   color: muted,
-                  child: Text(
-                    item.name,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+                  child: Text(item.name, style: theme.textTheme.bodyLarge),
                 ),
                 ?_buildSubtitle(muted),
               ],
@@ -91,7 +93,7 @@ class ItemRowContent extends StatelessWidget {
             child: isMenuClosed
                 ? Text(
                     'x${item.quantity}',
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: theme.textTheme.bodySmall,
                   )
                 : QuantityStepper(
                     quantity: item.quantity,
@@ -115,7 +117,14 @@ class ItemRowContent extends StatelessWidget {
   /// visible even after the item is in the trolley, same priority
   /// `item_tile.dart`'s own `_buildSubtitle` gives.
   Widget? _buildSubtitle(Color muted) {
-    if (item.hasNote) return Text(item.note!.text);
+    if (item.hasNote) {
+      return Text(
+        item.note!.text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: AppTextStyles.caption.copyWith(color: muted),
+      );
+    }
 
     final member = checkedByMember;
     if (!isChecked || member == null) return null;
@@ -123,7 +132,7 @@ class ItemRowContent extends StatelessWidget {
       t.items.checkedBy(name: member.displayName),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(color: muted, fontSize: 12),
+      style: AppTextStyles.caption.copyWith(color: muted),
     );
   }
 }

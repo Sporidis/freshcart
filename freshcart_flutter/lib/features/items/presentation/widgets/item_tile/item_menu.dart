@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -103,15 +104,17 @@ class ItemMenu extends StatelessWidget {
                     // white card used to stay white in dark mode too, a
                     // bright rectangle stamped over an otherwise dark screen.
                     color: scheme.surface,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(AppRadii.card),
                     boxShadow: [
                       // A plain black shadow either way: an elevation shadow
                       // simulates cast light, not surface colour, the same
                       // reasoning the barrier above stays literal black.
+                      // Values from Flow 03 "Hold an item" -- a card that
+                      // has actually lifted off the list, not a flat menu.
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
+                        color: Colors.black.withValues(alpha: 0.26),
+                        blurRadius: 34,
+                        offset: const Offset(0, 14),
                       ),
                     ],
                   ),
