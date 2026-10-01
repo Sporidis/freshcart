@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/dashed_add_row.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_state.dart';
@@ -46,10 +47,9 @@ class ManageShopsScreen extends ConsumerWidget {
       body: switch (s) {
         // The same empty-state layout every other screen uses, with the one
         // thing worth doing about a failed load: trying again.
-        ManageShopsScreenState(loadFailure: final failure?) => EmptyState(
-          icon: Icons.cloud_off_outlined,
-          title: t.errors.unexpectedTitle,
-          body: failure.toMessage(t),
+        ManageShopsScreenState(loadFailure: final failure?) => FailureState(
+          failure: failure,
+          t: t,
           action: ElevatedButton(
             onPressed: vm.retry,
             child: Text(t.common.retry),

@@ -83,6 +83,9 @@ class ItemsSectionController extends _$ItemsSectionController {
     return ItemsMode.browse;
   }
 
+  /// Re-fetches the items after a failed load -- the error state's Retry.
+  void retryLoad() => ref.invalidate(itemsControllerProvider(_listId));
+
   // ── Rows ────────────────────────────────────────────────────────────────
 
   Future<Failure?> toggle(ShoppingItem item) => _items.toggle(item);
