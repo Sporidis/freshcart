@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/features/items/data/repositories/item_reposito
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -652,7 +653,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Move to'), findsOneWidget);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ShopPicker),
+          matching: find.text('Bakery'),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(itemRepository.moveManyCalls.single.shopId, bakery.id);
@@ -679,7 +685,12 @@ void main() {
         await enterSelection(tester, 'Milk');
         await tester.tap(find.text('Move'));
         await tester.pumpAndSettle();
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(ShopPicker),
+            matching: find.text('Bakery'),
+          ),
+        );
         await tester.pumpAndSettle();
 
         expect(find.text('1 selected'), findsOneWidget);
