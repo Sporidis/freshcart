@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
 
 /// Renames and recolours a shop, or creates a new one when [shop] is null.
@@ -141,20 +142,11 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
           const SizedBox(height: 16),
           Text(t.shops.colorLabel, style: theme.textTheme.bodySmall),
           const SizedBox(height: 10),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: [
-              for (final swatch in AppColors.presetShopColors)
-                _Swatch(
-                  // Keyed by its colour so a test can tap a specific swatch
-                  // rather than guessing at an index.
-                  key: ValueKey('swatch-${swatch.toARGB32()}'),
-                  color: swatch,
-                  selected: _color.argb == swatch.toARGB32(),
-                  onTap: () => _pick(HexColor.fromArgb(swatch.toARGB32())),
-                ),
-            ],
+          ColorSwatchPicker(
+            colors: AppColors.presetShopColors,
+            selected: Color(_color.argb),
+            semanticLabel: t.shops.colorLabel,
+            onSelected: (color) => _pick(HexColor.fromArgb(color.toARGB32())),
           ),
           // A warning, never a block: two similar colours are a bad idea, not
           // an invalid one, and the household may have its own reasons.
@@ -180,56 +172,6 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Swatch extends StatelessWidget {
-  const _Swatch({
-    required this.color,
-    required this.selected,
-    required this.onTap,
-    super.key,
-  });
-
-  final Color color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final ink = Theme.of(context).colorScheme.onSurface;
-    return Semantics(
-      selected: selected,
-      button: true,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: AnimatedContainer(
-          duration: AppMotion.durationFor(context, AppMotion.micro),
-          width: 34,
-          height: 34,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-            border: selected ? Border.all(color: ink, width: 2.5) : null,
-          ),
-          child: selected
-              ? const Center(
-                  child: SizedBox(
-                    width: 10,
-                    height: 10,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-                )
-              : null,
-        ),
       ),
     );
   }

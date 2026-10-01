@@ -5,8 +5,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 
 class AddShopSheet extends ConsumerStatefulWidget {
   const AddShopSheet({required this.onAdd, super.key});
@@ -85,20 +85,11 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
             const SizedBox(height: AppSpacing.gap),
             Text(t.shops.colorLabel, style: theme.textTheme.labelMedium),
             const SizedBox(height: AppSpacing.gapSmall),
-            Wrap(
-              spacing: AppSpacing.gap,
-              runSpacing: AppSpacing.gapSmall,
-              children: [
-                for (final (index, color) in AppColors.presetShopColors.indexed)
-                  ColorChoice(
-                    color: color,
-                    // Numbered, so a screen reader can tell eight otherwise
-                    // identically-announced swatches apart.
-                    label: '${t.shops.colorLabel} ${index + 1}',
-                    selected: color == _selectedColor,
-                    onTap: () => setState(() => _selectedColor = color),
-                  ),
-              ],
+            ColorSwatchPicker(
+              colors: AppColors.presetShopColors,
+              selected: _selectedColor,
+              semanticLabel: t.shops.colorLabel,
+              onSelected: (color) => setState(() => _selectedColor = color),
             ),
             const SizedBox(height: AppSpacing.sheetH),
             // The app's themed primary (ink, full width), the same button
@@ -109,66 +100,6 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
               label: Text(t.shops.add),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-class ColorChoice extends StatelessWidget {
-  const ColorChoice({
-    required this.color,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-    super.key,
-  });
-
-  final Color color;
-
-  /// What a screen reader announces for this swatch.
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: selected,
-      label: label,
-      child: InkWell(
-        onTap: onTap,
-        customBorder: const CircleBorder(),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: Center(
-            child: AnimatedContainer(
-              duration: AppMotion.quick,
-              curve: AppMotion.pop,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: selected
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Colors.transparent,
-                  width: 2,
-                ),
-              ),
-              child: CircleAvatar(
-                radius: 18,
-                backgroundColor: color,
-                child: AnimatedScale(
-                  scale: selected ? 1 : 0,
-                  duration: AppMotion.quick,
-                  curve: AppMotion.pop,
-                  child: const Icon(Icons.check, color: Colors.white),
-                ),
-              ),
-            ),
-          ),
         ),
       ),
     );
