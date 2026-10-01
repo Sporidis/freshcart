@@ -4,6 +4,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_tabs/shop_tabs_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
@@ -157,7 +158,7 @@ class _AddShopPill extends StatelessWidget {
           onTap: onTap,
           customBorder: const StadiumBorder(),
           child: CustomPaint(
-            painter: _DashedStadiumBorder(
+            painter: DashedOutlinePainter(
               color: theme.colorScheme.outline.withValues(alpha: 0.4),
             ),
             child: const Padding(
@@ -169,45 +170,4 @@ class _AddShopPill extends StatelessWidget {
       ),
     );
   }
-}
-
-/// A dashed stadium outline -- Flutter has no built-in dashed [Border], and
-/// this is the app's only dashed shape, so a small hand-rolled painter beats
-/// pulling in a dependency for one outline.
-class _DashedStadiumBorder extends CustomPainter {
-  const _DashedStadiumBorder({required this.color});
-
-  final Color color;
-
-  static const double _dash = 4;
-  static const double _gap = 3;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          Offset.zero & size,
-          Radius.circular(size.height / 2),
-        ),
-      );
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        canvas.drawPath(
-          metric.extractPath(distance, distance + _dash),
-          paint,
-        );
-        distance += _dash + _gap;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedStadiumBorder oldDelegate) =>
-      oldDelegate.color != color;
 }
