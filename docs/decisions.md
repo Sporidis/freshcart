@@ -2577,3 +2577,42 @@ in multi-select and rearrange modes, as the spec requires.
   the pause, now in destructive red like delete.
 - **Shared avatars.** `MemberAvatarStack` moved to `core/ui`, shared by the drawer and the
   Household row.
+
+## 105. Presentation consistency audit: tokens where they earn it, literals where they don't
+
+**Problem:** an audit of every `features/*/presentation` file found drift at the edges of the
+token system rather than in its middle:
+- **Copies of the theme.** Five hand-styled red buttons, `AppColors.destructive` in a dozen
+  places beside a widget whose own comment said to use `colorScheme.error`, `isDark ? x : y`
+  surface and border picks, a private copy of `AppTheme`'s on-colour formula, and three
+  invented "muted" alphas (0.42, 0.42, 0.45) next to the real one (0.40).
+- **Four ways to fail a load.** `ErrorScreen`, a private `_Message`, a bare `Text`, and a
+  hand-built `EmptyState` with its own icon.
+- **Small targets.** A 26px re-add button, 31px suggestion chips, a 16px-tall collapse row, and
+  40px shop pills, while `AppSpacing.minTapTarget = 44` existed and was barely used.
+- **A spacing "scale" of four numbers** (20/12/8/13), so most spacing was literal by necessity.
+
+**Decision:**
+- **Read colours through the theme, never beside it.** `colorScheme.error`, `surfaceContainer`
+  and `outline` already are those tokens (`AppTheme` pins them), so a widget that reads
+  `AppColors` directly opts out of `forShop` theming for no gain. `DestructiveButton` comes in
+  two sizes, because the app has two primaries: a compact dialog action and the full-width sheet
+  `ElevatedButton`. The Filled/Elevated split was never drift; only the red was copied.
+- **One failure state.** `FailureState` is `ErrorScreen`'s body without the scaffold: the
+  failure's *type* picks icon and wording, and it always has exactly one action.
+- **`TapTarget` wraps the whole control and repeats its handler.** Flutter hit-tests by layout
+  box, so the target can only grow if the box grows. Wrapping *outside* the `InkWell` keeps the
+  ripple: the inner recognizer wins taps on the control, and the outer one only catches the
+  margin. The tests check that it never fires twice.
+- **A 4-pt spacing scale** (`xs`–`xxl`), with the semantic names (`screen`, `gap`, …) kept as
+  aliases. The rule is that *layout* spacing (gutters, gaps between stacked blocks, sheet insets)
+  uses tokens, and a component's *internal* geometry (a pill's 9×3, the stepper's 2px ring, the
+  welcome mockup) stays a private literal. A token per pixel value would be a list, not a scale.
+- **No shadow tokens, deliberately.** All five shadows are different, design-specified values
+  (one is animated and shop-tinted), and none is repeated. Tokens would only rename them.
+- **Sheets share one recipe:** `sheetH` sides, 0 at the top (the drag handle is the gap),
+  keyboard inset + `xl` at the bottom, `headlineSmall` title.
+
+**Left as is:** `CheckCircle` stays 22px because the whole item row is its tap target. The
+quantity stepper's 30px buttons are under 44, but fixing them would visibly change the stepper's
+ring, so that's a design call rather than a refactor.
