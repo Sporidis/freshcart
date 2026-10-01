@@ -6,8 +6,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/delete_item_with_undo.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -81,21 +83,37 @@ class SearchResults extends StatelessWidget {
     return ListView(
       children: [
         for (final item in matches)
-          ItemTile(
+          SwipeToDelete(
             key: ValueKey(item.id.value),
-            item: item,
-            t: t,
-            shopColor: dotFor(item.shopId),
-            checkedByMember: item.checkedBy == null
-                ? null
-                : state.list.memberFor(item.checkedBy!),
-            onToggle: () async => report(await vm.toggle(item)),
-            onDelete: () => vm.swipeDelete(item),
-            onQuantityChanged: (quantity) async => report(
-              await vm.setQuantity(item, quantity),
+            dismissKey: ValueKey('swipe-${item.id.value}'),
+            semanticLabel: t.common.delete,
+            onSwipe: () async => true,
+            onDismissed: () => deleteItemWithUndo(
+              context,
+              item: item,
+              delete: vm.swipeDelete,
+              t: t,
             ),
-            onEdit: () => onEdit(item),
-            highlightQuery: trimmed,
+            child: ItemTile(
+              item: item,
+              t: t,
+              shopColor: dotFor(item.shopId),
+              checkedByMember: item.checkedBy == null
+                  ? null
+                  : state.list.memberFor(item.checkedBy!),
+              onToggle: () async => report(await vm.toggle(item)),
+              onDelete: () => deleteItemWithUndo(
+                context,
+                item: item,
+                delete: vm.swipeDelete,
+                t: t,
+              ),
+              onQuantityChanged: (quantity) async => report(
+                await vm.setQuantity(item, quantity),
+              ),
+              onEdit: () => onEdit(item),
+              highlightQuery: trimmed,
+            ),
           ),
       ],
     );
