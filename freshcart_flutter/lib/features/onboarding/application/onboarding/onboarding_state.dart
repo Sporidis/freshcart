@@ -10,6 +10,19 @@ class OnboardingShopDraft {
   final HexColor color;
 }
 
+/// The shops the "Where do you shop?" step offers out of the box, in order.
+///
+/// The one place they're named: the wizard pre-selects the first two of
+/// these, and the step lists all of them plus anything the user typed in.
+final List<OnboardingShopDraft> presetShops = [
+  OnboardingShopDraft(
+    name: 'Albert Heijn',
+    color: HexColor.fromArgb(0xFF2456A6),
+  ),
+  OnboardingShopDraft(name: 'Colruyt', color: HexColor.fromArgb(0xFFE8791A)),
+  OnboardingShopDraft(name: 'Delhaize', color: HexColor.fromArgb(0xFFC0392B)),
+];
+
 /// The onboarding wizard's draft answers.
 ///
 /// Nothing here is persisted until [OnboardingController.finish] submits it —
@@ -61,6 +74,14 @@ class OnboardingState {
       createdList: createdList ?? this.createdList,
     );
   }
+
+  /// Every shop the add-shop step lists: the presets, then any shop the
+  /// user added themselves (presets never twice).
+  List<OnboardingShopDraft> get shopOptions => [
+    ...presetShops,
+    for (final shop in selectedShops)
+      if (!presetShops.any((preset) => preset.name == shop.name)) shop,
+  ];
 
   bool isShopSelected(String name) =>
       selectedShops.any((shop) => shop.name == name);

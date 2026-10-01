@@ -92,6 +92,7 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
                   .map(
                     (color) => ColorChoice(
                       color: color,
+                      label: t.shops.colorLabel,
                       selected: color == _selectedColor,
                       onTap: () => setState(() => _selectedColor = color),
                     ),
@@ -117,12 +118,16 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
 class ColorChoice extends StatelessWidget {
   const ColorChoice({
     required this.color,
+    required this.label,
     required this.selected,
     required this.onTap,
     super.key,
   });
 
   final Color color;
+
+  /// What a screen reader announces for this swatch.
+  final String label;
   final bool selected;
   final VoidCallback onTap;
 
@@ -131,7 +136,7 @@ class ColorChoice extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      label: 'Tab colour',
+      label: label,
       child: InkWell(
         onTap: onTap,
         customBorder: const CircleBorder(),

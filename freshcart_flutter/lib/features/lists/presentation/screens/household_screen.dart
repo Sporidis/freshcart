@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/lists/application/household_screen/household_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/household_screen/household_screen_state.dart';
@@ -127,9 +128,7 @@ class _MemberRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initial = member.displayName.trim().isEmpty
-        ? '?'
-        : member.displayName.trim()[0].toUpperCase();
+    final initial = initialFor(member.displayName);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowVertical),

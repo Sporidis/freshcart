@@ -243,5 +243,12 @@
     "perList": "Bawat listahan",
     "on": "Naka-on",
     "muted": "Naka-mute"
+  },
+  "sync": {
+    "offline": "Offline – masi-sync ang mga pagbabago mamaya",
+    "syncing": {
+      "one": "Sini-sync ang {{n}} pagbabago…",
+      "other": "Sini-sync ang {{n}} pagbabago…"
+    }
   }
 }

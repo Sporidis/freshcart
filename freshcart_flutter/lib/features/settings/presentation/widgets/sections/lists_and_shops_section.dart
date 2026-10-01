@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
+import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
+    show showCreateListDialog;
+import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_state.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/section_label.dart';
-import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Settings screen's "Lists & shops" group: doors into managing lists,
-/// shops, and the household for [allUserLists].
+/// The Settings screen's "Lists & shops" group: doors into each list's
+/// settings, and into making a new one. Draws [rows] as given -- counts and
+/// "Open now" are already decided by `SettingsScreenController`.
 class ListsAndShopsSection extends StatelessWidget {
-  const ListsAndShopsSection({required this.t, this.allUserLists, super.key});
+  const ListsAndShopsSection({required this.t, required this.rows, super.key});
 
   final Translations t;
-  final List<ShoppingList>? allUserLists;
+  final List<SettingsListRow> rows;
 
   @override
   Widget build(BuildContext context) {
@@ -27,24 +27,24 @@ class ListsAndShopsSection extends StatelessWidget {
           subtitle: t.settings.listsAndShopsSubtitle,
         ),
         const SizedBox(height: 12),
-        if (allUserLists != null && allUserLists!.isNotEmpty) ...[
-          for (final list in allUserLists!)
+        if (rows.isNotEmpty) ...[
+          for (final row in rows)
             _ListOption(
               t: t,
-              id: list.id,
-              onTap: () => context.push(Routes.listSettings(list.id)),
-              isOpen: list.id == allUserLists!.first.id,
+              row: row,
+              onTap: () => context.push(Routes.listSettings(row.list.id)),
             ),
-
           TextButton(
-            onPressed: () {},
-            // onPressed: () => context.push(Routes.createList),
+            // The same dialog the drawer and the empty lists screen open --
+            // one flow, three doors.
+            onPressed: () => showCreateListDialog(
+              context,
+              ProviderScope.containerOf(context, listen: false),
+              t,
+            ),
             child: Text(
               t.lists.create,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -53,34 +53,24 @@ class ListsAndShopsSection extends StatelessWidget {
   }
 }
 
-class _ListOption extends ConsumerWidget {
-  const _ListOption({
-    required this.t,
-    required this.id,
-    required this.onTap,
-    this.isOpen = false,
-  });
+class _ListOption extends StatelessWidget {
+  const _ListOption({required this.t, required this.row, required this.onTap});
 
   final Translations t;
-  final ListId id;
+  final SettingsListRow row;
   final VoidCallback onTap;
-  final bool isOpen;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final list = ref.watch(listByIdProvider(id)).dataOrNull;
-
-    final shops = ref.watch(shopsControllerProvider(id)).dataOrNull;
-    final members = list?.members ?? [];
-
+  Widget build(BuildContext context) {
+    final members = row.list.members.length;
+    final shopCount = row.shopCount;
     return ListTile(
-      title: Text(list?.name ?? ''),
+      title: Text(row.list.name),
       subtitle: Row(
         children: [
-          if (isOpen) Text('${t.settings.openNow} · '),
-          if (shops != null) Text(t.settings.shopCount(n: shops.length)),
-          if (members.isNotEmpty)
-            Text(' · ${t.settings.memberCount(n: members.length)}'),
+          if (row.isOpen) Text('${t.settings.openNow} · '),
+          if (shopCount != null) Text(t.settings.shopCount(n: shopCount)),
+          if (members > 0) Text(' · ${t.settings.memberCount(n: members)}'),
         ],
       ),
       onTap: onTap,

@@ -243,5 +243,12 @@
     "perList": "Per list",
     "on": "On",
     "muted": "Muted"
+  },
+  "sync": {
+    "offline": "Offline – changes will sync",
+    "syncing": {
+      "one": "Syncing {{n}} change…",
+      "other": "Syncing {{n}} changes…"
+    }
   }
 }

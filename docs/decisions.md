@@ -2365,3 +2365,36 @@ translated in `build`.
 `ProviderContainer`. That only worked while the screen depended on the keep-alive
 `ProfileController`. It now publishes through the fake port's `authStateChanges()`, the way a real
 change arrives.
+
+## 97. Presentation audit: rules out of widgets, and a `clockProvider` seam
+
+**Problem:** an audit of every screen and widget against #93 found widgets that decided or
+computed things. One was a real bug: Settings marked the *first* list "Open now", while the app
+opens to the *last-opened* one (`listsLandingTarget`). The widget had rebuilt a rule that already
+existed and got it wrong. Other leaks: the offline banner combined two providers into
+"syncing = online and writes queued", with English-only strings. The list header renamed through
+a second notifier. The upgrade nudge's visibility rule sat in the widget. Recency bucketing and
+the onboarding preset shops lived in widget files, and the presets also existed in the controller.
+Notifications and Settings each combined two or more sources without a VM, and the notification
+toggles dropped the `Failure` their writes returned.
+
+**Decision -- each rule moves to the layer that owns it.**
+- `SettingsScreenController` and `NotificationsScreenController` combine their sources (#93's
+  test). "Open now" reads `listsLandingTargetProvider`, so it cannot drift from where `/lists`
+  lands.
+- The banner's three cases become `syncBannerProvider`, which returns a sealed `SyncBanner`, so
+  the widget's `switch` is exhaustive and only draws. `showUpgradeNudgeProvider` does the same for
+  the nudge.
+- Rename goes through `ListDetailScreenController.rename`, and the title is its own small
+  widget, so the app bar keeps one notifier.
+- `presetShops` and `OnboardingState.shopOptions` are the one source for the add-shop step.
+
+**Decision -- `clockProvider` instead of a `now` constructor parameter.** Bucketing "Recently
+bought" by age moved into `recentlyBoughtProvider`. A provider can't take a clock argument, because
+a new `DateTime` on every build would be a new family key each time. So "now" is injected the
+Riverpod way: a keep-alive `clockProvider` that tests override with a fixed time. Reach for it
+wherever a provider compares against the current time, not `DateTime.now()`.
+
+**Small shared helpers:** `initialFor` (grapheme-safe, replacing seven copies where most did
+`trim()[0]` and split emoji) and `WidgetRef.haptic` (the "haptics on unless turned off" default
+in one place, replacing four copies).

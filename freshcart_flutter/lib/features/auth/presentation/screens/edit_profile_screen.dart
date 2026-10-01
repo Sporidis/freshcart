@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/edit_profile_screen/edit_profile_screen_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -287,9 +288,7 @@ class _AvatarPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final initial = user.displayName.trim().isEmpty
-        ? '?'
-        : user.displayName.trim()[0].toUpperCase();
+    final initial = initialFor(user.displayName);
 
     return Center(
       child: UserAvatar(

@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/move_to_shop_sheet.dart';
-import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/list_menu.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/member_avatar_button.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -219,23 +219,32 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    EditableListTitle(
-                      name: list.name,
-                      onRename: (name) async {
-                        final result = await ref
-                            .read(listsControllerProvider.notifier)
-                            .rename(list.id, name);
-                        return switch (result) {
-                          Ok<ShoppingList>() => null,
-                          Err<ShoppingList>(:final failure) =>
-                            failure.toMessage(t),
-                        };
-                      },
-                    ),
+                    _ListTitle(list: list, t: t),
                   ],
                 ),
         ),
       },
     );
   }
+}
+
+/// The tap-to-rename title. Its own widget so the rename goes through
+/// [ListDetailScreenController] -- the app bar around it already talks to
+/// the items view model, and a widget gets one notifier.
+class _ListTitle extends ConsumerWidget {
+  const _ListTitle({required this.list, required this.t});
+
+  final ShoppingList list;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) => EditableListTitle(
+    name: list.name,
+    onRename: (name) async {
+      final failure = await ref
+          .read(listDetailScreenControllerProvider(list.id).notifier)
+          .rename(name);
+      return failure?.toMessage(t);
+    },
+  );
 }

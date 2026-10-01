@@ -3,15 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
+import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_controller.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/about_section.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/account_card.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/lists_and_shops_section.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/preferences_section.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/profile_header.dart';
 
-/// Account-level settings, reached from the drawer.
+/// Account-level settings, reached from the drawer. Reads
+/// [SettingsScreenController]; each section below owns its own writes.
 class SettingsScreen extends ConsumerWidget {
   /// Creates the settings screen.
   const SettingsScreen({super.key});
@@ -19,9 +19,8 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final user = ref.watch(profileControllerProvider);
-    final account = user.dataOrNull;
-    final lists = ref.watch(listsControllerProvider).dataOrNull ?? const [];
+    final s = ref.watch(settingsScreenControllerProvider);
+    final account = s.profile.dataOrNull;
 
     return Scaffold(
       appBar: AppBar(
@@ -31,12 +30,12 @@ class SettingsScreen extends ConsumerWidget {
       body: ListView(
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
-          ProfileHeader(user: user, t: t),
+          ProfileHeader(user: s.profile, t: t),
           account == null
               ? const SizedBox.shrink()
               : AccountCard(user: account, t: t),
           const SizedBox(height: 12),
-          ListsAndShopsSection(t: t, allUserLists: lists),
+          ListsAndShopsSection(t: t, rows: s.lists),
           const SizedBox(height: 12),
           PreferencesSection(t: t),
           const SizedBox(height: 12),
