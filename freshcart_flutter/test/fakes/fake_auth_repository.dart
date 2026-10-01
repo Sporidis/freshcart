@@ -28,6 +28,13 @@ class FakeAuthRepository implements AuthPort {
   @override
   Stream<AuthUser?> authStateChanges() => _changes.stream;
 
+  /// Makes [next] the current identity and publishes it, the way the real
+  /// port does after a change made elsewhere (another device, the server).
+  void publish(AuthUser next) {
+    user = Ok(next);
+    _changes.add(next);
+  }
+
   @override
   Future<Result<AuthUser>> signInAnonymously() async => user;
 

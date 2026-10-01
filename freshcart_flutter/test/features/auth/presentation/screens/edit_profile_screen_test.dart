@@ -86,7 +86,9 @@ void main() {
     await pump(tester);
     expect(find.text('Remove photo'), findsNothing);
 
-    auth.user = Ok(
+    // Through the port's change stream, on the same container -- the way a
+    // photo set elsewhere really reaches this screen.
+    auth.publish(
       AuthUser(
         id: UserId('user-1'),
         displayName: 'Nikolaos',
@@ -94,7 +96,7 @@ void main() {
         avatarPhotoUrl: 'https://example.test/avatars/user-1.jpg',
       ),
     );
-    await pump(tester);
+    await tester.pumpAndSettle();
 
     expect(find.text('Remove photo'), findsOneWidget);
   });
