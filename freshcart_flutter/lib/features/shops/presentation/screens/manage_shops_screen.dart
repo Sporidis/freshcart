@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
@@ -9,15 +8,20 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_state.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
-import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
-import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The shops on one list, editable.
 /// TODO: improve the UI and UX for managing shops, including better handling of empty states and error messages.
+///
+/// Reads [ManageShopsScreenController]. The edit and delete sheets stay
+/// here, since they need a `BuildContext`; every step around them -- the
+/// write, the item count, clearing the colour preview -- comes from the VM.
 class ManageShopsScreen extends ConsumerWidget {
   /// Creates the screen for [listId].
   const ManageShopsScreen({required this.listId, super.key});
@@ -28,23 +32,20 @@ class ManageShopsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final shops = ref.watch(shopsControllerProvider(listId));
-    final isEmpty = shops.dataOrNull?.isEmpty ?? false;
+    final s = ref.watch(manageShopsScreenControllerProvider(listId));
+    final vm = ref.read(manageShopsScreenControllerProvider(listId).notifier);
 
     return Scaffold(
       appBar: AppBar(title: Text(t.shops.manage)),
-      body: switch (shops) {
-        AsyncLoading<Result<List<Shop>>>() => const Center(
+      body: switch (s) {
+        ManageShopsScreenState(loadFailure: final failure?) => Center(
+          child: Text(failure.toMessage(t)),
+        ),
+        ManageShopsScreenState(shops: null) => const Center(
           child: CircularProgressIndicator(),
         ),
-        AsyncError<Result<List<Shop>>>() => Center(
-          child: Text(t.errors.unexpected),
-        ),
-        AsyncOutcome<List<Shop>>(:final value?) => switch (value) {
-          Err<List<Shop>>(:final failure) => Center(
-            child: Text(failure.toMessage(t)),
-          ),
-          Ok<List<Shop>>(value: final loaded) when loaded.isEmpty => EmptyState(
+        ManageShopsScreenState(shops: final loaded?) when loaded.isEmpty =>
+          EmptyState(
             icon: Icons.storefront_outlined,
             title: t.shops.none,
             body: t.items.emptyShopBody,
@@ -58,26 +59,21 @@ class ManageShopsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          Ok<List<Shop>>(value: final loaded) => ListView(
-            padding: const EdgeInsets.all(AppSpacing.screen),
-            children: [
-              for (final shop in loaded)
-                _ShopRow(shop: shop, siblings: loaded, listId: listId),
-            ],
-          ),
-        },
+        ManageShopsScreenState(shops: final loaded?) => ListView(
+          padding: const EdgeInsets.all(AppSpacing.screen),
+          children: [
+            for (final shop in loaded)
+              _ShopRow(shop: shop, siblings: loaded, vm: vm),
+          ],
+        ),
       },
       // Hidden while the empty state is up, matching ListsScreen: the empty
       // state already offers this as its one action.
-      floatingActionButton: isEmpty
+      floatingActionButton: s.isEmpty
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => addShop(
-                context,
-                ref,
-                listId,
-                shops.dataOrNull ?? const [],
-              ),
+              onPressed: () =>
+                  addShop(context, ref, listId, s.shops ?? const <Shop>[]),
               icon: const Icon(Icons.add),
               label: Text(t.shops.add),
             ),
@@ -89,16 +85,17 @@ class _ShopRow extends ConsumerWidget {
   const _ShopRow({
     required this.shop,
     required this.siblings,
-    required this.listId,
+    required this.vm,
   });
 
   final Shop shop;
   final List<Shop> siblings;
-  final ListId listId;
+  final ManageShopsScreenController vm;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final t = ref.watch(translationsProvider);
     // Through the preview, so a colour being tried in the sheet shows here
     // too — this row sits behind it.
     final color = ref.watch(effectiveShopColorProvider(shop));
@@ -106,7 +103,7 @@ class _ShopRow extends ConsumerWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.gap),
       child: InkWell(
-        onTap: () => _edit(context, ref),
+        onTap: () => _edit(context, t),
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: Container(
           padding: const EdgeInsets.all(14),
@@ -131,9 +128,9 @@ class _ShopRow extends ConsumerWidget {
                 child: Text(shop.name, style: theme.textTheme.titleMedium),
               ),
               IconButton(
-                onPressed: () => _delete(context, ref),
+                onPressed: () => _delete(context, t),
                 icon: const Icon(Icons.delete_outline, size: 20),
-                tooltip: ref.read(translationsProvider).shops.delete,
+                tooltip: t.shops.delete,
               ),
               const Icon(Icons.chevron_right, size: 20),
             ],
@@ -143,10 +140,7 @@ class _ShopRow extends ConsumerWidget {
     );
   }
 
-  Future<void> _edit(BuildContext context, WidgetRef ref) async {
-    final controller = ref.read(shopsControllerProvider(listId).notifier);
-    final t = ref.read(translationsProvider);
-
+  Future<void> _edit(BuildContext context, Translations t) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
@@ -154,36 +148,25 @@ class _ShopRow extends ConsumerWidget {
       builder: (_) => EditShopSheet(
         shop: shop,
         siblings: siblings,
-        onSave: ({required name, required color}) async {
-          final result = await controller.edit(shop, name: name, color: color);
-          return switch (result) {
-            Ok<Shop>() => null,
-            Err<Shop>(:final failure) => failure.toMessage(t),
-          };
-        },
+        onSave: ({required name, required color}) async =>
+            (await vm.edit(shop, name: name, color: color))?.toMessage(t),
       ),
     );
-    // Whether it saved or was dismissed, the preview must not outlive the
-    // sheet: an abandoned colour left tinting the app would be a lie about
-    // what is stored.
-    ref.read(shopColorPreviewControllerProvider.notifier).clear();
+    vm.endEdit();
   }
 
-  Future<void> _delete(BuildContext context, WidgetRef ref) async {
-    final controller = ref.read(shopsControllerProvider(listId).notifier);
-    final t = ref.read(translationsProvider);
-
-    // The count is fetched before asking, because it is the question: an empty
-    // shop needs no decision, a shop holding six products needs a real one.
-    final count = switch (await controller.itemCount(shop.id)) {
-      Ok<int>(:final value) => value,
-      Err<int>(:final failure) => failure,
-    };
-    if (!context.mounted) return;
-    if (count is Failure) {
-      showFailureSnackBar(context, failure: count, t: t);
-      return;
+  Future<void> _delete(BuildContext context, Translations t) async {
+    final int count;
+    switch (await vm.itemCountForDelete(shop)) {
+      case Ok(:final value):
+        count = value;
+      case Err(:final failure):
+        if (context.mounted) {
+          showFailureSnackBar(context, failure: failure, t: t);
+        }
+        return;
     }
+    if (!context.mounted) return;
 
     final choice = await showModalBottomSheet<ShopDeletion>(
       context: context,
@@ -191,19 +174,18 @@ class _ShopRow extends ConsumerWidget {
       showDragHandle: true,
       builder: (_) => DeleteShopSheet(
         shop: shop,
-        itemCount: count as int,
+        itemCount: count,
         siblings: siblings,
       ),
     );
     if (choice == null || !context.mounted) return;
 
-    final result = await controller.remove(
-      shop.id,
+    final failure = await vm.remove(
+      shop,
       disposition: choice.disposition,
       moveTo: choice.moveTo,
     );
-    if (!context.mounted) return;
-    if (result case Err<void>(:final failure)) {
+    if (failure != null && context.mounted) {
       showFailureSnackBar(context, failure: failure, t: t);
     }
   }
