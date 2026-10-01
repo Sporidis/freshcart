@@ -18,10 +18,18 @@ class NotificationsScreenController extends _$NotificationsScreenController {
       ref.read(notificationPreferencesControllerProvider.notifier);
 
   @override
-  NotificationsScreenState build() => NotificationsScreenState(
-    preferences: ref.watch(notificationPreferencesControllerProvider).value,
-    lists: ref.watch(listsControllerProvider).dataOrNull ?? const [],
-  );
+  NotificationsScreenState build() {
+    final preferences = ref.watch(notificationPreferencesControllerProvider);
+    return NotificationsScreenState(
+      preferences: preferences.dataOrNull,
+      preferencesFailure: preferences.loadFailure,
+      lists: ref.watch(listsControllerProvider).dataOrNull ?? const [],
+    );
+  }
+
+  /// Re-reads the push preferences after a failed load.
+  void retryPreferences() =>
+      ref.invalidate(notificationPreferencesControllerProvider);
 
   Future<Failure?> setItemAdded(bool value) => _preferences.setItemAdded(value);
 

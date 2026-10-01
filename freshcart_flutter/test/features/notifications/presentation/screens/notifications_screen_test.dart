@@ -154,5 +154,22 @@ void main() {
         ),
       );
     });
+
+    testWidgets(
+      'a failed load shows no toggles -- never defaults posing as the '
+      "user's choices -- and Retry brings them back",
+      (tester) async {
+        push.preferencesFailure = const Failure.network();
+        await pump(tester);
+
+        expect(find.byType(SettingToggleOption), findsNothing);
+
+        push.preferencesFailure = null;
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SettingToggleOption), findsNWidgets(3));
+      },
+    );
   });
 }

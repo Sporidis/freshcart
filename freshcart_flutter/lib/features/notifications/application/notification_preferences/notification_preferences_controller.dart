@@ -10,18 +10,13 @@ part 'notification_preferences_controller.g.dart';
 @riverpod
 class NotificationPreferencesController
     extends _$NotificationPreferencesController {
+  ///
+  /// A failed read stays an [Err] rather than falling back to defaults:
+  /// defaults drawn as switches look exactly like the user's real choices,
+  /// and flipping one would then set the opposite of what they meant.
   @override
-  Future<NotificationPreferences> build() async {
-    final result = await ref
-        .watch(pushRepositoryProvider)
-        .notificationPreferences();
-    return switch (result) {
-      Ok<NotificationPreferences>(:final value) => value,
-      // A failed read just means the toggles show their defaults this
-      // load, not an error worth its own screen tier.
-      Err<NotificationPreferences>() => const NotificationPreferences(),
-    };
-  }
+  Future<Result<NotificationPreferences>> build() =>
+      ref.watch(pushRepositoryProvider).notificationPreferences();
 
   /// Sets whether "Someone adds an item" notifies.
   Future<Failure?> setItemAdded(bool value) => _set(
@@ -50,7 +45,7 @@ class NotificationPreferencesController
     final result = await write(value);
     switch (result) {
       case Ok<NotificationPreferences>(:final value):
-        if (ref.mounted) state = AsyncData(value);
+        if (ref.mounted) state = AsyncData(Ok(value));
         return null;
       case Err<NotificationPreferences>(:final failure):
         return failure;
