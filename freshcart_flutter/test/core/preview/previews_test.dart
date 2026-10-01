@@ -27,6 +27,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps
 import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -80,6 +81,7 @@ void main() {
     'shop tab pill · shop': shopTabPillShopPreview,
     'colour swatch picker': colorSwatchPickerPreview,
     'setting row': settingRowPreview,
+    'shop picker': shopPickerPreview,
   };
 
   for (final MapEntry(key: name, value: build) in previews.entries) {
