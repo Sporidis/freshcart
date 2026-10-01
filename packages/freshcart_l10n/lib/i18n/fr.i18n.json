@@ -22,6 +22,9 @@
     "emptyTitle": "Pas encore de listes",
     "emptyBody": "Créez-en une pour votre foyer, ou rejoignez une liste partagée avec vous.",
     "settingsTitle": "Paramètres de la liste",
+    "managing": "Gestion",
+    "renameShops": "Renommer magasins et couleurs",
+    "behaviour": "Comportement",
     "nameLabel": "Nom de la liste",
     "rename": "Renommer",
     "clearCheckedAfterShopping": "Effacer les produits cochés automatiquement",
@@ -131,6 +134,7 @@
   },
   "household": {
     "title": "Foyer",
+    "inviteSomeone": "Inviter quelqu'un",
     "you": "Vous",
     "owner": "Propriétaire",
     "youOwner": "Vous · Propriétaire",

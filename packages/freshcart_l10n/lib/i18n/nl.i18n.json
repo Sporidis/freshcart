@@ -22,6 +22,9 @@
     "emptyTitle": "Nog geen lijsten",
     "emptyBody": "Begin er een voor je huishouden, of sluit je aan bij een gedeelde lijst.",
     "settingsTitle": "Lijstinstellingen",
+    "managing": "Beheren",
+    "renameShops": "Winkels en kleuren aanpassen",
+    "behaviour": "Gedrag",
     "nameLabel": "Lijstnaam",
     "rename": "Naam wijzigen",
     "clearCheckedAfterShopping": "Afgevinkte producten automatisch wissen",
@@ -131,6 +134,7 @@
   },
   "household": {
     "title": "Huishouden",
+    "inviteSomeone": "Iemand uitnodigen",
     "you": "Jij",
     "owner": "Eigenaar",
     "youOwner": "Jij · Eigenaar",

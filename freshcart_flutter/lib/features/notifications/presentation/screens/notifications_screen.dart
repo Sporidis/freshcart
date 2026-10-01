@@ -73,13 +73,16 @@ class NotificationsScreen extends ConsumerWidget {
               ],
             ],
           ),
-          const SizedBox(height: AppSpacing.screen),
-          SettingsSection(
-            label: t.notifications.perList,
-            children: [
-              for (final list in s.lists) _ListMuteRow(list: list, t: t),
-            ],
-          ),
+          // Nothing to mute without a list -- no label over an empty group.
+          if (s.lists.isNotEmpty) ...[
+            const SizedBox(height: AppSpacing.screen),
+            SettingsSection(
+              label: t.notifications.perList,
+              children: [
+                for (final list in s.lists) _ListMuteRow(list: list, t: t),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -98,24 +101,29 @@ class _ListMuteRow extends ConsumerWidget {
     final muted = ref.watch(listMuteControllerProvider(list.id)).value ?? false;
     final muteColor = theme.colorScheme.onSurface.withValues(alpha: 0.45);
 
-    return SettingRow(
-      onTap: () => ref
-          .read(listMuteControllerProvider(list.id).notifier)
-          .setMuted(!muted),
-      leading: Container(
-        width: AppSizes.tabDot,
-        height: AppSizes.tabDot,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
+    // Announced as a toggle with its state, not as a plain button whose
+    // trailing "On"/"Muted" text a screen reader would read as a label.
+    return Semantics(
+      toggled: !muted,
+      child: SettingRow(
+        onTap: () => ref
+            .read(listMuteControllerProvider(list.id).notifier)
+            .setMuted(!muted),
+        leading: Container(
+          width: AppSizes.tabDot,
+          height: AppSizes.tabDot,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: muted ? muteColor : theme.colorScheme.onSurface,
+          ),
+        ),
+        title: list.name,
+        titleStyle: AppTextStyles.body.copyWith(
           color: muted ? muteColor : theme.colorScheme.onSurface,
         ),
-      ),
-      title: list.name,
-      titleStyle: AppTextStyles.body.copyWith(
-        color: muted ? muteColor : theme.colorScheme.onSurface,
-      ),
-      trailing: SettingValueText(
-        muted ? t.notifications.muted : t.notifications.on,
+        trailing: SettingValueText(
+          muted ? t.notifications.muted : t.notifications.on,
+        ),
       ),
     );
   }

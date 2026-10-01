@@ -22,6 +22,9 @@
     "emptyTitle": "Wala pang listahan",
     "emptyBody": "Magsimula ng isa para sa inyong bahay, o sumali sa listahang ibinahagi sa iyo.",
     "settingsTitle": "Mga setting ng listahan",
+    "managing": "Pinamamahalaan",
+    "renameShops": "Pangalan at kulay ng tindahan",
+    "behaviour": "Gawi",
     "nameLabel": "Pangalan ng listahan",
     "rename": "Palitan ang pangalan",
     "clearCheckedAfterShopping": "Awtomatikong burahin ang mga nachekong item",
@@ -131,6 +134,7 @@
   },
   "household": {
     "title": "Sambahayan",
+    "inviteSomeone": "Mag-imbita ng iba",
     "you": "Ikaw",
     "owner": "May-ari",
     "youOwner": "Ikaw · May-ari",
