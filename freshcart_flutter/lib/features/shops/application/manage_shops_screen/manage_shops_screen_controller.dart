@@ -32,6 +32,9 @@ class ManageShopsScreenController extends _$ManageShopsScreenController {
   ShopsController get _shops =>
       ref.read(shopsControllerProvider(listId).notifier);
 
+  /// Re-fetches the shops after a failed load -- the error state's Retry.
+  void retry() => ref.invalidate(shopsControllerProvider(listId));
+
   /// Saves a rename and/or recolour of [shop].
   Future<Failure?> edit(Shop shop, {String? name, HexColor? color}) async =>
       (await _shops.edit(shop, name: name, color: color)).failureOrNull;

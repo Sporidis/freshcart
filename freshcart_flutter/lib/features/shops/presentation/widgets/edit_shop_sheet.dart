@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
+import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Renames and recolours a shop, or creates a new one when [shop] is null.
 ///
@@ -110,18 +111,31 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  /// Every preset some *other* shop on this list already uses (or sits
+  /// close to), with who uses it -- marked on the swatch before anyone picks
+  /// it, rather than only warned about after.
+  Map<int, String> _takenSwatches(Translations t) => {
+    for (final preset in AppColors.presetShopColors)
+      for (final other in widget.siblings)
+        if (other.id != widget.shop?.id &&
+            HexColor.fromArgb(preset.toARGB32()).isCloseTo(other.color))
+          preset.toARGB32(): t.shops.usedBy(name: other.name),
+  };
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
     final clash = _clashesWith;
 
-    return Padding(
+    // Scrollable: name field, eight swatches, a warning line and a button do
+    // not fit above the keyboard on a small phone.
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.sheetH,
-        8,
+        0,
         AppSpacing.sheetH,
-        MediaQuery.viewInsetsOf(context).bottom + 30,
+        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.screen,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -133,43 +147,63 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
           ),
           const SizedBox(height: AppSpacing.gap),
           Text(t.shops.nameLabel, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 6),
+          const SizedBox(height: AppSpacing.gapSmall),
           TextField(
             controller: _name,
             enabled: !_saving,
+            // A new shop has nothing to see yet but its name field; an
+            // existing one opens on its colour, so no keyboard over it.
+            autofocus: _isCreate,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _saving ? null : _save(),
             decoration: InputDecoration(errorText: _error),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: AppSpacing.screen),
           Text(t.shops.colorLabel, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 10),
+          const SizedBox(height: AppSpacing.gapSmall),
           ColorSwatchPicker(
             colors: AppColors.presetShopColors,
             selected: Color(_color.argb),
             semanticLabel: t.shops.colorLabel,
+            marked: _takenSwatches(t),
             onSelected: (color) => _pick(HexColor.fromArgb(color.toARGB32())),
           ),
           // A warning, never a block: two similar colours are a bad idea, not
-          // an invalid one, and the household may have its own reasons.
+          // an invalid one, and the household may have its own reasons. Ink
+          // with an icon rather than the muted caption it used to be, which
+          // read as a footnote rather than as "look at this".
           AnimatedSize(
             duration: AppMotion.durationFor(context, AppMotion.quick),
             alignment: Alignment.topLeft,
             child: clash == null
                 ? const SizedBox(width: double.infinity)
                 : Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(
-                      t.shops.closeTo(name: clash.name),
-                      style: theme.textTheme.bodySmall,
+                    padding: const EdgeInsets.only(top: AppSpacing.gapSmall),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: AppSizes.quantityIcon,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                        const SizedBox(width: AppSpacing.gapSmall),
+                        Expanded(
+                          child: Text(
+                            t.shops.closeTo(name: clash.name),
+                            style: AppTextStyles.captionStrong.copyWith(
+                              color: theme.colorScheme.onSurface,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
           ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: _saving ? null : _save,
-              child: Text(_isCreate ? t.shops.add : t.shops.saveChanges),
-            ),
+          const SizedBox(height: AppSpacing.screen),
+          ElevatedButton(
+            onPressed: _saving ? null : _save,
+            child: Text(_isCreate ? t.shops.add : t.shops.saveChanges),
           ),
         ],
       ),

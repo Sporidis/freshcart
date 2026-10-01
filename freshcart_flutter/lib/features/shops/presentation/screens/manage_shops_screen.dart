@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
+import 'package:freshcart_flutter/core/ui/dashed_add_row.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
@@ -17,7 +22,11 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The shops on one list, editable.
-/// TODO: improve the UI and UX for managing shops, including better handling of empty states and error messages.
+///
+/// Each row is just the shop's dot and name, and tapping it opens the edit
+/// sheet. Deleting is a deliberate swipe (right-to-left, Motion spec §10)
+/// that opens the delete sheet -- never a trash icon one tap away on every
+/// row, sitting beside the edit chevron and looking no more serious than it.
 ///
 /// Reads [ManageShopsScreenController]. The edit and delete sheets stay
 /// here, since they need a `BuildContext`; every step around them -- the
@@ -38,8 +47,16 @@ class ManageShopsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.shops.manage)),
       body: switch (s) {
-        ManageShopsScreenState(loadFailure: final failure?) => Center(
-          child: Text(failure.toMessage(t)),
+        // The same empty-state layout every other screen uses, with the one
+        // thing worth doing about a failed load: trying again.
+        ManageShopsScreenState(loadFailure: final failure?) => EmptyState(
+          icon: Icons.cloud_off_outlined,
+          title: t.errors.unexpectedTitle,
+          body: failure.toMessage(t),
+          action: ElevatedButton(
+            onPressed: vm.retry,
+            child: Text(t.common.retry),
+          ),
         ),
         ManageShopsScreenState(shops: null) => const Center(
           child: CircularProgressIndicator(),
@@ -49,8 +66,8 @@ class ManageShopsScreen extends ConsumerWidget {
             icon: Icons.storefront_outlined,
             title: t.shops.none,
             body: t.items.emptyShopBody,
-            // The only exit here, so it lives in the empty state itself
-            // rather than a FAB — same rule as ListsScreen's empty state.
+            // The only exit here, so it lives in the empty state itself --
+            // same rule as ListsScreen's empty state.
             action: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -63,25 +80,26 @@ class ManageShopsScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(AppSpacing.screen),
           children: [
             for (final shop in loaded)
-              _ShopRow(shop: shop, siblings: loaded, vm: vm),
+              Padding(
+                key: ValueKey(shop.id.value),
+                padding: const EdgeInsets.only(bottom: AppSpacing.gapSmall),
+                child: _ShopRow(shop: shop, siblings: loaded, vm: vm),
+              ),
+            // Inline at the end, not a FAB: the same dashed "add another"
+            // row onboarding ends its shop list with, and the same dash as
+            // the strip's own "+" pill.
+            DashedAddRow(
+              label: t.shops.add,
+              onTap: () => addShop(context, ref, listId, loaded),
+            ),
           ],
         ),
       },
-      // Hidden while the empty state is up, matching ListsScreen: the empty
-      // state already offers this as its one action.
-      floatingActionButton: s.isEmpty
-          ? null
-          : FloatingActionButton.extended(
-              onPressed: () =>
-                  addShop(context, ref, listId, s.shops ?? const <Shop>[]),
-              icon: const Icon(Icons.add),
-              label: Text(t.shops.add),
-            ),
     );
   }
 }
 
-class _ShopRow extends ConsumerWidget {
+class _ShopRow extends ConsumerStatefulWidget {
   const _ShopRow({
     required this.shop,
     required this.siblings,
@@ -93,80 +111,172 @@ class _ShopRow extends ConsumerWidget {
   final ManageShopsScreenController vm;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ShopRow> createState() => _ShopRowState();
+}
+
+class _ShopRowState extends ConsumerState<_ShopRow> {
+  /// The spec's swipe numbers (§10): commit at 40% of the width, the trash
+  /// icon grows from 70% to full size over the first 30%, and pops past
+  /// full size the moment the threshold is crossed.
+  static const double _threshold = 0.4;
+  static const double _growUntil = 0.3;
+  static const double _iconMin = 0.7;
+  static const double _iconPop = 1.15;
+
+  /// The preview border's weight -- heavier than the resting hairline, so
+  /// the row behind the sheet visibly answers each swatch tap.
+  static const double _previewBorder = 1.5;
+
+  double _progress = 0;
+  bool _reached = false;
+
+  Shop get shop => widget.shop;
+
+  void _onSwipeUpdate(DismissUpdateDetails details) {
+    if (details.reached && !details.previousReached) {
+      // The pre-commit warning (§10): felt at the crossing, not on release.
+      ref.haptic(HapticFeedback.mediumImpact);
+    }
+    setState(() {
+      _progress = details.progress;
+      _reached = details.reached;
+    });
+  }
+
+  double get _iconScale {
+    if (_reached) return _iconPop;
+    final grown = (_progress / _growUntil).clamp(0.0, 1.0);
+    return _iconMin + (1 - _iconMin) * grown;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
     // Through the preview, so a colour being tried in the sheet shows here
-    // too — this row sits behind it.
+    // too -- this row sits behind it.
     final color = ref.watch(effectiveShopColorProvider(shop));
+    // A colour that differs from what is stored can only be a live preview:
+    // the row being edited takes it as its border, tying it to the sheet.
+    final previewing = color != shop.color;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: AppSpacing.gap),
-      child: InkWell(
-        onTap: () => _edit(context, t),
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        child: Container(
-          padding: const EdgeInsets.all(14),
+    return Semantics(
+      // A swipe is invisible to a screen reader and unreachable by
+      // keyboard; this is the same action, reachable both ways.
+      customSemanticsActions: {
+        CustomSemanticsAction(label: t.shops.delete): () => _delete(t),
+      },
+      child: Dismissible(
+        key: ValueKey('dismiss-${shop.id.value}'),
+        direction: DismissDirection.endToStart,
+        dismissThresholds: const {DismissDirection.endToStart: _threshold},
+        onUpdate: _onSwipeUpdate,
+        // Never dismisses on its own: a shop's products need a decision
+        // first, so crossing the threshold opens the delete sheet, and the
+        // row springs back. If the shop is deleted, the list rebuilds
+        // without it.
+        confirmDismiss: (_) async {
+          await _delete(t);
+          return false;
+        },
+        background: DecoratedBox(
           decoration: BoxDecoration(
-            border: Border.all(color: theme.colorScheme.outlineVariant),
+            color: AppColors.destructive,
             borderRadius: BorderRadius.circular(AppRadii.card),
           ),
-          child: Row(
-            children: [
-              AnimatedContainer(
-                duration: AppMotion.durationFor(context, AppMotion.standard),
-                curve: AppMotion.enter,
-                width: AppSizes.shopDotLarge,
-                height: AppSizes.shopDotLarge,
-                decoration: BoxDecoration(
-                  color: color.toColor(),
-                  shape: BoxShape.circle,
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.screen,
+              ),
+              child: AnimatedScale(
+                scale: _iconScale,
+                duration: AppMotion.durationFor(context, AppMotion.micro),
+                curve: AppMotion.curveFor(context, AppMotion.pop),
+                child: const Icon(Icons.delete_outline, color: Colors.white),
+              ),
+            ),
+          ),
+        ),
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: () => _edit(t),
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            child: AnimatedContainer(
+              duration: AppMotion.durationFor(context, AppMotion.standard),
+              curve: AppMotion.enter,
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.gap,
+                vertical: AppSpacing.rowVertical,
+              ),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border.all(
+                  color: previewing
+                      ? color.toColor()
+                      : theme.colorScheme.outlineVariant,
+                  width: previewing ? _previewBorder : 1,
                 ),
+                borderRadius: BorderRadius.circular(AppRadii.card),
               ),
-              const SizedBox(width: AppSpacing.gap),
-              Expanded(
-                child: Text(shop.name, style: theme.textTheme.titleMedium),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: AppMotion.durationFor(
+                      context,
+                      AppMotion.standard,
+                    ),
+                    curve: AppMotion.enter,
+                    width: AppSizes.shopDotLarge,
+                    height: AppSizes.shopDotLarge,
+                    decoration: BoxDecoration(
+                      color: color.toColor(),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.gap),
+                  Expanded(
+                    child: Text(shop.name, style: theme.textTheme.titleMedium),
+                  ),
+                  Icon(Icons.chevron_right, color: theme.colorScheme.outline),
+                ],
               ),
-              IconButton(
-                onPressed: () => _delete(context, t),
-                icon: const Icon(Icons.delete_outline, size: 20),
-                tooltip: t.shops.delete,
-              ),
-              const Icon(Icons.chevron_right, size: 20),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Future<void> _edit(BuildContext context, Translations t) async {
+  Future<void> _edit(Translations t) async {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       showDragHandle: true,
       builder: (_) => EditShopSheet(
         shop: shop,
-        siblings: siblings,
+        siblings: widget.siblings,
         onSave: ({required name, required color}) async =>
-            (await vm.edit(shop, name: name, color: color))?.toMessage(t),
+            (await widget.vm.edit(shop, name: name, color: color))?.toMessage(
+              t,
+            ),
       ),
     );
-    vm.endEdit();
+    widget.vm.endEdit();
   }
 
-  Future<void> _delete(BuildContext context, Translations t) async {
+  Future<void> _delete(Translations t) async {
     final int count;
-    switch (await vm.itemCountForDelete(shop)) {
+    switch (await widget.vm.itemCountForDelete(shop)) {
       case Ok(:final value):
         count = value;
       case Err(:final failure):
-        if (context.mounted) {
-          showFailureSnackBar(context, failure: failure, t: t);
-        }
+        if (mounted) showFailureSnackBar(context, failure: failure, t: t);
         return;
     }
-    if (!context.mounted) return;
+    if (!mounted) return;
 
     final choice = await showModalBottomSheet<ShopDeletion>(
       context: context,
@@ -175,17 +285,17 @@ class _ShopRow extends ConsumerWidget {
       builder: (_) => DeleteShopSheet(
         shop: shop,
         itemCount: count,
-        siblings: siblings,
+        siblings: widget.siblings,
       ),
     );
-    if (choice == null || !context.mounted) return;
+    if (choice == null || !mounted) return;
 
-    final failure = await vm.remove(
+    final failure = await widget.vm.remove(
       shop,
       disposition: choice.disposition,
       moveTo: choice.moveTo,
     );
-    if (failure != null && context.mounted) {
+    if (failure != null && mounted) {
       showFailureSnackBar(context, failure: failure, t: t);
     }
   }
