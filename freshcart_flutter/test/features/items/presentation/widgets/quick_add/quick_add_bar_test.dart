@@ -8,6 +8,8 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
+import '../../../../../fakes/fake_item_repository.dart';
+
 /// Owns the [AnimationController] a [RevealWaveScope] under test needs, and
 /// rebuilds it whenever [geometry] changes -- mirrors
 /// `test/core/theme/wave_themed_test.dart`'s own harness.
@@ -85,6 +87,8 @@ void main() {
                   firstRun: firstRun,
                   onQuickAdd: (_) async => false,
                   onOpenDetails: (_) async => false,
+                  findDuplicate: (_) => null,
+                  onBumpDuplicate: (_) async => false,
                 ),
               ),
             ),
@@ -175,6 +179,8 @@ void main() {
                         t: t,
                         onQuickAdd: (_) async => false,
                         onOpenDetails: (_) async => false,
+                        findDuplicate: (_) => null,
+                        onBumpDuplicate: (_) async => false,
                       ),
                     ),
                   ),
@@ -250,4 +256,160 @@ void main() {
       );
     },
   );
+
+  group('Duplicate warning (Component Library §03)', () {
+    Future<void> pumpBar(
+      WidgetTester tester, {
+      required ShoppingItem? Function(String) findDuplicate,
+      Future<bool> Function(ShoppingItem)? onBumpDuplicate,
+      Future<bool> Function(String)? onQuickAdd,
+    }) async {
+      await tester.pumpWidget(
+        ProviderScope(
+          child: MaterialApp(
+            home: Scaffold(
+              body: Align(
+                alignment: Alignment.bottomRight,
+                child: QuickAddBar(
+                  listId: listId,
+                  t: t,
+                  activeShopName: 'Lidl',
+                  onQuickAdd: onQuickAdd ?? (_) async => true,
+                  onOpenDetails: (_) async => false,
+                  findDuplicate: findDuplicate,
+                  onBumpDuplicate: onBumpDuplicate ?? (_) async => true,
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets(
+      'an exact match replaces the suggestion chips with the duplicate card',
+      (tester) async {
+        final existing = buildItem(name: 'Milk', quantity: 2);
+        await pumpBar(
+          tester,
+          findDuplicate: (name) =>
+              name.toLowerCase() == 'milk' ? existing : null,
+        );
+
+        await tester.enterText(find.byType(TextField), 'Milk');
+        await tester.pumpAndSettle();
+
+        expect(
+          find.text(
+            t.items.alreadyOnShop(name: 'Milk', shop: 'Lidl', quantity: 2),
+          ),
+          findsOneWidget,
+        );
+        expect(find.text(t.items.makeItX(quantity: 3)), findsOneWidget);
+        expect(find.text(t.items.addAnyway), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'a match in a different shop never shows the card',
+      (tester) async {
+        await pumpBar(tester, findDuplicate: (_) => null);
+
+        await tester.enterText(find.byType(TextField), 'Milk');
+        await tester.pumpAndSettle();
+
+        expect(find.text(t.items.addAnyway), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '"Make it x{n}" bumps the existing item and clears the field',
+      (tester) async {
+        final existing = buildItem(name: 'Milk', quantity: 2);
+        ShoppingItem? bumped;
+        await pumpBar(
+          tester,
+          findDuplicate: (name) =>
+              name.toLowerCase() == 'milk' ? existing : null,
+          onBumpDuplicate: (item) async {
+            bumped = item;
+            return true;
+          },
+        );
+        await tester.enterText(find.byType(TextField), 'Milk');
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text(t.items.makeItX(quantity: 3)));
+        await tester.pumpAndSettle();
+
+        expect(bumped, existing);
+        expect(find.text(t.items.addAnyway), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '"Add anyway" adds a new row instead of bumping',
+      (tester) async {
+        final existing = buildItem(name: 'Milk', quantity: 2);
+        String? added;
+        var bumpCalled = false;
+        await pumpBar(
+          tester,
+          findDuplicate: (name) =>
+              name.toLowerCase() == 'milk' ? existing : null,
+          onQuickAdd: (name) async {
+            added = name;
+            return true;
+          },
+          onBumpDuplicate: (_) async {
+            bumpCalled = true;
+            return true;
+          },
+        );
+        await tester.enterText(find.byType(TextField), 'Milk');
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text(t.items.addAnyway));
+        await tester.pumpAndSettle();
+
+        expect(added, 'Milk');
+        expect(bumpCalled, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Enter takes the primary option -- bump, not quick-add',
+      (tester) async {
+        final existing = buildItem(name: 'Milk', quantity: 2);
+        ShoppingItem? bumped;
+        var quickAddCalled = false;
+        await pumpBar(
+          tester,
+          findDuplicate: (name) =>
+              name.toLowerCase() == 'milk' ? existing : null,
+          onBumpDuplicate: (item) async {
+            bumped = item;
+            return true;
+          },
+          onQuickAdd: (_) async {
+            quickAddCalled = true;
+            return true;
+          },
+        );
+        await tester.enterText(find.byType(TextField), 'Milk');
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+
+        expect(bumped, existing);
+        expect(quickAddCalled, isFalse);
+      },
+    );
+  });
 }

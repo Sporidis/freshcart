@@ -186,6 +186,14 @@ class _ItemFlows {
     report(failure);
     return failure == null;
   }
+
+  /// The quick-add duplicate card's primary action. Same bool contract as
+  /// [quickAdd] -- false leaves the card up so the tap can be retried.
+  Future<bool> bumpDuplicate(ShoppingItem item) async {
+    final failure = await vm.bumpQuantity(item);
+    report(failure);
+    return failure == null;
+  }
 }
 
 /// What floats above the rows in browse mode: the completion celebration
@@ -227,6 +235,8 @@ class _FloatingCluster extends StatelessWidget {
           firstRun: s.firstRun,
           onQuickAdd: flows.quickAdd,
           onOpenDetails: flows.addWithDetails,
+          findDuplicate: (name) => s.duplicateFor(name, s.shopFilter),
+          onBumpDuplicate: flows.bumpDuplicate,
         ),
       ],
     );

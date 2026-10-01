@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -127,6 +128,19 @@ class _ItemSheetState extends State<ItemSheet> {
   void _remove() =>
       Navigator.of(context).pop<ItemSheetOutcome>(ItemSheetRemove());
 
+  /// A field's caption, sitting above it as plain text -- the design's own
+  /// rule, stated in `app_theme.dart`'s `inputDecorationTheme` comment:
+  /// labels never float inside the field via `labelText`.
+  Widget _fieldLabel(BuildContext context, String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: AppTextStyles.caption.copyWith(
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -150,41 +164,20 @@ class _ItemSheetState extends State<ItemSheet> {
             style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: AppSpacing.gap),
+          _fieldLabel(context, t.items.nameLabel),
           TextField(
             controller: _name,
             autofocus: !widget.isEditing,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(labelText: t.items.namePlaceholder),
+            decoration: InputDecoration(hintText: t.items.namePlaceholder),
             onSubmitted: (_) => _save(),
           ),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              // Quantity never drops below one: AddItem rejects zero, and a
-              // zero-quantity row on a shopping list means nothing.
-              IconButton(
-                onPressed: _quantity > 1
-                    ? () => setState(() => _quantity--)
-                    : null,
-                icon: const Icon(Icons.remove_circle_outline),
-              ),
-              SizedBox(
-                width: 28,
-                child: Text(
-                  '$_quantity',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium,
-                ),
-              ),
-              IconButton(
-                onPressed: () => setState(() => _quantity++),
-                icon: const Icon(Icons.add_circle_outline),
-              ),
-            ],
-          ),
+          // Shop before Amount, matching Flow 09 frame 6 / Flow 11's own
+          // field order -- not the arbitrary order this sheet had before.
           if (widget.shops.isNotEmpty) ...[
-            const SizedBox(height: 14),
+            const SizedBox(height: AppSpacing.gap),
+            _fieldLabel(context, t.items.shopLabel),
             ShopPicker(
               shops: widget.shops,
               t: t,
@@ -192,15 +185,42 @@ class _ItemSheetState extends State<ItemSheet> {
               onSelected: (id) => setState(() => _shopId = id),
             ),
           ],
-          const SizedBox(height: 14),
+          const SizedBox(height: AppSpacing.gap),
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(
+                top: BorderSide(color: theme.colorScheme.outlineVariant),
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(top: AppSpacing.gap),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(t.items.amountLabel, style: theme.textTheme.bodyLarge),
+                  QuantityStepper(
+                    quantity: _quantity,
+                    // Quantity never drops below one: AddItem rejects zero,
+                    // and a zero-quantity row on a shopping list means
+                    // nothing.
+                    onDecrement: _quantity > 1
+                        ? () => setState(() => _quantity--)
+                        : null,
+                    onIncrement: () => setState(() => _quantity++),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.gap),
+          _fieldLabel(context, t.items.notePlaceholder),
           TextField(
             controller: _note,
             textCapitalization: TextCapitalization.sentences,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(labelText: t.items.notePlaceholder),
             onSubmitted: (_) => _save(),
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: AppSpacing.gap),
           SizedBox(
             width: double.infinity,
             child: FilledButton(

@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/reveal/wave_themed.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_button.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_field.dart';
@@ -51,6 +52,8 @@ class QuickAddBar extends StatefulWidget {
     required this.listId,
     required this.onQuickAdd,
     required this.onOpenDetails,
+    required this.findDuplicate,
+    required this.onBumpDuplicate,
     required this.t,
     this.activeShopName,
     this.firstRun = false,
@@ -71,6 +74,15 @@ class QuickAddBar extends StatefulWidget {
   /// back to a bare button; false (cancelled, or the write failed) leaves
   /// the typed text in place for another attempt.
   final Future<bool> Function(String name) onOpenDetails;
+
+  /// The existing item [name] would duplicate in the active shop, or null --
+  /// Component Library §03's "Duplicate warning." A pure lookup against
+  /// already-loaded state, not a query, so it can run on every keystroke.
+  final ShoppingItem? Function(String name) findDuplicate;
+
+  /// The duplicate card's "Make it x{n}" action: bumps [item]'s quantity by
+  /// one. Same success contract as [onQuickAdd].
+  final Future<bool> Function(ShoppingItem item) onBumpDuplicate;
 
   /// Translations for the active locale.
   final Translations t;
@@ -165,6 +177,12 @@ class _QuickAddBarState extends State<QuickAddBar>
 
   bool get _hasText => _controller.text.trim().isNotEmpty;
 
+  /// The existing item the typed name would duplicate, or null. Recomputed
+  /// on every build -- `_handleTextChanged` already calls `setState` on
+  /// every keystroke, the same way [_hasText] stays live.
+  ShoppingItem? get _duplicate =>
+      _hasText ? widget.findDuplicate(_controller.text.trim()) : null;
+
   /// +, un-rotated: collapsed (tap opens), or expanded with text (tap opens
   /// the details sheet). ×, 1/8 turn: expanded and empty (tap cancels).
   bool get _showsPlus => _phase == _Phase.collapsed || _hasText;
@@ -209,6 +227,30 @@ class _QuickAddBarState extends State<QuickAddBar>
     }
   }
 
+  /// Enter's handler: "takes the primary option" (Component Library §03) --
+  /// the duplicate card's bump when one is showing, the ordinary quick-add
+  /// otherwise.
+  Future<void> _handleSubmit() async {
+    final duplicate = _duplicate;
+    if (duplicate != null) {
+      await _bump(duplicate);
+    } else {
+      await _quickAdd();
+    }
+  }
+
+  Future<void> _bump(ShoppingItem item) async {
+    if (_busy) return;
+    setState(() => _busy = true);
+    final bumped = await widget.onBumpDuplicate(item);
+    if (!mounted) return;
+    setState(() => _busy = false);
+    if (bumped) {
+      _controller.clear();
+      _focus.requestFocus();
+    }
+  }
+
   Future<void> _quickAdd() async {
     final name = _controller.text.trim();
     if (name.isEmpty || _busy) return;
@@ -229,17 +271,40 @@ class _QuickAddBarState extends State<QuickAddBar>
     final placeholder = widget.activeShopName == null
         ? widget.t.items.namePlaceholder
         : widget.t.items.addTo(shop: widget.activeShopName!);
+    final duplicate = _duplicate;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(26, 4, 26, 22),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        4,
+        AppSpacing.screen,
+        22,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          _SuggestionChips(
-            listId: widget.listId,
-            field: _controller,
-            visible: _phase == _Phase.expanded,
+          // The duplicate card and the suggestion chips share one slot above
+          // the capsule and are mutually exclusive (Flow 11: a frame never
+          // shows both) -- an exact match is more specific than "here's
+          // what you might mean," so it takes the slot when there is one.
+          AnimatedSwitcher(
+            duration: AppMotion.durationFor(context, AppMotion.quick),
+            child: duplicate != null
+                ? _DuplicateCard(
+                    key: const ValueKey('duplicate-card'),
+                    item: duplicate,
+                    shopName: widget.activeShopName ?? '',
+                    t: widget.t,
+                    onBump: () => unawaited(_bump(duplicate)),
+                    onAddAnyway: () => unawaited(_quickAdd()),
+                  )
+                : _SuggestionChips(
+                    key: const ValueKey('suggestion-chips'),
+                    listId: widget.listId,
+                    field: _controller,
+                    visible: _phase == _Phase.expanded,
+                  ),
           ),
           SizedBox(
             height: _diameter,
@@ -317,7 +382,7 @@ class _QuickAddBarState extends State<QuickAddBar>
                                   enabled: !_busy,
                                   placeholder: placeholder,
                                   showShopDot: widget.activeShopName != null,
-                                  onSubmitted: _quickAdd,
+                                  onSubmitted: _handleSubmit,
                                 )
                               : null,
                           button: QuickAddButton(
@@ -352,6 +417,7 @@ class _SuggestionChips extends ConsumerStatefulWidget {
     required this.listId,
     required this.field,
     required this.visible,
+    super.key,
   });
 
   final ListId listId;
@@ -411,7 +477,7 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
   Widget build(BuildContext context) {
     // Watching with the live, pre-debounce text would fire the request on
     // every keystroke -- the exact thing debouncing is for.
-    final suggestions = _query.isEmpty
+    final fetched = _query.isEmpty
         ? const <String>[]
         : ref
                   .watch(
@@ -422,6 +488,10 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
                   )
                   .value ??
               const <String>[];
+    // Component Library §03: "Max 3" -- the server's own floor
+    // (ItemService.suggestNames) defaults to 5, so the cap belongs here,
+    // at the one place that actually draws the chip row.
+    final suggestions = fetched.take(3).toList();
 
     return AnimatedSize(
       duration: AppMotion.durationFor(context, AppMotion.standard),
@@ -430,6 +500,80 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
       child: widget.visible && suggestions.isNotEmpty
           ? SuggestionRow(suggestions: suggestions, onTap: _pick)
           : const SizedBox(width: double.infinity),
+    );
+  }
+}
+
+/// The exact-match duplicate warning (Component Library §03; Flow Screens
+/// v2's "Already on the list"): "{item} is already on {shop}, x{n}," with a
+/// primary action that bumps the existing row's quantity instead of
+/// creating a second one, and a secondary escape hatch for when a second
+/// row really is what's wanted.
+class _DuplicateCard extends StatelessWidget {
+  const _DuplicateCard({
+    required this.item,
+    required this.shopName,
+    required this.t,
+    required this.onBump,
+    required this.onAddAnyway,
+    super.key,
+  });
+
+  final ShoppingItem item;
+  final String shopName;
+  final Translations t;
+  final VoidCallback onBump;
+  final VoidCallback onAddAnyway;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Material(
+        color: theme.colorScheme.surface,
+        elevation: 2,
+        shadowColor: Colors.black.withValues(alpha: 0.08),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          side: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                t.items.alreadyOnShop(
+                  name: item.name,
+                  shop: shopName,
+                  quantity: item.quantity,
+                ),
+                style: theme.textTheme.bodyLarge,
+              ),
+              const SizedBox(height: AppSpacing.gapSmall),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: onBump,
+                      child: Text(
+                        t.items.makeItX(quantity: item.quantity + 1),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.gapSmall),
+                  OutlinedButton(
+                    onPressed: onAddAnyway,
+                    child: Text(t.items.addAnyway),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -470,35 +614,58 @@ class _Pill extends StatelessWidget {
       theme.colorScheme.surface,
       openness,
     )!;
+    // Component Library §03: resting is "shop-tinted, elevation 6" with a
+    // colour-matched glow (`0 8px 22px rgba(shop, .35)`); once open it
+    // "flattens into the sheet-adjacent surface" -- a plain neutral shadow
+    // (`rgba(0,0,0,.10)`), same geometry. A Material `elevation` can't
+    // produce the tinted half of that (its shadow is always neutral), so
+    // the shadow is painted here instead and Material's own left at 0.
+    final shadowColor = Color.lerp(
+      theme.colorScheme.primary.withValues(alpha: 0.35),
+      Colors.black.withValues(alpha: 0.10),
+      openness.clamp(0.0, 1.0),
+    )!;
     // The same StadiumBorder throughout: at width == height its ends meet
     // and it reads as a circle, at full width as a pill.
     return SizedBox(
       width: width,
       height: height,
-      child: Material(
-        key: const ValueKey('quick-add-pill'),
-        color: fill,
-        elevation: 3,
-        shape: StadiumBorder(
-          side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(
-              alpha: openness.clamp(0.0, 1.0),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(height / 2),
+          boxShadow: [
+            BoxShadow(
+              color: shadowColor,
+              blurRadius: 22,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          key: const ValueKey('quick-add-pill'),
+          color: fill,
+          elevation: 0,
+          shape: StadiumBorder(
+            side: BorderSide(
+              color: theme.colorScheme.outlineVariant.withValues(
+                alpha: openness.clamp(0.0, 1.0),
+              ),
             ),
           ),
-        ),
-        child: Row(
-          children: [
-            if (field != null)
-              Expanded(
-                // "Placeholder text fades in over the last 40%" (§09) --
-                // the pill needs room first, or it would clip.
-                child: Opacity(
-                  opacity: ((openness - 0.6) / 0.4).clamp(0.0, 1.0),
-                  child: field,
+          child: Row(
+            children: [
+              if (field != null)
+                Expanded(
+                  // "Placeholder text fades in over the last 40%" (§09) --
+                  // the pill needs room first, or it would clip.
+                  child: Opacity(
+                    opacity: ((openness - 0.6) / 0.4).clamp(0.0, 1.0),
+                    child: field,
+                  ),
                 ),
-              ),
-            button,
-          ],
+              button,
+            ],
+          ),
         ),
       ),
     );

@@ -127,6 +127,12 @@ class ItemsSectionController extends _$ItemsSectionController {
   Future<Failure?> quickAdd(String name) =>
       _items.add(name: name, shopId: state.shopFilter);
 
+  /// The quick-add duplicate card's "Make it x{n}" action -- reuses
+  /// [setQuantity] rather than a second write path for what is, underneath,
+  /// exactly the same edit.
+  Future<Failure?> bumpQuantity(ShoppingItem item) =>
+      setQuantity(item, item.quantity + 1);
+
   Future<Failure?> add({
     required String name,
     required int quantity,

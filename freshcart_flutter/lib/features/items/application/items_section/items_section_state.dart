@@ -98,4 +98,20 @@ class ItemsSectionState {
 
   Shop? shopFor(ShopId? id) =>
       id == null ? null : shops.where((s) => s.id == id).firstOrNull;
+
+  /// The existing item in [shopId] whose name exactly matches [name]
+  /// (trimmed, case-insensitive), or null -- the quick-add control's
+  /// duplicate check (Component Library §03, "Duplicate warning"). A match
+  /// in a different shop isn't a duplicate and doesn't count, per Flow
+  /// Screens v2's "Already on the list".
+  ShoppingItem? duplicateFor(String name, ShopId? shopId) {
+    final target = name.trim().toLowerCase();
+    if (target.isEmpty) return null;
+    for (final item in allItems) {
+      if (item.shopId == shopId && item.name.trim().toLowerCase() == target) {
+        return item;
+      }
+    }
+    return null;
+  }
 }
