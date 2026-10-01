@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -143,14 +145,8 @@ class _PulsingDotsState extends State<_PulsingDots>
   }
 }
 
-double _sine(double phase) =>
-    // 2π · phase, without importing dart:math just for one call site.
-    _sin(phase * 6.283185307179586);
-
-// A tiny Taylor-series stand-in would drift; this is dart:math's own,
-// aliased so the file's only import list stays about Flutter and the app.
-double _sin(double x) =>
-    (x - (x * x * x) / 6 + (x * x * x * x * x) / 120).clamp(-1.0, 1.0);
+/// One full sine wave per unit of [phase].
+double _sine(double phase) => math.sin(phase * 2 * math.pi);
 
 @Preview(group: 'Onboarding', name: 'Splash', size: previewPhone)
 Widget splashScreenPreview() => previewApp(const SplashScreen());
