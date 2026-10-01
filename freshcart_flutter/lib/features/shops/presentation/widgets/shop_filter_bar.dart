@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_tabs/shop_tabs_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
@@ -102,8 +103,10 @@ class ShopFilterBar extends ConsumerWidget {
           // §05); the inter-pill gap is an explicit SizedBox rather than
           // doubled-up per-pill padding, so it reads as the design's own
           // `gap: 8px` instead of two 4px halves that happen to add up.
+          // 6, not the design's 8: a 56 bar minus 2×6 leaves exactly the
+          // 44pt the pills' TapTarget needs (decisions #105).
           padding: const EdgeInsets.symmetric(
-            vertical: 8,
+            vertical: 6,
             horizontal: AppSpacing.screen,
           ),
           children: [
@@ -150,20 +153,23 @@ class _AddShopPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        type: MaterialType.transparency,
-        child: InkWell(
-          onTap: onTap,
-          customBorder: const StadiumBorder(),
-          child: CustomPaint(
-            painter: DashedOutlinePainter(
-              color: theme.colorScheme.outline.withValues(alpha: 0.4),
-            ),
-            child: const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-              child: Icon(Icons.add, size: 16),
+    return TapTarget(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            customBorder: const StadiumBorder(),
+            child: CustomPaint(
+              painter: DashedOutlinePainter(
+                color: theme.colorScheme.outline.withValues(alpha: 0.4),
+              ),
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 13, vertical: 8),
+                child: Icon(Icons.add, size: 16),
+              ),
             ),
           ),
         ),

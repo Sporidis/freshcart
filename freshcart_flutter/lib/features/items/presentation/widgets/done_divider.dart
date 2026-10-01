@@ -3,6 +3,7 @@ import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
 /// The divider checked items collect under.
 ///
@@ -44,50 +45,58 @@ class DoneDivider extends StatelessWidget {
     final muted = theme.textTheme.labelSmall?.color;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 14, 4, 9),
+      // No vertical padding of its own: the TapTargets below are the row's
+      // height, so every pixel of it is tappable.
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [
           Expanded(
             child: Semantics(
               button: true,
               expanded: !collapsed,
-              child: InkWell(
+              child: TapTarget(
                 onTap: onToggle,
-                child: Row(
-                  children: [
-                    AnimatedRotation(
-                      turns: collapsed ? -0.25 : 0,
-                      duration: AppMotion.durationFor(
-                        context,
-                        AppMotion.standard,
+                child: InkWell(
+                  onTap: onToggle,
+                  child: Row(
+                    children: [
+                      AnimatedRotation(
+                        turns: collapsed ? -0.25 : 0,
+                        duration: AppMotion.durationFor(
+                          context,
+                          AppMotion.standard,
+                        ),
+                        curve: AppMotion.enter,
+                        child: Icon(Icons.expand_more, size: 16, color: muted),
                       ),
-                      curve: AppMotion.enter,
-                      child: Icon(Icons.expand_more, size: 16, color: muted),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        label.toUpperCase(),
-                        style: AppTextStyles.eyebrow.copyWith(color: muted),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          label.toUpperCase(),
+                          style: AppTextStyles.eyebrow.copyWith(color: muted),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           if (clearLabel != null && onClear != null)
-            InkWell(
+            TapTarget(
               onTap: onClear,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 4,
-                ),
-                child: Text(
-                  clearLabel!,
-                  style: AppTextStyles.captionStrong.copyWith(
-                    color: theme.colorScheme.primary,
+              child: InkWell(
+                onTap: onClear,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 4,
+                    vertical: 4,
+                  ),
+                  child: Text(
+                    clearLabel!,
+                    style: AppTextStyles.captionStrong.copyWith(
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                 ),
               ),

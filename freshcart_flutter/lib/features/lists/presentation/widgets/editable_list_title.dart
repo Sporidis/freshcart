@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
 /// The list name in the app bar, editable in place.
 ///
@@ -131,10 +132,13 @@ class EditableListTitleState extends State<EditableListTitle> {
       duration: AppMotion.durationFor(context, AppMotion.quick),
       child: !_editing
           ? (widget.tapToEdit
-                ? InkWell(
+                ? TapTarget(
                     key: const ValueKey('title'),
                     onTap: startEditing,
-                    child: Text(widget.name, style: style),
+                    child: InkWell(
+                      onTap: startEditing,
+                      child: Text(widget.name, style: style),
+                    ),
                   )
                 : Text(
                     widget.name,

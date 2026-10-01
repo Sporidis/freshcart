@@ -7,6 +7,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
@@ -178,27 +179,30 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
   @override
   Widget build(BuildContext context) {
     final ink = Theme.of(context).colorScheme.onSurface;
-    return Semantics(
-      button: true,
-      label: widget.tooltip,
-      child: InkWell(
-        onTap: _busy ? null : _handleTap,
-        customBorder: const CircleBorder(),
-        child: AnimatedBuilder(
-          animation: _overshoot,
-          builder: (context, child) =>
-              Transform.scale(scale: 1 + _overshoot.value, child: child),
-          child: Container(
-            width: 26,
-            height: 26,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: ink.withValues(alpha: 0.15),
-                width: 1.5,
+    return TapTarget(
+      onTap: _busy ? null : _handleTap,
+      child: Semantics(
+        button: true,
+        label: widget.tooltip,
+        child: InkWell(
+          onTap: _busy ? null : _handleTap,
+          customBorder: const CircleBorder(),
+          child: AnimatedBuilder(
+            animation: _overshoot,
+            builder: (context, child) =>
+                Transform.scale(scale: 1 + _overshoot.value, child: child),
+            child: Container(
+              width: 26,
+              height: 26,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: ink.withValues(alpha: 0.15),
+                  width: 1.5,
+                ),
               ),
+              child: Icon(Icons.add, size: 14, color: ink),
             ),
-            child: Icon(Icons.add, size: 14, color: ink),
           ),
         ),
       ),

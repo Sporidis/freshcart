@@ -273,26 +273,29 @@ class _MenuOptionRow extends StatelessWidget {
     final color = isDestructive ? scheme.error : scheme.onSurface;
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 16,
-              color: color.withValues(alpha: isDestructive ? 1 : 0.6),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                label,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: color),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: AppSpacing.minTapTarget),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 16,
+                color: color.withValues(alpha: isDestructive ? 1 : 0.6),
               ),
-            ),
-            ?trailing,
-          ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: color),
+                ),
+              ),
+              ?trailing,
+            ],
+          ),
         ),
       ),
     );
