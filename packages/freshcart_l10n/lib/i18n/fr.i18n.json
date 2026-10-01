@@ -125,8 +125,7 @@
     "body": "Votre compte n'existe que sur cet appareil. Liez une adresse e-mail pour ne pas perdre vos listes.",
     "action": "Lier un e-mail",
     "emailLabel": "E-mail",
-    "passwordLabel": "Mot de passe",
-    "linked": "Votre compte est sécurisé."
+    "passwordLabel": "Mot de passe"
   },
   "household": {
     "title": "Foyer",
@@ -167,6 +166,7 @@
     "manageShops": "Gérer les magasins",
     "household": "Foyer",
     "preferences": "Préférences",
+    "about": "À propos",
     "appearance": "Apparence",
     "currentAppearance": "{{mode}}",
     "appearanceSystem": "Système",
@@ -176,10 +176,14 @@
     "notifications": "Notifications",
     "haptics": "Retour haptique",
     "largerListText": "Texte de liste plus grand",
+    "largerListTextBody": "Plus facile à lire à bout de bras dans le rayon",
     "reduceMotion": "Réduire les animations",
+    "reduceMotionBody": "Suit le réglage de votre système",
     "on": "Activé",
     "off": "Désactivé",
     "helpFeedback": "Aide & commentaires",
+    "signOutConfirmTitle": "Se déconnecter ?",
+    "signOutConfirmBody": "Vos listes n'existent que sur cet appareil. Si vous vous déconnectez sans associer d'e-mail, vous les perdrez définitivement.",
     "termsOfService": "Conditions d'utilisation",
     "signOut": "Se déconnecter",
     "appVersion": "Version de l'application : {{version}}"
@@ -187,6 +191,7 @@
   "profile": {
     "title": "Modifier le profil",
     "nameLabel": "Nom affiché",
+    "nameHelper": "Tout votre foyer voit ce nom.",
     "colorLabel": "Couleur de l’avatar",
     "photoLabel": "Photo de l’avatar",
     "choosePhoto": "Choisir une photo",

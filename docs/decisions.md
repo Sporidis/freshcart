@@ -2479,3 +2479,29 @@ Onboarding's shop picker and "add a shop" row are the same components as the ite
 and the shop strip's "+", so they now share one implementation instead of copies. The
 "Your tabs will look like this" preview draws the real `ShopTabPill`, so the promise in its label
 can't drift from the real strip.
+
+## 101. Settings rows share one base; anonymous sign-out confirms
+
+**Problem:** the four settings option widgets each wrapped a different Material tile
+(`ListTile`, `SwitchListTile`, a raw inline `ListTile`). Each overrode its own padding and drew
+its own divider, so rows had different heights and value styles. They also sat 16 px further in
+than the section labels above them. Settings also had two smaller issues:
+- "Terms of Service" did nothing when tapped, and "New list" vanished for someone with no lists.
+- Signing out an anonymous account, whose lists exist only on this device, happened without
+  a confirmation step.
+
+**Decision:**
+- **One row base.** `SettingRow` owns row geometry: no horizontal inset, `rowVertical` padding,
+  and a 44 px minimum height. The option widgets only choose what goes in its trailing slot.
+  `SettingsSection` draws the label and draws dividers *between* rows, so a group's last row
+  has no trailing line. The notifications screen uses the same pieces.
+- **Rows only for real destinations.** About is just Sign out plus the version, and "New list"
+  always shows.
+- **Anonymous sign-out confirms first.** Linked accounts sign out immediately, since they lose
+  nothing. While the profile is still loading, it is treated as anonymous: asking once too
+  often is the safe mistake.
+- **A linked email shows once,** in the profile header with a verified tick. The "secured"
+  card that repeated the address is gone. The card still shows while the account is anonymous,
+  as #56 requires.
+- **One swatch picker.** Shop and avatar colours share `core/ui/ColorSwatchPicker`, which
+  replaced three copies.

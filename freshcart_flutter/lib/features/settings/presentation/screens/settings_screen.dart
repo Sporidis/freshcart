@@ -12,6 +12,10 @@ import 'package:freshcart_flutter/features/settings/presentation/widgets/section
 
 /// Account-level settings, reached from the drawer. Reads
 /// [SettingsScreenController]; each section below owns its own writes.
+///
+/// Only genuinely global things live here (Flow 10): you, your lists as
+/// doors into *their* settings, preferences, and signing out. Every gap
+/// between groups is the same [AppSpacing.screen].
 class SettingsScreen extends ConsumerWidget {
   /// Creates the settings screen.
   const SettingsScreen({super.key});
@@ -21,6 +25,9 @@ class SettingsScreen extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
     final s = ref.watch(settingsScreenControllerProvider);
     final account = s.profile.dataOrNull;
+    // Unknown counts as anonymous: it only decides whether sign-out asks
+    // first, and asking once too often is the safe mistake.
+    final isAnonymous = account?.isAnonymous ?? true;
 
     return Scaffold(
       appBar: AppBar(
@@ -31,15 +38,16 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
           ProfileHeader(user: s.profile, t: t),
-          account == null
-              ? const SizedBox.shrink()
-              : AccountCard(user: account, t: t),
-          const SizedBox(height: 12),
+          if (account != null && account.isAnonymous) ...[
+            const SizedBox(height: AppSpacing.screen),
+            AccountCard(t: t),
+          ],
+          const SizedBox(height: AppSpacing.screen),
           ListsAndShopsSection(t: t, rows: s.lists),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.screen),
           PreferencesSection(t: t),
-          const SizedBox(height: 12),
-          AboutSection(t: t),
+          const SizedBox(height: AppSpacing.screen),
+          AboutSection(t: t, isAnonymous: isAnonymous),
         ],
       ),
     );
