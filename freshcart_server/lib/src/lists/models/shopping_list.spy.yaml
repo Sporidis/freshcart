@@ -4,7 +4,7 @@ table: freshcart_shopping_list
 fields:
   id: UuidValue?, defaultPersist=random_v7
 
-  ### Human-readable list name.
+  ### Readable list name.
   name: String
 
   ### The short code someone types to join this list.
