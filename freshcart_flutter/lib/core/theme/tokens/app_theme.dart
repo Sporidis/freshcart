@@ -247,6 +247,13 @@ class AppTheme {
       surfaceContainerHigh: subtleSurface,
       surfaceContainerHighest: subtleSurface,
       surfaceTint: Colors.transparent,
+      // Same reasoning for the lines and secondary ink: generated from the
+      // seed, they came out olive in light mode (the warm ink seed tints the
+      // whole ramp), on every divider and settings row border. Pinned to
+      // the app's own neutral tokens like the surfaces above.
+      outline: border,
+      outlineVariant: border,
+      onSurfaceVariant: secondaryText,
     );
 
     final textTheme = TextTheme(
@@ -467,7 +474,14 @@ class AppTheme {
               ? buttonBg
               : (isDark ? Colors.white24 : Colors.black12),
         ),
-        thumbColor: const WidgetStatePropertyAll(Colors.white),
+        // On, the track is the ink-on-paper button colour -- white in dark
+        // mode -- so a fixed white thumb vanished into it. The thumb takes
+        // the button's own foreground instead, the same pair a primary
+        // button uses, so it reads in both modes.
+        thumbColor: WidgetStateProperty.resolveWith(
+          (states) =>
+              states.contains(WidgetState.selected) ? buttonFg : Colors.white,
+        ),
         trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
       ),
 

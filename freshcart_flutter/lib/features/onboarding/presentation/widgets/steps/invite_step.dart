@@ -32,7 +32,10 @@ class InviteStep extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t.onboarding.inviteTitle, style: AppTextStyles.largeTitle),
+          Text(
+            t.onboarding.inviteTitle,
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
           const SizedBox(height: 8),
           Text(
             t.onboarding.inviteSubtitle,

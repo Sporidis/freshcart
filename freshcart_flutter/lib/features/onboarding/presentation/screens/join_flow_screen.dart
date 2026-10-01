@@ -83,7 +83,10 @@ class _NameStepState extends ConsumerState<_NameStep> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t.onboarding.nameTitle, style: AppTextStyles.largeTitle),
+          Text(
+            t.onboarding.nameTitle,
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
           const SizedBox(height: 8),
           Text(
             t.onboarding.nameSubtitle,
@@ -149,7 +152,10 @@ class _CodeStep extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(t.join.codeTitle, style: AppTextStyles.largeTitle),
+          Text(
+            t.join.codeTitle,
+            style: Theme.of(context).textTheme.displayLarge,
+          ),
           const SizedBox(height: 8),
           Text(
             t.join.codeSubtitle,
@@ -243,7 +249,10 @@ class _ConfirmationStepState extends ConsumerState<_ConfirmationStep> {
               child: const Icon(Icons.check, color: Colors.white, size: 26),
             ),
             const SizedBox(height: 16),
-            Text(t.join.confirmTitle, style: AppTextStyles.sheetTitle),
+            Text(
+              t.join.confirmTitle,
+              style: Theme.of(context).textTheme.headlineSmall,
+            ),
             const SizedBox(height: 7),
             if (list != null)
               Text(

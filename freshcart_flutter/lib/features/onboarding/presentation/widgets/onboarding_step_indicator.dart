@@ -3,7 +3,6 @@ import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 
 /// The design's dash-pill progress row: the whole 4-step wizard (name, list,
@@ -33,7 +32,7 @@ class OnboardingStepIndicator extends ConsumerWidget {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(2),
                   color: step.index == index
-                      ? AppColors.ink
+                      ? theme.colorScheme.onSurface
                       : theme.colorScheme.outlineVariant,
                 ),
               ),

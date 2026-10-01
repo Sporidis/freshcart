@@ -16,12 +16,10 @@ class OfflineSyncingBanner extends ConsumerWidget {
     return switch (ref.watch(syncBannerProvider)) {
       SyncBannerHidden() => const SizedBox.shrink(),
       SyncBannerOffline() => _BuildBanner(
-        color: Colors.grey,
         icon: Icons.wifi_off,
         message: t.sync.offline,
       ),
       SyncBannerSyncing(:final pending) => _BuildBanner(
-        color: Colors.grey,
         icon: Icons.sync,
         message: t.sync.syncing(n: pending),
       ),
@@ -29,30 +27,26 @@ class OfflineSyncingBanner extends ConsumerWidget {
   }
 }
 
+/// The strip itself. The theme's inverse surface -- dark in light mode,
+/// light in dark mode -- so it stands apart from the list in both, the same
+/// pairing a snackbar uses.
 class _BuildBanner extends StatelessWidget {
-  final Color color;
+  const _BuildBanner({required this.icon, required this.message});
+
   final IconData icon;
   final String message;
 
-  const _BuildBanner({
-    required this.color,
-    required this.icon,
-    required this.message,
-  });
-
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
-      color: color,
-      padding: const EdgeInsets.all(8.0),
+      color: scheme.inverseSurface,
+      padding: const EdgeInsets.all(8),
       child: Row(
         children: [
-          Icon(icon, color: Colors.white),
-          const SizedBox(width: 8.0),
-          Text(
-            message,
-            style: const TextStyle(color: Colors.white),
-          ),
+          Icon(icon, color: scheme.onInverseSurface),
+          const SizedBox(width: 8),
+          Text(message, style: TextStyle(color: scheme.onInverseSurface)),
         ],
       ),
     );
