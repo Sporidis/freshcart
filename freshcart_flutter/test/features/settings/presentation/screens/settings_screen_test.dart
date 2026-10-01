@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_status_option.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
@@ -11,8 +13,6 @@ import 'package:freshcart_flutter/features/lists/data/repositories/list_reposito
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:freshcart_flutter/features/settings/presentation/screens/settings_screen.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_status_option.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';

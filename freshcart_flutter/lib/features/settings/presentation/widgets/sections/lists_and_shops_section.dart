@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
     show showCreateListDialog;
 import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_state.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_option.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/settings_section.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 

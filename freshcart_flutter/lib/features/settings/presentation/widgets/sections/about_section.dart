@@ -3,9 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/settings_section.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 

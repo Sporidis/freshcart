@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
@@ -24,7 +25,6 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/create_list_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/display_name_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/invite_step.dart';
-import 'package:freshcart_flutter/features/settings/presentation/widgets/settings_options/setting_row.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
