@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/lists/application/household_screen/household_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/household_screen/household_screen_state.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/invite_card.dart';
@@ -116,13 +117,6 @@ class _MemberRow extends StatelessWidget {
   final bool canManage;
   final HouseholdScreenController vm;
 
-  /// A stable colour per member, so the same person is the same colour
-  /// everywhere without storing one.
-  Color get _avatarColor {
-    const palette = AppColors.presetShopColors;
-    return palette[member.userId.value.hashCode.abs() % palette.length];
-  }
-
   String get _tag => switch ((isMe, member.isOwner)) {
     (true, true) => t.household.youOwner,
     (true, false) => t.household.you,
@@ -141,15 +135,14 @@ class _MemberRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowVertical),
       child: Row(
         children: [
-          CircleAvatar(
+          // The shared avatar, so a member's photo or chosen colour shows here
+          // exactly as in the drawer (decisions #65).
+          UserAvatar(
+            seed: member.userId.value,
+            initial: initial,
+            photoUrl: member.avatarPhotoUrl,
+            color: member.avatarColor,
             radius: 20,
-            backgroundColor: isMe ? AppColors.ink : _avatarColor,
-            child: Text(
-              initial,
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-              ),
-            ),
           ),
           const SizedBox(width: 13),
           Expanded(
