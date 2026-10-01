@@ -6,7 +6,6 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
@@ -384,8 +383,7 @@ class _ManagingSwitcherState extends State<_ManagingSwitcher> {
     final theme = Theme.of(context);
     final t = widget.t;
     final canSwitch = widget.lists.length > 1;
-    final isDark = theme.brightness == Brightness.dark;
-    final openFill = isDark ? AppColors.subtleDark : AppColors.subtleLight;
+    final openFill = theme.colorScheme.surfaceContainer;
     final duration = AppMotion.durationFor(context, AppMotion.standard);
 
     return AnimatedContainer(
@@ -536,7 +534,9 @@ class _DangerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) => SettingRow(
     title: title,
-    titleStyle: AppTextStyles.body.copyWith(color: AppColors.destructive),
+    titleStyle: AppTextStyles.body.copyWith(
+      color: Theme.of(context).colorScheme.error,
+    ),
     onTap: onTap,
   );
 }

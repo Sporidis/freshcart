@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
@@ -106,7 +105,7 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
                 TextButton(
                   onPressed: () async => report(await vm.deleteSelected()),
                   style: TextButton.styleFrom(
-                    foregroundColor: AppColors.destructive,
+                    foregroundColor: Theme.of(context).colorScheme.error,
                   ),
                   child: Text(t.common.delete),
                 ),

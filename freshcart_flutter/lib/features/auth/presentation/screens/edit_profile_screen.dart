@@ -271,7 +271,7 @@ class _ColorSection extends StatelessWidget {
           Text(
             failure.toMessage(t),
             style: theme.textTheme.bodySmall?.copyWith(
-              color: AppColors.destructive,
+              color: Theme.of(context).colorScheme.error,
             ),
           ),
         ],

@@ -54,7 +54,6 @@ class _InviteCardState extends ConsumerState<InviteCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.gap,
@@ -62,10 +61,10 @@ class _InviteCardState extends ConsumerState<InviteCard> {
         AppSpacing.gapSmall,
         AppSpacing.gapSmall,
       ),
-      // The app's own subtle surface, not a translucent M3 container role
-      // that tints differently depending on the seed behind it.
+      // The app's own subtle surface: AppTheme pins every surfaceContainer
+      // role to it, so it no longer tints with the seed behind it.
       decoration: BoxDecoration(
-        color: isDark ? AppColors.subtleDark : AppColors.subtleLight,
+        color: theme.colorScheme.surfaceContainer,
         border: Border.all(color: theme.colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadii.input),
       ),

@@ -55,7 +55,7 @@ class SearchRecentlyBought extends ConsumerWidget {
     if (buckets.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.42);
+    final muted = theme.textTheme.labelSmall?.color;
 
     Widget sectionHeader(String label) => Padding(
       padding: const EdgeInsets.fromLTRB(

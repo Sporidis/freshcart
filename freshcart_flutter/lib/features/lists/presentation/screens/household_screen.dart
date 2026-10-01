@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
@@ -225,16 +225,16 @@ class _MemberRow extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(t.common.cancel),
             ),
-            FilledButton(
-              style: destructive
-                  ? FilledButton.styleFrom(
-                      backgroundColor: AppColors.destructive,
-                      foregroundColor: Colors.white,
-                    )
-                  : null,
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(confirmLabel),
-            ),
+            if (destructive)
+              DestructiveButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(confirmLabel),
+              )
+            else
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(confirmLabel),
+              ),
           ],
         ),
       ) ??

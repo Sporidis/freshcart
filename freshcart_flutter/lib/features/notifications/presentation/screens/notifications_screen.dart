@@ -99,7 +99,7 @@ class _ListMuteRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final muted = ref.watch(listMuteControllerProvider(list.id)).value ?? false;
-    final muteColor = theme.colorScheme.onSurface.withValues(alpha: 0.45);
+    final muteColor = theme.textTheme.bodySmall?.color;
 
     // Announced as a toggle with its state, not as a plain button whose
     // trailing "On"/"Muted" text a screen reader would read as a label.

@@ -267,7 +267,7 @@ class _MenuOptionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // `colorScheme.error`/`onSurface`, not the fixed `AppColors.destructive`/
+    // `colorScheme.error`/`onSurface`, not the fixed `Theme.of(context).colorScheme.error`/
     // `bgDark` this used to read -- ink text on a white-only assumption went
     // unreadable on the now dark-mode-aware card above.
     final color = isDestructive ? scheme.error : scheme.onSurface;

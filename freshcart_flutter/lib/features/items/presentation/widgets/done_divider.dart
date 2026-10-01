@@ -41,7 +41,7 @@ class DoneDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.42);
+    final muted = theme.textTheme.labelSmall?.color;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(4, 14, 4, 9),

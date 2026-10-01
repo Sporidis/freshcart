@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
@@ -46,7 +45,7 @@ class JoinCodeInput extends StatefulWidget {
 
   /// Draws every box's border in the error colour -- the boxes are the
   /// field, so they carry the field's error state (Motion spec §07: "border
-  /// lerps to AppColors.destructive").
+  /// lerps to Theme.of(context).colorScheme.error").
   final bool hasError;
 
   @override
@@ -154,7 +153,7 @@ class _CodeBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadii.input),
         border: Border.all(
           color: hasError
-              ? AppColors.destructive
+              ? Theme.of(context).colorScheme.error
               : active
               ? theme.colorScheme.primary
               : theme.colorScheme.outlineVariant,

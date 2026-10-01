@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
@@ -42,11 +42,7 @@ Future<void> confirmDeleteList(
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(t.common.cancel),
         ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.destructive,
-            foregroundColor: Colors.white,
-          ),
+        DestructiveButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(t.lists.deleteForEveryone),
         ),
@@ -85,11 +81,7 @@ Future<void> confirmLeaveList(
         // Destructive red, like delete: leaving cannot be undone without a
         // fresh invite code from someone still on the list. (The design
         // skips this confirm; we keep it -- decisions #104.)
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.destructive,
-            foregroundColor: Colors.white,
-          ),
+        DestructiveButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(t.lists.leave),
         ),
