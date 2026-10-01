@@ -54,6 +54,34 @@ class OnboardingController extends _$OnboardingController {
     );
   }
 
+  /// Advances past the current step if its answer is valid; otherwise records
+  /// why in [OnboardingState.error] and stays put.
+  ///
+  /// This is what lets Continue stay on screen the whole time (Motion spec
+  /// §07: "Continue stays fixed -- never re-animates") instead of hiding
+  /// until the field is valid: the button is always pressable, and pressing
+  /// it with a bad answer is what surfaces the inline error. The next
+  /// keystroke clears it again -- every `update*` above already passes
+  /// `clearError: true`.
+  ///
+  /// Returns whether it advanced, so the caller can fire the step haptic
+  /// only on a real advance.
+  bool continueIfValid() {
+    final check = switch (state.step) {
+      OnboardingStep.displayName => AuthUser.validateDisplayName(
+        state.displayName,
+      ),
+      OnboardingStep.createList => ShoppingList.validateName(state.listName),
+      OnboardingStep.addShop || OnboardingStep.invite => const Ok(''),
+    };
+    if (check case Err(:final failure)) {
+      state = state.copyWith(error: failure);
+      return false;
+    }
+    next();
+    return true;
+  }
+
   /// Advances to the next step, if any.
   void next() {
     const steps = OnboardingStep.values;

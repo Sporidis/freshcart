@@ -16,6 +16,13 @@ class AppMotion {
   // 450ms read as barely-there once a real diagonal crossing was involved.
   static const Duration reveal = Duration(milliseconds: 700);
 
+  // Onboarding step transitions (Motion spec §07, the "signature moment"):
+  // the outgoing page leaves faster than the incoming one arrives, and the
+  // incoming one waits a beat so the two never visibly overlap mid-screen.
+  static const Duration stepOut = Duration(milliseconds: 200);
+  static const Duration stepIn = Duration(milliseconds: 320);
+  static const Duration stepInDelay = Duration(milliseconds: 60);
+
   static const Curve enter = Curves.easeOutCubic;
   static const Curve exit = Curves.easeInCubic;
   static const Curve pop = Curves.easeOutBack;

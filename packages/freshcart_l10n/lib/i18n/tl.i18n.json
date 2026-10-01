@@ -205,7 +205,8 @@
     "sampleItem2": "Pasta",
     "sampleItem3": "Kamatis",
     "sampleItem4": "Coffee beans",
-    "sampleActivity": "Idinagdag ni {{name}} ang {{item}}"
+    "sampleActivity": "Idinagdag ni {{name}} ang {{item}}",
+    "sampleMemberName": "Sam"
   },
   "onboarding": {
     "stepOf": "Hakbang {{step}} ng {{total}}",
@@ -215,6 +216,7 @@
     "listTitle": "Pangalanan ang unang listahan mo",
     "listSubtitle": "Puwede kang magdagdag pa mamaya — isang BBQ, biyahe, malaking grocery.",
     "listPlaceholder": "hal. Lingguhang Grocery",
+    "defaultListName": "Lingguhang Pamimili",
     "shopSheetBody": "Bigyan ito ng pangalan at pumili ng kulay para sa tab nito.",
     "shopPlaceholder": "hal. Palengke",
     "suggestionHousehold": "Sambahayan",

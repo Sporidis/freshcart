@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:go_router/go_router.dart';
@@ -103,8 +105,23 @@ class _PulsingDotsState extends State<_PulsingDots>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat();
+    duration: _cycle,
+  );
+
+  /// The design's "slow 1.2 s opacity cycle".
+  static const Duration _cycle = Duration(milliseconds: 1200);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // The only motion on this screen is decorative, so reduced motion turns
+    // it off outright: the dots simply sit at full opacity.
+    if (AppMotion.reduced(context)) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      unawaited(_controller.repeat());
+    }
+  }
 
   @override
   void dispose() {
@@ -130,7 +147,9 @@ class _PulsingDotsState extends State<_PulsingDots>
             builder: (context, child) {
               // A third of a turn apart, each riding the same 1.2s sine.
               final phase = _controller.value + (index / _colors.length);
-              final opacity = 0.35 + 0.65 * ((1 + _sine(phase)) / 2);
+              final opacity = _controller.isAnimating
+                  ? 0.35 + 0.65 * ((1 + _sine(phase)) / 2)
+                  : 1.0;
               return Opacity(opacity: opacity, child: child);
             },
             child: Container(

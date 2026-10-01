@@ -7,6 +7,10 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/invite_card.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/fill_or_scroll.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 import 'package:go_router/go_router.dart';
 
 /// Step 4: the new list's own join code, framed as optional in the copy
@@ -27,43 +31,44 @@ class InviteStep extends ConsumerWidget {
     );
     final theme = Theme.of(context);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+    return FillOrScroll(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        AppSpacing.sheetH,
+        AppSpacing.screen,
+        AppSpacing.screen,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            t.onboarding.inviteTitle,
-            style: Theme.of(context).textTheme.displayLarge,
+          OnboardingStepHeader(
+            title: t.onboarding.inviteTitle,
+            subtitle: t.onboarding.inviteSubtitle,
           ),
-          const SizedBox(height: 8),
-          Text(
-            t.onboarding.inviteSubtitle,
-            style: AppTextStyles.secondary.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-          ),
-          const SizedBox(height: 28),
-          if (list != null) ...[
-            Text(
-              t.onboarding.shareCode,
-              style: AppTextStyles.label.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+          const SizedBox(height: AppSpacing.screen),
+          if (list != null)
+            OnboardingEntrance(
+              index: 2,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.onboarding.shareCode,
+                    style: AppTextStyles.label.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.gapSmall),
+                  InviteCard(joinCode: list.joinCode.value, t: t),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            InviteCard(joinCode: list.joinCode.value, t: t),
-          ],
           const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: AppSizes.buttonHeight,
-            child: FilledButton(
-              onPressed: () => context.go(Routes.lists),
-              child: Text(t.onboarding.startMyList),
-            ),
+          OnboardingPrimaryButton(
+            label: t.onboarding.startMyList,
+            onPressed: () => context.go(Routes.lists),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.gapSmall),
           Center(
             child: TextButton(
               onPressed: () => context.go(Routes.lists),

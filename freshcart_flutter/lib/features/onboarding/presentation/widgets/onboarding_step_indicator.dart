@@ -3,56 +3,143 @@ import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 
-/// The design's dash-pill progress row: the whole 4-step wizard (name, list,
-/// shops, invite) rather than the 3-of-3 the mockup's own frames show, since
-/// this app's wizard runs one step longer than the screens it draws.
-class OnboardingStepIndicator extends ConsumerWidget {
+/// The design's step rail: a short dash per step, the active one stretched
+/// into a pill, followed by "Step n of 3".
+///
+/// Counts only [numberedSteps] -- the three questions that build the list.
+/// [OnboardingStep.invite] comes after the list already exists and is
+/// optional by design ("You can do this any time"); numbering it as step 4
+/// of 4 framed it as one more required question. On that step the rail
+/// collapses away entirely, as in the design's own Step 4 frame.
+class OnboardingStepIndicator extends ConsumerStatefulWidget {
+  /// Creates the rail for [step].
   const OnboardingStepIndicator({required this.step, super.key});
 
   final OnboardingStep step;
 
+  /// The steps the rail counts, in order.
+  static const numberedSteps = [
+    OnboardingStep.displayName,
+    OnboardingStep.createList,
+    OnboardingStep.addShop,
+  ];
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<OnboardingStepIndicator> createState() =>
+      _OnboardingStepIndicatorState();
+}
+
+class _OnboardingStepIndicatorState
+    extends ConsumerState<OnboardingStepIndicator> {
+  static const double _dashWidth = 6;
+  static const double _activeWidth = 22;
+  static const double _height = 4;
+
+  /// How far the counter text travels on change, as a fraction of its own
+  /// height -- enough to read as "moved", short of leaving its clip.
+  static const double _counterTravel = 0.6;
+
+  /// +1 when the last change moved forward, -1 when it moved back -- the
+  /// counter slides up going forward and down going back (§07: "Back:
+  /// mirror image").
+  int _direction = 1;
+
+  @override
+  void didUpdateWidget(OnboardingStepIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.step != oldWidget.step) {
+      _direction = widget.step.index > oldWidget.step.index ? 1 : -1;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          Row(
-            children: List.generate(
-              OnboardingStep.values.length,
-              (index) => AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                width: step.index == index ? 24 : 6,
-                height: 4,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(2),
-                  color: step.index == index
-                      ? theme.colorScheme.onSurface
-                      : theme.colorScheme.outlineVariant,
-                ),
+    final position = OnboardingStepIndicator.numberedSteps.indexOf(
+      widget.step,
+    );
+    final total = OnboardingStepIndicator.numberedSteps.length;
+    final pillDuration = AppMotion.durationFor(context, AppMotion.bouncy);
+    final pillCurve = AppMotion.curveFor(context, AppMotion.pop);
+    final direction = _direction;
+
+    return AnimatedSize(
+      duration: AppMotion.durationFor(context, AppMotion.standard),
+      curve: AppMotion.enter,
+      alignment: Alignment.topLeft,
+      child: position == -1
+          ? const SizedBox(width: double.infinity)
+          : Padding(
+              padding: const EdgeInsets.fromLTRB(
+                AppSpacing.screen,
+                AppSpacing.gap,
+                AppSpacing.screen,
+                0,
+              ),
+              child: Row(
+                children: [
+                  for (var i = 0; i < total; i++) ...[
+                    if (i > 0) const SizedBox(width: AppSpacing.gapSmall),
+                    AnimatedContainer(
+                      duration: pillDuration,
+                      curve: pillCurve,
+                      width: i == position ? _activeWidth : _dashWidth,
+                      height: _height,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(AppRadii.pill),
+                        color: i == position
+                            ? theme.colorScheme.onSurface
+                            : theme.colorScheme.outlineVariant,
+                      ),
+                    ),
+                  ],
+                  const SizedBox(width: AppSpacing.gap),
+                  // "Step 1 of 3": the number slides and cross-fades on
+                  // change (§07), keyed by step so only that text moves.
+                  ClipRect(
+                    child: AnimatedSwitcher(
+                      duration: pillDuration,
+                      switchInCurve: AppMotion.enter,
+                      switchOutCurve: AppMotion.exit,
+                      layoutBuilder: (current, previous) => Stack(
+                        alignment: Alignment.centerLeft,
+                        children: [...previous, ?current],
+                      ),
+                      transitionBuilder: (child, animation) {
+                        final incoming = child.key == ValueKey(position);
+                        final from = Offset(
+                          0,
+                          (incoming ? _counterTravel : -_counterTravel) *
+                              direction,
+                        );
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween(
+                              begin: from,
+                              end: Offset.zero,
+                            ).animate(animation),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Text(
+                        t.onboarding.stepOf(step: position + 1, total: total),
+                        key: ValueKey(position),
+                        style: AppTextStyles.captionStrong.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              t.onboarding.stepOf(
-                step: step.index + 1,
-                total: OnboardingStep.values.length,
-              ),
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

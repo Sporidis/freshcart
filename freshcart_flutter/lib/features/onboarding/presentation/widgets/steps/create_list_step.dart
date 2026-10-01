@@ -1,10 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 
+/// Step 2: name the first list.
+///
+/// Arrives pre-filled with a sensible default and fully selected (design:
+/// "so Continue is a valid single tap") -- most people's first list *is*
+/// the weekly shop, and anyone who wants something else just types over it.
 class CreateListStep extends ConsumerStatefulWidget {
   const CreateListStep({super.key});
 
@@ -13,9 +23,27 @@ class CreateListStep extends ConsumerStatefulWidget {
 }
 
 class _CreateListStepState extends ConsumerState<CreateListStep> {
-  late final _controller = TextEditingController(
-    text: ref.read(onboardingControllerProvider).listName,
-  );
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    final draft = ref.read(onboardingControllerProvider).listName;
+    final text = draft.isEmpty
+        ? ref.read(translationsProvider).onboarding.defaultListName
+        : draft;
+    _controller = TextEditingController(text: text)
+      ..selection = TextSelection(baseOffset: 0, extentOffset: text.length);
+    if (draft.isEmpty) {
+      // Not inline: writing to a provider while the tree is building is an
+      // error in Riverpod, and initState runs inside that build.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          ref.read(onboardingControllerProvider.notifier).updateListName(text);
+        }
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -23,55 +51,118 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
     super.dispose();
   }
 
+  void _useSuggestion(String suggestion) {
+    _controller
+      ..text = suggestion
+      ..selection = TextSelection.collapsed(offset: suggestion.length);
+    ref.read(onboardingControllerProvider.notifier).updateListName(suggestion);
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(onboardingControllerProvider.notifier);
+    final error = ref.watch(
+      onboardingControllerProvider.select((s) => s.error),
+    );
     final t = ref.watch(translationsProvider);
     final suggestions = [
       t.onboarding.suggestionHousehold,
       t.onboarding.suggestionBigShop,
       t.onboarding.suggestionBbq,
     ];
+    final errorText = error?.toMessage(t);
+
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        AppSpacing.sheetH,
+        AppSpacing.screen,
+        0,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            t.onboarding.listTitle,
-            style: Theme.of(context).textTheme.headlineSmall,
+          OnboardingStepHeader(
+            title: t.onboarding.listTitle,
+            subtitle: t.onboarding.listSubtitle,
           ),
-          const SizedBox(height: 8),
-          Text(t.onboarding.listSubtitle),
-          const SizedBox(height: 24),
-          TextField(
-            controller: _controller,
-            onChanged: controller.updateListName,
-            decoration: InputDecoration(
-              hintText: t.onboarding.listPlaceholder,
+          const SizedBox(height: AppSpacing.screen),
+          OnboardingEntrance(
+            index: 2,
+            child: ShakeOnError(
+              errorText: errorText,
+              child: TextField(
+                controller: _controller,
+                onChanged: controller.updateListName,
+                autofocus: true,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: t.onboarding.listPlaceholder,
+                  errorText: errorText,
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: suggestions
-                .map(
-                  (suggestion) => ActionChip(
-                    label: Text(suggestion),
-                    onPressed: () {
-                      _controller
-                        ..text = suggestion
-                        ..selection = TextSelection.collapsed(
-                          offset: suggestion.length,
-                        );
-                      controller.updateListName(suggestion);
-                    },
+          const SizedBox(height: AppSpacing.gap),
+          OnboardingEntrance(
+            index: 3,
+            child: Wrap(
+              spacing: AppSpacing.gapSmall,
+              runSpacing: AppSpacing.gapSmall,
+              children: [
+                for (final suggestion in suggestions)
+                  _SuggestionPill(
+                    label: suggestion,
+                    onTap: () => _useSuggestion(suggestion),
                   ),
-                )
-                .toList(),
+              ],
+            ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// An outlined suggestion pill -- the design's, rather than [ActionChip]'s
+/// tonal fill, which read as a second kind of button competing with
+/// Continue.
+class _SuggestionPill extends StatelessWidget {
+  const _SuggestionPill({required this.label, required this.onTap});
+
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      type: MaterialType.transparency,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const StadiumBorder(),
+        child: Container(
+          constraints: const BoxConstraints(
+            minHeight: AppSpacing.minTapTarget,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gap),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.pill),
+            border: Border.all(color: theme.colorScheme.outlineVariant),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.label.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
