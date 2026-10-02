@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
@@ -56,17 +59,37 @@ QueueDrainer queueDrainer(Ref ref) => QueueDrainer(
   ref.watch(listRepositoryProvider),
 );
 
-/// Sends saved changes to the server when the phone goes from offline to
-/// online.
+/// Sends saved offline changes to the server when we become online.
 ///
 /// Returns nothing. It only has to exist, so `app.dart` watches it once to
 /// start it.
 @Riverpod(keepAlive: true)
 void queueDrainCoordinator(Ref ref) {
-  ref.listen(syncProvider, (previous, next) async {
-    if (previous?.value == SyncStatus.offline &&
-        next.value == SyncStatus.online) {
+  // True while a drain is running. Two drains at once would both read the
+  // same queue and send the same changes twice (duplicate items).
+  var draining = false;
+
+  Future<void> drainOnce() async {
+    if (draining) return;
+    draining = true;
+    try {
+      // At app start we can be online before sign-in is done. Draining
+      // then would fail with "unauthorized", so wait for it.
+      final session = await ref.read(authBootstrapProvider.future);
+      if (!session.authenticated) return;
       await ref.read(queueDrainerProvider).drain();
+    } finally {
+      draining = false;
+    }
+  }
+
+  ref.listen(syncProvider, (previous, next) {
+    // Drain when we BECOME online: coming back from offline, but also the
+    // first status at app start (then `previous` is still loading, not
+    // offline). Staying online (online -> online) doesn't drain again.
+    final wasOnline = previous?.value == SyncStatus.online;
+    if (!wasOnline && next.value == SyncStatus.online) {
+      unawaited(drainOnce());
     }
   });
 }
