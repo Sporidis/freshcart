@@ -10,7 +10,6 @@ part 'notification_preferences_controller.g.dart';
 @riverpod
 class NotificationPreferencesController
     extends _$NotificationPreferencesController {
-  ///
   /// A failed read stays an [Err] rather than falling back to defaults:
   /// defaults drawn as switches look exactly like the user's real choices,
   /// and flipping one would then set the opposite of what they meant.

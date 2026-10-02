@@ -4,6 +4,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
@@ -47,10 +48,16 @@ class NotificationsScreen extends ConsumerWidget {
           SettingsSection(
             label: t.notifications.push,
             children: [
-              // TODO(human): when s.preferencesFailure is non-null, show the
-              // failure and a Retry (vm.retryPreferences) instead of the
-              // spinner below -- see the Learn by Doing note.
-              if (preferences == null)
+              if (s.preferencesFailure case final failure?)
+                FailureState(
+                  failure: failure,
+                  t: t,
+                  action: ElevatedButton(
+                    onPressed: vm.retryPreferences,
+                    child: Text(t.common.retry),
+                  ),
+                )
+              else if (preferences == null)
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: AppSpacing.screen),
                   child: Center(child: CircularProgressIndicator()),
