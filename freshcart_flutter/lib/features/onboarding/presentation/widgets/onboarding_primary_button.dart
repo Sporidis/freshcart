@@ -2,17 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 
-/// The one primary action on every Getting-in screen: Get started,
-/// Continue, Join list, Start my list.
+/// The main button on the welcome, onboarding and join screens ("Get
+/// started", "Continue", "Join list", "Start my list").
 ///
-/// An [ElevatedButton] because that is the button `AppTheme` styles as the
-/// design's ink, full-width, 52 px primary. The flow had drifted into four
-/// different primaries -- a restyled [FilledButton] on Welcome, M3-default
-/// [FilledButton]s on Join and Invite, this one in the wizard -- and the
-/// first screens are exactly where a mismatch is most visible.
+/// It's an [ElevatedButton], because our theme styles that one as the big
+/// dark full-width button.
 ///
-/// While [isLoading], the label swaps for a spinner and presses are ignored,
-/// so a slow network cannot be double-submitted into two lists.
+/// While [isLoading], it shows a spinner and ignores taps, so a slow
+/// network can't cause a double save (two lists).
 class OnboardingPrimaryButton extends StatelessWidget {
   /// Creates the button.
   const OnboardingPrimaryButton({
@@ -33,9 +30,8 @@ class OnboardingPrimaryButton extends StatelessWidget {
     return ElevatedButton(
       onPressed: isLoading ? null : onPressed,
       child: isLoading
-          // Inside the button, so IconTheme already carries the button's
-          // own foreground colour -- the spinner matches the label it
-          // replaces in both themes without naming a colour here.
+          // No colour set: inside the button it automatically gets the
+          // button's text colour.
           ? Builder(
               builder: (context) => SizedBox.square(
                 dimension: _spinnerSize,

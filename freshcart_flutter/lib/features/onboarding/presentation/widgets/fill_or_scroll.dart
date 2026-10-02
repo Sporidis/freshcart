@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// Lets a step's [child] -- a [Column] that pins its button to the bottom
-/// with a [Spacer] -- fill the screen when there is room, and scroll when
-/// there is not.
+/// Fills the screen when there's room, and scrolls when there isn't.
 ///
-/// A bare Column with a Spacer overflows the moment its height shrinks below
-/// its content: a small phone with the keyboard up, or mid-transition while
-/// the wizard's footer grows back in under the outgoing step.
-/// [SliverFillRemaining] with `hasScrollBody: false` is the standard way to
-/// get both behaviours from one layout.
+/// For a [Column] that uses a [Spacer] to push its button to the bottom.
+/// A plain Column like that overflows when the screen gets too small (for
+/// example a small phone with the keyboard open). [SliverFillRemaining]
+/// with `hasScrollBody: false` is the standard fix.
 class FillOrScroll extends StatelessWidget {
   /// Wraps [child].
   const FillOrScroll({required this.child, this.padding, super.key});

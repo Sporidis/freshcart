@@ -92,8 +92,7 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
               onSelected: (color) => setState(() => _selectedColor = color),
             ),
             const SizedBox(height: AppSpacing.sheetH),
-            // The app's themed primary (ink, full width), the same button
-            // every other Getting-in screen uses for its main action.
+            // Our standard full-width main button.
             ElevatedButton.icon(
               onPressed: canSubmit ? _submit : null,
               icon: const Icon(Icons.add),

@@ -14,18 +14,14 @@ import 'package:freshcart_flutter/features/onboarding/application/onboarding/onb
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_tabs_preview.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
 
-/// The wizard's fixed footer: Continue, and on the shops step, the "Your
-/// tabs will look like this" preview above it.
+/// The bottom of the wizard: the Continue button, and on the shops step the
+/// "Your tabs will look like this" preview above it.
 ///
-/// Continue never hides, never disables, and never re-animates (Motion spec
-/// §07: "Continue stays fixed"). It used to vanish until the current answer
-/// was valid, which left a brand-new user looking at step 1 with a text
-/// field and nothing to press. Now it is always there, and pressing it with
-/// a bad answer is what explains what is wrong -- inline, on the field.
+/// Continue is always visible and always enabled. Pressing it with a bad
+/// answer shows what's wrong, under the field.
 ///
-/// On the shops step the footer turns into the design's tray: one subtle
-/// surface with a hairline top edge, holding the preview and the button
-/// together, so the payoff sits right beside the action that commits it.
+/// On the shops step, the preview and the button sit together on a light
+/// grey panel with a thin line on top.
 class OnboardingFooter extends ConsumerWidget {
   const OnboardingFooter({super.key});
 
@@ -33,11 +29,10 @@ class OnboardingFooter extends ConsumerWidget {
     final controller = ref.read(onboardingControllerProvider.notifier);
     final state = ref.read(onboardingControllerProvider);
 
-    // Shops -> Invite is the one transition that does real work (creates
-    // the list and its shops) -- every other step is a plain, synchronous
-    // advance. Once that has already succeeded once (state.createdList is
-    // set), Back-then-Continue must not repeat it: a second submit would
-    // create a second list.
+    // Going from Shops to Invite saves everything (creates the list and
+    // shops). Other steps just move on.
+    // If the list already exists (the user went back and pressed Continue
+    // again), don't save again, or we'd create a second list.
     if (state.step == OnboardingStep.addShop && state.createdList == null) {
       final result = await controller.submit();
       if (!context.mounted) return;

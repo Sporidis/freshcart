@@ -14,21 +14,20 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboa
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// FreshCart's front door: one screen, two exits, no carousel.
+/// The first screen a new user sees. Two buttons: "Get started" and "I have
+/// an invite code".
 ///
-/// Traced from the design's own Welcome frame rather than an original take —
-/// it shows the product instead of describing it, a tilted preview of a real
-/// list cropped by the fold, so the pitch is legible before a single word of
-/// copy is read.
+/// The top shows a tilted picture of a shopping list, so the user sees what
+/// the app does before reading anything.
 class WelcomeScreen extends ConsumerWidget {
   /// Creates the welcome screen.
   const WelcomeScreen({super.key});
 
-  /// Welcome's own, wider side margin (the design's 28 px) -- the mark, the
-  /// headline and both exits all hang off the same left edge.
+  /// Side margin for this screen (28 px, wider than elsewhere). Logo, title
+  /// and buttons all line up on it.
   static const double _sideInset = 28;
 
-  /// The mark's size once it has landed here from the splash tile.
+  /// The logo's size here (after flying in from the splash screen).
   static const double _markSize = 28;
 
   @override
@@ -42,8 +41,8 @@ class WelcomeScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // The landing spot for the splash's Hero: without a matching
-            // tag here, the "mark flies to Welcome" moment was only a fade.
+            // Where the splash logo lands. The Hero tag must match the
+            // splash screen's, or it would just fade instead of fly.
             Padding(
               padding: const EdgeInsets.fromLTRB(
                 _sideInset,
@@ -113,8 +112,9 @@ class WelcomeScreen extends ConsumerWidget {
   }
 }
 
-/// The illustration area: a tilted card mocking up a real list, an activity
-/// bubble floating over it, faded into [backgroundColor] at the fold.
+/// The picture at the top: a tilted fake shopping list, with a small
+/// "someone added this" bubble on it. Fades into [backgroundColor] at the
+/// bottom.
 class _ListPreviewScene extends StatelessWidget {
   const _ListPreviewScene({required this.t, required this.backgroundColor});
 
@@ -141,8 +141,8 @@ class _ListPreviewScene extends StatelessWidget {
             top: 4,
             child: _ActivityBubble(t: t),
           ),
-          // Blends the card's crop into the headline section below it,
-          // rather than the fold reading as a hard clip.
+          // A fade at the bottom, so the picture doesn't end with a hard
+          // edge.
           Positioned(
             left: 0,
             right: 0,
@@ -188,19 +188,12 @@ class _ListPreviewCard extends StatelessWidget {
       width: 250,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        // theme.colorScheme.surface, not AppColors.surfaceLight -- this
-        // mockup card was hardcoded to the light-mode surface regardless of
-        // the active theme, which is why it stayed bright white in dark
-        // mode instead of following the screen around it.
+        // Theme colour (not a fixed light colour), so the card is dark in
+        // dark mode.
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadii.celebration),
-        // surfaceDark and this screen's own subtleDark background are only
-        // a couple of RGB units apart -- a shadow alone (which barely reads
-        // against a dark background anyway) left the card blending into
-        // whatever was behind it. A hairline border is what the app already
-        // reaches for elsewhere to bound a surface regardless of how close
-        // its fill sits to what's behind it (see OutlinedButton/input
-        // fields in AppTheme._build, same AppColors.border* tokens).
+        // A thin border, because in dark mode the card and the background
+        // are almost the same colour. A shadow alone isn't visible enough.
         border: Border.all(
           color: theme.colorScheme.outline,
         ),
@@ -223,10 +216,8 @@ class _ListPreviewCard extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           for (final (index, row) in rows.indexed) ...[
-            // No explicit colour: Divider falls back to the theme's own
-            // DividerThemeData (already correctly light/dark-aware in
-            // AppTheme._build), where a hardcoded AppColors.dividerLight
-            // would not have been.
+            // No colour set, so it uses the theme's divider colour (which
+            // works in dark mode too).
             if (index > 0) const Divider(height: 1),
             _PreviewRow(
               name: row.$1,
@@ -254,10 +245,8 @@ class _PreviewRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // A checked circle's fill and its own checkmark are an on-surface/
-    // surface pair, not a fixed ink/white pair -- in dark mode onSurface is
-    // white, so a hardcoded white checkmark on it would vanish the same way
-    // the activity bubble's text did against a hardcoded-light card.
+    // Theme colours for the circle and its checkmark, so the checkmark is
+    // still visible in dark mode (a fixed white one would vanish).
     final checkedFill = theme.colorScheme.onSurface;
     final checkedGlyph = theme.colorScheme.surface;
     return Padding(
@@ -317,29 +306,16 @@ class _ActivityBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Whoever added the sample item -- a stand-in household member, not a
-    // real user. Localised like the rest of the mock list, so the bubble
-    // reads as a plausible housemate in every locale.
+    // A made-up housemate's name, translated per language.
     final sampleMemberName = t.welcome.sampleMemberName;
     final theme = Theme.of(context);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(6, 6, 12, 6),
       decoration: BoxDecoration(
-        // theme.colorScheme.surface, not AppColors.surfaceLight -- the
-        // actual bug report: this stayed hardcoded light regardless of
-        // theme, while the activity text beside it (no explicit colour,
-        // AppTextStyles.captionStrong) correctly inherited the ambient,
-        // theme-aware text colour -- white in dark mode. A card that never
-        // leaves light mode plus text that correctly follows dark mode is
-        // exactly how "white text on a white card" (the actual symptom
-        // reported) happens: two colours from two different sources that
-        // silently stopped agreeing the moment the theme changed.
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadii.pill),
-        // Same reasoning as _ListPreviewCard's border: surfaceDark sits too
-        // close to this screen's own background to read as "a card" from
-        // fill colour and a barely-visible-on-dark shadow alone.
+        // Thin border, same reason as the list card above.
         border: Border.all(
           color: theme.colorScheme.outline,
         ),

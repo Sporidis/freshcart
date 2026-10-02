@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
-/// Fades and lifts [child] in once, when it first mounts, [index] stagger
-/// steps after its siblings (Motion spec §07: "title, body, field stagger
-/// 35 ms apart via AppMotion.stagger").
+/// Fades [child] in and slides it up a little, when it first appears.
+/// [index] adds a small delay (35 ms per step), so title, text and field
+/// come in one after another.
 ///
-/// Because every onboarding step is remounted on each transition, this
-/// replays on every step arrival -- forward or back -- without any explicit
-/// trigger.
+/// Each step is rebuilt when you move to it, so this plays again every
+/// time, forward or back.
 class OnboardingEntrance extends StatelessWidget {
   /// Creates the entrance for the [index]th element of a step.
   const OnboardingEntrance({
@@ -16,12 +15,12 @@ class OnboardingEntrance extends StatelessWidget {
     super.key,
   });
 
-  /// Position among the elements entering together; 0 enters first.
+  /// The order it comes in. 0 is first.
   final int index;
 
   final Widget child;
 
-  /// How far below its resting place the element starts.
+  /// How far below its final position it starts.
   static const double _rise = 12;
 
   @override

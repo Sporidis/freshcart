@@ -13,12 +13,13 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboa
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 import 'package:go_router/go_router.dart';
 
-/// Step 4: the new list's own join code, framed as optional in the copy
-/// itself rather than only through a skip link — both its buttons lead to
-/// the same place, because inviting later is exactly as easy as inviting now.
+/// Step 4 (optional): shows the new list's join code, to invite others.
 ///
-/// Only reachable once [OnboardingController.submit] has actually created
-/// the list — this is the one step with something real to show.
+/// Both buttons go to the same place (the list), because inviting later is
+/// just as easy.
+///
+/// Only reached after [OnboardingController.submit] created the list, so
+/// the code is real.
 class InviteStep extends ConsumerWidget {
   /// Creates the step.
   const InviteStep({super.key});

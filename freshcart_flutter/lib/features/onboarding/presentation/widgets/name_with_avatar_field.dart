@@ -8,15 +8,13 @@ import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
 
-/// The "What should we call you?" field: an avatar that fills in with the
-/// person's initial as they type, beside the name field itself.
+/// The "What should we call you?" field, with an avatar next to it that
+/// shows the first letter as you type.
 ///
-/// Shared by the onboarding wizard's first step and the join flow's name
-/// step -- the design draws them identically, and they had already drifted
-/// apart as two copies (different title sizes, two different initial rules).
+/// Used by both onboarding and the join flow.
 ///
-/// The avatar is the field's explanation: before anything is typed it is an
-/// empty dashed circle, so it is obvious the name is what will go in it.
+/// Before anything is typed, the avatar is an empty dashed circle, so it's
+/// clear the name goes there.
 class NameWithAvatarField extends StatefulWidget {
   /// Creates the field, starting from [initialValue].
   const NameWithAvatarField({
@@ -28,14 +26,15 @@ class NameWithAvatarField extends StatefulWidget {
     super.key,
   });
 
-  /// The name typed so far -- the controller's draft, so going back to this
-  /// step does not lose it.
+  /// The name typed so far. Comes from the controller, so it's still there
+  /// when the user comes back to this step.
   final String initialValue;
 
   final String hintText;
   final ValueChanged<String> onChanged;
 
-  /// Inline validation message, or null. Shakes the field when it appears.
+  /// Error message under the field, or null. The field shakes when it
+  /// appears.
   final String? errorText;
 
   final bool autofocus;
@@ -56,8 +55,8 @@ class _NameWithAvatarFieldState extends State<NameWithAvatarField> {
   @override
   Widget build(BuildContext context) {
     return Row(
-      // Top-aligned: an error line under the field must not drag the avatar
-      // down to the new vertical centre.
+      // Aligned to the top, so the avatar doesn't move down when an error
+      // appears under the field.
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         ValueListenableBuilder(
