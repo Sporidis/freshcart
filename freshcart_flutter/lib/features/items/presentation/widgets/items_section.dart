@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
@@ -89,7 +90,15 @@ class ItemsSection extends ConsumerWidget {
     // hidden under the button.
     return Stack(
       children: [
-        Positioned.fill(child: body),
+        Positioned.fill(
+          // Outside the state switch, so it survives an empty tab between
+          // two full ones.
+          child: _TabSwitchMotion(
+            filter: s.shopFilter,
+            order: [null, for (final shop in s.shops) shop.id],
+            child: body,
+          ),
+        ),
         // No "all done" card and no add button while selecting, searching
         // or rearranging. (Search has its own "Add to list" button.)
         if (s.mode == ItemsMode.browse && !s.isLoading)
@@ -280,6 +289,7 @@ class _ItemList extends StatelessWidget {
 
     Widget tileFor(
       ShoppingItem item, {
+      required int position,
       bool selectable = false,
       int? index,
     }) => SwipeToDelete(
@@ -295,38 +305,41 @@ class _ItemList extends StatelessWidget {
       // bring it back.
       onSwipe: () async => true,
       onDismissed: () => deleteWithUndo(item),
-      child: ItemTile(
-        t: t,
-        item: item,
-        shopColor: dotFor(item.shopId),
-        // On All the row is the only sign of its shop; on a tab it's obvious.
-        shopName: state.shopFilter == null
-            ? state.shopFor(item.shopId)?.name
-            : null,
-        onToggle: () async => report(await vm.toggle(item)),
-        onEdit: () => onEdit(item),
-        onDelete: () => deleteWithUndo(item),
-        onQuantityChanged: (quantity) async =>
-            report(await vm.setQuantity(item, quantity)),
-        selected: selectable && state.selection.contains(item.id),
-        selectionMode: selectable && selectionMode,
-        onSelectionToggle: selectable
-            ? () => vm.toggleSelection(item.id)
-            : null,
-        onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
-        // Only open rows (not checked ones) can start rearranging.
-        onRearrange: selectable && state.canRearrange
-            ? vm.startRearrange
-            : null,
-        dragHandle: index == null
-            ? null
-            : ReorderableDragStartListener(
-                index: index,
-                child: const Icon(Icons.drag_handle, size: 16),
-              ),
-        checkedByMember: item.checkedBy == null
-            ? null
-            : state.list.memberFor(item.checkedBy!),
+      child: _TabSlide(
+        position: position,
+        child: ItemTile(
+          t: t,
+          item: item,
+          shopColor: dotFor(item.shopId),
+          // On All the row is the only sign of its shop; on a tab it's obvious.
+          shopName: state.shopFilter == null
+              ? state.shopFor(item.shopId)?.name
+              : null,
+          onToggle: () async => report(await vm.toggle(item)),
+          onEdit: () => onEdit(item),
+          onDelete: () => deleteWithUndo(item),
+          onQuantityChanged: (quantity) async =>
+              report(await vm.setQuantity(item, quantity)),
+          selected: selectable && state.selection.contains(item.id),
+          selectionMode: selectable && selectionMode,
+          onSelectionToggle: selectable
+              ? () => vm.toggleSelection(item.id)
+              : null,
+          onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
+          // Only open rows (not checked ones) can start rearranging.
+          onRearrange: selectable && state.canRearrange
+              ? vm.startRearrange
+              : null,
+          dragHandle: index == null
+              ? null
+              : ReorderableDragStartListener(
+                  index: index,
+                  child: const Icon(Icons.drag_handle, size: 16),
+                ),
+          checkedByMember: item.checkedBy == null
+              ? null
+              : state.list.memberFor(item.checkedBy!),
+        ),
       ),
     );
 
@@ -346,11 +359,12 @@ class _ItemList extends StatelessWidget {
             ),
             children: [
               for (final (index, item) in open.indexed)
-                tileFor(item, index: index),
+                tileFor(item, position: index, index: index),
             ],
           )
         else
-          for (final item in open) tileFor(item, selectable: true),
+          for (final (i, item) in open.indexed)
+            tileFor(item, position: i, selectable: true),
         if (done.isNotEmpty) ...[
           DoneDivider(
             label: t.items.doneCount(n: done.length),
@@ -360,7 +374,8 @@ class _ItemList extends StatelessWidget {
             onClear: () async => report(await vm.clearChecked()),
           ),
           if (!state.doneCollapsed)
-            for (final item in done) tileFor(item),
+            for (final (i, item) in done.indexed)
+              tileFor(item, position: open.length + 1 + i),
         ],
       ],
     );
@@ -406,6 +421,116 @@ class _ItemsEmptyState extends StatelessWidget {
               actionLabel: t.items.addTo(shop: shop.name),
               onAction: onAdd,
             ),
+    );
+  }
+}
+
+/// Slides the rows in from the side of the tab you moved to (design v3:
+/// 28px, 220ms, rows 24ms apart).
+///
+/// One controller for the whole list, shared through [_TabSwitchScope].
+/// A row that mounts later (a newly added item) finds the animation already
+/// finished and simply appears; one animation per row couldn't tell the
+/// two cases apart.
+class _TabSwitchMotion extends StatefulWidget {
+  const _TabSwitchMotion({
+    required this.filter,
+    required this.order,
+    required this.child,
+  });
+
+  final ShopId? filter;
+
+  /// The tabs in strip order (null is All), to tell left from right.
+  final List<ShopId?> order;
+  final Widget child;
+
+  @override
+  State<_TabSwitchMotion> createState() => _TabSwitchMotionState();
+}
+
+class _TabSwitchMotionState extends State<_TabSwitchMotion>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: AppMotion.listSlide + _TabSlide.step * _TabSlide.maxStagger,
+    value: 1,
+  );
+  double _direction = 1;
+
+  @override
+  void didUpdateWidget(covariant _TabSwitchMotion oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.filter == oldWidget.filter) return;
+    if (AppMotion.reduced(context)) return;
+    final from = widget.order.indexOf(oldWidget.filter);
+    final to = widget.order.indexOf(widget.filter);
+    // Moving right, the rows come in from the right.
+    _direction = to >= from ? 1 : -1;
+    unawaited(_controller.forward(from: 0));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => _TabSwitchScope(
+    controller: _controller,
+    direction: _direction,
+    child: widget.child,
+  );
+}
+
+class _TabSwitchScope extends InheritedNotifier<AnimationController> {
+  const _TabSwitchScope({
+    required AnimationController controller,
+    required this.direction,
+    required super.child,
+  }) : super(notifier: controller);
+
+  /// 1 when the rows enter from the right, -1 from the left.
+  final double direction;
+}
+
+/// One row's part of [_TabSwitchMotion]: its own 220ms slice of the shared
+/// animation, starting [step] later than the row above.
+class _TabSlide extends StatelessWidget {
+  const _TabSlide({required this.position, required this.child});
+
+  /// The row's place in the list, for its delay.
+  final int position;
+  final Widget child;
+
+  static const Duration step = Duration(milliseconds: 24);
+
+  /// Rows below this all start together, so a long list isn't still
+  /// arriving half a second later.
+  static const int maxStagger = 8;
+  static const double _travel = 28;
+
+  @override
+  Widget build(BuildContext context) {
+    final scope = context.dependOnInheritedWidgetOfExactType<_TabSwitchScope>();
+    final controller = scope?.notifier;
+    if (scope == null || controller == null || controller.isCompleted) {
+      return child;
+    }
+    final total = controller.duration!.inMicroseconds;
+    final start = (step * position.clamp(0, maxStagger)).inMicroseconds;
+    final t = Interval(
+      start / total,
+      (start + AppMotion.listSlide.inMicroseconds) / total,
+      curve: AppMotion.enter,
+    ).transform(controller.value);
+    return Opacity(
+      opacity: t,
+      child: Transform.translate(
+        offset: Offset(scope.direction * _travel * (1 - t), 0),
+        child: child,
+      ),
     );
   }
 }

@@ -2642,6 +2642,11 @@ interaction.
 - **Pushes stay Cupertino.** v3's single push (350ms, `ios` curve, the outgoing page moving −30%)
   is close enough to the Cupertino transition that a custom one wouldn't earn its code.
 - **The 22px check circle becomes 26px.** #105 left that to a design call, and v3 makes it.
+- **Swiping between tabs stays on the strip**, with v3's thresholds (86px or 450px/s). v3 also
+  swipes on the list body, but there swipe-left already deletes a row; the row would win
+  wherever there's a row, so tab-swiping would only work on empty space.
+- **The colour wave is 400ms** (was 700ms, #85/#89), and the header carries the tab's tint with
+  its own wave from the same origin. The header needs no screenshot: it's one flat colour.
 - **Small theme changes now:** sheet drag handle 36×5, drawer 300px, toast radius 14. The 98px
   "above the FAB" offset belongs to the list's undo toast, not to every SnackBar, so it lives in
   `showUndoToast`, not in the theme.

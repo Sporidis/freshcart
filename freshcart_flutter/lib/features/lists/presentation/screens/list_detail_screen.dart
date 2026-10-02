@@ -146,12 +146,9 @@ class _Body extends StatelessWidget {
                       : AppTheme.light(seed),
                   duration: AppMotion.durationFor(context, AppMotion.quick),
                   curve: AppMotion.enter,
-                  child: Column(
-                    children: [
-                      ShopFilterBar(listId: list.id, revealKey: revealKey),
-                      const Divider(height: 1),
-                    ],
-                  ),
+                  // No divider below: in v3 the header's tint ends where
+                  // the strip begins, which is separation enough.
+                  child: ShopFilterBar(listId: list.id, revealKey: revealKey),
                 ),
         ),
         const OfflineSyncingBanner(),

@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
@@ -14,12 +17,16 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_p
 /// The row of shop tabs: "All", one [ShopTabPill] per shop, and a dashed
 /// "+" to add a shop.
 ///
+/// Design v3: the pills are plain, and one accent highlight slides behind
+/// the selected one. It's placed by measuring the pills after layout, so it
+/// follows labels and counts as their widths change.
+///
 /// Picking a tab filters the items and changes the screen's colour. Both
-/// come from [ShopTabsController], so they always match. Swiping left or
-/// right on the list changes tabs the same way as tapping.
+/// come from [ShopTabsController], so they always match. A swipe on the
+/// strip changes tabs the same way as tapping.
 ///
 /// Always shown, even with no shops, so "+" is always there.
-class ShopFilterBar extends ConsumerWidget {
+class ShopFilterBar extends ConsumerStatefulWidget {
   /// Creates the bar for [listId].
   const ShopFilterBar({
     required this.listId,
@@ -34,14 +41,89 @@ class ShopFilterBar extends ConsumerWidget {
   /// for a swipe), before the filter changes.
   final GlobalKey<ShopThemeRevealState> revealKey;
 
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = ref.watch(translationsProvider);
-    final s = ref.watch(shopTabsControllerProvider(listId));
+  /// The strip's height. The pills are 36, inside 44px tap targets.
+  static const double height = 52;
 
-    // Where the finger touched. Saved in onTapDown, used in onTap right
-    // after.
-    Offset? tapOrigin;
+  @override
+  ConsumerState<ShopFilterBar> createState() => _ShopFilterBarState();
+}
+
+class _ShopFilterBarState extends ConsumerState<ShopFilterBar> {
+  /// One key per tab, to measure where the highlight goes. Null is "All".
+  final Map<ShopId?, GlobalKey> _pillKeys = {};
+  final GlobalKey _rowKey = GlobalKey();
+
+  /// The selected pill's box, relative to the row. Null until measured.
+  Rect? _highlight;
+
+  /// False until the highlight has been placed once, so it appears in place
+  /// instead of sliding in from the left edge.
+  bool _placed = false;
+
+  ShopId? _lastSelected;
+
+  /// Where the finger touched. Saved in onTapDown, used in onTap right
+  /// after.
+  Offset? _tapOrigin;
+
+  /// How far the current swipe has travelled.
+  double _swipe = 0;
+
+  // A swipe changes tabs past 86px of travel or 450px/s, as in the design.
+  static const double _swipeDistance = 86;
+  static const double _swipeVelocity = 450;
+
+  static const double _pillHeight = 36;
+
+  GlobalKey _keyFor(ShopId? id) => _pillKeys.putIfAbsent(id, GlobalKey.new);
+
+  /// After layout, moves the highlight under the selected pill.
+  void _measure(ShopId? selected) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final row = _rowKey.currentContext?.findRenderObject();
+      final pill = _pillKeys[selected]?.currentContext?.findRenderObject();
+      if (row is! RenderBox || pill is! RenderBox) return;
+      if (!row.hasSize || !pill.hasSize) return;
+      final rect = pill.localToGlobal(Offset.zero, ancestor: row) & pill.size;
+      if (rect != _highlight) setState(() => _highlight = rect);
+      if (!_placed) {
+        // From the next frame on, changes slide.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) setState(() => _placed = true);
+        });
+      }
+    });
+  }
+
+  /// Keeps the selected pill on screen (after a swipe, it may not be).
+  void _scrollTo(ShopId? selected) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final pillContext = _pillKeys[selected]?.currentContext;
+      if (pillContext == null || !mounted) return;
+      unawaited(
+        Scrollable.ensureVisible(
+          pillContext,
+          alignment: .5,
+          duration: AppMotion.durationFor(context, AppMotion.shopHighlight),
+          curve: AppMotion.enter,
+        ),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = ref.watch(translationsProvider);
+    final s = ref.watch(shopTabsControllerProvider(widget.listId));
+    final theme = Theme.of(context);
+    final revealKey = widget.revealKey;
+
+    _measure(s.selected);
+    if (s.selected != _lastSelected) {
+      if (_placed) _scrollTo(s.selected);
+      _lastSelected = s.selected;
+    }
 
     // Backup start point if there's no tap position. Shouldn't happen,
     // because onTapDown always runs before onTap.
@@ -58,7 +140,9 @@ class ShopFilterBar extends ConsumerWidget {
     // goes through here.
     void select(ShopId? shopId, Offset? origin) {
       revealKey.currentState?.beginReveal(origin ?? fallbackOrigin());
-      ref.read(shopTabsControllerProvider(listId).notifier).select(shopId);
+      ref
+          .read(shopTabsControllerProvider(widget.listId).notifier)
+          .select(shopId);
     }
 
     // A swipe has no tap position, so the wave starts from a screen edge:
@@ -75,62 +159,105 @@ class ShopFilterBar extends ConsumerWidget {
       if (target != null) select(target.shopId, edgeOrigin(delta));
     }
 
+    Color colorOf(Shop shop) =>
+        Color(ref.watch(effectiveShopColorProvider(shop)).argb);
+    Color accent = theme.colorScheme.onSurface;
+    for (final shop in s.tabs) {
+      if (shop.id == s.selected) accent = colorOf(shop);
+    }
+
+    final highlight = _highlight;
+
     return SizedBox(
-      height: 56,
+      height: ShopFilterBar.height,
       child: GestureDetector(
-        // `translucent`, so the list underneath still gets the touches and
-        // can scroll. This only adds a reaction to a fast sideways swipe.
+        // `translucent`, so the pills underneath still get their taps. This
+        // only adds a reaction to a sideways swipe.
         behavior: HitTestBehavior.translucent,
+        onHorizontalDragStart: (_) => _swipe = 0,
+        onHorizontalDragUpdate: (details) => _swipe += details.delta.dx,
         onHorizontalDragEnd: (details) {
           final velocity = details.primaryVelocity ?? 0;
-          // Only a fast swipe changes tabs, not a slow drag.
-          if (velocity.abs() < 200) return;
-          step(velocity < 0 ? 1 : -1);
+          final far = _swipe.abs() >= _swipeDistance;
+          final fast = velocity.abs() >= _swipeVelocity;
+          if (!far && !fast) return;
+          final leftward = far ? _swipe < 0 : velocity < 0;
+          step(leftward ? 1 : -1);
         },
-        child: ListView(
+        child: SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          // Side padding matches the screen edge. Vertical is 6 (not the
-          // design's 8): the 56 px bar minus 2×6 leaves exactly the 44 px
-          // the pills need to be easy to tap (decisions.md #105).
           padding: const EdgeInsets.symmetric(
-            vertical: 6,
             horizontal: AppSpacing.screen,
+            vertical: (ShopFilterBar.height - AppSpacing.minTapTarget) / 2,
           ),
-          children: [
-            ShopTabPill(
-              label: t.shops.all,
-              active: s.selected == null,
-              count: s.remainingIn(null),
-              onTapDown: (details) => tapOrigin = details.globalPosition,
-              onTap: () => select(null, tapOrigin),
-            ),
-            for (final shop in s.tabs) ...[
-              const SizedBox(width: AppSpacing.gapSmall),
-              ShopTabPill(
-                label: shop.name,
-                active: s.selected == shop.id,
-                color: Color(
-                  ref.watch(effectiveShopColorProvider(shop)).argb,
+          child: Stack(
+            children: [
+              if (highlight != null)
+                AnimatedPositioned(
+                  duration: _placed
+                      ? AppMotion.durationFor(context, AppMotion.shopHighlight)
+                      : Duration.zero,
+                  curve: AppMotion.enter,
+                  left: highlight.left,
+                  width: highlight.width,
+                  // The pill is 36 inside its 44px tap target.
+                  top: highlight.top + (highlight.height - _pillHeight) / 2,
+                  height: _pillHeight,
+                  child: AnimatedContainer(
+                    duration: AppMotion.durationFor(
+                      context,
+                      AppMotion.standard,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accent,
+                      borderRadius: BorderRadius.circular(AppRadii.pill),
+                    ),
+                  ),
                 ),
-                count: s.remainingIn(shop.id),
-                onTapDown: (details) => tapOrigin = details.globalPosition,
-                onTap: () => select(shop.id, tapOrigin),
+              Row(
+                key: _rowKey,
+                children: [
+                  ShopTabPill(
+                    key: _keyFor(null),
+                    label: t.shops.all,
+                    active: s.selected == null,
+                    showFill: false,
+                    count: s.remainingIn(null),
+                    onTapDown: (details) => _tapOrigin = details.globalPosition,
+                    onTap: () => select(null, _tapOrigin),
+                  ),
+                  for (final shop in s.tabs) ...[
+                    const SizedBox(width: AppSpacing.gapSmall),
+                    ShopTabPill(
+                      key: _keyFor(shop.id),
+                      label: shop.name,
+                      active: s.selected == shop.id,
+                      showFill: false,
+                      color: colorOf(shop),
+                      count: s.remainingIn(shop.id),
+                      onTapDown: (details) =>
+                          _tapOrigin = details.globalPosition,
+                      onTap: () => select(shop.id, _tapOrigin),
+                    ),
+                  ],
+                  const SizedBox(width: AppSpacing.gapSmall),
+                  _AddShopPill(
+                    tooltip: t.shops.add,
+                    onTap: () =>
+                        addShop(context, ref, widget.listId, s.allShops),
+                  ),
+                ],
               ),
             ],
-            const SizedBox(width: AppSpacing.gapSmall),
-            _AddShopPill(
-              tooltip: t.shops.add,
-              onTap: () => addShop(context, ref, listId, s.allShops),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
-/// The dashed "+" at the end of the tabs. Opens [addShop]. It's not a tab
-/// and can't be selected.
+/// The dashed 36px "+" at the end of the tabs. Opens [addShop]. It's not a
+/// tab and can't be selected.
 class _AddShopPill extends StatelessWidget {
   const _AddShopPill({required this.tooltip, required this.onTap});
 
@@ -144,19 +271,17 @@ class _AddShopPill extends StatelessWidget {
       onTap: onTap,
       child: Tooltip(
         message: tooltip,
-        child: Material(
-          type: MaterialType.transparency,
-          child: InkWell(
-            onTap: onTap,
-            customBorder: const StadiumBorder(),
-            child: CustomPaint(
-              painter: DashedOutlinePainter(
-                color: theme.colorScheme.outline.withValues(alpha: 0.4),
-              ),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 13, vertical: 8),
-                child: Icon(Icons.add, size: 16),
-              ),
+        child: SizedBox.square(
+          dimension: 36,
+          child: CustomPaint(
+            painter: DashedOutlinePainter(
+              color: theme.colorScheme.onSurface.withValues(alpha: .36),
+              strokeWidth: 1.5,
+            ),
+            child: Icon(
+              Icons.add,
+              size: 14,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
           ),
         ),
