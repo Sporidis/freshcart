@@ -2,12 +2,10 @@ import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/items/entities/shopping_item.dart';
 import 'package:freshcart_domain/src/items/ports/item_repository.dart';
 
-/// Moves an item to a new manual position, between two neighbours.
+/// Moves an item to a new position, between two other items.
 ///
-/// The position itself is [ShoppingItem.sortOrderBetween] — an invariant of
-/// the entity, not a rule this use case owns — so the same arithmetic the
-/// server ends up storing is what the presentation layer applies
-/// optimistically while the write is in flight.
+/// The position is calculated by [ShoppingItem.sortOrderBetween], so the
+/// screen and the server get the same number.
 class ReorderItem {
   /// Creates the use case against an [ItemRepository].
   const ReorderItem(this._items);
@@ -17,8 +15,8 @@ class ReorderItem {
   /// Moves [item] to sit between [before] and [after] (either may be null,
   /// for the top or the bottom of the list).
   ///
-  /// Returns `Failure.conflict()` if someone else changed the item first; the
-  /// caller then rolls its optimistic move back.
+  /// Returns `Failure.conflict()` if someone else changed the item first.
+  /// The caller then undoes the move on screen.
   Future<Result<ShoppingItem>> call(
     ShoppingItem item, {
     required ShoppingItem? before,

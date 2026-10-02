@@ -1,12 +1,13 @@
-/// The pure Dart heart of FreshCart.
+/// The core of FreshCart, in plain Dart.
 ///
-/// Entities, value objects, the [Result]/[Failure] union, repository ports and
-/// use cases. This library depends on nothing but pure Dart — no Flutter, no
-/// Serverpod, no Firebase, no generated client — which is what makes the
-/// dependency rule in `docs/architecture.md` enforceable by the compiler rather
-/// than by convention.
+/// Contains the entities, value objects, [Result]/[Failure], repository
+/// interfaces (ports) and use cases.
 ///
-/// Consumers import this barrel, never `src/` directly.
+/// This package uses NO Flutter, Serverpod, Firebase or generated client.
+/// Because it's a separate package, the compiler enforces that (see
+/// `docs/architecture.md`).
+///
+/// Import this file, never files from `src/` directly.
 library;
 
 // Auth

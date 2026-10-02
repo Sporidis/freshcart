@@ -8,12 +8,11 @@ import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
 part 'auth_user.freezed.dart';
 
-/// The signed-in identity.
+/// The signed-in user.
 ///
-/// FreshCart is anonymous-first: a user gets an [id] on first launch without
-/// signing up, and later *links* Google or email to that same [id]. The id
-/// never changes on upgrade, which is why no data migration is needed
-/// (`docs/decisions.md` #6).
+/// Users get an [id] on first launch, without signing up (anonymous). Later
+/// they can link Google or email to that same [id]. The id never changes,
+/// so none of their data has to be moved (decisions.md #6).
 @freezed
 abstract class AuthUser with _$AuthUser {
   /// Creates an authenticated user.
@@ -23,36 +22,28 @@ abstract class AuthUser with _$AuthUser {
     required bool isAnonymous,
     String? email,
 
-    /// A colour the user picked for their own avatar, from the same swatches
-    /// shops use ([HexColor]). `null` until they choose one, which is not a
-    /// missing state to fix — [avatarPhotoUrl] and [avatarColor] both being
-    /// unset is what "use the automatic colour" *means* (`docs/decisions.md`
-    /// #65 extends this to a photo).
+    /// The colour the user picked for their avatar, or `null`. If both this
+    /// and [avatarPhotoUrl] are null, an automatic colour is used
+    /// (decisions.md #65).
     HexColor? avatarColor,
 
-    /// A photo the user uploaded for their avatar, or `null` if they have not
-    /// set one. Takes priority over [avatarColor] when rendering — chosen
-    /// deliberately over automatically, and a photo over a flat colour once
-    /// both exist.
+    /// The URL of the user's avatar photo, or `null`. If set, it's shown
+    /// instead of [avatarColor].
     String? avatarPhotoUrl,
   }) = _AuthUser;
 
   const AuthUser._();
 
-  /// The shortest a display name may be.
-  ///
-  /// One character is almost always a slip rather than a name, and a shared
-  /// list where a member shows as "A" is no more readable than one where they
-  /// show as "Someone".
+  /// Minimum name length. One letter is usually a typo, and "A" on a shared
+  /// list doesn't tell anyone who it is.
   static const int minDisplayNameLength = 2;
 
-  /// The longest a display name may be.
+  /// Maximum name length.
   static const int maxDisplayNameLength = 40;
 
-  /// Validates a proposed display name, returning it trimmed.
+  /// Checks a name and returns it without spaces at the ends.
   ///
-  /// Trims *before* measuring, so a name of two spaces is rejected rather than
-  /// counted as two characters.
+  /// Trims first, then checks the length, so "  " (two spaces) is rejected.
   static Result<String> validateDisplayName(String displayName) {
     final trimmed = displayName.trim();
     if (trimmed.length < minDisplayNameLength) {
@@ -68,26 +59,21 @@ abstract class AuthUser with _$AuthUser {
     return Ok(trimmed);
   }
 
-  /// Whether this account would survive losing the current device.
+  /// Whether the account would survive losing this phone.
   ///
-  /// An anonymous session lives only in local storage: lose it and you lose
-  /// access to every shared list. The UI uses this to nudge an upgrade at the
-  /// moment it matters — creating or joining a shared list.
+  /// An anonymous account only exists on the phone. Lose the phone, lose all
+  /// lists. The UI uses this to ask the user to add an email.
   bool get isRecoverable => !isAnonymous;
 
-  /// The largest avatar photo accepted, in bytes.
+  /// The biggest avatar photo allowed, in bytes.
   ///
-  /// A generous ceiling for something the client is expected to have already
-  /// downsized before it ever reaches here (`docs/decisions.md` #65) — this
-  /// exists as a backstop against a client that skipped that step, not as the
-  /// size a well-behaved upload is expected to bump up against.
+  /// The app already makes photos smaller before uploading. This limit is
+  /// just a safety net (decisions.md #65).
   static const int maxAvatarPhotoBytes = 5 * 1024 * 1024;
 
-  /// Validates a proposed avatar photo.
-  ///
-  /// Rejects an empty upload (nothing to store) and one over
-  /// [maxAvatarPhotoBytes]. Deliberately does not sniff the format — that is
-  /// the storage layer's job, not a domain rule.
+  /// Checks an avatar photo: not empty, and not bigger than
+  /// [maxAvatarPhotoBytes]. Doesn't check the file type; that's done where
+  /// it's stored.
   static Result<Uint8List> validateAvatarPhoto(Uint8List bytes) {
     if (bytes.isEmpty) {
       return const Err(

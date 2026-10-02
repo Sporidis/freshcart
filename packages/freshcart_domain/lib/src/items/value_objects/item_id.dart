@@ -1,19 +1,17 @@
-/// Identifies a shopping item.
+/// The id of a shopping item.
 ///
-/// An [extension type](https://dart.dev/language/extension-types): at runtime
-/// this *is* the underlying [String], so wrapping costs nothing, but the
-/// compiler still refuses to let a ItemId stand in for any other id type. That
-/// removes a whole class of "passed the wrong id" bugs for free.
+/// An [extension type](https://dart.dev/language/extension-types): when the
+/// app runs it's just a [String] (no extra cost), but the compiler won't let
+/// you pass a ItemId where another kind of id is expected. So you can't mix
+/// up a list id and an item id by accident.
 ///
-/// The value is the string form of the server's UUID. The domain deliberately
-/// does not depend on the `uuid` package — converting to and from
-/// `UuidValue` is the mapper's job at the `data/` boundary.
+/// The value is the server's UUID as a string. The domain doesn't use the
+/// `uuid` package; converting is done by the mappers in `data/`.
 extension type const ItemId._(String value) implements Object {
-  /// Wraps [value], which must be a non-empty id string.
+  /// Wraps [value], which must not be empty.
   ///
-  /// Throws [ArgumentError] on an empty value. That is a programmer error —
-  /// the server never issues one — so it throws rather than returning a
-  /// `Result`, per the convention in `CLAUDE.md`.
+  /// Throws [ArgumentError] if it's empty. That would be a bug (the server
+  /// never sends an empty id), so it throws instead of returning a `Result`.
   factory ItemId(String value) {
     if (value.isEmpty) {
       throw ArgumentError.value(value, 'value', 'ItemId must not be empty');
