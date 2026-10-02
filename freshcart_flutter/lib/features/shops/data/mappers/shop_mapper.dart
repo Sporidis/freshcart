@@ -1,14 +1,12 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Maps a [dto.Shop] wire object to the domain entity.
+/// Converts a Serverpod [dto.Shop] into our domain [Shop].
 extension ShopDtoX on dto.Shop {
   /// Converts to the domain [Shop].
   ///
-  /// The wire carries a bare `int`; the domain wraps it in [HexColor], which
-  /// validates the range and knows how to render itself. Note what does *not*
-  /// happen here: no Flutter `Color` is constructed. That conversion belongs to
-  /// the theme layer, which is what keeps the domain Flutter-free.
+  /// The server sends the colour as an `int`. We wrap it in [HexColor]
+  /// (not a Flutter `Color`), because the domain can't use Flutter.
   Shop toDomain() {
     final rawId = id;
     if (rawId == null) {
@@ -24,9 +22,9 @@ extension ShopDtoX on dto.Shop {
   }
 }
 
-/// Maps a domain [Shop] back to the wire object.
+/// Converts a domain [Shop] back into a Serverpod [dto.Shop].
 extension ShopX on Shop {
-  /// Converts to a [dto.Shop] for a write.
+  /// Converts to a [dto.Shop], to send to the server.
   dto.Shop toDto() => dto.Shop(
     id: dto.UuidValue.withValidation(id.value),
     listId: dto.UuidValue.withValidation(listId.value),
@@ -36,13 +34,14 @@ extension ShopX on Shop {
   );
 }
 
-/// Maps the domain's disposition onto the wire enum.
+/// Converts our domain enum into Serverpod's enum.
 ///
-/// Two enums with the same three names, deliberately: the generated one is a
-/// DTO and must not become the domain's vocabulary (golden rule 2). The
-/// exhaustive switch means adding a case to either forces this to be updated.
+/// The two enums have the same values on purpose. Serverpod types must
+/// never be used in the domain (golden rule 2), so we keep our own copy.
+/// If either enum gets a new value, this `switch` won't compile until it's
+/// handled.
 extension ShopItemDispositionX on ShopItemDisposition {
-  /// This disposition, as the server names it.
+  /// The matching Serverpod value.
   dto.ShopItemDisposition toDto() => switch (this) {
     ShopItemDisposition.untag => dto.ShopItemDisposition.untag,
     ShopItemDisposition.moveToShop => dto.ShopItemDisposition.moveToShop,

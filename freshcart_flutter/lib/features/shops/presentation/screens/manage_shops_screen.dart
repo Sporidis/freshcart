@@ -19,16 +19,14 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_sho
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The shops on one list, editable.
+/// The screen to manage one list's shops.
 ///
-/// Each row is just the shop's dot and name, and tapping it opens the edit
-/// sheet. Deleting is a deliberate swipe (right-to-left, Motion spec §10)
-/// that opens the delete sheet -- never a trash icon one tap away on every
-/// row, sitting beside the edit chevron and looking no more serious than it.
+/// Each row shows the shop's colour dot and name. Tap to edit. Swipe left
+/// to delete, which opens the delete sheet. There's no trash icon on
+/// purpose, so deleting is never one accidental tap away.
 ///
-/// Reads [ManageShopsScreenController]. The edit and delete sheets stay
-/// here, since they need a `BuildContext`; every step around them -- the
-/// write, the item count, clearing the colour preview -- comes from the VM.
+/// The sheets are opened here (they need a `BuildContext`). Everything
+/// else comes from [ManageShopsScreenController].
 class ManageShopsScreen extends ConsumerWidget {
   /// Creates the screen for [listId].
   const ManageShopsScreen({required this.listId, super.key});
@@ -45,8 +43,7 @@ class ManageShopsScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: Text(t.shops.manage)),
       body: switch (s) {
-        // The same empty-state layout every other screen uses, with the one
-        // thing worth doing about a failed load: trying again.
+        // Loading failed: show the error with a Retry button.
         ManageShopsScreenState(loadFailure: final failure?) => FailureState(
           failure: failure,
           t: t,
@@ -63,8 +60,7 @@ class ManageShopsScreen extends ConsumerWidget {
             icon: Icons.storefront_outlined,
             title: t.shops.none,
             body: t.items.emptyShopBody,
-            // The only exit here, so it lives in the empty state itself --
-            // same rule as ListsScreen's empty state.
+            // No shops yet: the empty state has the "add shop" button.
             action: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -82,9 +78,8 @@ class ManageShopsScreen extends ConsumerWidget {
                 padding: const EdgeInsets.only(bottom: AppSpacing.gapSmall),
                 child: _ShopRow(shop: shop, siblings: loaded, vm: vm),
               ),
-            // Inline at the end, not a FAB: the same dashed "add another"
-            // row onboarding ends its shop list with, and the same dash as
-            // the strip's own "+" pill.
+            // "Add another" row at the end of the list (not a FAB), same
+            // as in onboarding.
             DashedAddRow(
               label: t.shops.add,
               onTap: () => addShop(context, ref, listId, loaded),
@@ -112,8 +107,8 @@ class _ShopRow extends ConsumerStatefulWidget {
 }
 
 class _ShopRowState extends ConsumerState<_ShopRow> {
-  /// The preview border's weight -- heavier than the resting hairline, so
-  /// the row behind the sheet visibly answers each swatch tap.
+  /// Border width while previewing a colour. Thicker than normal, so you
+  /// can see the row react behind the sheet.
   static const double _previewBorder = 1.5;
 
   Shop get shop => widget.shop;
@@ -122,20 +117,20 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
-    // Through the preview, so a colour being tried in the sheet shows here
-    // too -- this row sits behind it.
+    // Includes the preview colour, so this row changes while the user tries
+    // colours in the sheet.
     final color = ref.watch(effectiveShopColorProvider(shop));
-    // A colour that differs from what is stored can only be a live preview:
-    // the row being edited takes it as its border, tying it to the sheet.
+    // If the colour differs from the saved one, it's a preview. Show a
+    // border so it's clear which row is being edited.
     final previewing = color != shop.color;
 
     return SwipeToDelete(
       dismissKey: ValueKey('dismiss-${shop.id.value}'),
       semanticLabel: t.shops.delete,
       borderRadius: BorderRadius.circular(AppRadii.card),
-      // Never dismisses on its own: a shop's products need a decision
-      // first, so a committed swipe opens the delete sheet and the row
-      // springs back. If the shop is deleted, the list rebuilds without it.
+      // Swiping doesn't delete directly. It opens the delete sheet (the
+      // user has to decide what happens to the items) and the row slides
+      // back. If the shop is deleted, the list rebuilds without it.
       onSwipe: () async {
         await _delete(t);
         return false;

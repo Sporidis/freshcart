@@ -8,19 +8,15 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// One tab in the shop strip: "All" or a single shop, active or not.
+/// One shop tab: "All" or a single shop.
 ///
-/// Component Library §02. Replaces a stock `FilterChip` because the active
-/// state is a full colour fill (not `FilterChip`'s selected-outline look),
-/// and only a shop tab carries a leading dot at all -- "All" never does.
+/// When selected, the whole pill is filled with the shop's colour. When
+/// not, it shows a small coloured dot. "All" has no dot.
 ///
-/// This widget only draws; it does not know about [ShopFilterProvider] or
-/// remaining-item counts. Its caller resolves "am I selected" and "how many
-/// are left in me" and hands both down, same as every other presentation
-/// widget in this codebase (`ItemTile`, `ShopTabPill`'s own `count`).
+/// This widget only draws. The parent tells it if it's selected and how
+/// many items are left.
 class ShopTabPill extends StatefulWidget {
-  /// Creates the pill. Pass `color: null` for the "All" tab -- it is always
-  /// ink (or white-on-dark), and never draws a leading dot.
+  /// Creates the pill. Pass `color: null` for the "All" tab.
   const ShopTabPill({
     required this.label,
     required this.active,
@@ -40,16 +36,14 @@ class ShopTabPill extends StatefulWidget {
   /// The shop's colour, or null for the neutral "All" tab.
   final Color? color;
 
-  /// Items still unchecked inside this tab. Hidden (not "· 0") at zero, per
-  /// the component library's own note: a badge that can read "0" reads as
-  /// broken, not "nothing left".
+  /// How many items are still unchecked in this tab. Hidden when 0
+  /// (a "0" badge looks broken).
   final int? count;
 
   final VoidCallback? onTap;
 
-  /// Fires before [onTap], with where the finger landed -- lets a caller
-  /// anchor a theme-reveal animation to the tap instead of the pill's
-  /// centre.
+  /// Called before [onTap], with where the finger touched. Used to start
+  /// the colour wave from that spot.
   final GestureTapDownCallback? onTapDown;
 
   @override
@@ -58,9 +52,8 @@ class ShopTabPill extends StatefulWidget {
 
 class _ShopTabPillState extends State<ShopTabPill>
     with SingleTickerProviderStateMixin {
-  /// A one-shot scale "kick" on tap -- 1.0 -> 1.08 -> 1.0 -- so the tapped
-  /// pill visibly launches the theme-reveal wave it anchors (decisions
-  /// #88). Same two-stage overshoot shape as the app's other pops.
+  /// A small "pop" when tapped (size 1.0 -> 1.08 -> 1.0), so it looks like
+  /// the pill starts the colour wave. See decisions.md #88.
   late final AnimationController _kick = AnimationController(
     vsync: this,
     duration: AppMotion.quick,
@@ -92,9 +85,8 @@ class _ShopTabPillState extends State<ShopTabPill>
   }
 
   void _handleTap() {
-    // Skipped outright under reduced motion rather than softened: the kick
-    // *is* the overshoot, so a version without one would be no motion at
-    // all, just a 180 ms delay before nothing.
+    // No pop at all with reduced motion. A pop without the bounce would
+    // just be a pause.
     if (!AppMotion.reduced(context)) unawaited(_kick.forward(from: 0));
     widget.onTap?.call();
   }
@@ -102,9 +94,7 @@ class _ShopTabPillState extends State<ShopTabPill>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Neutral fill tracks brightness the same way the app's own "ink" text
-    // colour does (`AppTheme`'s local `ink` var) -- not a literal constant,
-    // so the All tab still reads correctly in dark mode.
+    // The "All" fill: dark in light mode, light in dark mode.
     final fill = widget.color ?? theme.colorScheme.onSurface;
     final onFill = AppTheme.onColorFor(fill);
     final label = (widget.count == null || widget.count == 0)
@@ -142,10 +132,8 @@ class _ShopTabPillState extends State<ShopTabPill>
                       height: AppSizes.tabDot,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        // Active: white, matching the fill's own contrast --
-                        // inactive: the shop's literal colour (component
-                        // library: "inactive pills keep a small shop-colour
-                        // dot").
+                        // Dot colour: white when selected, the shop's
+                        // colour when not.
                         color: widget.active ? onFill : widget.color,
                       ),
                     ),

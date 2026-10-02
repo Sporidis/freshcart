@@ -11,18 +11,14 @@ import 'package:freshcart_flutter/features/shops/application/shop_tabs/shop_tabs
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 
-/// The shop tab strip: "All", one [ShopTabPill] per shop, and a permanent
-/// dashed "+" to add another.
+/// The row of shop tabs: "All", one [ShopTabPill] per shop, and a dashed
+/// "+" to add a shop.
 ///
-/// Selecting a tab does two things at once: it narrows the visible items and
-/// it re-themes the app to that shop's colour. Both read the same piece of
-/// state ([ShopTabsController]), so they cannot disagree -- and a swipe
-/// across the strip drives that exact same state a tap would, rather than
-/// keeping a second index of its own.
+/// Picking a tab filters the items and changes the screen's colour. Both
+/// come from [ShopTabsController], so they always match. Swiping left or
+/// right on the list changes tabs the same way as tapping.
 ///
-/// Unlike the `FilterChip` row this replaces, the strip never hides: "All"
-/// and "+" are permanent furniture on every list, shops or not (Component
-/// Library §02 -- "The + is permanent furniture on every list").
+/// Always shown, even with no shops, so "+" is always there.
 class ShopFilterBar extends ConsumerWidget {
   /// Creates the bar for [listId].
   const ShopFilterBar({
@@ -34,9 +30,8 @@ class ShopFilterBar extends ConsumerWidget {
   /// The list whose shops to show.
   final ListId listId;
 
-  /// The themed body's reveal state -- selecting a tab anchors the colour
-  /// reveal at the tap (or, for a swipe, the edge it came from) through
-  /// this, before the shop filter itself changes.
+  /// Used to start the colour wave from the tap (or from the screen edge
+  /// for a swipe), before the filter changes.
   final GlobalKey<ShopThemeRevealState> revealKey;
 
   @override
@@ -44,12 +39,12 @@ class ShopFilterBar extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
     final s = ref.watch(shopTabsControllerProvider(listId));
 
-    // Set by each pill's onTapDown, read by its own onTap right after --
-    // both are recreated together every build, so this is never stale.
+    // Where the finger touched. Saved in onTapDown, used in onTap right
+    // after.
     Offset? tapOrigin;
 
-    // Where to anchor the reveal when there's no tap position to use --
-    // defensive only, since a real tap always fires onTapDown before onTap.
+    // Backup start point if there's no tap position. Shouldn't happen,
+    // because onTapDown always runs before onTap.
     Offset fallbackOrigin() {
       final box = revealKey.currentContext?.findRenderObject();
       if (box is RenderBox && box.hasSize) {
@@ -58,19 +53,16 @@ class ShopFilterBar extends ConsumerWidget {
       return Offset.zero;
     }
 
-    // The reveal has to be anchored *before* the filter provider changes --
-    // see [ShopThemeRevealState.beginReveal] -- so every path that changes
-    // the filter routes through here rather than calling the provider
-    // directly.
+    // The wave must start BEFORE the filter changes (it screenshots the old
+    // colour, see [ShopThemeRevealState.beginReveal]). So every tab change
+    // goes through here.
     void select(ShopId? shopId, Offset? origin) {
       revealKey.currentState?.beginReveal(origin ?? fallbackOrigin());
       ref.read(shopTabsControllerProvider(listId).notifier).select(shopId);
     }
 
-    // A swipe has no finger position on the *target* tab to anchor to, so
-    // it reveals from whichever screen edge the new tab conceptually slides
-    // in from instead -- forward (to the right) from the right, backward
-    // from the left.
+    // A swipe has no tap position, so the wave starts from a screen edge:
+    // next tab from the right edge, previous tab from the left edge.
     Offset? edgeOrigin(int delta) {
       final box = revealKey.currentContext?.findRenderObject();
       if (box is! RenderBox || !box.hasSize) return null;
@@ -86,25 +78,20 @@ class ShopFilterBar extends ConsumerWidget {
     return SizedBox(
       height: 56,
       child: GestureDetector(
-        // translucent, not opaque: a swipe still has to reach the
-        // ListView underneath so it keeps scrolling normally too, this
-        // only *additionally* reacts to a decisive horizontal flick.
+        // `translucent`, so the list underneath still gets the touches and
+        // can scroll. This only adds a reaction to a fast sideways swipe.
         behavior: HitTestBehavior.translucent,
         onHorizontalDragEnd: (details) {
           final velocity = details.primaryVelocity ?? 0;
-          // A stray drag shouldn't change tabs -- only a real flick, same
-          // threshold order of magnitude Dismissible's own swipe uses.
+          // Only a fast swipe changes tabs, not a slow drag.
           if (velocity.abs() < 200) return;
           step(velocity < 0 ? 1 : -1);
         },
         child: ListView(
           scrollDirection: Axis.horizontal,
-          // Horizontal matches the screen's own edge inset (Theme Reference
-          // §05); the inter-pill gap is an explicit SizedBox rather than
-          // doubled-up per-pill padding, so it reads as the design's own
-          // `gap: 8px` instead of two 4px halves that happen to add up.
-          // 6, not the design's 8: a 56 bar minus 2×6 leaves exactly the
-          // 44pt the pills' TapTarget needs (decisions #105).
+          // Side padding matches the screen edge. Vertical is 6 (not the
+          // design's 8): the 56 px bar minus 2×6 leaves exactly the 44 px
+          // the pills need to be easy to tap (decisions.md #105).
           padding: const EdgeInsets.symmetric(
             vertical: 6,
             horizontal: AppSpacing.screen,
@@ -142,8 +129,8 @@ class ShopFilterBar extends ConsumerWidget {
   }
 }
 
-/// The permanent dashed "+" that opens [addShop]. A sibling of the tabs,
-/// never one of them -- it does not participate in [ShopFilterController] at all.
+/// The dashed "+" at the end of the tabs. Opens [addShop]. It's not a tab
+/// and can't be selected.
 class _AddShopPill extends StatelessWidget {
   const _AddShopPill({required this.tooltip, required this.onTap});
 

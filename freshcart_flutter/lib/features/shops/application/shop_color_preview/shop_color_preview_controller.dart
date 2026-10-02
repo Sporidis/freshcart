@@ -3,16 +3,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'shop_color_preview_controller.g.dart';
 
-/// A shop colour being tried out, before anyone commits to it.
+/// A shop colour the user is trying out, before saving it.
 ///
-/// The design's best moment: picking a swatch retints the tab pill and every
-/// dot for that shop *behind* the open sheet, so the consequence is visible
-/// before it is chosen. That only works if widgets which are not descendants
-/// of the sheet can see the pending value — which is precisely why this is
-/// app state and not something held inside the sheet's own State.
+/// When the user taps a colour in the edit sheet, the shop's tab and dots
+/// behind the sheet change colour right away, so they can see how it looks.
+/// Those widgets aren't inside the sheet, so the preview has to live in a
+/// provider, not in the sheet's own State.
 ///
-/// Cleared when the sheet closes, whether it saved or not: an abandoned
-/// preview must not outlive the sheet that was showing it.
+/// Cleared when the sheet closes, saved or not.
 @riverpod
 class ShopColorPreviewController extends _$ShopColorPreviewController {
   @override
@@ -22,6 +20,6 @@ class ShopColorPreviewController extends _$ShopColorPreviewController {
   void preview(ShopId shopId, HexColor color) =>
       state = (shopId: shopId, color: color);
 
-  /// Drops the preview, restoring every dot to what is actually stored.
+  /// Removes the preview, so the saved colour shows again.
   void clear() => state = null;
 }

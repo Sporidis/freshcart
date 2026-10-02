@@ -11,13 +11,11 @@ import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Renames and recolours a shop, or creates a new one when [shop] is null.
+/// Edits a shop's name and colour, or creates a new shop if [shop] is null.
 ///
-/// Every swatch tap previews immediately behind the sheet rather than waiting
-/// for Save, because the whole question a shop colour answers is "will I spot
-/// this in an aisle?" — and that cannot be judged from a swatch in a modal.
-/// There is nothing to re-tint behind the sheet for a shop that does not exist
-/// yet, so the live preview only fires in edit mode.
+/// When editing, tapping a colour changes the shop's colour behind the
+/// sheet right away, so the user sees how it really looks. When creating,
+/// there's nothing behind the sheet to recolour yet, so no preview.
 class EditShopSheet extends ConsumerStatefulWidget {
   /// Creates the sheet. Pass `shop: null` to create a new shop instead of
   /// editing an existing one.
@@ -31,10 +29,10 @@ class EditShopSheet extends ConsumerStatefulWidget {
   /// The shop being edited, or null when creating a new one.
   final Shop? shop;
 
-  /// The other shops on this list, for the colour-clash warning.
+  /// The other shops on this list, to warn about similar colours.
   final List<Shop> siblings;
 
-  /// Commits the add/edit. An error message keeps the sheet open.
+  /// Saves the shop. If it returns an error message, the sheet stays open.
   final Future<String?> Function({
     required String name,
     required HexColor color,
@@ -55,9 +53,8 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
 
   bool get _isCreate => widget.shop == null;
 
-  /// The first preset that does not clash with a sibling's colour, or the
-  /// first preset outright if every one of them does — a starting point, not
-  /// a guarantee, since the user can always repick.
+  /// The first preset colour no other shop is using. If all are used, just
+  /// the first one. The user can change it anyway.
   HexColor _firstUnusedPreset() {
     for (final preset in AppColors.presetShopColors) {
       final candidate = HexColor.fromArgb(preset.toARGB32());
@@ -82,7 +79,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     }
   }
 
-  /// The shop this colour could be confused with, if any.
+  /// Another shop with a similar colour, or null.
   Shop? get _clashesWith {
     for (final other in widget.siblings) {
       if (other.id == widget.shop?.id) continue;
@@ -111,9 +108,9 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     if (mounted) Navigator.of(context).pop();
   }
 
-  /// Every preset some *other* shop on this list already uses (or sits
-  /// close to), with who uses it -- marked on the swatch before anyone picks
-  /// it, rather than only warned about after.
+  /// Preset colours that another shop already uses (or is close to), with
+  /// that shop's name. They get a mark in the picker, so the user knows
+  /// before picking.
   Map<int, String> _takenSwatches(Translations t) => {
     for (final preset in AppColors.presetShopColors)
       for (final other in widget.siblings)
@@ -128,8 +125,8 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     final t = ref.watch(translationsProvider);
     final clash = _clashesWith;
 
-    // Scrollable: name field, eight swatches, a warning line and a button do
-    // not fit above the keyboard on a small phone.
+    // Scrollable, because with the keyboard open it doesn't all fit on a
+    // small phone.
     return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         AppSpacing.sheetH,
@@ -151,8 +148,8 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
           TextField(
             controller: _name,
             enabled: !_saving,
-            // A new shop has nothing to see yet but its name field; an
-            // existing one opens on its colour, so no keyboard over it.
+            // New shop: open the keyboard for the name straight away.
+            // Existing shop: don't, so the keyboard doesn't hide the colours.
             autofocus: _isCreate,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.done,
@@ -169,10 +166,8 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
             marked: _takenSwatches(t),
             onSelected: (color) => _pick(HexColor.fromArgb(color.toARGB32())),
           ),
-          // A warning, never a block: two similar colours are a bad idea, not
-          // an invalid one, and the household may have its own reasons. Ink
-          // with an icon rather than the muted caption it used to be, which
-          // read as a footnote rather than as "look at this".
+          // Only a warning: similar colours are allowed, just not a great
+          // idea.
           AnimatedSize(
             duration: AppMotion.durationFor(context, AppMotion.quick),
             alignment: Alignment.topLeft,
@@ -234,7 +229,7 @@ Widget editShopSheetPreview() {
   );
 }
 
-/// The clash warning, which only shows for a confusable pair.
+/// The "similar colour" warning. Only shown when two colours look alike.
 @Preview(group: 'Shops', name: 'Edit shop · colour clash', size: Size(393, 560))
 Widget editShopSheetClashPreview() {
   Shop shop(String id, String name, int argb) => Shop(
@@ -259,8 +254,7 @@ Widget editShopSheetClashPreview() {
   );
 }
 
-/// Create mode: no shop, an empty name, and a starting colour chosen to
-/// avoid the siblings already on the list.
+/// For creating: empty name, and a starting colour no other shop uses.
 @Preview(group: 'Shops', name: 'Add shop', size: Size(393, 560))
 Widget editShopSheetCreatePreview() {
   Shop shop(String id, String name, int argb) => Shop(

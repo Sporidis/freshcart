@@ -11,15 +11,13 @@ import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 /// What the user chose to do with a shop's products.
 typedef ShopDeletion = ({ShopItemDisposition disposition, ShopId? moveTo});
 
-/// Asks what happens to a shop's products before deleting it.
+/// Asks what should happen to a shop's items before deleting it.
 ///
-/// Never a bare confirm. A shop holding six products is not the same decision
-/// as an empty one, so the count leads and the options are real alternatives
-/// rather than OK and Cancel — the design's rule is that products are never
-/// destroyed silently, and a confirm dialog that quietly untags them is only
-/// a kinder way of being silent.
+/// Not just "OK / Cancel". It shows how many items the shop has, and gives
+/// real choices (move them, untag them, or delete them). Items are never
+/// removed without the user choosing it.
 ///
-/// An empty shop skips the choice entirely: there is nothing to decide.
+/// An empty shop skips this sheet, there's nothing to decide.
 class DeleteShopSheet extends ConsumerWidget {
   /// Creates the sheet for [shop].
   const DeleteShopSheet({
@@ -32,10 +30,10 @@ class DeleteShopSheet extends ConsumerWidget {
   /// The shop being deleted.
   final Shop shop;
 
-  /// How many products are tagged to it.
+  /// How many items have this shop.
   final int itemCount;
 
-  /// The other shops on this list, as possible destinations.
+  /// The other shops on this list, where the items could be moved to.
   final List<Shop> siblings;
 
   @override
@@ -49,8 +47,8 @@ class DeleteShopSheet extends ConsumerWidget {
 
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    // Scrollable, because the option list grows with the household's shops:
-    // a fixed column reads fine with two and overflows with six.
+    // Scrollable, because there's one option per shop. With many shops it
+    // wouldn't fit.
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.sheetH,
@@ -75,7 +73,7 @@ class DeleteShopSheet extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.screen),
           if (itemCount > 0) ...[
-            // The safe ways out first -- each keeps every product.
+            // Safe options first: these keep all the items.
             for (final target in destinations)
               _Option(
                 leading: _Dot(color: target.color.toColor()),
@@ -99,8 +97,8 @@ class DeleteShopSheet extends ConsumerWidget {
                 moveTo: null,
               )),
             ),
-            // Then a clear break before the one option that destroys
-            // something: it must never read as "one more of the above".
+            // Then a gap, and the option that deletes the items, so it's
+            // clearly different from the ones above.
             const SizedBox(height: AppSpacing.gapSmall),
             const Divider(),
             const SizedBox(height: AppSpacing.gap),
@@ -119,8 +117,7 @@ class DeleteShopSheet extends ConsumerWidget {
               )),
             ),
           ] else
-            // The design's destructive button: red, named for exactly what
-            // it deletes -- not the ink primary every safe action uses.
+            // Red button, saying exactly what it deletes.
             DestructiveButton.block(
               onPressed: () => Navigator.of(context).pop((
                 disposition: ShopItemDisposition.untag,
@@ -129,7 +126,7 @@ class DeleteShopSheet extends ConsumerWidget {
               child: Text(t.shops.deleteConfirm(name: shop.name)),
             ),
           const SizedBox(height: AppSpacing.gapSmall),
-          // Quiet, so it never competes with the choices above it.
+          // A plain text button, so it doesn't stand out.
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
             style: TextButton.styleFrom(
@@ -144,9 +141,8 @@ class DeleteShopSheet extends ConsumerWidget {
   }
 }
 
-/// One answer to "what happens to the products". Safe answers carry a
-/// chevron (they go somewhere); the destructive one is tinted red instead,
-/// and has none -- it ends something.
+/// One option in the delete sheet. Safe options have a ">" arrow. The
+/// option that deletes items is red, without an arrow.
 class _Option extends StatelessWidget {
   const _Option({
     required this.leading,
@@ -162,8 +158,7 @@ class _Option extends StatelessWidget {
   final VoidCallback onTap;
   final bool destructive;
 
-  /// The destructive card's faint red wash and border -- enough to separate
-  /// it at a glance without shouting louder than the title.
+  /// The light red background and border of the delete option.
   static const double _washAlpha = 0.06;
   static const double _borderAlpha = 0.35;
 
@@ -268,7 +263,7 @@ Widget deleteShopSheetPreview() {
   );
 }
 
-/// An empty shop needs no decision, so it is not asked for one.
+/// For an empty shop: there are no items, so there's nothing to decide.
 @Preview(group: 'Shops', name: 'Delete shop · empty', size: Size(393, 360))
 Widget deleteShopSheetEmptyPreview() => previewApp(
   Scaffold(
