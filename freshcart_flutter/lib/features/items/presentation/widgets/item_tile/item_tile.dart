@@ -25,6 +25,7 @@ class ItemTile extends StatefulWidget {
     required this.item,
     required this.shopColor,
     required this.onToggle,
+    this.shopName,
     required this.onEdit,
     required this.onDelete,
     required this.onQuantityChanged,
@@ -43,8 +44,13 @@ class ItemTile extends StatefulWidget {
   /// The item to show.
   final ShoppingItem item;
 
-  /// The colour of the item's shop (for its dot), or null if it has no shop.
+  /// The colour of the item's shop (the check fills with it), or null if
+  /// it has no shop.
   final Color? shopColor;
+
+  /// The shop's name for the subtitle. Only on the All tab; see
+  /// [ItemRowContent.shopName].
+  final String? shopName;
 
   /// Translations (for the menu labels and "Checked off by {name}").
   final Translations t;
@@ -109,6 +115,12 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   // the AnimatedSwitcher a "before" and "after" to animate between.
   static const _quantityMorphThreshold = 0.5;
 
+  /// How long the menu's stepper waits after the last tap before saving.
+  /// "+ + +" becomes one save of 4, not three racing saves: the server
+  /// rejects an edit whose `updatedAt` isn't the one it holds, and the
+  /// second tap would otherwise send the first tap's optimistic copy.
+  static const _quantityCommitDelay = Duration(milliseconds: 400);
+
   late final AnimationController _animationController;
   late final AnimationController _strikeController;
   late final AnimationController _checkFillController;
@@ -118,6 +130,18 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   Timer? _pressTellTimer;
   late bool _isChecked;
   bool _isMenuOpen = false;
+
+  /// The quantity the menu's stepper shows but hasn't saved yet.
+  int? _pendingQuantity;
+  Timer? _quantityCommit;
+
+  /// [ItemTile.item] with the stepper's unsaved quantity, for the menu.
+  ShoppingItem get _menuItem {
+    final pending = _pendingQuantity;
+    return pending == null
+        ? widget.item
+        : widget.item.copyWith(quantity: pending);
+  }
 
   @override
   void initState() {
@@ -154,6 +178,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     _pressScaleController.dispose();
     _longPressTimer?.cancel();
     _pressTellTimer?.cancel();
+    _commitQuantity();
     // Remove the menu directly, not through `_closeMenu()`. That one calls
     // `setState`, which isn't allowed inside `dispose()` (even though
     // `mounted` is still true here).
@@ -179,6 +204,39 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
         _checkFillController.reverse();
       }
     }
+    if (widget.item != oldWidget.item) {
+      // The saved item has caught up with (or, after a failed save, undone)
+      // the stepper. Show the item itself again.
+      if (_quantityCommit == null) _pendingQuantity = null;
+      // The menu lives in an overlay, outside this row's subtree, so it
+      // doesn't rebuild with it. Without this it keeps the item from when
+      // it opened. After the frame, because marking another subtree dirty
+      // during build isn't allowed.
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _menuEntry?.markNeedsBuild(),
+      );
+    }
+  }
+
+  /// The menu's stepper: show the new quantity now, save it once the taps
+  /// stop.
+  void _onMenuQuantity(int quantity) {
+    _pendingQuantity = quantity;
+    _menuEntry?.markNeedsBuild();
+    _quantityCommit?.cancel();
+    _quantityCommit = Timer(_quantityCommitDelay, _commitQuantity);
+  }
+
+  /// Saves the stepper's quantity now, if it differs from the item's.
+  void _commitQuantity() {
+    _quantityCommit?.cancel();
+    _quantityCommit = null;
+    final pending = _pendingQuantity;
+    if (pending == null || pending == widget.item.quantity) {
+      _pendingQuantity = null;
+      return;
+    }
+    widget.onQuantityChanged(pending);
   }
 
   void _animateChecked(bool checked) {
@@ -260,7 +318,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               globalPosition: globalPosition,
               size: size,
               scale: scale,
-              item: widget.item,
+              item: _menuItem,
               isChecked: _isChecked,
               onChanged: _setChecked,
               onClose: _closeMenu,
@@ -268,12 +326,13 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               onDelete: widget.onDelete,
               onSelectMore: widget.onSelectMore,
               onRearrange: widget.onRearrange,
-              onQuantityChanged: widget.onQuantityChanged,
+              onQuantityChanged: _onMenuQuantity,
               strikeProgress: _strikeController,
               fillProgress: _checkFillController,
               isMenuClosed:
                   _animationController.value < _quantityMorphThreshold,
               shopColor: widget.shopColor,
+              shopName: widget.shopName,
               t: widget.t,
               checkedByMember: widget.checkedByMember,
             );
@@ -286,6 +345,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   }
 
   void _closeMenu() {
+    // Don't make the user wait out the delay: closing saves.
+    _commitQuantity();
     _menuEntry?.remove();
     _menuEntry = null;
     _pressScaleController.animateTo(1, curve: AppMotion.pop);
@@ -307,6 +368,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
           strikeProgress: _strikeController,
           fillProgress: _checkFillController,
           shopColor: widget.shopColor,
+          shopName: widget.shopName,
+          isSelecting: true,
           onQuantityChanged: widget.onQuantityChanged,
           t: widget.t,
           checkedByMember: widget.checkedByMember,
@@ -337,6 +400,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               fillProgress: _checkFillController,
               isMenuClosed: !_isMenuOpen,
               shopColor: widget.shopColor,
+              shopName: widget.shopName,
               onQuantityChanged: widget.onQuantityChanged,
               dragHandle: widget.dragHandle,
               t: widget.t,
