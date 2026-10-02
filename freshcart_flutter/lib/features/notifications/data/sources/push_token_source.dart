@@ -1,13 +1,12 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 
-/// Supplies this device's push registration token.
+/// Gets this device's push token.
 ///
-/// Split out from the repository so that the *only* thing Firebase is
-/// responsible for is producing a token string. Everything else — registering
-/// it, muting a list, unregistering on sign-out — is ordinary server traffic
-/// that needs no Firebase at all, and is tested without it.
+/// Separate from the repository, so Firebase is only used to get the token.
+/// Everything else (registering, muting, unregistering) is normal server
+/// calls, and can be tested without Firebase.
 abstract interface class PushTokenSource {
-  /// Whether this platform can produce a token.
+  /// Whether this platform supports push.
   Future<bool> isSupported();
 
   /// This device's current token, or null if unavailable.
@@ -17,15 +16,13 @@ abstract interface class PushTokenSource {
   dto.DevicePlatform get platform;
 }
 
-/// The [PushTokenSource] used until Firebase is configured.
+/// A placeholder [PushTokenSource] that always says "push not supported".
 ///
-/// Reports unsupported, so the app degrades to live in-app updates only rather
-/// than promising a notification setting the platform will not honour.
+/// Used on web (see `main.dart`). The app then only uses live updates
+/// inside the app, and doesn't show push settings that wouldn't work.
 ///
-/// Replacing this with a `firebase_messaging` implementation is the whole of
-/// the remaining work: request permission, read `getToken()`, and return it.
-/// Nothing else in the app changes, which is the point of the port
-/// (`docs/decisions.md` #7).
+/// Phones use `FirebaseMessagingTokenSource` instead. The rest of the app
+/// doesn't care which one is used (decisions.md #7).
 class UnconfiguredPushTokenSource implements PushTokenSource {
   /// Creates the placeholder source.
   const UnconfiguredPushTokenSource(this.platform);
