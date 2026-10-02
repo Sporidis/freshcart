@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/features/shops/application/shop/shop_providers
 import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filter_bar.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../../fakes/fake_item_repository.dart';
@@ -236,6 +237,45 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Cake'), findsOneWidget);
     });
+
+    testWidgets(
+      'one highlight slides under whichever tab is selected',
+      (tester) async {
+        shops.byListResult = Ok([colruyt, bakery]);
+        items.byListResult = Ok([buildItem(name: 'Milk')]);
+
+        await pump(tester);
+
+        final highlight = find.descendant(
+          of: find.byType(ShopFilterBar),
+          matching: find.byType(AnimatedPositioned),
+        );
+        double centreOf(Finder f) => tester.getCenter(f).dx;
+        final tab = find.ancestor(
+          of: pill('Bakery'),
+          matching: find.byType(ShopTabPill),
+        );
+
+        expect(highlight, findsOneWidget);
+        expect(
+          centreOf(highlight),
+          closeTo(
+            centreOf(
+              find.ancestor(
+                of: pill('All shops'),
+                matching: find.byType(ShopTabPill),
+              ),
+            ),
+            1,
+          ),
+        );
+
+        await tester.tap(pill('Bakery'));
+        await tester.pumpAndSettle();
+
+        expect(centreOf(highlight), closeTo(centreOf(tab), 1));
+      },
+    );
 
     testWidgets('clearing the filter shows everything again', (tester) async {
       shops.byListResult = Ok([colruyt, bakery]);

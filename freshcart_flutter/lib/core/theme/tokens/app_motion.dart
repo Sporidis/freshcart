@@ -10,9 +10,10 @@ class AppMotion {
   static const Duration sheetIn = Duration(milliseconds: 380);
   static const Duration sheetOut = Duration(milliseconds: 220);
   static const Duration celebrate = Duration(milliseconds: 900);
-  // The colour wave when switching shops. Slow enough to see it cross the
-  // whole screen. See decisions.md #85 and #89.
-  static const Duration reveal = Duration(milliseconds: 700);
+  // The colour wave when switching shops. Was 700ms, slow enough to watch
+  // cross the screen (decisions.md #85, #89); design v3 makes it 400ms and
+  // restartable, so a tab switch feels like a tap, not a show (#106).
+  static const Duration reveal = colorWave;
 
   // Moving between onboarding steps. The old page leaves quickly, then the
   // new one comes in a bit later, so they never overlap.
