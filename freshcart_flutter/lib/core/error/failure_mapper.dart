@@ -3,15 +3,13 @@ import 'dart:async';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Translates transport-level errors into domain [Failure]s.
+/// Turns any exception from the server or network into a domain [Failure].
 ///
-/// This is the *only* place Serverpod's exception types are interpreted.
-/// Everything above `data/` sees a `Failure` and never learns that a network,
-/// let alone Serverpod, was involved — which is what makes the backend
-/// swappable (`docs/decisions.md` #2).
+/// This is the only place that knows about Serverpod's exception types.
+/// Everything above the `data/` layer only sees [Failure], so the backend
+/// could be replaced without changing the rest of the app. See decisions.md #2.
 Failure mapExceptionToFailure(Object error) => switch (error) {
-  // Exceptions the server declares in its protocol. These are the interesting
-  // ones: they carry meaning the UI acts on.
+  // Our own exceptions, thrown on purpose by the server.
   dto.ListNotFoundException() ||
   dto.ItemNotFoundException() => const Failure.notFound(),
   dto.NotAMemberException() => const Failure.unauthorized(),
@@ -21,27 +19,27 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
     'That code does not match a list',
   ),
 
-  // Transport-level failures.
+  // Serverpod's built-in HTTP errors.
   dto.ServerpodClientUnauthorized() ||
   dto.ServerpodClientForbidden() => const Failure.unauthorized(),
   dto.ServerpodClientNotFound() => const Failure.notFound(),
   dto.ServerpodClientException() => Failure.network(error.toString()),
 
-  // Network-level failures that are not covered by the above transport-level exceptions.
+  // The request took too long.
   TimeoutException() => Failure.network(error.toString()),
 
-  // The live-update stream (`ItemRealtimeSource.watchByList` and friends)
-  // runs over its own WebSocket, separate from the request/response path
-  // above — so it fails through this whole exception family instead
-  // (verified against serverpod_client's method_stream_manager_exceptions.dart)
-  // when that socket drops, not a ServerpodClientException.
+  // Live updates use a separate WebSocket. When it drops, it throws this
+  // instead of the HTTP errors above.
   dto.MethodStreamException() => Failure.network(error.toString()),
 
-  // Anything else is a bug rather than an expected outcome, so it keeps its
-  // cause for logging and shows a generic message.
+  // Anything else is a bug. Keep the original error so it can be logged.
   _ => Failure.unexpected(error),
 };
 
+/// Runs [body], and tries again if the server couldn't be reached.
+///
+/// Tries at most [maxAttempts] times in total. Any other error is rethrown
+/// straight away.
 Future<T> retryOnUnreachable<T>(
   Future<T> Function() body, {
   int maxAttempts = 2,
@@ -56,6 +54,9 @@ Future<T> retryOnUnreachable<T>(
   }
 }
 
+/// Whether [error] means we couldn't reach the server at all.
+///
+/// Serverpod uses status code -1 when no response came back.
 bool isUnreachable(Object error) =>
     (error is dto.ServerpodClientException && error.statusCode == -1) ||
     error is TimeoutException;

@@ -1,20 +1,18 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Turns a [Failure] into something a person can read.
+/// Turns a [Failure] into a message the user can read.
 ///
-/// The only place this translation happens. Keeping it out of the widgets means
-/// a new [Failure] case is one exhaustive `switch` to update, and the compiler
-/// points at it.
+/// This is the only place it happens. If a new kind of [Failure] is added,
+/// the compiler will point here because the `switch` must cover every case.
 extension FailureMessage on Failure {
-  /// The localized message for this failure.
+  /// The translated message for this failure.
   String toMessage(Translations t) => switch (this) {
     NetworkFailure() => t.errors.network,
     NotFoundFailure() => t.errors.notFound,
     UnauthorizedFailure() => t.errors.unauthorized,
     ConflictFailure() => t.errors.conflict,
-    // A validation failure already carries a specific, actionable message from
-    // the domain, so it is shown rather than replaced with a generic one.
+    // Validation failures already have a specific message, so show that.
     ValidationFailure(:final message) => message,
     UnexpectedFailure() => t.errors.unexpected,
   };

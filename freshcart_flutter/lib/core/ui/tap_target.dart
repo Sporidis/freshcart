@@ -1,21 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// Grows a small control's hit area to the 44pt minimum without changing
-/// how it looks.
+/// Makes a small button easier to tap (at least 44 x 44), without making it
+/// look bigger.
 ///
-/// Wraps the *whole* control, InkWell and all, and repeats its handler:
+/// Wrap the whole control and pass the same tap handler again:
 ///
 ///   TapTarget(onTap: add, child: InkWell(onTap: add, child: smallCircle))
 ///
-/// Flutter hit-tests by layout box -- a widget only receives taps inside its
-/// own size -- so the box has to grow for the target to grow. The margin it
-/// adds is transparent, and a tap on the control itself still goes to the
-/// inner InkWell (the deepest tap recognizer wins the gesture arena), so the
-/// ripple is untouched; this detector only ever catches the margin.
+/// It adds an invisible area around the control. Taps on the control itself
+/// still go to its own InkWell (so the ripple still works). Taps on the
+/// invisible area are caught here.
 ///
-/// Excluded from semantics: the inner control already announces itself, and
-/// a second nested "button" node would be read twice.
+/// Hidden from screen readers, because the inner control already
+/// announces itself.
 class TapTarget extends StatelessWidget {
   /// Wraps [child] in a box at least [AppSpacing.minTapTarget] square.
   const TapTarget({
@@ -28,8 +26,8 @@ class TapTarget extends StatelessWidget {
   /// The control's own tap handler; null while it is disabled.
   final VoidCallback? onTap;
 
-  /// For controls that care where they were tapped (the shop pills anchor
-  /// the theme reveal to it).
+  /// For controls that need to know where they were tapped. The shop pills
+  /// use it to start the colour wave from that spot.
   final GestureTapDownCallback? onTapDown;
 
   final Widget child;

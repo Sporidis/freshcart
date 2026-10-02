@@ -2,12 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 
-/// "+ Add another", as a full-width dashed row at the end of a list of
-/// cards -- the design's one mark for "add to this collection", the same
-/// dash as the shop strip's permanent "+" pill.
+/// A full-width row with a dashed border, like "+ Add another", shown at
+/// the end of a list of cards.
 ///
-/// Shared by onboarding's shop step and Manage shops, which list the same
-/// kind of card and so end the same way.
+/// In the design, a dashed border always means "add something". Used by
+/// onboarding and Manage shops.
 class DashedAddRow extends StatelessWidget {
   /// Creates the row.
   const DashedAddRow({required this.label, required this.onTap, super.key});

@@ -4,8 +4,7 @@ import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
 /// A settings row showing its current choice, which opens a dialog to pick
 /// one of [options].
 ///
-/// Looks exactly like any other [SettingOption] -- value then chevron --
-/// because to the person tapping it, it is one: a row that opens something.
+/// Looks the same as a [SettingOption] (value, then an arrow).
 class SettingDropdownOption<T> extends StatelessWidget {
   const SettingDropdownOption({
     required this.title,

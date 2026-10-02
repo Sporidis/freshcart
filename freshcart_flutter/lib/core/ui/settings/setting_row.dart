@@ -3,20 +3,15 @@ import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// The one settings row every option widget is built on: title, optional
-/// subtitle, optional leading and trailing slots, optional tap.
+/// The basic settings row: title, optional subtitle, optional things on the
+/// left and right, optional tap.
 ///
-/// The option widgets (`SettingOption`, `SettingToggleOption`,
-/// `SettingDropdownOption`, `SettingStatusOption`) used to wrap three
-/// different Material tiles, each overriding its own padding and drawing
-/// its own divider. They drifted on height, inset, divider colour and value
-/// styling. Now they only decide what goes in [trailing]; geometry lives
-/// here once.
+/// All the other setting widgets (`SettingOption`, `SettingToggleOption`,
+/// ...) are built on this one and only choose what goes in [trailing]. That
+/// way every settings row has the same size and spacing.
 ///
-/// No horizontal padding: rows share their left edge with the section label
-/// above them (the screen's own side padding sets that edge). No divider
-/// either -- `SettingsSection` draws those *between* rows, so a group's last
-/// row never gets one, matching the design.
+/// No side padding, so rows line up with the section title above them.
+/// No divider either: `SettingsSection` draws those between rows.
 class SettingRow extends StatelessWidget {
   /// Creates the row.
   const SettingRow({
@@ -37,16 +32,15 @@ class SettingRow extends StatelessWidget {
   final Widget? leading;
   final Widget? trailing;
 
-  /// Null makes the row inert (no ripple, nothing for a screen reader to
-  /// announce as a button) -- right for a read-only status row.
+  /// If null, the row can't be tapped and screen readers won't call it a
+  /// button. Use that for rows that only show information.
   final VoidCallback? onTap;
 
-  /// Overrides the title's style -- for action rows ("New list") and the
-  /// destructive "Sign out".
+  /// A different style for the title, for example red for "Sign out".
   final TextStyle? titleStyle;
 
-  /// The design's hairline gap between title and subtitle -- tighter than
-  /// any spacing token, which are all for gaps *between* things.
+  /// The small gap between title and subtitle. Smaller than any value in
+  /// `AppSpacing`.
   static const double _subtitleGap = 2;
 
   @override
@@ -106,7 +100,7 @@ class SettingValueText extends StatelessWidget {
   );
 }
 
-/// The "this opens something" chevron.
+/// The ">" arrow that means "tap to open".
 class SettingChevron extends StatelessWidget {
   /// Creates the chevron.
   const SettingChevron({super.key});

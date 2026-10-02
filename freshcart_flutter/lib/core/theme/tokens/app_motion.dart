@@ -10,15 +10,12 @@ class AppMotion {
   static const Duration sheetIn = Duration(milliseconds: 380);
   static const Duration sheetOut = Duration(milliseconds: 220);
   static const Duration celebrate = Duration(milliseconds: 900);
-  // The shop-theme reveal (decisions #85, slowed per decisions #89): long
-  // enough to actually watch the wave travel to a far corner of the screen
-  // (the FAB, gated on this via WaveThemed) before it's already settled --
-  // 450ms read as barely-there once a real diagonal crossing was involved.
+  // The colour wave when switching shops. Slow enough to see it cross the
+  // whole screen. See decisions.md #85 and #89.
   static const Duration reveal = Duration(milliseconds: 700);
 
-  // Onboarding step transitions (Motion spec §07, the "signature moment"):
-  // the outgoing page leaves faster than the incoming one arrives, and the
-  // incoming one waits a beat so the two never visibly overlap mid-screen.
+  // Moving between onboarding steps. The old page leaves quickly, then the
+  // new one comes in a bit later, so they never overlap.
   static const Duration stepOut = Duration(milliseconds: 200);
   static const Duration stepIn = Duration(milliseconds: 320);
   static const Duration stepInDelay = Duration(milliseconds: 60);
@@ -35,30 +32,28 @@ class AppMotion {
     damping: 14,
   );
 
-  /// Whether the viewer has asked the platform for reduced motion.
+  /// Whether the user turned on "reduce motion" in the phone's settings.
   ///
-  /// The motion spec's rule: every non-essential animation checks this, and
-  /// when it is on, durations collapse to [micro] and [pop]'s overshoot falls
-  /// back to a plain ease. Overshoot and long travel are exactly what motion
-  /// sensitivity reacts to, so honouring it is not a nicety.
+  /// If so, animations become very short ([micro]) and don't bounce. Some
+  /// people get dizzy from motion, so every animation should respect this.
   static bool reduced(BuildContext context) =>
       MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
-  /// [duration], collapsed to [micro] when the viewer wants reduced motion.
+  /// Returns [duration], or [micro] if reduced motion is on.
   static Duration durationFor(BuildContext context, Duration duration) =>
       reduced(context) ? micro : duration;
 
-  /// [curve], with [pop]'s overshoot dropped when motion is reduced.
+  /// Returns [curve], but without the bounce of [pop] if reduced motion is on.
   static Curve curveFor(BuildContext context, Curve curve) =>
       reduced(context) && curve == pop ? press : curve;
 
-  /// Stagger delay for list children entering together (cap at 6 items).
+  /// Delay for the item at [index], so list items appear one after another
+  /// instead of all at once. Stops growing after 6 items.
   static Duration stagger(int index) =>
       Duration(milliseconds: (index.clamp(0, 5)) * 35);
 
-  /// Stagger delay for rows revealing their multi-select circle down the
-  /// list (§10) — its own, faster cadence than [stagger], which is for
-  /// content entering rather than a mode-switch reveal.
+  /// Like [stagger], but faster. Used when entering select mode, so the
+  /// select circles appear row by row.
   static Duration selectionStagger(int index) =>
       Duration(milliseconds: (index.clamp(0, 10)) * 25);
 }

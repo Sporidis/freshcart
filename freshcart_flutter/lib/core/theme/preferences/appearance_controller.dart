@@ -6,13 +6,11 @@ part 'appearance_controller.g.dart';
 
 enum Appearance { system, light, dark }
 
-/// The user's chosen theme mode.
+/// Whether the user wants light mode, dark mode, or to follow the phone.
 ///
-/// Persisted with `shared_preferences`, the same pattern
-/// [UpgradeNudgeController] uses — this is a plain UI preference, not
-/// anything secret. Stored by [Appearance.name] rather than an index, so
-/// adding a value later can't silently shift what an already-stored index
-/// means.
+/// Saved on the device with `shared_preferences`. We save the name
+/// (`'dark'`), not the index (`2`). If we add a new option later, the
+/// indexes could shift, but the names won't.
 @riverpod
 class AppearanceController extends _$AppearanceController {
   static const _prefsKey = 'appearance_mode';

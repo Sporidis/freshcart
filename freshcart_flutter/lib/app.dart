@@ -9,41 +9,36 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
-/// The largest text scale "Larger list text" applies, deliberately modest —
-/// the design's own note is "easier to read at arm's length," not a full
-/// accessibility text-scale system (`docs/design-gap-plan.md` §7).
+/// How much bigger text gets when "Larger list text" is on.
+///
+/// Kept small on purpose: it's meant to make lists easier to read, not to be a
+/// full accessibility text-size setting.
 const _largeTextScale = TextScaler.linear(1.15);
 
-/// The FreshCart application root.
+/// The root widget of the app.
 ///
-/// Always themed from [AppTheme.brandSeed] — the app's chrome (drawer,
-/// settings, dialogs, navigation transitions) is neutral ink-on-paper and
-/// stays that way regardless of which shop is active anywhere in the app.
-/// A shop's colour only ever tints the list-detail subtree that shop
-/// belongs to (see `ListDetailScreen`'s own local [AnimatedTheme]), never
-/// this root one.
+/// The app always uses the neutral FreshCart brand colours. Shop colours are
+/// only applied inside a list's detail screen (see `ListDetailScreen`), never
+/// here.
 ///
-/// The [AnimatedTheme] here still earns its keep for light/dark mode: it
-/// glides between [theme] and [darkTheme] on an [Appearance] change or a
-/// system brightness switch, rather than snapping.
+/// The [AnimatedTheme] here makes switching between light and dark mode fade
+/// smoothly instead of jumping.
 class FreshCartApp extends ConsumerWidget {
   /// Creates the app root.
   const FreshCartApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Defaults to system/off while each persisted choice is still loading
-    // (first frame only — shared_preferences resolves fast, and both
-    // defaults are exactly what an unset preference should behave like
-    // anyway).
+    // While the saved settings are still loading (only the very first frame),
+    // fall back to "follow the system" and "normal text size".
     final themeMode =
         ref.watch(appearanceControllerProvider).value?.themeMode ??
         ThemeMode.system;
     final largeText = ref.watch(largeTextControllerProvider).value ?? false;
     final t = ref.watch(translationsProvider);
 
-    // Kick off the queue drain coordinator to listen for sync status changes.
-    // (KeepAlive = true)
+    // Watching this starts the coordinator that sends queued offline changes
+    // to the server when we're back online.
     ref.watch(queueDrainCoordinatorProvider);
 
     return SessionResumeObserver(
@@ -56,16 +51,13 @@ class FreshCartApp extends ConsumerWidget {
         routerConfig: ref.watch(appRouterProvider),
         builder: (context, child) => AnimatedTheme(
           data: Theme.of(context),
-          // The motion spec's own token table assigns "colour tint" to
-          // `quick` (180ms, easeOutCubic) — the same token chip selection
-          // and row strike-through already use.
+          // Same speed as other colour changes in the app (180ms).
           duration: AppMotion.durationFor(context, AppMotion.quick),
           curve: AppMotion.enter,
           child: MediaQuery(
-            // Overrides, rather than stacks onto, the ambient scaler — this
-            // is an explicit in-app preference, not an addition to whatever
-            // OS-level accessibility scaling the device already applies. Off
-            // leaves the ambient (OS) scaler untouched.
+            // When "Larger list text" is on, use our fixed scale instead of
+            // the phone's text size setting. When it's off (null), the
+            // phone's setting is kept as is.
             data: MediaQuery.of(context).copyWith(
               textScaler: largeText ? _largeTextScale : null,
             ),

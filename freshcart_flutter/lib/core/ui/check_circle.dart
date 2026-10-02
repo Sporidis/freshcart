@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// The design's check circle (Component Library "CheckCircle"): a plain
-/// filled/outlined circle rather than [Checkbox], whose Material fill colour,
-/// size, and checkmark weight don't match the design's spec (same reasoning
-/// as `QuantityStepper`'s hand-painted glyphs).
+/// The round checkbox from the design: an empty circle, or filled when
+/// checked.
 ///
-/// Lives in `core/ui` because more than one feature draws it -- an item
-/// row's checkbox and onboarding's shop picker -- and the design treats them
-/// as the same component.
+/// Drawn by hand because Flutter's [Checkbox] can't be styled to look like
+/// the design. In `core/ui` because both item rows and onboarding use it.
 class CheckCircle extends StatelessWidget {
   const CheckCircle({
     required this.value,
@@ -19,9 +16,8 @@ class CheckCircle extends StatelessWidget {
 
   final bool value;
 
-  /// Toggles [value]. Null when the circle is only an indicator and the
-  /// surrounding row owns the tap (onboarding's shop picker) -- no second,
-  /// smaller hit target competing with the row's own.
+  /// Called when tapped. Leave null if the whole row handles the tap
+  /// instead (like in onboarding), so the circle is just a picture.
   final ValueChanged<bool?>? onChanged;
   final Animation<double> fillProgress;
 
@@ -31,9 +27,8 @@ class CheckCircle extends StatelessWidget {
     final circle = AnimatedBuilder(
       animation: fillProgress,
       builder: (context, child) {
-        // 340ms easeOutBack overshoot on checking; a plain, un-curved
-        // reverse on unchecking -- same asymmetry item_tile.dart's own
-        // _checkFill uses, so checking reads as an action, not a flip.
+        // Checking has a small bounce. Unchecking doesn't. Same as in
+        // item_tile.dart.
         final eased = fillProgress.status == AnimationStatus.reverse
             ? fillProgress.value
             : Curves.easeOutBack.transform(fillProgress.value);
@@ -43,13 +38,8 @@ class CheckCircle extends StatelessWidget {
           height: AppSizes.checkCircle,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            // `onSurface`/`surface`, not the fixed `AppColors.bgDark`/
-            // `bgLight` this used to read -- those are light-mode-only
-            // literals (the seed swatches `AppTheme` builds *from*), so a
-            // "checked" circle painted with them stayed near-black in dark
-            // mode too and all but disappeared against a dark row. The
-            // scheme roles invert with brightness the way the design's own
-            // ink-on-paper checkbox is supposed to.
+            // Use theme colours (not fixed ones), so the circle is dark in
+            // light mode and light in dark mode.
             color: Color.lerp(Colors.transparent, scheme.onSurface, clamped),
             border: value
                 ? null

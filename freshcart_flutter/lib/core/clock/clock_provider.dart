@@ -2,9 +2,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'clock_provider.g.dart';
 
-/// "Now", as a seam. Anything that buckets or compares against the current
-/// time reads it from here, so a test can pin it with
-/// `clockProvider.overrideWithValue(() => fixed)` instead of depending on
-/// the day it happens to run.
+/// Gives the current time.
+///
+/// Code that needs "now" reads it from here instead of calling
+/// `DateTime.now()` directly. Then tests can fix the time with
+/// `clockProvider.overrideWithValue(() => fixed)`.
 @Riverpod(keepAlive: true)
 DateTime Function() clock(Ref ref) => DateTime.now;

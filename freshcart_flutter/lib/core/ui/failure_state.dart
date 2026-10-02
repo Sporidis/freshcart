@@ -5,15 +5,13 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// A failed load, drawn in place of the content it failed to load.
+/// An error message shown where content failed to load.
 ///
-/// The body of [ErrorScreen], without its scaffold, so a screen whose
-/// *section* failed (items, shops, all lists) shows the same icon, wording
-/// and single action as one that failed whole -- rather than each screen
-/// inventing its own centred text and button.
+/// Same as [ErrorScreen], but without the [Scaffold], so it can be used for
+/// one part of a screen (like just the items).
 ///
-/// The failure's *type* picks icon and wording; [action] is the one way
-/// forward (Retry, or Back to lists).
+/// The kind of failure picks the icon and text. [action] is the button
+/// (Retry, or Back to lists).
 class FailureState extends StatelessWidget {
   /// Creates the state for [failure].
   const FailureState({
@@ -26,7 +24,7 @@ class FailureState extends StatelessWidget {
   final Failure failure;
   final Translations t;
 
-  /// The single way out. A dead end is how someone ends up force-quitting.
+  /// The button that gets the user out, so they're never stuck.
   final Widget action;
 
   @override
@@ -47,8 +45,8 @@ class FailureState extends StatelessWidget {
         t.errors.unexpectedTitle,
         t.errors.network,
       ),
-      // Never the raw cause: an exception string tells the user nothing and
-      // tells an attacker something.
+      // Never show the raw error text. It doesn't help the user and could
+      // leak technical details.
       _ => (
         Icons.error_outline,
         t.errors.unexpectedTitle,

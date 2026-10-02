@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// A labelled group of settings rows: the eyebrow label, an optional
-/// explanation, then [children] with a hairline between each.
+/// A group of settings rows with a title: the small uppercase title, an
+/// optional explanation, then [children] with a thin line between each.
 ///
-/// Replaces `SectionLabel` plus each section laying itself out by hand --
-/// which had given three sections three different labels (uppercase via
-/// `SectionLabel`, a raw lowercase `Text`, and one centred). Dividers are
-/// drawn here, *between* rows, so a group's last row never trails one.
+/// The lines are only drawn between rows, so there's none after the last.
 class SettingsSection extends StatelessWidget {
   /// Creates the section.
   const SettingsSection({

@@ -21,64 +21,57 @@ import 'package:serverpod_flutter/serverpod_flutter.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Register plural rules for the locales slang does not ship (nl, tl) before
-  // anything renders. See docs/decisions.md #25.
+  // slang has no plural rules for Dutch and Tagalog, so we register our own.
+  // Must happen before any text is shown. See decisions.md #25.
   configurePluralResolvers();
 
-  // Mobile only — FCM is scoped to Android/iOS (docs/decisions.md #7, #8);
-  // the web build never touches firebase_core at all.
+  // Push notifications only exist on Android and iOS, so the web build skips
+  // Firebase completely. See decisions.md #7 and #8.
   if (!kIsWeb) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
 
-  // Resolved in order: --dart-define=SERVER_URL, then assets/config.json, then
-  // http://localhost:8080/. On a physical device the default will not reach
-  // your machine — pass your LAN address with --dart-define. Not awaiting the
-  // sign-in below alongside it: this is a local config read, effectively
-  // instant, and not what the splash screen exists to cover.
+  // Where the server lives. Checked in this order:
+  // 1. --dart-define=SERVER_URL
+  // 2. assets/config.json
+  // 3. http://localhost:8080/
+  // On a real phone, localhost is the phone itself, so pass your computer's
+  // LAN address with --dart-define.
   final serverUrl = await getServerUrl();
 
   final client = Client(serverUrl)
     ..connectivityMonitor = FlutterConnectivityMonitor()
     ..authSessionManager = FlutterAuthSessionManager();
 
-  // web keeps the honest "unsupported" source (decisions.md #8); native
-  // platforms get the real Firebase-backed one now that a project exists.
+  // Web gets a placeholder that always says "push not supported".
+  // Phones get the real Firebase one.
   final PushTokenSource tokenSource = kIsWeb
       ? const UnconfiguredPushTokenSource(DevicePlatform.web)
       : FirebaseMessagingTokenSource(
           Platform.isIOS ? DevicePlatform.ios : DevicePlatform.android,
         );
 
-  // An explicit container, not a plain ProviderScope, because the work below
-  // needs to read providers before the first frame exists.
+  // We create the ProviderContainer ourselves (instead of a plain
+  // ProviderScope) so we can read providers below, before the UI exists.
   final container = ProviderContainer(
-    // The one place the client is constructed. Everything else reaches it
-    // through the provider, so a test can substitute a fake without the app
-    // knowing (docs/architecture.md, and the FakeClient in test/fakes).
+    // This is the only place the real client is created. Everything else gets
+    // it through the provider, so tests can swap in a fake client.
     overrides: [
       serverpodClientProvider.overrideWithValue(client),
       pushTokenSourceProvider.overrideWithValue(tokenSource),
     ],
   );
 
-  // Not awaited: `main()` used to block the first frame on this exact call,
-  // with the OS launch image covering the wait. Now `runApp` fires straight
-  // away and `SplashScreen` — the app's own first route, watching
-  // `authBootstrapProvider` — covers it instead, for exactly as long as it
-  // takes. Reading `.future` here rather than leaving the provider to be
-  // discovered by Splash's first `build()` just starts the network round
-  // trip one frame earlier.
+  // Start signing in now, but don't wait for it. The SplashScreen shows while
+  // sign-in is running. Starting it here, instead of letting the splash
+  // screen start it, just saves one frame.
   unawaited(
     container.read(authBootstrapProvider.future).then((session) {
-      // Device registration needs a signed-in session, so it waits for this
-      // rather than firing at the same moment as the sign-in call. Still
-      // fire-and-forget from here on — PushRepositoryImpl guards every call
-      // into a Result, and a failed registration must never surface as a
-      // crash; the app is fully usable without push, it just would not
-      // receive it.
+      // Registering for push needs a signed-in user, so it waits for sign-in.
+      // We don't wait for it to finish: if it fails, the app still works,
+      // the user just won't get push notifications.
       if (session.authenticated) {
         unawaited(container.read(pushRepositoryProvider).registerDevice());
       }

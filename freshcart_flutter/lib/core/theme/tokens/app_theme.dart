@@ -2,14 +2,15 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 
-/// Basket type scale. Sizes and weights match the design one-for-one:
-/// 28/26 titles · 22 sheet titles · 19 card title · 16-17 body ·
-/// 14-15 secondary · 12-13 caption.
+/// All text styles in the app, copied exactly from the design.
+///
+/// Sizes: 28/26 titles, 22 sheet titles, 19 card title, 16-17 body,
+/// 14-15 secondary, 12-13 captions.
 class AppTextStyles {
   AppTextStyles._();
 
-  /// Swap for a bundled family when you ship; the system face is the design's
-  /// reference rendering on iOS.
+  /// The iOS system font, which the design uses. Replace with a bundled font
+  /// before release.
   static const String fontFamily = '.SF Pro Text';
 
   static const TextStyle largeTitle = TextStyle(
@@ -33,8 +34,7 @@ class AppTextStyles {
     letterSpacing: -0.2,
   );
 
-  /// The one raised card's headline and the splash wordmark: a step
-  /// between body (16) and sheet titles (22).
+  /// Title on cards and the app name on the splash screen.
   static const TextStyle cardTitle = TextStyle(
     fontFamily: fontFamily,
     fontSize: 19,
@@ -83,7 +83,7 @@ class AppTextStyles {
     fontWeight: FontWeight.w600,
   );
 
-  /// Section eyebrows: LISTS, DONE · 3, THIS WEEK.
+  /// Small uppercase section headers, like "LISTS" or "DONE · 3".
   static const TextStyle eyebrow = TextStyle(
     fontFamily: 'monospace',
     fontSize: 12,
@@ -105,7 +105,7 @@ class AppTextStyles {
   );
 }
 
-/// Corner radii used across the app. Nothing else is legal.
+/// The only corner radii allowed in the app. Don't use other values.
 class AppRadii {
   AppRadii._();
   static const double sheet = 24; // bottom sheets
@@ -117,18 +117,16 @@ class AppRadii {
   static const double snackbar = 12;
   static const double pill = 999; // tabs, chips, avatars
 
-  /// The splash's app-icon tile: the iOS squircle proportion (~24% of its
-  /// 86px side), not a UI radius -- it has to read as *the app icon*.
+  /// For the app icon on the splash screen. Matches the rounding of iOS app
+  /// icons (about 24% of its 86px size).
   static const double appIcon = 21;
 }
 
-/// The 4-pt spacing scale (decisions #105).
+/// Spacing values, all multiples of 4. See decisions.md #105.
 ///
-/// Layout spacing -- screen gutters, gaps between sections and rows, sheet
-/// insets -- comes from here. A component's own internal geometry (a pill's
-/// 9×3 padding, a stepper's 2px ring) stays a literal private to that
-/// widget: it belongs to the component's shape, not to the system, and a
-/// token per pixel value would be noise rather than a scale.
+/// Use these for layout: screen padding, gaps between sections and rows.
+/// Tiny sizes that are part of one widget's own shape (like a pill's
+/// padding) can stay as plain numbers inside that widget.
 class AppSpacing {
   AppSpacing._();
   static const double xs = 4;
@@ -138,7 +136,7 @@ class AppSpacing {
   static const double xl = 20;
   static const double xxl = 24;
 
-  // Semantic aliases -- what most call sites should actually reach for.
+  // Named by what they're for. Prefer these over the raw sizes above.
   static const double screen = xl; // horizontal screen padding
   static const double sheetH = xl;
   static const double gap = md;
@@ -161,22 +159,22 @@ class AppSizes {
   static const double swatch = 32; // colour pickers (shop, avatar)
 }
 
-/// Basket theming.
+/// Builds the app's [ThemeData].
 ///
-/// [light] / [dark] are the neutral, shop-agnostic default — onboarding,
-/// settings, the "All" tab, anything not scoped to one shop.
+/// [light] and [dark] are the normal neutral theme, used everywhere that
+/// isn't about one specific shop.
 ///
-/// [forShop] re-seeds the scheme from the colour the USER picked when they
-/// created that shop, so accents (selected tab pill, check fill, FAB,
-/// focused input, refresh indicator) tint to it while surfaces, text and
-/// primary buttons stay identical. Scope it per subtree:
+/// [forShop] is the same theme, but the accent colour (selected tab, check
+/// circles, FAB, focused input) is the shop's colour. Backgrounds, text and
+/// main buttons don't change. Use it only around the part of the screen
+/// that belongs to that shop:
 ///
 ///   Theme(
 ///     data: AppTheme.forShop(shop.color, Theme.of(context).brightness),
 ///     child: ProductListView(shop: shop),
 ///   )
 ///
-/// Never swap the whole MaterialApp theme per shop — the chrome must not move.
+/// Never change the whole app's theme to a shop colour.
 class AppTheme {
   AppTheme._();
 
@@ -196,16 +194,9 @@ class AppTheme {
     seed: shopColor ?? AppColors.shopColorFallback,
   );
 
-  /// A readable colour to draw text/icons in on top of [background].
+  /// White or ink (near-black), whichever is readable on [background].
   ///
-  /// A plain luminance check rather than `generatedScheme.onPrimary`: once
-  /// [background] is the shop's literal colour rather than an M3-generated
-  /// tone, the two are no longer a matched pair, and pairing arbitrary text
-  /// with the wrong one of them risks real contrast failures, not just a
-  /// slightly-off hue.
-  ///
-  /// Public because a shop pill paints the literal shop colour outside any
-  /// [forShop] subtree and needs the exact same rule.
+  /// Checks how light the colour is. Public because shop pills also need it.
   static Color onColorFor(Color background) =>
       ThemeData.estimateBrightnessForColor(background) == Brightness.dark
       ? Colors.white
@@ -238,25 +229,14 @@ class AppTheme {
       brightness: brightness,
     );
     final isNeutralTheme = seed == brandSeed;
-    // The literal shop colour, not `generatedScheme.primary`: M3's seeding
-    // snaps any input to the nearest tone on its own generated ramp, which
-    // measurably shifts hue and saturation away from the swatch someone
-    // actually picked. `presetShopColors` are curated, already-good colours
-    // (AppColors' own doc comment), not raw user input that needs that
-    // correction -- so the accent everywhere (FAB, checkboxes, the selected
-    // chip) is the colour itself, matching the dot and chip that show it.
+    // Use the exact shop colour. Material's generated `primary` would shift
+    // it slightly, so it wouldn't match the colour the user picked.
     final primary = isNeutralTheme ? ink : seed;
     final subtleSurface = isDark ? AppColors.subtleDark : AppColors.subtleLight;
-    // Ink-on-paper both modes, matching buttonBg/buttonFg above: light mode
-    // is a near-black primary with white "on" content; dark mode inverts to
-    // a white primary with near-black "on" content. Deliberately
-    // `AppColors.ink` here, not the local `ink` variable a few lines up --
-    // that local is "whichever text colour suits this brightness" (white in
-    // dark mode), so using it for onPrimary/onSecondary/onTertiary made
-    // `primary == onPrimary` (both white) in dark mode with no shop active,
-    // which is the app's default state on most screens. Background and
-    // foreground being the same colour is why a FilledButton/FAB/checkbox
-    // in dark mode read as "unreadable" rather than merely off-brand.
+    // Text on top of the primary colour. Light mode: white on black.
+    // Dark mode: black on white.
+    // Careful: use `AppColors.ink` here, NOT the local `ink` variable. In
+    // dark mode that one is white, which would give white text on white.
     final onNeutralPrimary = isDark ? AppColors.ink : Colors.white;
     final scheme = generatedScheme.copyWith(
       primary: primary,
@@ -269,22 +249,15 @@ class AppTheme {
       onSurface: ink,
       error: AppColors.destructive,
       onError: Colors.white,
-      // The chrome is neutral ink-on-paper regardless of the active shop
-      // (this file's own governing rule, stated at the top) -- these tonal
-      // surfaces were left to whatever ColorScheme.fromSeed derived from the
-      // seed, which is how a bar as plain as the add-item field ended up
-      // tinted a stray olive-green. Pinned to the app's own neutral tokens
-      // instead of the generated ramp, same as `surface` just above.
+      // Set these by hand to our neutral colours. If left to
+      // ColorScheme.fromSeed, they come out slightly green.
       surfaceContainerLowest: bg,
       surfaceContainerLow: surface,
       surfaceContainer: subtleSurface,
       surfaceContainerHigh: subtleSurface,
       surfaceContainerHighest: subtleSurface,
       surfaceTint: Colors.transparent,
-      // Same reasoning for the lines and secondary ink: generated from the
-      // seed, they came out olive in light mode (the warm ink seed tints the
-      // whole ramp), on every divider and settings row border. Pinned to
-      // the app's own neutral tokens like the surfaces above.
+      // Same for lines and secondary text: set by hand so they stay neutral.
       outline: border,
       outlineVariant: border,
       onSurfaceVariant: secondaryText,
@@ -389,8 +362,8 @@ class AppTheme {
         fillColor: isDark ? AppColors.subtleDark : Colors.transparent,
         contentPadding: const EdgeInsets.all(14),
         hintStyle: AppTextStyles.body.copyWith(color: mutedText),
-        // Labels sit ABOVE the field as plain Text in this design —
-        // do not use labelText / floating labels.
+        // In this design, labels are a separate Text above the field.
+        // Don't use labelText or floating labels.
         border: _inputBorder(border),
         enabledBorder: _inputBorder(border),
         focusedBorder: _inputBorder(scheme.primary),
@@ -401,19 +374,16 @@ class AppTheme {
         ),
       ),
 
-      // Shop tab pills. Selected background is the shop's own colour when the
-      // subtree is wrapped in AppTheme.forShop().
+      // Shop tab pills. Inside AppTheme.forShop(), the selected one is filled
+      // with the shop's colour.
       chipTheme: ChipThemeData(
         backgroundColor: Colors.transparent,
         selectedColor: scheme.primary,
         disabledColor: Colors.transparent,
-        // A WidgetStateColor, not `secondaryLabelStyle`: that property looks
-        // like the selected-state label style but Chip's own build method
-        // never actually reads it (confirmed against the installed Flutter
-        // SDK source) -- only `labelStyle` is consumed, resolved per-state.
-        // Without this, a selected chip's translucent unselected-style ink
-        // renders on top of `selectedColor` (near-black for the neutral
-        // theme), which is what made a selected tab's own label invisible.
+        // The label colour changes when selected, so it stays readable on
+        // the filled background. This must be done here in `labelStyle`:
+        // Flutter's Chip ignores `secondaryLabelStyle`, even though the name
+        // suggests otherwise.
         labelStyle: AppTextStyles.label.copyWith(
           color: WidgetStateColor.resolveWith(
             (states) => states.contains(WidgetState.selected)
@@ -457,9 +427,7 @@ class AppTheme {
         subtitleTextStyle: AppTextStyles.caption.copyWith(color: mutedText),
         contentPadding: EdgeInsets.zero,
         minLeadingWidth: 0,
-        // AppColors.selectedRow{Light,Dark} were defined but never wired to
-        // anything -- the drawer's "currently open" list row is the first
-        // place that actually needs a selected-row treatment.
+        // Background of the selected row, e.g. the open list in the drawer.
         selectedTileColor: isDark
             ? AppColors.selectedRowDark
             : AppColors.selectedRowLight,
@@ -496,11 +464,8 @@ class AppTheme {
         ),
       ),
 
-      // The list's overflow menu (ListMenu). Left unthemed, PopupMenuButton
-      // falls back to Material 3 defaults -- a tinted surface, its own
-      // elevation shadow, 4px corners -- the one overlay in the app that
-      // wouldn't match the zero-elevation, ink-on-paper language every other
-      // surface (dialog, sheet, snackbar) is pinned to above.
+      // The "..." menu on a list. Styled to match our dialogs and sheets
+      // (flat, no shadow) instead of Material's default look.
       popupMenuTheme: PopupMenuThemeData(
         color: surface,
         surfaceTintColor: Colors.transparent,
@@ -525,10 +490,8 @@ class AppTheme {
               ? buttonBg
               : (isDark ? Colors.white24 : Colors.black12),
         ),
-        // On, the track is the ink-on-paper button colour -- white in dark
-        // mode -- so a fixed white thumb vanished into it. The thumb takes
-        // the button's own foreground instead, the same pair a primary
-        // button uses, so it reads in both modes.
+        // When the switch is on, the thumb uses the button text colour, so
+        // it's visible on the track in both light and dark mode.
         thumbColor: WidgetStateProperty.resolveWith(
           (states) =>
               states.contains(WidgetState.selected) ? buttonFg : Colors.white,
