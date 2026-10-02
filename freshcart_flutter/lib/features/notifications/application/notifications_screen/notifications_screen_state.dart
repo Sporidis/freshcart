@@ -1,6 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Everything `NotificationsScreen` renders, already derived.
+/// The data `NotificationsScreen` shows.
 class NotificationsScreenState {
   const NotificationsScreenState({
     required this.preferences,
@@ -8,14 +8,14 @@ class NotificationsScreenState {
     this.preferencesFailure,
   });
 
-  /// The user's push choices; null while they load, so the toggles never
-  /// show a default as if it were the user's real setting.
+  /// The user's push settings, or null while loading (so no fake default
+  /// switches are shown).
   final NotificationPreferences? preferences;
 
-  /// Why [preferences] could not be read, if it couldn't; null while
-  /// loading or once loaded.
+  /// Why [preferences] couldn't load. Null while loading or after it
+  /// worked.
   final Failure? preferencesFailure;
 
-  /// The lists that get a per-list mute row; empty until they load.
+  /// The lists to show a mute row for. Empty until loaded.
   final List<ShoppingList> lists;
 }

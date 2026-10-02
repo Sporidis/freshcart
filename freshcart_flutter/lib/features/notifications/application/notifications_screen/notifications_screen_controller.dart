@@ -7,11 +7,10 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'notifications_screen_controller.g.dart';
 
-/// The view model behind `NotificationsScreen`: the push preferences and the
-/// lists to mute, side by side.
+/// The controller for `NotificationsScreen`: the push preferences, and the
+/// lists that can be muted.
 ///
-/// Earns its place by combining two sources. Each per-list mute row keeps
-/// its own `ListMuteController` -- one row, one notifier.
+/// Each list's mute row has its own `ListMuteController`.
 @riverpod
 class NotificationsScreenController extends _$NotificationsScreenController {
   NotificationPreferencesController get _preferences =>
@@ -27,7 +26,7 @@ class NotificationsScreenController extends _$NotificationsScreenController {
     );
   }
 
-  /// Re-reads the push preferences after a failed load.
+  /// Loads the push preferences again. Used by the Retry button.
   void retryPreferences() =>
       ref.invalidate(notificationPreferencesControllerProvider);
 

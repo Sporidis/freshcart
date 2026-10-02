@@ -4,15 +4,14 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'notification_preferences_controller.g.dart';
 
-/// The signed-in user's own choices about which push notifications they
-/// receive -- the Notifications screen's "Push" section (decisions #80,
-/// phase 2).
+/// Which push notifications the user wants. For the "Push" section on the
+/// Notifications screen (decisions.md #80).
 @riverpod
 class NotificationPreferencesController
     extends _$NotificationPreferencesController {
-  /// A failed read stays an [Err] rather than falling back to defaults:
-  /// defaults drawn as switches look exactly like the user's real choices,
-  /// and flipping one would then set the opposite of what they meant.
+  /// Loads the preferences. If that fails, it stays an [Err] (no default
+  /// values). Default switches would look like the user's real settings,
+  /// and flipping one could save the opposite of what they wanted.
   @override
   Future<Result<NotificationPreferences>> build() =>
       ref.watch(pushRepositoryProvider).notificationPreferences();

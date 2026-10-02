@@ -10,17 +10,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'push_repository_impl.g.dart';
 
-/// The Serverpod-backed [PushPort].
+/// The real [PushPort], talking to the Serverpod server.
 ///
-/// ## Documented platform limitation
+/// ## Known limitation
 ///
-/// iOS web push for installable PWAs is gated in the EU, so an EU iPhone user
-/// on the free PWA install path will **not** receive background notifications.
-/// Live in-app updates still work for them — those come from the Serverpod
-/// stream, not from here. Real iOS background push needs a native build and a
-/// paid Apple Developer account, which is deferred
-/// (`docs/decisions.md` #8). [isSupported] reports this honestly so the UI can
-/// avoid offering a setting the platform will ignore.
+/// On an iPhone in the EU, the web app (PWA) can't get push notifications.
+/// Live updates inside the app still work (they come from Serverpod, not
+/// from here). Real iOS push needs the native app and a paid Apple
+/// Developer account (decisions.md #8). [isSupported] says when push isn't
+/// possible, so the UI doesn't show settings that won't work.
 class PushRepositoryImpl implements PushPort {
   /// Creates the repository against a client and a token source.
   const PushRepositoryImpl(this._client, this._tokens);
@@ -34,8 +32,8 @@ class PushRepositoryImpl implements PushPort {
   @override
   Future<Result<void>> registerDevice() => _guard(() async {
     final token = await _tokens.token();
-    // No token is not a failure: it is the expected state on a platform that
-    // cannot deliver push. The caller has already been told via isSupported.
+    // No token isn't an error: it's normal on a platform without push
+    // (isSupported already says so).
     if (token == null) return;
     await _client.notification.registerDevice(token, _tokens.platform);
   });
@@ -101,22 +99,21 @@ class PushRepositoryImpl implements PushPort {
   }
 }
 
-/// Which platform this build is running on, for device registration.
+/// Which platform the app runs on (sent when registering the device).
 @Riverpod(keepAlive: true)
 dto.DevicePlatform devicePlatform(Ref ref) {
   if (kIsWeb) return dto.DevicePlatform.web;
   return Platform.isIOS ? dto.DevicePlatform.ios : dto.DevicePlatform.android;
 }
 
-/// Supplies the device's push token.
+/// Supplies the [PushTokenSource].
 ///
-/// Overridden with a Firebase-backed source once a project is configured; the
-/// rest of the app is unaffected.
+/// `main.dart` overrides it: Firebase on Android/iOS, a placeholder on web.
 @Riverpod(keepAlive: true)
 PushTokenSource pushTokenSource(Ref ref) =>
     UnconfiguredPushTokenSource(ref.watch(devicePlatformProvider));
 
-/// Supplies the [PushPort].
+/// Supplies the [PushPort] (the push repository).
 @Riverpod(keepAlive: true)
 PushPort pushRepository(Ref ref) => PushRepositoryImpl(
   ref.watch(serverpodClientProvider),
