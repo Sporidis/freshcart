@@ -1,22 +1,21 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// [NameHistoryEntry] grouped by recency; see [bucketByRecency].
+/// Item names split into "this week", "last week" and "earlier". Made by
+/// [bucketByRecency].
 typedef RecencyBuckets = ({
   List<NameHistoryEntry> thisWeek,
   List<NameHistoryEntry> lastWeek,
   List<NameHistoryEntry> earlier,
 });
 
-/// Buckets [entries] into "this week" / "last week" / "earlier" using
-/// rolling 7-day windows measured back from [now], not calendar-week
-/// boundaries -- the app ships five locales with different week-start
-/// conventions (some start Monday, some Sunday), and a rolling window means
-/// the same label reads the same regardless of which day a calendar week is
-/// considered to start on.
+/// Splits [entries] into "this week" / "last week" / "earlier".
 ///
-/// [entries] is expected already ordered by [NameHistoryEntry.lastUsedAt]
-/// descending (what `recentNamesProvider` returns) -- bucketing is a single
-/// pass that preserves that order within each group, not a sort of its own.
+/// "This week" means the last 7 days from [now], not the calendar week.
+/// Countries start the week on different days (Monday or Sunday), and this
+/// way it works the same everywhere.
+///
+/// [entries] must already be sorted newest first. This keeps that order,
+/// it doesn't sort.
 RecencyBuckets bucketByRecency(List<NameHistoryEntry> entries, DateTime now) {
   final thisWeek = <NameHistoryEntry>[];
   final lastWeek = <NameHistoryEntry>[];
@@ -34,8 +33,8 @@ RecencyBuckets bucketByRecency(List<NameHistoryEntry> entries, DateTime now) {
   return (thisWeek: thisWeek, lastWeek: lastWeek, earlier: earlier);
 }
 
-/// Reads on [RecencyBuckets] a record type cannot declare itself.
+/// Extra getters for [RecencyBuckets] (a record can't have its own).
 extension RecencyBucketsX on RecencyBuckets {
-  /// No history at all -- every bucket empty.
+  /// True if all three groups are empty.
   bool get isEmpty => thisWeek.isEmpty && lastWeek.isEmpty && earlier.isEmpty;
 }

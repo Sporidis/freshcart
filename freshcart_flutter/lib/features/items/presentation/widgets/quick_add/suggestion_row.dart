@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// The chip row that floats just above the pill once there is enough typed
-/// to suggest something -- traced from §09's own frame 4 markup ("Olive
-/// oil", "Olives", "Olive tapenade", riding just above the field).
+/// The row of suggestion chips above the field (like "Olive oil",
+/// "Olives"), shown once enough is typed.
 class SuggestionRow extends StatelessWidget {
   const SuggestionRow({
     required this.suggestions,
@@ -20,8 +19,8 @@ class SuggestionRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-      // The row is the 44pt target height; each chip sits centred in it at
-      // its own size, its TapTarget catching the band above and below.
+      // The row is 44 px high (easy to tap). Each chip is smaller and
+      // centred; its TapTarget makes the space above and below tappable too.
       child: SizedBox(
         height: AppSpacing.minTapTarget,
         child: ListView.separated(

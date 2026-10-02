@@ -5,10 +5,10 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// The divider checked items collect under.
+/// The "Done · 3" line above the checked items.
 ///
-/// Tappable: folding the trolley away is the whole reason it is a divider and
-/// not a plain label. The chevron rotates 180° to say which way the tap goes.
+/// Tap it to fold or unfold the checked items. The arrow turns around to
+/// show which way.
 class DoneDivider extends StatelessWidget {
   /// Creates the divider.
   const DoneDivider({
@@ -29,14 +29,10 @@ class DoneDivider extends StatelessWidget {
   /// Called when the divider is tapped.
   final VoidCallback onToggle;
 
-  /// "Clear checked", pre-translated. Null hides the action entirely — a
-  /// divider with nothing checked to clear has no button to be pressed by
-  /// accident.
+  /// The "Clear checked" text, already translated. Null hides the button.
   final String? clearLabel;
 
-  /// Deletes every checked item. A separate tap target from [onToggle]'s, so
-  /// clearing the trolley and folding it away stay two different gestures on
-  /// one row rather than one gesture doing two things.
+  /// Deletes all checked items. A separate button from folding ([onToggle]).
   final VoidCallback? onClear;
 
   @override
@@ -45,8 +41,8 @@ class DoneDivider extends StatelessWidget {
     final muted = theme.textTheme.labelSmall?.color;
 
     return Padding(
-      // No vertical padding of its own: the TapTargets below are the row's
-      // height, so every pixel of it is tappable.
+      // No vertical padding: the tap areas below set the height, so the
+      // whole row can be tapped.
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
       child: Row(
         children: [

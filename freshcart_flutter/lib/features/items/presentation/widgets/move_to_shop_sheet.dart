@@ -4,16 +4,18 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// What [showMoveToShopSheet] resolved to -- distinct from `null`, which
-/// means "dismissed without choosing", so "moved to no shop" (untagged, a
-/// real choice) is never confused with "cancelled" (do nothing at all).
+/// What the user picked in [showMoveToShopSheet].
+///
+/// A wrapper is needed because "no shop" is also null. Without it, null
+/// could mean "move to no shop" or "cancelled".
 class MoveToShopOutcome {
   const MoveToShopOutcome(this.shopId);
 
   final ShopId? shopId;
 }
 
-/// Asks which shop a multi-selection should move to.
+/// Asks which shop the selected items should move to. Returns null if
+/// cancelled.
 Future<MoveToShopOutcome?> showMoveToShopSheet(
   BuildContext context, {
   required List<Shop> shops,
@@ -25,8 +27,8 @@ Future<MoveToShopOutcome?> showMoveToShopSheet(
   builder: (_) => _MoveToShopSheet(shops: shops, t: t),
 );
 
-/// The multi-select "Move" sheet: the same [ShopPicker] `ItemSheet` uses
-/// for one item at a time, offered here for a whole selection instead.
+/// The "Move to shop" sheet in select mode. Uses the same [ShopPicker] as
+/// `ItemSheet`.
 class _MoveToShopSheet extends StatelessWidget {
   const _MoveToShopSheet({required this.shops, required this.t});
 

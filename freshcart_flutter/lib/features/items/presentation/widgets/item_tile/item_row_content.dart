@@ -7,9 +7,10 @@ import 'package:freshcart_flutter/core/ui/checked_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The row's visual content, reused unmodified as `ItemMenu`'s header once
-/// it lifts off the list — one object built from one set of data, in both
-/// places, so they can never visually drift apart.
+/// What an item row looks like (dot, name, quantity...).
+///
+/// Used in the list, and also at the top of `ItemMenu` when the row lifts
+/// up. Same widget in both places, so they always look the same.
 class ItemRowContent extends StatelessWidget {
   const ItemRowContent({
     required this.item,
@@ -37,22 +38,19 @@ class ItemRowContent extends StatelessWidget {
   final ValueChanged<int> onQuantityChanged;
   final Translations t;
 
-  /// Rearrange mode's drag handle, at the row's leading edge ahead of the
-  /// checkbox -- the design's own row order. Null outside rearrange mode.
+  /// The drag handle, before the checkbox. Null outside rearrange mode.
   final Widget? dragHandle;
 
-  /// Who checked this item off, if anyone. A note always wins over showing
-  /// this -- see `ItemTile.checkedByMember`.
+  /// Who checked this item off. If there's a note, the note is shown
+  /// instead.
   final ListMember? checkedByMember;
 
-  /// Search's query (Motion spec §16: "matching substrings are weight-600
-  /// rather than highlighted"), or null outside search -- every other caller
-  /// of this row just gets a plain name.
+  /// The search text. Matching letters in the name are shown bold. Null
+  /// outside search.
   final String? highlightQuery;
 
-  /// The name, in weight-600 where it matches [highlightQuery] -- a plain
-  /// [Text] when there's nothing to match (the overwhelmingly common case,
-  /// so it stays the cheap path).
+  /// The item name, with the part matching [highlightQuery] in bold. Just a
+  /// plain [Text] when not searching (the usual case).
   Widget _nameText(TextStyle? style) {
     final query = highlightQuery?.trim();
     if (query == null || query.isEmpty) return Text(item.name, style: style);
@@ -127,10 +125,8 @@ class ItemRowContent extends StatelessWidget {
                   )
                 : QuantityStepper(
                     quantity: item.quantity,
-                    // No button at all below 1, not a disabled tap: this
-                    // mirrors ShoppingItem.validateQuantity's own floor --
-                    // "add at least one" -- so the row can't even attempt an
-                    // edit the domain would reject.
+                    // At 1, the minus button is removed (not just disabled),
+                    // because the quantity can't go below 1.
                     onDecrement: item.quantity > 1
                         ? () => onQuantityChanged(item.quantity - 1)
                         : null,
@@ -142,10 +138,9 @@ class ItemRowContent extends StatelessWidget {
     );
   }
 
-  /// A note if it has one, otherwise -- once checked -- who checked it off.
-  /// The note always wins: it is the shopper's own instruction and stays
-  /// visible even after the item is in the trolley, same priority
-  /// `item_tile.dart`'s own `_buildSubtitle` gives.
+  /// The line under the name: the note if there is one, otherwise (when
+  /// checked) who checked it. The note wins because it's an instruction
+  /// for the shopper.
   Widget? _buildSubtitle(Color muted) {
     if (item.hasNote) {
       return Text(

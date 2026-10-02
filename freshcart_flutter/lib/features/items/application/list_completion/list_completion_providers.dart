@@ -8,27 +8,26 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_completion_providers.g.dart';
 
-/// Whether [items] is a finished list: something on it, and all of it
-/// checked.
+/// Whether the list is done: it has items, and all are checked.
 bool allChecked(List<ShoppingItem> items) =>
     items.isNotEmpty && items.every((i) => i.isChecked);
 
-/// Reacts to [list] *becoming* finished or unfinished. A side effect only,
-/// with no value, the same shape as `queueDrainCoordinator`:
+/// Reacts when [list] becomes done, or stops being done. Returns nothing,
+/// it only does things (like `queueDrainCoordinator`).
 ///
-/// - No longer finished: a "Keep list" dismissal is forgotten, so the next
-///   completion celebrates again.
-/// - Just finished, with "Clear checked after shopping" on (decisions #79):
-///   the checked items are cleared. Not on the initial load, so a list that
-///   was already finished when opened never wipes itself on arrival.
+/// - No longer done: forget "Keep list", so the "all done" card shows
+///   again next time.
+/// - Just became done, and "Clear checked after shopping" is on
+///   (decisions.md #79): remove the checked items. Not when the list is
+///   first loaded, so a list that was already done doesn't clear itself
+///   when you open it.
 ///
-/// Why its own provider: both rules compare the items *before* and *after*
-/// a change, which takes a `ref.listen` that survives the change.
-/// `ItemsSectionController` also *watches* the items, so every change
-/// rebuilds it, and a listener registered in its `build()` is replaced
-/// before it can ever fire. This provider watches nothing, so its
-/// listener lives as long as the section does (`ItemsSectionController`
-/// watches it to keep it alive). See decisions #99.
+/// Why its own provider? Both rules compare the items before and after a
+/// change, using `ref.listen`. If that listener were in
+/// `ItemsSectionController.build()`, it would be replaced on every item
+/// change (because that controller watches the items), before it could
+/// ever run. This provider watches nothing, so its listener stays.
+/// See decisions.md #99.
 @riverpod
 void listCompletion(Ref ref, ShoppingList list) {
   ref.listen(itemsControllerProvider(list.id), (previous, next) {

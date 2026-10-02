@@ -3,15 +3,15 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Deletes [item] the undoable way: hidden at once, committed only after
-/// [ItemsController.swipeUndoWindow], with an "Undo" snackbar for exactly
-/// that long (Motion spec §10).
+/// Deletes [item] with an Undo option.
 ///
-/// The one path every item delete takes -- the swipe, the hold menu's
-/// Delete, and the same two in search results. [delete] is the caller's
-/// view-model `swipeDelete`, which hands back the undo action; before this
-/// existed, every caller dropped that action on the floor, so a deleted
-/// item quietly vanished four seconds later with no way back.
+/// The item disappears right away, and an "Undo" snackbar shows. The real
+/// delete happens after [ItemsController.swipeUndoWindow], unless Undo is
+/// tapped.
+///
+/// Every way of deleting an item uses this (swipe, hold menu, search).
+/// [delete] is the controller's `swipeDelete`, which returns the undo
+/// function.
 void deleteItemWithUndo(
   BuildContext context, {
   required ShoppingItem item,
@@ -20,13 +20,12 @@ void deleteItemWithUndo(
 }) {
   final undo = delete(item);
   ScaffoldMessenger.of(context)
-    // One at a time, newest wins -- same rule as showFailureSnackBar.
+    // Remove the old snackbar first, only the newest one shows.
     ..hideCurrentSnackBar()
     ..showSnackBar(
       SnackBar(
         content: Text(t.items.itemRemoved(name: item.name)),
-        // Exactly the window the delete is actually held for: a snackbar
-        // that outlived it would offer an undo that no longer works.
+        // Shown exactly as long as Undo still works.
         duration: ItemsController.swipeUndoWindow,
         action: SnackBarAction(label: t.common.undo, onPressed: undo),
       ),

@@ -13,38 +13,26 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/suggestion_row.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The floating control that replaces a persistent add-item bar.
+/// The floating "+" button that opens into a text field to add items.
 ///
-/// Two ways to add something, both from the same control, because "fast" and
-/// "detailed" want different affordance:
+/// Two ways to add:
+///  * Type a name and press Enter: [onQuickAdd] adds it right away. The
+///    field clears and stays open for the next item. This is the fast way
+///    to add many items.
+///  * Type a name and tap the button: [onOpenDetails] opens the item sheet,
+///    to set a quantity or shop first.
 ///
-///  * Type a name and hit Return -- [onQuickAdd] fires immediately with just
-///    that name, the field clears and stays focused, ready for the next one.
-///    This is the path for rattling off a list, and it must stay exactly as
-///    fast as the old always-visible field was.
-///  * Type a name and tap the button instead of Return -- [onOpenDetails]
-///    fires with the typed text, for setting a quantity or a shop before it
-///    is actually added.
+/// The button icon is one "+" that rotates:
+///  * "+": closed, or open with text (tap = add with details);
+///  * rotated 45° to "×": open with empty field (tap = close).
 ///
-/// A single [Icons.add] glyph carries all three of its meanings by rotating
-/// 1/8 turn rather than swapping icons: un-rotated it is a "+" (closed, or
-/// "add these details"); rotated it is an "×" (open, empty field --
-/// "cancel"). The same glyph rotating both ways is what makes "the x turns
-/// back into a plus" a literal description of what happens, not a metaphor
-/// implemented as two different icons cross-fading.
-///
-/// Resting, this is a single circle "tinted to the active shop" (the
-/// design's own words) -- elevated, with a colour-matched shadow. Open, it
-/// "flattens into the sheet-adjacent surface": the pill itself goes back to
-/// plain white/surface with a hairline border, and the shop's colour survives
-/// as two smaller things instead -- a leading dot before the text, and the
-/// trailing button's own fill, which then also answers "is there anything to
-/// commit": grey and muted while the field is empty, shop-coloured the
-/// moment there is text.
+/// Closed, it's a round button in the shop's colour, with a coloured
+/// shadow. Open, it becomes a wide white pill. The shop colour then only
+/// shows as a dot before the text, and on the button (grey while the field
+/// is empty, shop colour once there's text).
 class QuickAddBar extends StatefulWidget {
-  /// Key on the [Transform.scale] the first-run pulse (§11) drives -- a test
-  /// scopes to it to read the pulse's live scale, the same role
-  /// `ItemTile.checkKey`/`editKey` play for that widget's own rows.
+  /// Key on the pulsing [Transform.scale], so tests can find it and read
+  /// its scale.
   static const pulseKey = Key('quick-add-bar-pulse');
 
   /// Creates the control.
@@ -60,47 +48,41 @@ class QuickAddBar extends StatefulWidget {
     super.key,
   });
 
-  /// The list this bar adds to -- needed to scope the suggestion chips'
-  /// query (decisions #64) to this list's own history.
+  /// The list to add to. Suggestions come from this list's history
+  /// (decisions.md #64).
   final ListId listId;
 
-  /// Adds [name] with default quantity and no shop. Returning false keeps
-  /// the text in the field for a retry, the same contract the old
-  /// AddItemField's onSubmit had.
+  /// Adds [name] right away. Return false (failed) to keep the text in the
+  /// field, so the user can try again.
   final Future<bool> Function(String name) onQuickAdd;
 
-  /// Opens the details sheet, pre-filled with [name], and reports whether it
-  /// actually added something. True clears the field and collapses the bar
-  /// back to a bare button; false (cancelled, or the write failed) leaves
-  /// the typed text in place for another attempt.
+  /// Opens the item sheet with [name] filled in. Returns true if something
+  /// was added (then the field clears and closes). False (cancelled or
+  /// failed) keeps the text.
   final Future<bool> Function(String name) onOpenDetails;
 
-  /// The existing item [name] would duplicate in the active shop, or null --
-  /// Component Library §03's "Duplicate warning." A pure lookup against
-  /// already-loaded state, not a query, so it can run on every keystroke.
+  /// Returns the item with the same name in the selected shop, or null. For
+  /// the "already on the list" warning. Only looks at loaded items (no
+  /// server call), so it's fine to run on every key.
   final ShoppingItem? Function(String name) findDuplicate;
 
-  /// The duplicate card's "Make it x{n}" action: bumps [item]'s quantity by
-  /// one. Same success contract as [onQuickAdd].
+  /// "Make it x{n}" on the duplicate card: adds 1 to [item]'s quantity.
+  /// Returns true if it worked, like [onQuickAdd].
   final Future<bool> Function(ShoppingItem item) onBumpDuplicate;
 
   /// Translations for the active locale.
   final Translations t;
 
-  /// The active shop tab's name, or null on "All" (or when the list has no
-  /// shops yet) -- drives the placeholder ("Add to Colruyt" vs. a generic
-  /// prompt) and the leading dot. The colour itself is not a separate
-  /// parameter: it is already `theme.colorScheme.primary` -- the pill is
-  /// wrapped in [WaveThemed] (see this widget's own `build`), which is what
-  /// makes that value correct at any given moment during a shop switch,
-  /// not this widget itself.
+  /// The selected shop's name, or null on "All". Used for the placeholder
+  /// ("Add to Colruyt") and the dot.
+  ///
+  /// The colour isn't passed in: it's `theme.colorScheme.primary`, which
+  /// [WaveThemed] keeps correct during a shop switch.
   final String? activeShopName;
 
-  /// Whether this is a brand-new, still-empty list -- the FAB's own
-  /// first-run coach mark (§11: "the FAB pulses gently three times... then
-  /// stops for good -- no arrow, no persistent coach mark"). Read once, at
-  /// mount, the same way [ItemTile.justAdded] is -- see this state class's
-  /// own `initState`.
+  /// Whether this is a brand-new empty list. Then the button pulses 3
+  /// times to get attention, and stops. Only checked once, when the widget
+  /// is created.
   final bool firstRun;
 
   @override
@@ -118,17 +100,16 @@ class _QuickAddBarState extends State<QuickAddBar>
   _Phase _phase = _Phase.collapsed;
   bool _busy = false;
 
-  /// Drives the roll-out: 0 is the bare circle, 1 is the fully-open pill.
+  /// The open/close animation: 0 is the round button, 1 is the open pill.
   late final AnimationController _reveal = AnimationController(
     vsync: this,
     duration: AppMotion.standard,
   );
 
-  /// The first-run coach mark (§11): three gentle scale pulses, 900ms apart,
-  /// then stops for good. Modeled directly on the old `_AddNudgeArrow`'s own
-  /// three-bounce `TweenSequence` shape -- one controller running the whole
-  /// sequence rather than a loop of awaited delays, which would keep firing
-  /// after the widget is gone.
+  /// The first-run pulse: 3 small pulses, 900 ms apart, then it stops.
+  ///
+  /// One controller for all 3 (not a loop with delays), so it stops when
+  /// the widget is disposed.
   late final AnimationController _pulse = AnimationController(
     vsync: this,
     duration: AppMotion.celebrate * 3,
@@ -156,9 +137,8 @@ class _QuickAddBarState extends State<QuickAddBar>
   @override
   void initState() {
     super.initState();
-    // The icon's rotation depends on whether there is text, which changes on
-    // every keystroke -- listening directly is simpler than plumbing a
-    // second piece of state that only ever mirrors the controller's own.
+    // Rebuild on every key, because the icon depends on whether there's
+    // text.
     _controller.addListener(_handleTextChanged);
     if (widget.firstRun) _pulse.forward();
   }
@@ -177,20 +157,21 @@ class _QuickAddBarState extends State<QuickAddBar>
 
   bool get _hasText => _controller.text.trim().isNotEmpty;
 
-  /// The existing item the typed name would duplicate, or null. Recomputed
-  /// on every build -- `_handleTextChanged` already calls `setState` on
-  /// every keystroke, the same way [_hasText] stays live.
+  /// The item the typed name would duplicate, or null. Checked on every
+  /// build (which happens on every key).
   ShoppingItem? get _duplicate =>
       _hasText ? widget.findDuplicate(_controller.text.trim()) : null;
 
-  /// +, un-rotated: collapsed (tap opens), or expanded with text (tap opens
-  /// the details sheet). ×, 1/8 turn: expanded and empty (tap cancels).
+  /// What tapping the button does:
+  /// - closed: open the field;
+  /// - open with text: open the item sheet;
+  /// - open and empty ("×"): close.
   bool get _showsPlus => _phase == _Phase.collapsed || _hasText;
 
   void _open() {
     setState(() => _phase = _Phase.expanded);
     _reveal.forward();
-    // The field does not exist in the tree until this frame builds it.
+    // Focus after this frame, because the text field doesn't exist yet.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _focus.requestFocus();
     });
@@ -227,9 +208,8 @@ class _QuickAddBarState extends State<QuickAddBar>
     }
   }
 
-  /// Enter's handler: "takes the primary option" (Component Library §03) --
-  /// the duplicate card's bump when one is showing, the ordinary quick-add
-  /// otherwise.
+  /// What Enter does: if the duplicate card is showing, "Make it x{n}".
+  /// Otherwise, quick add.
   Future<void> _handleSubmit() async {
     final duplicate = _duplicate;
     if (duplicate != null) {
@@ -260,8 +240,7 @@ class _QuickAddBarState extends State<QuickAddBar>
     setState(() => _busy = false);
     if (added) {
       _controller.clear();
-      // Stays open, refocused: adding several things in a row is the whole
-      // point of the fast path, and closing after each one would undo it.
+      // Stay open with the keyboard, so the user can add the next item.
       _focus.requestFocus();
     }
   }
@@ -284,10 +263,8 @@ class _QuickAddBarState extends State<QuickAddBar>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // The duplicate card and the suggestion chips share one slot above
-          // the capsule and are mutually exclusive (Flow 11: a frame never
-          // shows both) -- an exact match is more specific than "here's
-          // what you might mean," so it takes the slot when there is one.
+          // Above the field: either the duplicate card or the suggestions,
+          // never both. The duplicate card wins.
           AnimatedSwitcher(
             duration: AppMotion.durationFor(context, AppMotion.quick),
             child: duplicate != null
@@ -312,64 +289,39 @@ class _QuickAddBarState extends State<QuickAddBar>
               builder: (context, constraints) => AnimatedBuilder(
                 animation: Listenable.merge([_reveal, _pulse]),
                 builder: (context, child) {
-                  // "260ms, easeOutQuint on width" (§09) -- _reveal itself
-                  // runs linearly (AnimationController has no curve of its
-                  // own); everything riding its progress curves through
-                  // AppMotion.sheet instead of the raw value, so the roll
-                  // decelerates into place rather than moving at a constant
-                  // rate the whole way.
+                  // _reveal runs at a constant speed. We apply a curve
+                  // (AppMotion.sheet) so the opening slows down at the end.
                   final openness = AppMotion.sheet.transform(_reveal.value);
                   final width = lerpDouble(
                     _diameter,
                     constraints.maxWidth,
                     openness,
                   )!;
-                  // Only while collapsed -- the coach mark's whole point is
-                  // drawing the eye to the closed button; pulsing while someone
-                  // is already typing would just be noise. Reduced motion drops
-                  // the pulse entirely, the same non-negotiable rule every other
-                  // animation in this codebase follows.
+                  // Only pulse while closed (not while typing), and never
+                  // with reduced motion.
                   final pulseScale =
                       _phase == _Phase.collapsed && !AppMotion.reduced(context)
                       ? _pulseScale.value
                       : 1.0;
                   return Align(
                     alignment: Alignment.centerRight,
-                    // Both the first-run pulse and WaveThemed's own bounce
-                    // (below) scale around the *centre of whatever box
-                    // they're given* -- this SizedBox is sized to exactly
-                    // `width`, the pill's own true bounds, whether that's a
-                    // collapsed circle or the fully open pill. Previously
-                    // both wrapped this whole row (suggestions included),
-                    // a box that's always the *screen's* width with the
-                    // button sitting flush against its right edge; scaling
-                    // that box pivoted around a point near the screen's
-                    // horizontal centre, well outside the button, which is
-                    // what made both pulse and bounce visibly lurch
-                    // sideways instead of popping in place. The same
-                    // oversized box was also what WaveThemed's own "has the
-                    // wave physically reached me" check was comparing
-                    // against, so tightening the wrap fixes that too.
+                    // Exactly as wide as the button/pill. The pulse and the
+                    // bounce grow from the centre of this box, so it must
+                    // be the button's own size, or the button would jump
+                    // sideways. WaveThemed also uses this box to check when
+                    // the wave reaches the button.
                     child: Transform.scale(
                       key: QuickAddBar.pulseKey,
                       scale: pulseScale,
                       child: WaveThemed(
                         bounce: true,
-                        // Only while fully collapsed (not just "in
-                        // `_Phase.collapsed`" -- that flips the instant
-                        // `_collapse()` is called, while `_reveal` is still
-                        // easing `openness` back down over the next ~260ms,
-                        // during which the `TextField` below is still
-                        // mounted): `localReveal` builds this `Builder`
-                        // *twice* (old-themed underneath, new-themed on
-                        // top, clipped to the wave) so the wave can visibly
-                        // sweep across the pill's own fill instead of
-                        // flipping it all at once -- safe only when there's
-                        // no `TextField` in it (`if (openness > 0)` below)
-                        // to attach the same `FocusNode`/
-                        // `TextEditingController` twice. Anything short of
-                        // fully closed falls back to the plain single-copy
-                        // flip, same as before.
+                        // Let the wave sweep across the button, but only
+                        // when it's fully closed (openness == 0).
+                        // `localReveal` builds the button twice, which is
+                        // only safe without the TextField inside. (Checking
+                        // `_Phase.collapsed` isn't enough: that changes
+                        // right away, while the close animation still has
+                        // the TextField for ~260 ms.)
                         localReveal: openness <= 0,
                         child: _Pill(
                           openness: openness,
@@ -407,11 +359,11 @@ class _QuickAddBarState extends State<QuickAddBar>
   }
 }
 
-/// The suggestion chips above the open field (§09, decisions #64).
+/// The suggestion chips above the open field (decisions.md #64).
 ///
-/// Its own widget so the debounce lives apart from the roll-out animation:
-/// it listens to the same [field], waits for typing to settle, and only
-/// then asks [itemSuggestionsProvider].
+/// Its own widget, so the waiting logic is separate from the animation. It
+/// listens to [field], waits until typing pauses, then asks
+/// [itemSuggestionsProvider].
 class _SuggestionChips extends ConsumerStatefulWidget {
   const _SuggestionChips({
     required this.listId,
@@ -429,14 +381,12 @@ class _SuggestionChips extends ConsumerStatefulWidget {
 }
 
 class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
-  /// How long to wait after the last keystroke before asking the server --
-  /// a network call per keystroke would mean several in-flight requests
-  /// racing each other for every word typed.
+  /// How long to wait after the last key before asking the server. Asking
+  /// on every key would send many requests at once.
   static const Duration _debounceDelay = Duration(milliseconds: 300);
 
-  /// The query actually being watched: lags the typed text by
-  /// [_debounceDelay], and only once it clears the same two-character floor
-  /// the server itself enforces.
+  /// The text we actually ask suggestions for. Updated [_debounceDelay]
+  /// after typing stops, and only with at least 2 letters.
   String _query = '';
   Timer? _debounce;
 
@@ -457,8 +407,7 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
     _debounce?.cancel();
     final text = widget.field.text.trim();
     if (text.length < 2) {
-      // Below the floor: clear immediately rather than waiting out a
-      // debounce for a query that would come back empty anyway.
+      // Less than 2 letters: clear right away, no need to wait.
       if (_query.isNotEmpty) setState(() => _query = '');
       return;
     }
@@ -475,8 +424,7 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
 
   @override
   Widget build(BuildContext context) {
-    // Watching with the live, pre-debounce text would fire the request on
-    // every keystroke -- the exact thing debouncing is for.
+    // Use the delayed text, not the live text, or it would ask on every key.
     final fetched = _query.isEmpty
         ? const <String>[]
         : ref
@@ -488,9 +436,7 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
                   )
                   .value ??
               const <String>[];
-    // Component Library §03: "Max 3" -- the server's own floor
-    // (ItemService.suggestNames) defaults to 5, so the cap belongs here,
-    // at the one place that actually draws the chip row.
+    // Show at most 3 chips (the server sends up to 5).
     final suggestions = fetched.take(3).toList();
 
     return AnimatedSize(
@@ -504,11 +450,10 @@ class _SuggestionChipsState extends ConsumerState<_SuggestionChips> {
   }
 }
 
-/// The exact-match duplicate warning (Component Library §03; Flow Screens
-/// v2's "Already on the list"): "{item} is already on {shop}, x{n}," with a
-/// primary action that bumps the existing row's quantity instead of
-/// creating a second one, and a secondary escape hatch for when a second
-/// row really is what's wanted.
+/// The "already on the list" card: "{item} is already on {shop}, x{n}".
+///
+/// Main button: add 1 to the existing item's quantity. Second button: add
+/// it as a new row anyway.
 class _DuplicateCard extends StatelessWidget {
   const _DuplicateCard({
     required this.item,
@@ -578,13 +523,12 @@ class _DuplicateCard extends StatelessWidget {
   }
 }
 
-/// The pill itself at a given [openness]: a shop-coloured circle at 0, a
-/// plain surface pill at 1.
+/// The button/pill itself. At [openness] 0 it's a round button in the
+/// shop's colour, at 1 a wide white pill.
 ///
-/// A widget of its own rather than an inline Builder, and still reading
-/// `Theme.of` from its own context: it sits *inside* WaveThemed's gated
-/// Theme (decisions #90), so every colour below rides the wave rather than
-/// the ambient theme.
+/// A separate widget so `Theme.of(context)` reads the theme from inside
+/// WaveThemed. That way its colours change with the wave (decisions.md
+/// #90).
 class _Pill extends StatelessWidget {
   const _Pill({
     required this.openness,
@@ -598,8 +542,8 @@ class _Pill extends StatelessWidget {
   final double width;
   final double height;
 
-  /// The text field; null while fully collapsed, so WaveThemed can safely
-  /// build this pill twice without attaching one FocusNode twice.
+  /// The text field. Null when fully closed, so WaveThemed can safely build
+  /// this twice.
   final Widget? field;
   final Widget button;
 
@@ -607,26 +551,22 @@ class _Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final field = this.field;
-    // "Flattens into the sheet-adjacent surface" -- one continuous lerp
-    // riding the same width animation.
+    // The background goes from shop colour to white as it opens.
     final fill = Color.lerp(
       theme.colorScheme.primary,
       theme.colorScheme.surface,
       openness,
     )!;
-    // Component Library §03: resting is "shop-tinted, elevation 6" with a
-    // colour-matched glow (`0 8px 22px rgba(shop, .35)`); once open it
-    // "flattens into the sheet-adjacent surface" -- a plain neutral shadow
-    // (`rgba(0,0,0,.10)`), same geometry. A Material `elevation` can't
-    // produce the tinted half of that (its shadow is always neutral), so
-    // the shadow is painted here instead and Material's own left at 0.
+    // The shadow: shop-coloured when closed, grey when open. Material's
+    // `elevation` shadow can only be grey, so we draw our own shadow and
+    // leave elevation at 0.
     final shadowColor = Color.lerp(
       theme.colorScheme.primary.withValues(alpha: 0.35),
       Colors.black.withValues(alpha: 0.10),
       openness.clamp(0.0, 1.0),
     )!;
-    // The same StadiumBorder throughout: at width == height its ends meet
-    // and it reads as a circle, at full width as a pill.
+    // One StadiumBorder for both: when width == height it's a circle, when
+    // wider it's a pill.
     return SizedBox(
       width: width,
       height: height,
@@ -656,8 +596,8 @@ class _Pill extends StatelessWidget {
             children: [
               if (field != null)
                 Expanded(
-                  // "Placeholder text fades in over the last 40%" (§09) --
-                  // the pill needs room first, or it would clip.
+                  // The placeholder fades in during the last 40% of opening,
+                  // once there's room for it.
                   child: Opacity(
                     opacity: ((openness - 0.6) / 0.4).clamp(0.0, 1.0),
                     child: field,

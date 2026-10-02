@@ -5,14 +5,11 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// What [ItemSheet] hands back: either the details to save, or a request to
-/// remove the item entirely. A sealed class rather than a nullable-field
-/// record, so the caller's own `switch` has to handle both without a third,
-/// silently-possible "neither" shape to forget.
+/// What [ItemSheet] returns: either "save these details" or "delete the
+/// item". A sealed class, so the caller's `switch` must handle both cases.
 sealed class ItemSheetOutcome {}
 
-/// Save with these details -- creating a new item, or updating an existing
-/// one, depending on which [ItemSheet] was opened.
+/// Save these details (a new item, or changes to an existing one).
 class ItemSheetSave extends ItemSheetOutcome {
   /// Creates the outcome.
   ItemSheetSave({
@@ -28,21 +25,16 @@ class ItemSheetSave extends ItemSheetOutcome {
   final String? noteText;
 }
 
-/// Remove the item being edited. Only reachable when [ItemSheet.item] is
-/// set -- there is nothing to remove while adding.
+/// Delete the item. Only possible when editing (not when adding).
 class ItemSheetRemove extends ItemSheetOutcome {}
 
-/// One sheet for both adding a new item and editing an existing one --
-/// "the same sheet, titled Edit product and with a Remove action, is what a
-/// row tap opens later; one component, two entry points" (§09). Previously
-/// two separate widgets (`AddItemSheet`, and an `ItemEditorDialog` that
-/// could not even change an item's shop); unified because they already did
-/// almost the same thing, and a second field added to one would otherwise
-/// need remembering to add to the other too.
+/// The bottom sheet for adding a new item or editing one. When editing,
+/// the title is "Edit product" and there's a Remove button.
+///
+/// One widget for both, so a new field only needs to be added once.
 class ItemSheet extends StatefulWidget {
-  /// Creates the sheet for adding a new item, pre-filled with [initialName]
-  /// (already typed in [QuickAddBar]) and, if a shop tab was active,
-  /// [initialShopId].
+  /// Creates the sheet for adding. Starts with [initialName] (what was
+  /// typed in [QuickAddBar]) and [initialShopId] (the selected shop tab).
   const ItemSheet.add({
     required String initialName,
     required this.shops,
@@ -53,7 +45,7 @@ class ItemSheet extends StatefulWidget {
        _initialName = initialName,
        _initialShopId = initialShopId;
 
-  /// Creates the sheet for editing [item], pre-filled from it.
+  /// Creates the sheet for editing [item], filled in with its details.
   const ItemSheet.edit({
     required ShoppingItem this.item,
     required this.shops,
@@ -62,12 +54,12 @@ class ItemSheet extends StatefulWidget {
   }) : _initialName = null,
        _initialShopId = null;
 
-  /// Null while adding; the item being edited otherwise. Also what decides
-  /// the sheet's mode -- there is no separate boolean to keep in step with it.
+  /// The item being edited, or null when adding. This alone decides if the
+  /// sheet is in "add" or "edit" mode.
   final ShoppingItem? item;
 
-  /// The shops on this list, to tag the item to one of them. Empty hides the
-  /// picker entirely -- nothing to choose from is not worth a section.
+  /// The shops on this list, to pick from. If empty, the shop picker is
+  /// hidden.
   final List<Shop> shops;
 
   /// Translations for the active locale.
@@ -76,7 +68,7 @@ class ItemSheet extends StatefulWidget {
   final String? _initialName;
   final ShopId? _initialShopId;
 
-  /// Whether this is the edit form -- [item] is set.
+  /// True when editing ([item] isn't null).
   bool get isEditing => item != null;
 
   @override
@@ -93,10 +85,9 @@ class _ItemSheetState extends State<ItemSheet> {
   late int _quantity = widget.item?.quantity ?? 1;
   late ShopId? _shopId = _initialShopId();
 
-  /// The item's own shop when editing; the active shop tab when adding --
-  /// but only if it is actually one of [ItemSheet.shops] either way. A
-  /// stale filter or a shop deleted out from under an open sheet should
-  /// fall back to "no shop" rather than tag to something with no chip.
+  /// The shop to start with: the item's shop when editing, the selected tab
+  /// when adding. If that shop isn't in [ItemSheet.shops] anymore (for
+  /// example it was deleted), it falls back to "no shop".
   ShopId? _initialShopId() {
     final id = widget.item?.shopId ?? widget._initialShopId;
     if (id == null) return null;
@@ -127,9 +118,8 @@ class _ItemSheetState extends State<ItemSheet> {
   void _remove() =>
       Navigator.of(context).pop<ItemSheetOutcome>(ItemSheetRemove());
 
-  /// A field's caption, sitting above it as plain text -- the design's own
-  /// rule, stated in `app_theme.dart`'s `inputDecorationTheme` comment:
-  /// labels never float inside the field via `labelText`.
+  /// A field's label, as plain text above the field (the design never uses
+  /// `labelText` inside the field).
   Widget _fieldLabel(BuildContext context, String text) => Padding(
     padding: const EdgeInsets.only(bottom: 6),
     child: Text(
@@ -172,8 +162,7 @@ class _ItemSheetState extends State<ItemSheet> {
             decoration: InputDecoration(hintText: t.items.namePlaceholder),
             onSubmitted: (_) => _save(),
           ),
-          // Shop before Amount, matching Flow 09 frame 6 / Flow 11's own
-          // field order -- not the arbitrary order this sheet had before.
+          // Shop comes before Amount, as in the design.
           if (widget.shops.isNotEmpty) ...[
             const SizedBox(height: AppSpacing.gap),
             _fieldLabel(context, t.items.shopLabel),
@@ -199,9 +188,8 @@ class _ItemSheetState extends State<ItemSheet> {
                   Text(t.items.amountLabel, style: theme.textTheme.bodyLarge),
                   QuantityStepper(
                     quantity: _quantity,
-                    // Quantity never drops below one: AddItem rejects zero,
-                    // and a zero-quantity row on a shopping list means
-                    // nothing.
+                    // Minimum is 1. Zero of something makes no sense on a
+                    // shopping list (and AddItem rejects it).
                     onDecrement: _quantity > 1
                         ? () => setState(() => _quantity--)
                         : null,

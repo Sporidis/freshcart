@@ -4,10 +4,12 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The row's floating, expanded state once held past the long-press
-/// threshold. An [OverlayEntry]'s content, not a route — a route (dialog,
-/// menu, bottom sheet) owns its own canned transition and anchors to the
-/// screen or a corner, not to this specific row's live position.
+/// The menu that appears when you hold an item: the row lifts up, with the
+/// options below it.
+///
+/// Shown in an [OverlayEntry], not as a dialog or route. A dialog has its
+/// own animation and position; this needs to appear exactly where the row
+/// is.
 class ItemMenu extends StatelessWidget {
   const ItemMenu({
     required this.globalPosition,
@@ -57,14 +59,14 @@ class ItemMenu extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return Stack(
       children: [
-        // Full-screen barrier, tap-to-close. Must be listed before the card
-        // below — Stack hit-tests the last child first, so a barrier listed
-        // after the card would swallow taps meant for the card itself.
+        // A dark layer over the whole screen. Tap it to close the menu.
         //
-        // A plain black scrim, not a scheme colour -- a modal barrier's job
-        // is to dim whatever is behind it regardless of that content's own
-        // theme, the same reasoning Flutter's own default barrierColor is
-        // brightness-invariant.
+        // It must come BEFORE the card in this Stack. A Stack checks taps on
+        // the last child first, so if it came after, it would catch taps
+        // meant for the card.
+        //
+        // Plain black (not a theme colour), because it just darkens
+        // whatever is behind it, in light and dark mode.
         Positioned.fill(
           child: GestureDetector(
             onTap: onClose,
@@ -74,43 +76,31 @@ class ItemMenu extends StatelessWidget {
         Positioned(
           top: globalPosition.dy,
           left: globalPosition.dx + _cardInset,
-          // No `height:` here — the card is taller than the row it grew
-          // from once the option list is attached below the header, so it
-          // has to size itself to its own content instead of being pinned
-          // to the row's original height.
+          // No `height:`: the card is taller than the row (the options are
+          // below it), so it sizes itself.
           width: size.width - _cardInset * 2,
           child: Transform.scale(
             scale: scale,
             alignment: Alignment.topLeft,
-            // OverlayEntry content sits outside the screen's own Scaffold,
-            // so Checkbox (and anything else Material-dependent) needs its
-            // own Material ancestor here.
+            // The overlay is outside the screen's Scaffold, so it needs its
+            // own Material for widgets like Checkbox.
             child: Material(
               type: MaterialType.transparency,
-              // Plain layout boxes (Padding, Column, Row, a decorated
-              // Container) don't claim a hit-test on their own -- only an
-              // actual interactive widget or an explicitly opaque one does.
-              // Without this, a tap on any blank space inside the card (the
-              // padding, a gap between rows, the divider) falls straight
-              // through to the full-screen barrier below and closes the
-              // menu. This absorbs every tap in the card's bounds so only a
-              // tap genuinely outside it can reach the barrier.
+              // Catches taps on empty space inside the card. Without this, a
+              // tap on padding or a gap would go through to the dark layer
+              // behind and close the menu. (Padding, Column etc. don't
+              // catch taps by themselves.)
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {},
                 child: Container(
                   decoration: BoxDecoration(
-                    // `colorScheme.surface`, not `Colors.white` -- the fixed
-                    // white card used to stay white in dark mode too, a
-                    // bright rectangle stamped over an otherwise dark screen.
+                    // Theme colour, so the card is dark in dark mode.
                     color: scheme.surface,
                     borderRadius: BorderRadius.circular(AppRadii.card),
                     boxShadow: [
-                      // A plain black shadow either way: an elevation shadow
-                      // simulates cast light, not surface colour, the same
-                      // reasoning the barrier above stays literal black.
-                      // Values from Flow 03 "Hold an item" -- a card that
-                      // has actually lifted off the list, not a flat menu.
+                      // A black shadow (shadows are always dark), so the
+                      // card looks lifted off the list.
                       BoxShadow(
                         color: Colors.black.withValues(alpha: 0.26),
                         blurRadius: 34,
@@ -160,12 +150,11 @@ class ItemMenu extends StatelessWidget {
   }
 }
 
-/// The five actions behind a hold, below [ItemRowContent]'s header.
-///
-/// All five call real callbacks: Edit details and Move to shop both open the
-/// same edit flow, Delete removes the row, Select more… seeds the selection
-/// with this row, and Rearrange list puts the whole list into rearrange
-/// mode.
+/// The five options in the hold menu:
+/// - Edit details / Move to shop: both open the edit sheet;
+/// - Delete: deletes the item;
+/// - Select more…: starts select mode with this item selected;
+/// - Rearrange list: starts rearrange mode.
 class _ItemMenuOptions extends StatelessWidget {
   const _ItemMenuOptions({
     required this.onClose,
@@ -267,9 +256,8 @@ class _MenuOptionRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    // `colorScheme.error`/`onSurface`, not the fixed `Theme.of(context).colorScheme.error`/
-    // `bgDark` this used to read -- ink text on a white-only assumption went
-    // unreadable on the now dark-mode-aware card above.
+    // Theme colours (red for Delete, normal text for the rest), so the text
+    // is readable in dark mode too.
     final color = isDestructive ? scheme.error : scheme.onSurface;
     return InkWell(
       onTap: onTap,
