@@ -52,6 +52,28 @@ a:hover{color:#1A3E77}
   </div>
 
   <section style="margin-bottom:30px;break-inside:avoid">
+    <div class="mspec-eyebrow">00 — v3 · Current design</div>
+    <h2 class="mspec-h2">What the main prototype does now</h2>
+    <div class="mspec-rule"></div>
+    <p class="mspec-p">This section overrides anything below that disagrees with it. Tokens live in <span class="mspec-kbd">app_motion.dart</span> (ios, emphasized, exitStd and the per-interaction durations).</p>
+    <table class="mspec-tbl">
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Shop switch</strong></td><td>Highlight slides 280 ms easeOutCubic; rows enter 28 px in tab direction, 220 ms, 24 ms stagger; colour wave 400 ms, restarts on each tap. Swipe follows the finger; commit at 86 px or 450 px/s.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Switch list</strong></td><td>From the drawer: the name flies into the header, 380 ms Cubic(.2,.8,.2,1), scale 0.62 → 1, while the drawer closes. Rows rise 12 px, 30 ms stagger.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Drawer</strong></td><td>300 px. Open 360 ms ios curve, close 260 ms Cubic(.4,0,.6,1). Scrim 0 → 42%. Rows cascade in 40 ms apart.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>List settings</strong></td><td>The only push: 350 ms ios; outgoing −30%.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Sheets</strong></td><td>Edge-to-edge. Open 440 ms ios, close 300 ms. Content cascades 45 ms apart from 110 ms. Drag the handle 110 px or flick to dismiss.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>FAB</strong></td><td>Rolls 56 → full width in 380 ms ios; input fades in after 160 ms. + rotates 45° to × when empty (300 ms easeOutBack). Enter adds instantly and stays open.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Check-off</strong></td><td>Fill pops (easeOutBack 260 ms) + ripple ring 480 ms. Ticks within 750 ms settle together: lift, glide to DONE 480 ms emphasized, 45 ms stagger; others reflow 380 ms. Toast with Undo.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Hold menu</strong></td><td>450 ms hold, cancelled by 8 px movement, light haptic. The row lifts in place (scale .97 → 1.02 → 1, 340 ms), the body unrolls by clip (300 ms), items cascade 40 ms. The stepper acts without closing.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Select mode</strong></td><td>Ink bar replaces the header (340 ms ios). Circles mean selected. Move and Delete are batch actions with Undo. FAB scales out to 0.6.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Rearrange</strong></td><td>Handles only here. The dragged row lifts (scale 1.02, shadow); others make room in 220 ms; the dropped row settles in 280 ms. Done shows "Order saved".</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Toast</strong></td><td>Ink, 48 px, rises 18 px in 380 ms emphasized, held 3.4 s. Every bulk or destructive action gets one with Undo.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Onboarding</strong></td><td>Welcome cards drop in (620 ms, 90 ms stagger). Steps slide 36 px in the direction of travel, 340 ms, 40 ms stagger. Invalid input shakes for 360 ms.</td></tr>
+      <tr><td style="white-space:nowrap;vertical-align:top"><strong>Reduced motion</strong></td><td>Everything becomes a 120 ms crossfade. No travel, scale or overshoot; the settle wait shortens to 300 ms.</td></tr>
+    </table>
+  </section>
+
+  <section style="margin-bottom:30px;break-inside:avoid">
     <div class="mspec-eyebrow">01 — Principles</div>
     <h2 class="mspec-h2">Five rules that make it feel alive</h2>
     <div class="mspec-rule"></div>
