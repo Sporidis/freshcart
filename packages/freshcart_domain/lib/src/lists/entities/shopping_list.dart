@@ -8,10 +8,10 @@ import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
 
 part 'shopping_list.freezed.dart';
 
-/// A shopping list shared by one or more people.
+/// A shopping list, shared by one or more people.
 ///
-/// The list owns its membership; items are fetched separately because a list
-/// can hold hundreds of them and the two change at very different rates.
+/// The list contains its members. Items are loaded separately, because
+/// there can be hundreds and they change much more often than the list.
 @freezed
 abstract class ShoppingList with _$ShoppingList {
   /// Creates a shopping list.
@@ -23,31 +23,26 @@ abstract class ShoppingList with _$ShoppingList {
     required DateTime createdAt,
     @Default(<ListMember>[]) List<ListMember> members,
 
-    /// Whether checked items clear themselves the moment the whole list is
-    /// checked, instead of waiting for an explicit "Clear checked" tap
-    /// (decisions #79). Off by default: this changes what happens to items
-    /// people have already added, so an existing list does not suddenly
-    /// start clearing itself out from under anyone.
+    /// Whether checked items are removed automatically when everything is
+    /// checked (instead of tapping "Clear checked") (decisions.md #79). Off
+    /// by default, so existing lists don't suddenly start removing items.
     @Default(false) bool clearCheckedAfterShopping,
 
-    /// True while this list reflects a write that couldn't reach the server
-    /// and is sitting in the offline queue rather than confirmed there (Flow
-    /// 07). `id` may be a locally-minted temp id in that state — see
+    /// True while this list has a change waiting in the offline queue (not
+    /// saved on the server yet). Then `id` may be a temporary id. See
     /// `docs/offline-sync-plan.md` §2.
     @Default(false) bool pending,
   }) = _ShoppingList;
 
   const ShoppingList._();
 
-  /// The longest a list name may be.
+  /// Maximum list name length.
   static const int maxNameLength = 60;
 
-  /// Validates a proposed list name, returning it trimmed.
+  /// Checks a list name and returns it without spaces at the ends.
   ///
-  /// On the entity rather than in `CreateList` because creating and renaming
-  /// are two doors into the same field: a name that is illegal to create must
-  /// stay illegal to rename to. Static because the rule has to hold before the
-  /// list exists.
+  /// On the entity (not in `CreateList`), so creating and renaming use the
+  /// same rule. Static, because it's needed before the list exists.
   static Result<String> validateName(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -59,9 +54,7 @@ abstract class ShoppingList with _$ShoppingList {
     return Ok(trimmed);
   }
 
-  /// Whether [userId] currently belongs to this list.
-  ///
-  /// The router's membership guard asks this before opening a list screen.
+  /// Whether [userId] is a member of this list.
   bool hasMember(UserId userId) =>
       members.any((member) => member.userId == userId);
 
@@ -73,6 +66,6 @@ abstract class ShoppingList with _$ShoppingList {
     return null;
   }
 
-  /// Whether [userId] may rename or delete this list, or remove members.
+  /// Whether [userId] is the owner (can rename, delete, remove members).
   bool isOwnedBy(UserId userId) => ownerId == userId;
 }

@@ -4,26 +4,24 @@ import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/items/entities/shopping_item.dart';
 import 'package:freshcart_domain/src/items/ports/item_repository.dart';
 
-/// Checks or unchecks an item, recording who did it and when.
+/// Checks or unchecks an item, and saves who did it and when.
 ///
-/// The state change itself is [ShoppingItem.toggleChecked] — an invariant of
-/// the entity. This use case only supplies the actor and the clock and persists
-/// the result, which is what lets the presentation layer apply the *same*
-/// transformation optimistically and stay consistent with what the server will
-/// store.
+/// The change itself is [ShoppingItem.toggleChecked]. This use case only
+/// adds the user and the time, and saves it. So the screen can use the
+/// same method to show it right away.
 class ToggleItemChecked {
   /// Creates the use case against an [ItemRepository] and a [Clock].
   const ToggleItemChecked(this._items, {this.clock = systemClock});
 
   final ItemRepository _items;
 
-  /// Supplies the check timestamp. Override it in tests to pin "now".
+  /// Gives the check time. Tests pass a fixed clock.
   final Clock clock;
 
-  /// Flips [item]'s checked state on behalf of [by].
+  /// Checks or unchecks [item], done by user [by].
   ///
-  /// Returns `Failure.conflict()` if someone else changed the item first; the
-  /// caller then rolls its optimistic update back.
+  /// Returns `Failure.conflict()` if someone else changed the item first.
+  /// The caller then undoes it on screen.
   Future<Result<ShoppingItem>> call(
     ShoppingItem item, {
     required UserId by,

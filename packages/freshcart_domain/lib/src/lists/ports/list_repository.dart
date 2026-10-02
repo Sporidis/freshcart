@@ -5,39 +5,38 @@ import 'package:freshcart_domain/src/lists/entities/shopping_list.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
 
-/// How the domain reads and writes shopping lists.
+/// The interface for reading and saving shopping lists.
 ///
-/// A *port*: the domain declares the shape, `freshcart_flutter`'s `data/` layer
-/// supplies the implementation against the Serverpod client. Nothing here
-/// mentions transport, so swapping the backend touches only that adapter.
+/// This is a "port": the domain says WHAT it needs, and the app's `data/`
+/// layer implements it with Serverpod. Nothing here mentions Serverpod, so
+/// changing the backend only changes that implementation.
 abstract interface class ListRepository {
-  /// Every list the signed-in user belongs to.
+  /// All lists the signed-in user is on.
   Future<Result<List<ShoppingList>>> myLists();
 
-  /// One list by [id], or `Failure.notFound` if it is gone or not visible.
+  /// One list by [id], or `Failure.notFound` if it's gone or you can't see
+  /// it.
   Future<Result<ShoppingList>> byId(ListId id);
 
-  /// Item counts for each of [ids] the signed-in user belongs to -- the
-  /// drawer's remaining-count row (Flow 10, §4). May return fewer entries
-  /// than [ids] if some are not visible to the caller.
+  /// Item counts for the lists [ids], for the drawer. May return fewer than
+  /// [ids] if the user can't see some of them.
   Future<Result<List<ListSummary>>> summaries(List<ListId> ids);
 
-  /// Creates a list named [name], owned by the signed-in user.
-  ///
-  /// The server generates the [JoinCode].
+  /// Creates a list called [name], owned by the signed-in user. The server
+  /// creates the [JoinCode].
   Future<Result<ShoppingList>> create({required String name});
 
-  /// Joins the list matching [code], adding the signed-in user as a member.
+  /// Joins the list with [code]. The signed-in user becomes a member.
   Future<Result<ShoppingList>> joinByCode(JoinCode code);
 
   /// Renames list [id] to [name]. Owner only.
   Future<Result<ShoppingList>> rename(ListId id, String name);
 
-  /// Sets whether list [id] clears its checked items automatically once
-  /// everything on it is checked (decisions #79). Any member may set this --
-  /// unlike rename/delete, it is a shared shopping-behaviour preference, not
-  /// an identity or destructive action, matching how any member may already
-  /// toggle a shop's `isActive`.
+  /// Sets whether list [id] removes checked items automatically when
+  /// everything is checked (decisions.md #79).
+  ///
+  /// Any member can change this (not only the owner), like turning a shop
+  /// tab on or off. It's a shared preference, not a dangerous action.
   Future<Result<ShoppingList>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
@@ -46,31 +45,29 @@ abstract interface class ListRepository {
   /// Removes the signed-in user from list [id].
   Future<Result<void>> leave(ListId id);
 
-  /// Deletes list [id] for everyone on it.
+  /// Deletes list [id] for everyone. Only the owner can.
   ///
-  /// Distinct from [leave] on purpose. Leaving takes you out of a list that
-  /// carries on without you; this ends it for the whole household, and only
-  /// its owner may do it. Collapsing the two into one call with a flag is how
-  /// somebody destroys a shared list meaning to walk away from it.
+  /// Separate from [leave] on purpose. Leaving only removes you; deleting
+  /// removes the list for everyone. One method with a flag would make it
+  /// too easy to delete a shared list by mistake.
   Future<Result<void>> delete(ListId id);
 
-  /// Removes [userId] from list [id], on the owner's authority.
+  /// Removes member [userId] from list [id]. Only the owner can.
   ///
-  /// Not the same as [leave]: leaving is something you do to yourself,
-  /// removal is something done to you, and only the list's owner may do it.
+  /// Different from [leave]: you leave yourself, but the owner removes
+  /// someone else.
   Future<Result<void>> removeMember(ListId id, UserId userId);
 
-  /// Hands ownership of list [id] to [userId], who must already be a member.
+  /// Makes member [userId] the owner of list [id]. The old owner becomes a
+  /// normal member.
   ///
-  /// The outgoing owner becomes an ordinary member. This is the honest way
-  /// out for an owner who wants to leave — the alternative would be a list
-  /// nobody can rename or delete.
+  /// This lets an owner leave without leaving a list that nobody can rename
+  /// or delete.
   Future<Result<ShoppingList>> transferOwnership(ListId id, UserId userId);
 
-  /// Live view of list [id], re-emitting whenever anyone changes it.
+  /// List [id], updated live whenever anyone changes it.
   ///
-  /// Backed by a Serverpod stream (Phase 8). Emits `Err` for a transport drop
-  /// rather than closing, so the UI can show a reconnecting state instead of
-  /// going blank.
+  /// If the connection drops, the implementation keeps the last value and
+  /// reconnects by itself. Other errors (like "not found") come as `Err`.
   Stream<Result<ShoppingList>> watch(ListId id);
 }

@@ -4,30 +4,24 @@ import 'package:freshcart_domain/src/items/entities/shopping_item.dart';
 import 'package:freshcart_domain/src/items/ports/item_repository.dart';
 import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
 
-/// Applies a user's edit to an existing item, enforcing the same rules the
-/// item had to satisfy to be added in the first place.
+/// Saves an edit to an item, with the same rules as when adding it.
 ///
-/// Exists because [AddItem] and this use case are two doors into the same
-/// fields: a name that is illegal to create must stay illegal to rename to.
-/// Before this, the edit path went straight to [ItemRepository.save] and
-/// enforced nothing, so an item could be edited into a state it could never
-/// have been created in — a blank name, or a quantity of zero.
+/// So an item can't be edited into something that couldn't be added (like
+/// an empty name or quantity 0).
 class EditItem {
   /// Creates the use case against an [ItemRepository] and a [Clock].
   const EditItem(this._items, {this.clock = systemClock});
 
   final ItemRepository _items;
 
-  /// Supplies the note's `updatedAt`. Override it in tests to pin "now".
+  /// Gives the note's time. Tests pass a fixed clock.
   final Clock clock;
 
-  /// Validates the edit and persists it.
+  /// Checks the edit and saves it.
   ///
-  /// [noteText] is the note's new body: `null` or blank clears the note
-  /// entirely, which is why it is not simply forwarded as-is.
+  /// [noteText]: the new note text. `null` or empty removes the note.
   ///
-  /// [shopId] is passed through as given, so `null` untags the item — the
-  /// "no shop" choice in the editor has to be expressible.
+  /// [shopId]: the new shop. `null` means "no shop".
   Future<Result<ShoppingItem>> call(
     ShoppingItem item, {
     required String name,

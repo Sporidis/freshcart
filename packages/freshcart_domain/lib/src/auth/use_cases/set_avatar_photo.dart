@@ -4,21 +4,18 @@ import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
 import 'package:freshcart_domain/src/auth/ports/auth_port.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 
-/// Uploads a photo for the caller's own avatar.
+/// Uploads an avatar photo for the signed-in user.
 ///
-/// The one avatar-related write with a real rule behind it — size —, which is
-/// why it gets a use case of its own rather than a direct call to
-/// [AuthPort.setAvatarPhoto] the way `setAvatarColor` and `clearAvatarPhoto`
-/// are called directly from the application layer (mirroring how this
-/// codebase already treats `signOut`/`linkGoogle`/`linkEmail`: a trivial
-/// forward with nothing to validate does not earn a use-case wrapper).
+/// A use case because there's a rule to check (the size). Simple calls with
+/// nothing to check (`setAvatarColor`, `signOut`...) don't get a use case;
+/// the app calls [AuthPort] directly for those.
 class SetAvatarPhoto {
   /// Creates the use case against an [AuthPort].
   const SetAvatarPhoto(this._auth);
 
   final AuthPort _auth;
 
-  /// Validates [bytes] and uploads them.
+  /// Checks [bytes] and uploads them.
   Future<Result<AuthUser>> call(Uint8List bytes) async =>
       switch (AuthUser.validateAvatarPhoto(bytes)) {
         Err(:final failure) => Err(failure),
