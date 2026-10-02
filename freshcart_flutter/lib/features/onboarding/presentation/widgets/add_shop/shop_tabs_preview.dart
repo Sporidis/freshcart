@@ -6,17 +6,14 @@ import 'package:freshcart_flutter/features/onboarding/application/onboarding/onb
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// "Your tabs will look like this": the shop strip the list screen will
-/// show, built from the shops picked so far.
+/// "Your tabs will look like this": a preview of the shop tabs, using the
+/// shops picked so far.
 ///
-/// Uses the list screen's real [ShopTabPill] rather than a look-alike, so
-/// the promise in the label is literally true -- and cannot quietly stop
-/// being true the next time the real pill changes.
+/// Uses the real [ShopTabPill], so the preview always matches the real
+/// tabs.
 ///
-/// Each pill keeps its own identity (keyed by shop name), so toggling a shop
-/// animates just that pill in rather than rebuilding the whole row: the
-/// design's "every toggle adds a real pill" is the step's payoff, and it
-/// only lands if the new pill visibly arrives.
+/// Each pill has a key (the shop name), so when a shop is picked only that
+/// pill animates in. The rest of the row stays still.
 class ShopTabsPreview extends StatelessWidget {
   const ShopTabsPreview({required this.shops, required this.t, super.key});
 
@@ -36,7 +33,7 @@ class ShopTabsPreview extends StatelessWidget {
           style: theme.textTheme.labelSmall,
         ),
         const SizedBox(height: AppSpacing.gapSmall),
-        // Decorative: a picture of the strip, not a working one.
+        // Just a picture: the pills can't be tapped.
         IgnorePointer(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -67,8 +64,7 @@ class ShopTabsPreview extends StatelessWidget {
   }
 }
 
-/// Pops a pill in the first time it mounts -- the same easeOutBack "pop"
-/// the rest of the app uses for something newly added.
+/// Makes a pill "pop" in (grow with a small bounce) when it first appears.
 class _PillArrival extends StatelessWidget {
   const _PillArrival({required this.child, super.key});
 

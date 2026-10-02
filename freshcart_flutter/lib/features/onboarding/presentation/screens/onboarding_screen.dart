@@ -17,13 +17,13 @@ import 'package:go_router/go_router.dart';
 @Preview(group: 'Onboarding', name: 'Wizard shell', size: previewPhone)
 Widget onboardingScreenPreview() => previewApp(const OnboardingScreen());
 
-/// The first-list wizard: name, list, shops, then an optional invite.
+/// The onboarding wizard: your name, list name, shops, then an optional
+/// invite.
 ///
-/// Back always goes somewhere. On step 1 that is Welcome -- Welcome reaches
-/// this screen with `context.go`, so there is no route underneath to pop
-/// to, and without this a new user who tapped "Get started" by mistake had
-/// no way back to "I have an invite code" short of killing the app. The
-/// system back gesture follows the same rule through [PopScope].
+/// Back always works. On step 1 it goes to Welcome. (Welcome opens this
+/// screen with `context.go`, so there's no screen underneath to pop back
+/// to. Without this, a user who tapped "Get started" by mistake would be
+/// stuck.) The phone's back gesture does the same, through [PopScope].
 class OnboardingScreen extends ConsumerWidget {
   final bool isInvited;
   const OnboardingScreen({super.key, this.isInvited = false});
@@ -60,10 +60,9 @@ class OnboardingScreen extends ConsumerWidget {
                   },
                 ),
               ),
-              // Step 4 draws its own two buttons inline (design: "Start my
-              // list" / "I'll do this later", both leading the same place) --
-              // the shared footer is for the three steps that each have
-              // exactly one way forward.
+              // No footer on step 4: it has its own two buttons ("Start my
+              // list" / "I'll do this later"). The footer is for steps 1-3,
+              // which have one Continue button.
               if (step != OnboardingStep.invite) const OnboardingFooter(),
             ],
           ),

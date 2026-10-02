@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/name_
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 
-/// Step 1: the only thing asked about the person.
+/// Step 1: the user's name. The only personal thing we ask.
 class DisplayNameStep extends ConsumerWidget {
   const DisplayNameStep({super.key});
 

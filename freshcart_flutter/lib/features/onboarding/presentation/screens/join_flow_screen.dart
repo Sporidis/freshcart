@@ -25,13 +25,14 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboa
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_transition.dart';
 import 'package:go_router/go_router.dart';
 
-/// Welcome's second exit: someone joining a list someone else already made,
-/// rather than starting their own. Two questions (a name, a code) and a
-/// beat of confirmation, then straight into the list — matching the
-/// design's own "Join by code" and "Joined" frames.
+/// The screen for joining someone else's list with a code (the second
+/// button on Welcome).
 ///
-/// Shares the wizard's step header, name field, primary button and step
-/// transition, so the two ways in feel like one product rather than two.
+/// Asks for a name, then the code, shows a short "Joined!" message, then
+/// opens the list.
+///
+/// Uses the same header, name field, button and animations as onboarding,
+/// so both flows feel the same.
 class JoinFlowScreen extends ConsumerWidget {
   /// Creates the screen.
   const JoinFlowScreen({super.key});
@@ -46,9 +47,9 @@ class JoinFlowScreen extends ConsumerWidget {
         : controller.back();
 
     return PopScope(
-      // Nothing underneath to pop to (Welcome arrives here with `go`), and
-      // the confirmation routes on by itself -- back there would only race
-      // its own timer.
+      // There's no screen underneath to go back to (Welcome opens this
+      // with `go`). On the confirmation step, back is disabled because it
+      // moves on by itself.
       canPop: false,
       onPopInvokedWithResult: (didPop, _) {
         if (!didPop && step != JoinFlowStep.confirmation) goBack();
@@ -75,7 +76,7 @@ class JoinFlowScreen extends ConsumerWidget {
   }
 }
 
-/// Padding every join step shares -- the same insets as the wizard's steps.
+/// Padding for every join step, same as onboarding.
 const _stepPadding = EdgeInsets.fromLTRB(
   AppSpacing.screen,
   AppSpacing.sheetH,
@@ -151,9 +152,8 @@ class _CodeStep extends ConsumerWidget {
             index: 2,
             child: ShakeOnError(
               errorText: errorText,
-              // Motion spec, error table: a mistyped or unknown code is the
-              // user's to fix, so it shakes; a network failure is not their
-              // mistake, so it only appears.
+              // Shake for a wrong code (the user can fix it). Don't shake
+              // for a network error (not their fault).
               shake: error is ValidationFailure || error is NotFoundFailure,
               child: JoinCodeInput(
                 value: state.code,
@@ -204,8 +204,7 @@ class _ConfirmationStep extends ConsumerStatefulWidget {
 class _ConfirmationStepState extends ConsumerState<_ConfirmationStep> {
   Timer? _timer;
 
-  /// "A beat of payoff before the list appears" (design note) -- then it
-  /// routes on by itself.
+  /// Shows "Joined!" for a moment, then opens the list by itself.
   static const Duration _hold = Duration(milliseconds: 1400);
 
   static const double _badgeSize = 56;
@@ -238,8 +237,7 @@ class _ConfirmationStepState extends ConsumerState<_ConfirmationStep> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // The one moment in the flow allowed to pop: something just
-            // succeeded.
+            // A bouncy "pop" animation, because it worked.
             TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
               duration: AppMotion.durationFor(context, AppMotion.bouncy),

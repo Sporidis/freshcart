@@ -12,13 +12,11 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_s
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 
-/// Step 3: pick the shops the list will be split by.
+/// Step 3: pick your shops.
 ///
-/// Only the shop list lives here, scrolling in its own area (there is no cap
-/// on how many shops someone adds). The "Your tabs will look like this"
-/// preview sits in the wizard's footer tray instead, pinned beside Continue
-/// -- see `OnboardingFooter` -- so it stays in view however long this list
-/// grows, and shares one surface with the button rather than two.
+/// Only the shop list is here, and it scrolls (users can add as many as
+/// they want). The tab preview is in `OnboardingFooter`, next to Continue,
+/// so it stays visible however long the list gets.
 class AddShopStep extends ConsumerWidget {
   const AddShopStep({super.key});
 

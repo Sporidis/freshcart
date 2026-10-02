@@ -1,6 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// One page of the onboarding wizard, in display order.
+/// The steps of the onboarding wizard, in order.
 enum OnboardingStep { displayName, createList, addShop, invite }
 
 class OnboardingShopDraft {
@@ -10,10 +10,9 @@ class OnboardingShopDraft {
   final HexColor color;
 }
 
-/// The shops the "Where do you shop?" step offers out of the box, in order.
+/// The shops offered on the "Where do you shop?" step.
 ///
-/// The one place they're named: the wizard pre-selects the first two of
-/// these, and the step lists all of them plus anything the user typed in.
+/// The first two are selected by default. The user can also add their own.
 final List<OnboardingShopDraft> presetShops = [
   OnboardingShopDraft(
     name: 'Albert Heijn',
@@ -23,11 +22,10 @@ final List<OnboardingShopDraft> presetShops = [
   OnboardingShopDraft(name: 'Delhaize', color: HexColor.fromArgb(0xFFC0392B)),
 ];
 
-/// The onboarding wizard's draft answers.
+/// The user's answers in the onboarding wizard, before they're saved.
 ///
-/// Nothing here is persisted until [OnboardingController.finish] submits it —
-/// that's why this is a plain state class living in `application/`, not a
-/// domain entity: the domain has no concept of an in-progress onboarding.
+/// Nothing is saved until [OnboardingController.submit]. This lives in
+/// `application/`, not the domain, because it's only screen state.
 class OnboardingState {
   const OnboardingState({
     this.step = OnboardingStep.displayName,
@@ -48,10 +46,8 @@ class OnboardingState {
   final bool isSubmitting;
   final Failure? error;
 
-  /// The list [OnboardingController.submit] created, once the shops step is
-  /// done — only set once submission succeeds, which is also the only time
-  /// the wizard reaches [OnboardingStep.invite], the one step that needs it
-  /// (to show the real join code, not a placeholder).
+  /// The list that [OnboardingController.submit] created. Null until then.
+  /// The invite step uses it to show the real join code.
   final ShoppingList? createdList;
 
   OnboardingState copyWith({
@@ -75,8 +71,8 @@ class OnboardingState {
     );
   }
 
-  /// Every shop the add-shop step lists: the presets, then any shop the
-  /// user added themselves (presets never twice).
+  /// All shops shown on the shops step: the presets, then the ones the user
+  /// added (without duplicates).
   List<OnboardingShopDraft> get shopOptions => [
     ...presetShops,
     for (final shop in selectedShops)

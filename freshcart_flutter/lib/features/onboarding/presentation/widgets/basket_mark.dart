@@ -3,25 +3,22 @@ import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 
-/// The app's mark: a basket, drawn from the design's own SVG path data
-/// rather than a bundled asset, so it can be recoloured (dark on the splash,
-/// ink on Welcome) without shipping two image files.
+/// The app logo: a basket, drawn in code (not an image file), so it can be
+/// any colour.
 ///
-/// This is the single source both [SplashScreen] and [WelcomeScreen] draw
-/// from — they share it through a `Hero` (see [heroTag]), which is only
-/// convincing if both ends are pixel-identical.
+/// Used by [SplashScreen] and [WelcomeScreen]. The logo flies from one to
+/// the other with a `Hero` animation (see [heroTag]).
 class BasketMark extends StatelessWidget {
   /// Creates the mark at [size] logical pixels, stroked in [color].
   const BasketMark({required this.size, required this.color, super.key});
 
-  /// The side length of the mark's square bounding box.
+  /// Width and height of the logo.
   final double size;
 
   /// The stroke colour.
   final Color color;
 
-  /// The `Hero` tag shared by every place this mark appears, so navigating
-  /// between them animates one mark flying rather than two crossfading.
+  /// The `Hero` tag. Same on both screens, so the logo flies between them.
   static const String heroTag = 'basket-mark';
 
   @override
@@ -34,16 +31,15 @@ class BasketMark extends StatelessWidget {
   }
 }
 
-/// Draws the design's basket glyph: a viewBox-58 path traced 1:1 from the
-/// reference markup (`Flow Screens.dc.html`, the Splash frame), scaled to
-/// whatever box it is given.
+/// Draws the basket. Copied from the design's SVG (58 x 58), then scaled
+/// to the given size.
 class _BasketMarkPainter extends CustomPainter {
   const _BasketMarkPainter({required this.color});
 
   final Color color;
 
-  /// The glyph's native viewBox, so every stroke width below is exactly the
-  /// design's own — only the canvas transform changes size, not the paths.
+  /// The SVG's original size. We draw at this size and scale the canvas,
+  /// so all numbers below match the SVG exactly.
   static const double _viewBoxSize = 58;
 
   @override
@@ -52,8 +48,7 @@ class _BasketMarkPainter extends CustomPainter {
     canvas.save();
     canvas.scale(scale);
 
-    // The basket body: a rounded trapezoid, its two bottom corners rounded
-    // the way `stroke-linejoin="round"` renders a sharp path corner.
+    // The basket: a shape wider at the top, with rounded bottom corners.
     final body = Path()
       ..moveTo(12, 22)
       ..lineTo(46, 22)
@@ -86,7 +81,7 @@ class _BasketMarkPainter extends CustomPainter {
         ..strokeCap = StrokeCap.round,
     );
 
-    // The two fold lines across the basket's face.
+    // The two lines across the front of the basket.
     final linePaint = Paint()
       ..color = color
       ..strokeWidth = 2.5

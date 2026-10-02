@@ -4,13 +4,8 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
 
-/// The title and one-line explanation every onboarding and join step opens
-/// with.
-///
-/// One widget rather than each step styling its own, because they had
-/// drifted to four different title sizes across five screens -- the design
-/// draws them all identically, and the steps only read as one wizard if they
-/// actually are identical.
+/// The title and short explanation at the top of every onboarding and join
+/// step. One widget, so they all look the same.
 class OnboardingStepHeader extends StatelessWidget {
   /// Creates the header.
   const OnboardingStepHeader({

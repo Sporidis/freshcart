@@ -8,13 +8,11 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/check_circle.dart';
 
-/// One shop on the "Where do you shop?" step: its colour dot, its name, and
-/// whether it is picked.
+/// One row on the "Where do you shop?" step: colour dot, name, and a check
+/// circle.
 ///
-/// The dot is the only place the shop's colour appears. The check is the
-/// app's ink [CheckCircle], the same one an item row uses -- picking a shop
-/// and checking an item are the same gesture, so they look the same, and
-/// the shop's colour stays a label rather than also becoming a state.
+/// The check circle is the same [CheckCircle] as on items, so picking a
+/// shop looks like checking an item. The shop's colour is only on the dot.
 class ShopOption extends StatefulWidget {
   const ShopOption({
     required this.name,

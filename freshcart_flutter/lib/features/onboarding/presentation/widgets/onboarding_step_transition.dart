@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
-/// Swaps one onboarding step for the next with the Motion spec's authored
-/// transition (§07), rather than a full-width page slide:
+/// The animation between onboarding steps:
 ///
-/// - outgoing: slides 24 px the way it is leaving and fades out, 200 ms
-///   easeInCubic;
-/// - incoming: starts 32 px off on the far side and fades in, 320 ms
-///   easeOutCubic after a 60 ms beat;
-/// - going back mirrors both directions.
+/// - the old step slides 24 px away and fades out (200 ms);
+/// - after a short pause (60 ms), the new step slides in from 32 px on the
+///   other side and fades in (320 ms);
+/// - going back does the same in the other direction.
 ///
-/// Shorter travel than a page slide on purpose: the steps share their
-/// chrome (back arrow, step rail, Continue), so only the content changes,
-/// and a whole-page slide made the unchanged chrome look like it moved too.
+/// Only the content moves, not the whole page. The back arrow, step
+/// indicator and Continue stay put.
 ///
-/// [index] is the step's position in its flow; a higher index than last
-/// time means forward. Each [child] is remounted on arrival, which is what
-/// replays its [OnboardingEntrance] stagger.
+/// [index] is the step number. A higher number than before means forward.
 class OnboardingStepTransition extends StatefulWidget {
   /// Creates the transition, showing [child] as step [index].
   const OnboardingStepTransition({
@@ -60,16 +55,16 @@ class _OnboardingStepTransitionState extends State<OnboardingStepTransition> {
     return AnimatedSwitcher(
       duration: reduced ? AppMotion.micro : inTotal,
       reverseDuration: reduced ? AppMotion.micro : AppMotion.stepOut,
-      // Full-size, top-aligned pages: the default centred, loosely-sized
-      // Stack would let a short step float to the middle mid-transition.
+      // Full size and aligned to the top. Otherwise a short step would float
+      // to the middle during the animation.
       layoutBuilder: (current, previous) => Stack(
         fit: StackFit.expand,
         children: [...previous, ?current],
       ),
       transitionBuilder: (child, animation) {
         final incoming = child.key == currentKey;
-        // An outgoing child's animation runs 1 -> 0, so its curve is the
-        // reverse one; an incoming child's waits out the delay first.
+        // The old step's animation runs backwards (1 -> 0), so it uses the
+        // reverse curve. The new step waits for the pause first.
         final curved = incoming
             ? CurvedAnimation(
                 parent: animation,

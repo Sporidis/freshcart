@@ -1,18 +1,15 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// One page of the join-by-code flow, in display order.
+/// The steps of the "join with a code" flow, in order.
 ///
-/// Shorter than [OnboardingStep] (`onboarding_state.dart`) — this is the
-/// welcome screen's *other* exit, for someone joining a list someone else
-/// already made rather than starting their own, so there is no list, shop
-/// or invite step to walk through.
+/// Shorter than onboarding: the user joins an existing list, so there's no
+/// list, shops or invite step.
 enum JoinFlowStep { name, code, confirmation }
 
-/// The join flow's draft answers.
+/// The user's answers in the join flow, before they're saved.
 ///
-/// Nothing here is persisted until [JoinFlowController.submit] submits it —
-/// same reasoning as [OnboardingState]: this is in-progress UI state, not
-/// something the domain has any concept of.
+/// Nothing is saved until [JoinFlowController.submit]. Only screen state,
+/// like [OnboardingState].
 class JoinFlowState {
   const JoinFlowState({
     this.step = JoinFlowStep.name,
@@ -30,8 +27,8 @@ class JoinFlowState {
   final bool isSubmitting;
   final Failure? error;
 
-  /// Set once [JoinFlowController.submit] succeeds — the confirmation step's
-  /// only reason to exist is showing which real list this became.
+  /// The list that was joined. Set once [JoinFlowController.submit] works.
+  /// The confirmation step shows its name.
   final ShoppingList? joinedList;
 
   JoinFlowState copyWith({

@@ -10,11 +10,10 @@ import 'package:freshcart_flutter/features/onboarding/application/onboarding/onb
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
 
-/// Step 2: name the first list.
+/// Step 2: name your first list.
 ///
-/// Arrives pre-filled with a sensible default and fully selected (design:
-/// "so Continue is a valid single tap") -- most people's first list *is*
-/// the weekly shop, and anyone who wants something else just types over it.
+/// Starts with a default name, already selected. Most people can just tap
+/// Continue. To change it, just start typing (it replaces the selection).
 class CreateListStep extends ConsumerStatefulWidget {
   const CreateListStep({super.key});
 
@@ -35,8 +34,8 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
     _controller = TextEditingController(text: text)
       ..selection = TextSelection(baseOffset: 0, extentOffset: text.length);
     if (draft.isEmpty) {
-      // Not inline: writing to a provider while the tree is building is an
-      // error in Riverpod, and initState runs inside that build.
+      // Delayed until after this frame: Riverpod doesn't allow changing a
+      // provider while widgets are building, and initState is part of that.
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
           ref.read(onboardingControllerProvider.notifier).updateListName(text);
@@ -124,9 +123,8 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
   }
 }
 
-/// An outlined suggestion pill -- the design's, rather than [ActionChip]'s
-/// tonal fill, which read as a second kind of button competing with
-/// Continue.
+/// A suggested name, as a pill with only a border. Not [ActionChip],
+/// because its filled look competed with the Continue button.
 class _SuggestionPill extends StatelessWidget {
   const _SuggestionPill({required this.label, required this.onTap});
 

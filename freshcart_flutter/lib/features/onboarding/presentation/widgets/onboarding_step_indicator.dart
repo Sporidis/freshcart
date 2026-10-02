@@ -7,21 +7,19 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 
-/// The design's step rail: a short dash per step, the active one stretched
-/// into a pill, followed by "Step n of 3".
+/// The step indicator: a small dash per step (the current one is longer),
+/// then "Step n of 3".
 ///
-/// Counts only [numberedSteps] -- the three questions that build the list.
-/// [OnboardingStep.invite] comes after the list already exists and is
-/// optional by design ("You can do this any time"); numbering it as step 4
-/// of 4 framed it as one more required question. On that step the rail
-/// collapses away entirely, as in the design's own Step 4 frame.
+/// Only counts the first 3 steps ([numberedSteps]). The invite step is
+/// optional, so calling it "Step 4 of 4" would make it look required. On
+/// that step the indicator is hidden.
 class OnboardingStepIndicator extends ConsumerStatefulWidget {
   /// Creates the rail for [step].
   const OnboardingStepIndicator({required this.step, super.key});
 
   final OnboardingStep step;
 
-  /// The steps the rail counts, in order.
+  /// The steps that are counted, in order.
   static const numberedSteps = [
     OnboardingStep.displayName,
     OnboardingStep.createList,
@@ -39,13 +37,12 @@ class _OnboardingStepIndicatorState
   static const double _activeWidth = 22;
   static const double _height = 4;
 
-  /// How far the counter text travels on change, as a fraction of its own
-  /// height -- enough to read as "moved", short of leaving its clip.
+  /// How far the "Step n of 3" text slides when it changes (as a fraction
+  /// of its height).
   static const double _counterTravel = 0.6;
 
-  /// +1 when the last change moved forward, -1 when it moved back -- the
-  /// counter slides up going forward and down going back (§07: "Back:
-  /// mirror image").
+  /// +1 after going forward, -1 after going back. The text slides up when
+  /// going forward, and down when going back.
   int _direction = 1;
 
   @override
@@ -99,8 +96,8 @@ class _OnboardingStepIndicatorState
                     ),
                   ],
                   const SizedBox(width: AppSpacing.gap),
-                  // "Step 1 of 3": the number slides and cross-fades on
-                  // change (§07), keyed by step so only that text moves.
+                  // "Step 1 of 3": slides and fades when the step changes.
+                  // The key makes Flutter treat each step's text as new.
                   ClipRect(
                     child: AnimatedSwitcher(
                       duration: pillDuration,
