@@ -5,10 +5,12 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// The "Done · 3" line above the checked items.
+/// The "DONE · 3" line above the checked items (design v3: a mono eyebrow
+/// with a quiet "Clear" on the right).
 ///
 /// Tap it to fold or unfold the checked items. The arrow turns around to
-/// show which way.
+/// show which way. The fold is ours, not the design's: kept because a long
+/// Done section otherwise pushes the open items' end out of reach.
 class DoneDivider extends StatelessWidget {
   /// Creates the divider.
   const DoneDivider({
@@ -29,7 +31,7 @@ class DoneDivider extends StatelessWidget {
   /// Called when the divider is tapped.
   final VoidCallback onToggle;
 
-  /// The "Clear checked" text, already translated. Null hides the button.
+  /// The "Clear" text, already translated. Null hides the button.
   final String? clearLabel;
 
   /// Deletes all checked items. A separate button from folding ([onToggle]).
@@ -41,9 +43,14 @@ class DoneDivider extends StatelessWidget {
     final muted = theme.textTheme.labelSmall?.color;
 
     return Padding(
-      // No vertical padding: the tap areas below set the height, so the
-      // whole row can be tapped.
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+      // Only a top gap: the tap areas below set the height, so the whole
+      // row can be tapped.
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.sm,
+        0,
+      ),
       child: Row(
         children: [
           Expanded(
@@ -85,13 +92,16 @@ class DoneDivider extends StatelessWidget {
                 onTap: onClear,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
+                    horizontal: AppSpacing.md,
                     vertical: 4,
                   ),
+                  // Neutral, not the accent: clearing is housekeeping, not
+                  // the next thing to do.
                   child: Text(
                     clearLabel!,
-                    style: AppTextStyles.captionStrong.copyWith(
-                      color: theme.colorScheme.primary,
+                    style: AppTextStyles.secondaryStrong.copyWith(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ),
@@ -116,7 +126,7 @@ Widget doneDividerPreview() => previewPiece(
         label: 'Done · 3',
         collapsed: false,
         onToggle: () {},
-        clearLabel: 'Clear checked',
+        clearLabel: 'Clear',
         onClear: () {},
       ),
       const SizedBox(height: 24),

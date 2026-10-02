@@ -79,7 +79,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // The real journey: drawer -> Settings -> the list's own row.
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byTooltip('Open navigation menu'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();

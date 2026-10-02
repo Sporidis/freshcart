@@ -51,13 +51,14 @@
     "namePlaceholder": "Что нужно купить?",
     "notePlaceholder": "Заметка (необязательно)",
     "checkedBy": "Отметил(а) {{name}}",
-    "emptyTitle": "В списке пока пусто",
-    "emptyBody": "Добавьте первый товар ниже.",
-    "emptyShopTitle": "Ничего для «{{shop}}»",
-    "emptyShopBody": "Добавленные здесь товары появятся на этой вкладке.",
+    "emptyTitle": "Список пуст",
+    "emptyBody": "Добавьте первый товар. Вся семья сразу его увидит.",
+    "emptyShopTitle": "Для «{{shop}}» пока ничего",
+    "emptyShopBody": "Товары, добавленные здесь, сразу попадут в этот магазин.",
     "emptyShopAction": "Добавить товар",
     "doneCount": "Готово · {{n}}",
     "clearChecked": "Очистить отмеченные",
+    "clear": "Очистить",
     "itemRemoved": "{{name}} удалено",
     "selectedCount": "Выбрано: {{n}}",
     "celebrateCount": {
@@ -83,7 +84,11 @@
     "menuMoveToShop": "Переместить в магазин",
     "menuRearrangeList": "Изменить порядок списка",
     "menuSelectMore": "Выбрать ещё…",
-    "rearrangeHeader": "Перетащите, чтобы изменить порядок"
+    "rearrangeHeader": "Перетащите, чтобы изменить порядок",
+    "listEyebrow": "Корзина",
+    "progressOf": "{{done}} из {{total}}",
+    "rearrangeScopeAll": "Порядок всего в списке {{list}}",
+    "rearrangeScopeShop": "Порядок для {{shop}}"
   },
   "shops": {
     "all": "Все магазины",

@@ -7,12 +7,19 @@ import 'package:flutter/material.dart';
 class DashedOutlinePainter extends CustomPainter {
   /// Draws a dashed border in [color]. If [radius] is null, the ends are
   /// fully round (a pill shape).
-  const DashedOutlinePainter({required this.color, this.radius});
+  const DashedOutlinePainter({
+    required this.color,
+    this.radius,
+    this.strokeWidth = 1,
+  });
 
   final Color color;
 
   /// Corner radius, or null for a pill shape.
   final double? radius;
+
+  /// 1 for outlines; the empty state's rings use 2.
+  final double strokeWidth;
 
   static const double _dash = 4;
   static const double _gap = 3;
@@ -29,7 +36,7 @@ class DashedOutlinePainter extends CustomPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = strokeWidth;
     for (final metric in path.computeMetrics()) {
       var distance = 0.0;
       while (distance < metric.length) {
@@ -44,5 +51,7 @@ class DashedOutlinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant DashedOutlinePainter oldDelegate) =>
-      oldDelegate.color != color || oldDelegate.radius != radius;
+      oldDelegate.color != color ||
+      oldDelegate.radius != radius ||
+      oldDelegate.strokeWidth != strokeWidth;
 }

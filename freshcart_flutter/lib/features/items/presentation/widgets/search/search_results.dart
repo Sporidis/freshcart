@@ -92,6 +92,8 @@ class SearchResults extends StatelessWidget {
               item: item,
               t: t,
               shopColor: dotFor(item.shopId),
+              // Search spans every shop, so always say which.
+              shopName: state.shopFor(item.shopId)?.name,
               checkedByMember: item.checkedBy == null
                   ? null
                   : state.list.memberFor(item.checkedBy!),

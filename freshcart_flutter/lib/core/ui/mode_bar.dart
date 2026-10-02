@@ -32,7 +32,9 @@ class ModeBar extends StatelessWidget {
   final String? closeLabel;
   final List<ModeBarPill> actions;
 
-  static const double height = 58;
+  /// 60, not the prototype's 58: the list header shares this height, and
+  /// its title needs a 44px tap target under the 16px eyebrow.
+  static const double height = 60;
 
   @override
   Widget build(BuildContext context) {
@@ -57,7 +59,7 @@ class ModeBar extends StatelessWidget {
                     child: TapTarget(
                       onTap: onClose,
                       child: Icon(
-                        Icons.close_rounded,
+                        Icons.close,
                         size: 20,
                         color: colors.foreground,
                       ),

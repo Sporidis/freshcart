@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/reveal/tint_wave.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
@@ -104,6 +105,30 @@ void main() {
     });
 
     testWidgets(
+      "the header carries the tab's colour faintly: ink on All, the shop's "
+      'own colour on its tab',
+      (tester) async {
+        await pump(tester);
+        Color headerTint() =>
+            tester.widget<TintWave>(find.byType(TintWave)).color;
+
+        final onAll = headerTint();
+        await tester.tap(find.textContaining('Colruyt'));
+        await tester.pumpAndSettle();
+        final onColruyt = headerTint();
+
+        expect(onColruyt, isNot(onAll));
+        // Tinted toward the shop: its strongest channel grows.
+        final shop = colruyt.color.toColor();
+        expect(onColruyt.r - onColruyt.b, greaterThan(onAll.r - onAll.b));
+        expect(shop.r, greaterThan(shop.b));
+        // And it's actually painted across the header, not 0px tall: the
+        // AppBar gives flexibleSpace a loose height.
+        expect(tester.getSize(find.byType(TintWave)).height, greaterThan(60));
+      },
+    );
+
+    testWidgets(
       'the drawer stays neutral while the body is tinted -- the tint does '
       'not leak sideways',
       (tester) async {
@@ -112,7 +137,7 @@ void main() {
         await tester.pumpAndSettle();
         expect(bodyTheme(tester).colorScheme.primary, isNot(AppColors.ink));
 
-        await tester.tap(find.byIcon(Icons.menu));
+        await tester.tap(find.byTooltip('Open navigation menu'));
         await tester.pumpAndSettle();
 
         final drawerTheme = Theme.of(

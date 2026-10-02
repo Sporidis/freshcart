@@ -2,7 +2,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:meta/meta.dart';
 
-/// The data for `ListDetailScreen` itself: the list, colours and menu. The
+/// The data for `ListDetailScreen` itself: the list and its colours. The
 /// item rows use `ItemsSectionState` instead.
 ///
 /// Plain Dart (no Flutter types, so [HexColor] instead of `Color`).
@@ -25,8 +25,8 @@ class ListDetailScreenState {
   /// The list; null until it has loaded.
   final ShoppingList? list;
 
-  /// Whether the menu shows "Delete" (owner) or "Leave" (member). False
-  /// until we know who the user is, to be safe (see `isListOwner`).
+  /// Whether the title can be renamed (owner only). False until we know
+  /// who the user is, to be safe (see `isListOwner`).
   final bool isOwner;
 
   /// The selected shop tab's colour, used to colour the items area. Null

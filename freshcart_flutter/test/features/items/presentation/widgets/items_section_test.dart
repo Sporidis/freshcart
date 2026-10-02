@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/ui/empty_state.dart';
-import 'package:freshcart_flutter/core/ui/user_avatar.dart';
+import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
+import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
@@ -80,16 +82,16 @@ void main() {
   });
 
   testWidgets(
-    "the header shows the app name kicker, the list's own name, and the "
-    "signed-in member's avatar",
+    "the header shows the Basket eyebrow, the list's own name, and the "
+    "household's avatars",
     (tester) async {
       items.byListResult = const Ok(<ShoppingItem>[]);
 
       await pump(tester);
 
-      expect(find.text('FreshCart'), findsOneWidget);
+      expect(find.text('Basket'), findsOneWidget);
       expect(find.text('Groceries'), findsOneWidget);
-      expect(find.byType(UserAvatar), findsOneWidget);
+      expect(find.byType(MemberAvatarStack), findsOneWidget);
     },
   );
 
@@ -100,8 +102,10 @@ void main() {
 
     await pump(tester);
 
-    expect(find.byType(EmptyState), findsOneWidget);
-    expect(find.text('Nothing on the list yet'), findsOneWidget);
+    expect(find.byType(ItemsEmptyState), findsOneWidget);
+    expect(find.text('Your list is empty'), findsOneWidget);
+    // Design v3: the empty list starts adding too, not only a shop tab.
+    expect(find.text('Add a product'), findsOneWidget);
   });
 
   testWidgets(
@@ -126,13 +130,14 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Bread'), findsNothing);
-      expect(find.text('Nothing for Colruyt'), findsOneWidget);
+      expect(find.text('Nothing for Colruyt yet'), findsOneWidget);
+      // The button names where the product will go.
+      expect(find.text('Add to Colruyt'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'a checked item collects under Done, collapsible, with a Clear checked '
-    'action',
+    'a checked item collects under Done, collapsible, with a Clear action',
     (tester) async {
       items.byListResult = Ok([
         buildItem(id: 'a', name: 'Milk'),
@@ -144,7 +149,7 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Bread'), findsOneWidget);
       expect(find.text('DONE · 1'), findsOneWidget);
-      expect(find.text('Clear checked'), findsOneWidget);
+      expect(find.text('Clear'), findsOneWidget);
 
       // Folding the Done section away hides the checked row without
       // removing it -- toggle, don't clear.
@@ -156,7 +161,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Bread'), findsOneWidget);
 
-      await tester.tap(find.text('Clear checked'));
+      await tester.tap(find.text('Clear'));
       await tester.pumpAndSettle();
 
       expect(items.clearCheckedCallCount, 1);
@@ -312,7 +317,12 @@ void main() {
 
       expect(find.text('2 selected'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ModeBar),
+          matching: find.text('Delete'),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(items.removeManyCalls.single.toSet(), {
@@ -320,7 +330,56 @@ void main() {
         ItemId('b'),
       });
       // Cleared back out of selection mode on success.
-      expect(find.text('FreshCart'), findsOneWidget);
+      expect(find.byType(ModeBar), findsNothing);
+      expect(find.text('Basket'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    "the hold menu's stepper shows each tap at once and saves the total "
+    'once -- not one racing save per tap',
+    (tester) async {
+      items.byListResult = Ok([buildItem(id: 'a', name: 'Milk')]);
+
+      await pump(tester);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('Milk')),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      final plus = find
+          .descendant(
+            of: find.byType(QuantityStepper),
+            matching: find.byWidgetPredicate(
+              (w) => w.runtimeType.toString() == '_StepperButton',
+            ),
+          )
+          .last;
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(plus);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // The menu kept up with every tap, before anything was saved.
+      expect(
+        find.descendant(
+          of: find.byType(QuantityStepper),
+          matching: find.text('4'),
+        ),
+        findsOneWidget,
+      );
+      expect(items.savedItems, isEmpty);
+
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(items.savedItems, hasLength(1));
+      expect(items.savedItems.single.quantity, 4);
     },
   );
 

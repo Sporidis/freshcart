@@ -147,7 +147,7 @@ class AppSpacing {
 
 class AppSizes {
   AppSizes._();
-  static const double checkCircle = 22;
+  static const double checkCircle = 26; // v3, decisions #106
   static const double shopDot = 7; // in list rows
   static const double shopDotLarge = 14; // in shop rows / pickers
   static const double tabDot = 8;

@@ -55,6 +55,9 @@ class AppMotion {
   static const Duration holdDelay = Duration(milliseconds: 450);
   static const Duration holdMenuIn = Duration(milliseconds: 340);
 
+  /// The ink mode bar replacing the header (Select, Rearrange).
+  static const Duration modeBar = Duration(milliseconds: 340);
+
   /// Quiet period after the last tick before checked rows move to Done.
   static const Duration checkSettle = Duration(milliseconds: 750);
 

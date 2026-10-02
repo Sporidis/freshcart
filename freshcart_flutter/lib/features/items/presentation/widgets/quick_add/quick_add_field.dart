@@ -59,8 +59,6 @@ class QuickAddField extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: placeholder,
                 hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-                // The pill is the field. The theme fills inputs in dark mode,
-                // which drew a faint box inside the pill, so opt out.
                 filled: false,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,

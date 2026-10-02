@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -88,6 +89,7 @@ void main() {
     'shop picker pill': shopPickerPillPreview,
     'sheet scaffold': appSheetScaffoldPreview,
     'mode bar': modeBarPreview,
+    'empty list (v3)': itemsEmptyStatePreview,
   };
 
   for (final MapEntry(key: name, value: build) in previews.entries) {
