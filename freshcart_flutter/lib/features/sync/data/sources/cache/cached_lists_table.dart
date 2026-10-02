@@ -1,12 +1,9 @@
 import 'package:drift/drift.dart';
 
-/// A locally-persisted snapshot of one `ShoppingList`, read back when the
-/// app opens with no signal (`docs/offline-sync-plan.md` §4's "cached
-/// reads", deferred out of the original write-queue phases and built as its
-/// own phase). [data] is the whole entity, JSON-encoded via
-/// `ShoppingListCachePayload` -- one blob column rather than one column per
-/// field, matching `PendingOperations`' own payload column, since nothing
-/// here is ever queried by a field other than [listId].
+/// Database table: the last known version of each list, for offline use.
+///
+/// The whole list is stored as JSON in [data], not one column per field.
+/// That's simpler, and we only ever look rows up by [listId] anyway.
 class CachedLists extends Table {
   TextColumn get listId => text()();
   TextColumn get data => text()();

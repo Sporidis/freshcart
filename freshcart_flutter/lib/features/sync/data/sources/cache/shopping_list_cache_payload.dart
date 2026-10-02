@@ -1,10 +1,9 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Converts a [ShoppingList] to and from the JSON shape [CachedListsStore]
-/// stores -- the full entity, including its members, since a cold-started
-/// read cache has nothing else to merge into.
+/// Converts a [ShoppingList] to JSON for [CachedListsStore], including its
+/// members.
 extension ShoppingListCachePayload on ShoppingList {
-  /// Serializes this list for [CachedListsStore.upsert]/`replaceAll`.
+  /// Turns this list into JSON.
   Map<String, dynamic> toCachePayload() => {
     'id': id.value,
     'name': name,
@@ -26,8 +25,8 @@ extension ShoppingListCachePayload on ShoppingList {
   };
 }
 
-/// Rebuilds the [ShoppingList] a cached row was captured from -- the
-/// inverse of [ShoppingListCachePayload.toCachePayload].
+/// Turns JSON from [ShoppingListCachePayload.toCachePayload] back into a
+/// [ShoppingList].
 ShoppingList shoppingListFromCachePayload(Map<String, dynamic> payload) {
   return ShoppingList(
     id: ListId(payload['id'] as String),
