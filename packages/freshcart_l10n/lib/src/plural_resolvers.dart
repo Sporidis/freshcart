@@ -1,19 +1,18 @@
 import 'package:freshcart_l10n/i18n/translations.g.dart';
 
-/// Plural rules for the locales slang does not ship.
+/// Plural rules for languages slang doesn't know.
 ///
-/// slang has built-in CLDR cardinal resolvers for `ar cs de en es fr he it ja
-/// pl ru sv uk vi` only. FreshCart also ships **nl** — its *base* locale — and
-/// **tl**, neither of which is covered. Left alone, both fall back to a
-/// tolerant default (`one` only when n == 1) and slang logs an error on every
-/// plural lookup. That default happens to match Dutch; it does **not** match
+/// slang only has plural rules for `ar cs de en es fr he it ja pl ru sv uk
+/// vi`. Our **nl** (the default language!) and **tl** aren't in that list.
+/// Without these rules, slang uses a fallback ("one" only for 1) and logs an
+/// error on every plural. That fallback is right for Dutch, but wrong for
 /// Tagalog.
 const Map<String, PluralResolver> freshCartCardinalResolvers = {
   'nl': _dutchCardinal,
   'tl': _tagalogCardinal,
 };
 
-/// Dutch: `one` when the value is exactly 1, `other` otherwise.
+/// Dutch: "one" for exactly 1, "other" for everything else.
 String _dutchCardinal(
   num n, {
   String? zero,
@@ -24,10 +23,10 @@ String _dutchCardinal(
   String? other,
 }) => n == 1 ? (one ?? other!) : other!;
 
-/// Tagalog: `one` unless the integer part ends in 4, 6 or 9.
+/// Tagalog: "one", unless the number ends in 4, 6 or 9.
 ///
-/// So 5 and 10 are `one` while 4, 6, 14 and 19 are `other` — a rule the
-/// tolerant fallback gets wrong for most values.
+/// So 5 and 10 are "one", but 4, 6, 14 and 19 are "other". The fallback
+/// gets this wrong for most numbers.
 String _tagalogCardinal(
   num n, {
   String? zero,
@@ -42,20 +41,19 @@ String _tagalogCardinal(
   return isOther ? other! : (one ?? other!);
 }
 
-/// Builds the [Translations] for [locale] with FreshCart's resolvers applied.
+/// Gets the [Translations] for [locale], with our plural rules.
 ///
-/// Prefer this over `locale.buildSync()` directly: a resolver registered
-/// through [configurePluralResolvers] only reaches the `LocaleSettings`
-/// singleton, so translations built by hand would silently use the fallback.
+/// Use this, not `locale.buildSync()`. The rules from
+/// [configurePluralResolvers] only apply to the global `LocaleSettings`, so
+/// `buildSync()` would quietly use the wrong fallback rules.
 Translations translationsFor(AppLocale locale) => locale.buildSync(
   cardinalResolver: freshCartCardinalResolvers[locale.languageCode],
 );
 
-/// Registers the resolvers on the [LocaleSettings] singleton that backs the
-/// global `t`.
+/// Registers our plural rules on the global [LocaleSettings] (used by `t`).
 ///
-/// Call once at startup, before rendering anything, from both the Flutter app
-/// and the Jaspr site.
+/// Call once at startup, before showing anything, in both the app and the
+/// website.
 void configurePluralResolvers() {
   for (final entry in freshCartCardinalResolvers.entries) {
     LocaleSettings.setPluralResolverSync(
