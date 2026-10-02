@@ -9,25 +9,24 @@ import 'package:freshcart_flutter/features/auth/application/profile/profile_cont
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Settings screen's "About" group: sign out, and the app version.
+/// The "About" section in Settings: sign out, and the app version.
 ///
-/// No "Terms of Service" or "Help & feedback" rows until they have a real
-/// destination -- a row that does nothing when tapped reads as broken, and
-/// these are the first rows a sceptical new user pokes at.
+/// No "Terms" or "Help" rows yet, because there's nowhere for them to go.
+/// A row that does nothing looks broken.
 class AboutSection extends ConsumerWidget {
   const AboutSection({required this.t, required this.isAnonymous, super.key});
 
   final Translations t;
 
-  /// Whether signing out would lose this account's lists for good. Pass
-  /// true while the profile is still loading -- confirming once too often
-  /// is harmless, skipping it once too often is not.
+  /// Whether signing out would delete this account's lists forever. Pass
+  /// true while still loading, to be safe.
   final bool isAnonymous;
 
-  /// An anonymous account exists only on this device (the account card's
-  /// own copy says so), so signing it out is the one irreversible action in
-  /// Settings -- it asks first. A linked account loses nothing, and signs
-  /// straight out.
+  /// Asks "are you sure?" before signing out. Returns true to continue.
+  ///
+  /// Only asks for anonymous accounts: they only exist on this phone, so
+  /// signing out loses them forever. A linked account can sign back in, so
+  /// it returns true straight away.
   Future<bool> _confirmSignOut(BuildContext context) async {
     if (!isAnonymous) return true;
     return await showDialog<bool>(

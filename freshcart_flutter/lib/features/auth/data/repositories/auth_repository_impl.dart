@@ -11,13 +11,12 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart'
 
 part 'auth_repository_impl.g.dart';
 
-// Imported for the `client.auth` extension only. The auth module ships its
-// own AuthUser, which would otherwise collide with the domain entity of the
-// same name — a good illustration of why the domain owns its own types.
+// The import above is only for `client.auth`. Serverpod's auth package has
+// its own `AuthUser` class, which would clash with our domain `AuthUser`.
 
-/// The Serverpod-backed [AuthPort].
+/// The real [AuthPort], talking to the Serverpod server.
 ///
-/// Identity is minted server-side and read back, never asserted by the client.
+/// The server creates and decides the user's id. The app only reads it.
 class AuthRepositoryImpl implements AuthPort {
   /// Creates the repository against a generated Serverpod [dto.Client].
   AuthRepositoryImpl(this._client);
@@ -76,11 +75,10 @@ class AuthRepositoryImpl implements AuthPort {
 
   @override
   Future<Result<AuthUser>> linkGoogle() async {
-    // Deliberately not faked. Google linking needs an OAuth client id and the
-    // google_sign_in flow to obtain an id token; the *server* half already
-    // exists via GoogleIdpAdmin, which accepts an existing authUserId exactly
-    // as the email path does. Returning a clear failure beats a stub that looks
-    // wired up. See docs/decisions.md #39.
+    // Not built yet. The server side is ready, but the app still needs a
+    // Google OAuth client id and the google_sign_in flow. Returning an
+    // honest error is better than a fake that looks like it works.
+    // See decisions.md #39.
     return const Err(
       Failure.validation(
         'google',
@@ -96,7 +94,7 @@ class AuthRepositoryImpl implements AuthPort {
     _changes.add(null);
   });
 
-  /// Re-reads the identity from the server and publishes it.
+  /// Gets the current user from the server again and tells listeners.
   Future<AuthUser> _refresh() async {
     final me = await _client.profile.me();
     final user = AuthUser(

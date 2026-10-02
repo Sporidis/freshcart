@@ -7,14 +7,11 @@ part 'current_user_provider.g.dart';
 
 /// The signed-in user's id, as the server sees it.
 ///
-/// Needed by the optimistic paths: to show "you ticked this" before the server
-/// has answered, the client has to know who it is. The id is minted server-side
-/// and derived from the session, never asserted by the client.
+/// Needed to update the screen before the server answers. For example, to
+/// show "you checked this" straight away, the app has to know who "you" is.
 ///
-/// Only the id, deliberately. The full [AuthUser] — display name, whether the
-/// account is still anonymous — arrives in phase 10, when linking a provider
-/// makes `isAnonymous` a question worth answering. Inventing a value for it now
-/// would be a lie the compiler could not catch later.
+/// Only the id. For the full user (name, anonymous or not), use
+/// `ProfileController`.
 @Riverpod(keepAlive: true)
 Future<Result<UserId>> currentUserId(Ref ref) async {
   final client = ref.watch(serverpodClientProvider);

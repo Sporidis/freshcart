@@ -7,11 +7,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'edit_profile_screen_controller.g.dart';
 
-/// The view model behind `EditProfileScreen`: the profile it shows, and
-/// every change the screen can make to it.
+/// The controller for `EditProfileScreen`: the profile to show, and all
+/// the changes the screen can make.
 ///
-/// Earns its place through [choosePhoto], the one multi-step action (pick,
-/// then upload). The screen keeps its own saving flags and errors -- see
+/// It exists mainly for [choosePhoto], which has two steps (pick, then
+/// upload). Saving flags and errors stay in the screen itself, see
 /// [EditProfileScreenState] for why.
 @riverpod
 class EditProfileScreenController extends _$EditProfileScreenController {
@@ -24,8 +24,8 @@ class EditProfileScreenController extends _$EditProfileScreenController {
     );
   }
 
-  /// Fetched fresh on every use, since holding on to a notifier instance
-  /// could outlive it.
+  /// Read again every time, instead of stored in a field. A stored notifier
+  /// could be disposed while we still hold it.
   ProfileController get _profile =>
       ref.read(profileControllerProvider.notifier);
 
@@ -38,8 +38,8 @@ class EditProfileScreenController extends _$EditProfileScreenController {
 
   /// Lets the user pick a gallery photo and uploads it as their avatar.
   ///
-  /// Returns null on success *and* when the user cancels the picker --
-  /// cancelling is not an error, so the screen shows nothing for it.
+  /// Returns null when it worked, and also when the user cancelled.
+  /// Cancelling isn't an error, so nothing is shown.
   Future<Failure?> choosePhoto() async {
     final result = await ref.read(avatarPhotoSourceProvider).pick();
     return switch (result) {

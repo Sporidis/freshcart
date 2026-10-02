@@ -6,20 +6,18 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_providers.g.dart';
 
-/// Who the signed-in user is, or null until that's known (or if it failed).
+/// The signed-in user's id, or null if not known yet (or sign-in failed).
 ///
-/// The application layer's one doorway to [currentUserIdProvider], which
-/// stays in `data/` because repositories need it too. Screens ask this --
-/// or better, a question built on it like `isListOwner` -- instead of
-/// reaching into the data layer themselves.
+/// Screens use this instead of [currentUserIdProvider] directly, because
+/// that one lives in the data layer (repositories need it too).
 @riverpod
 UserId? signedInUserId(Ref ref) => ref.watch(currentUserIdProvider).dataOrNull;
 
-/// Resolves once sign-in has finished: true for a brand-new identity (send
-/// them through onboarding), false for a restored one.
+/// Finishes when sign-in is done. `true` means a brand-new user (show
+/// onboarding), `false` means a returning user.
 ///
-/// Splash only needs this one answer, not the bootstrap's whole result --
-/// and not to know that the bootstrap lives in the data layer.
+/// The splash screen uses this, so it doesn't need to know about the data
+/// layer.
 @riverpod
 Future<bool> isNewIdentity(Ref ref) async =>
     (await ref.watch(authBootstrapProvider.future)).isNewIdentity;

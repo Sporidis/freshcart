@@ -5,12 +5,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'upgrade_nudge_providers.g.dart';
 
-/// Whether `UpgradeNudge` should show: the user is anonymous *and* has not
-/// dismissed it.
+/// Whether to show `UpgradeNudge`: only if the user is anonymous AND
+/// hasn't closed it.
 ///
-/// Both halves stay quiet while they load. An unknown identity counts as not
-/// anonymous, and an unread dismissal counts as dismissed, so a cold start
-/// never flashes the banner for one frame and then takes it away again.
+/// While either is still loading, the answer is "don't show". Otherwise the
+/// banner could flash for one frame at startup and then disappear.
 @riverpod
 bool showUpgradeNudge(Ref ref) {
   final isAnonymous =
