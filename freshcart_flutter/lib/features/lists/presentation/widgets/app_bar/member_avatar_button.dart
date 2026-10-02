@@ -7,12 +7,8 @@ import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:go_router/go_router.dart';
 
-/// The signed-in member's own avatar, opening Household on tap.
-///
-/// Membership and the join code used to live in an inline expansion tile on
-/// this screen; both moved to Household, which the design reaches through
-/// exactly this avatar. Duplicating that content here would be two places
-/// showing the same thing, one of them stale the moment the other changes.
+/// Your avatar in the app bar. Tap to open the Household screen (members
+/// and invite code).
 class MemberAvatarButton extends ConsumerWidget {
   const MemberAvatarButton({required this.list, super.key});
 

@@ -7,12 +7,11 @@ import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapp
 import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_lists_store.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
 
-/// Turns the server's list broadcasts into a live view of one list.
+/// Gives live updates for one list.
 ///
-/// Unlike the item source, the wire carries the whole [dto.ShoppingList]
-/// on every change rather than a delta: a list is a single row, not a
-/// collection that could run to hundreds, so there is nothing to merge. Each
-/// event simply replaces what was there.
+/// Unlike items, the server sends the whole list on every change (not just
+/// what changed). A list is one small object, so each update just replaces
+/// the old one.
 class ListRealtimeSource {
   /// Creates the source against a generated Serverpod [dto.Client].
   const ListRealtimeSource(
@@ -25,16 +24,12 @@ class ListRealtimeSource {
   final ConnectivityAdapter _connectivityAdapter;
   final CachedListsStore _cache;
 
-  /// Emits the current state of [listId], re-emitting whenever anyone changes
-  /// it — a rename, a join, a member leaving.
+  /// Sends list [listId] now, and again every time someone changes it
+  /// (rename, someone joins or leaves).
   ///
-  /// Seeds with a normal fetch, then follows the stream. A dropped
-  /// connection no longer ends this stream: [resilientWatch] keeps the last
-  /// good value and reconnects transparently once [ConnectivityAdapter]
-  /// reports we're back online (see `docs/offline-sync-plan.md` Phase F).
-  /// Every snapshot is also written through to [_cache], and a cold start
-  /// with no connection falls back to reading it (§4's "cached reads")
-  /// instead of failing outright.
+  /// Uses [resilientWatch]: if the connection drops, it keeps the last
+  /// value and reconnects when we're back online. Every update is also
+  /// saved to [_cache], so the app can show it when starting offline.
   Stream<Result<ShoppingList>> watch(ListId listId) {
     final listUuid = dto.UuidValue.withValidation(listId.value);
 
@@ -43,10 +38,8 @@ class ListRealtimeSource {
       watch: () => _client.list.watchList(listUuid),
       reduce: (_, next) => next.toDomain(),
       online: _connectivityAdapter.watchIsOnline,
-      // Best-effort: a failed write here (e.g. the app closing the database
-      // mid-write) must not surface as an uncaught error on a stream nobody
-      // awaits this against -- the live watch above already has its value,
-      // cached reads are only a fallback for a cold offline start.
+      // Save to the offline cache, without waiting. If saving fails,
+      // ignore it: the cache is only a backup.
       cacheWrite: (list) => unawaited(_cache.upsert(list).catchError((_) {})),
       cacheRead: () => _cache.read(listId),
     );

@@ -32,44 +32,43 @@ class ListSettingsScreenController extends _$ListSettingsScreenController {
     );
   }
 
-  /// The teller, not the balance: fetched fresh on every use, since
-  /// holding on to a notifier instance could outlive it.
+  /// Read again every time, instead of stored in a field. A stored notifier
+  /// could be disposed while we still hold it.
   ListsController get _lists => ref.read(listsControllerProvider.notifier);
 
   ShopsController get _shops =>
       ref.read(shopsControllerProvider(listId).notifier);
 
-  /// Renames this list. The screen keeps the saving flag and the error
-  /// beside its text field -- see [ListSettingsScreenState] for why.
+  /// Renames this list. The "saving" flag and error are kept in the screen
+  /// (see [ListSettingsScreenState] for why).
   Future<Failure?> rename(String name) async =>
       (await _lists.rename(listId, name)).failureOrNull;
 
-  /// Turns [shop] on or off for this list (an inactive shop has no tab).
+  /// Shows or hides [shop]'s tab on this list.
   Future<Failure?> toggleShopActive(Shop shop) async =>
       (await _shops.toggleActive(shop)).failureOrNull;
 
-  /// "Clear checked after shopping" (decisions #79).
+  /// Turns "Clear checked after shopping" on or off (decisions.md #79).
   Future<Failure?> setClearCheckedAfterShopping(bool clear) async =>
       (await _lists.setClearCheckedAfterShopping(listId, clear)).failureOrNull;
 
-  /// Forces a fresh fetch of the user's lists -- the error screen's exit
-  /// needs it so `/lists` doesn't redirect straight back to a gone list.
+  /// Reloads the user's lists. Called before leaving an error screen, so
+  /// `/lists` doesn't send the user back to a list that's gone.
   Future<void> refreshLists() => _lists.refresh();
 
-  /// Deletes this list for everyone on it. Owner only, enforced server-side.
+  /// Deletes this list for everyone. Only the owner can (the server checks).
   Future<Failure?> deleteList() async =>
       (await _lists.delete(listId)).failureOrNull;
 
-  /// Leaves this list; it carries on for everyone else.
+  /// Leaves this list. It still exists for the others.
   Future<Failure?> leaveList() async =>
       (await _lists.leave(listId)).failureOrNull;
 
-  /// How many products the delete dialog says will go with the list.
+  /// How many items will be deleted with the list (shown in the delete
+  /// dialog). 0 if the items haven't loaded.
   ///
-  /// Read at the moment of asking rather than kept in the watched state: the
-  /// number is shown once, in a dialog, so watching it would rebuild this
-  /// view model on every item change for nobody. Falls back to 0 if the
-  /// items haven't loaded -- the same as before this moved here.
+  /// Read once when asked, not watched. Watching would rebuild this
+  /// controller on every item change, just for a number shown once.
   int itemCountForDialog() =>
       ref.read(itemsControllerProvider(listId)).dataOrNull?.length ?? 0;
 }

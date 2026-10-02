@@ -2,20 +2,18 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/list_member_mapper.dart';
 
-/// Maps a [dto.ShoppingList] wire object to the domain entity.
+/// Converts a Serverpod [dto.ShoppingList] into our domain [ShoppingList].
 extension ShoppingListDtoX on dto.ShoppingList {
   /// Converts to the domain [ShoppingList].
   ///
-  /// Two things happen here that are the reason mapping exists at all. The
-  /// generated `id` is nullable because the wire shape allows an unsaved row;
-  /// the domain entity's id is not, because a list that came back from the
-  /// server always has one. And `joinCode` arrives as a bare `String` and is
-  /// re-parsed into a validated [JoinCode], so a malformed code from a stale
-  /// server cannot slip upward unnoticed.
+  /// Two checks happen here:
+  /// - Serverpod's `id` can be null (for rows not saved yet). Ours can't,
+  ///   because a list from the server always has an id.
+  /// - `joinCode` comes as a plain `String`. We turn it into a [JoinCode],
+  ///   which checks it's valid.
   ///
-  /// Throws [StateError] if either invariant is violated — that is a broken
-  /// server contract, not an expected failure, so it must not be swallowed
-  /// into a `Result`.
+  /// Throws [StateError] if either check fails. That means the server is
+  /// broken (a bug), not a normal failure, so it's not a `Result`.
   ShoppingList toDomain() {
     final rawId = id;
     if (rawId == null) {
