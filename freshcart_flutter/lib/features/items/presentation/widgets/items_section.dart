@@ -21,17 +21,15 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_results.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// A list's items area: the rows (or search results, or an empty state),
-/// with the completion celebration and the add control floating on top.
+/// The items area of a list: the rows (or search results, or an empty
+/// state), with the "all done" card and the add button floating on top.
 ///
-/// Pure UI: every derivation and multi-step action lives in
-/// [ItemsSectionController]. What stays here is what needs a `BuildContext` --
-/// sheets and snackbars. The header (title, selection and search actions)
-/// belongs to `ListDetailScreen`, which reads the same view model.
+/// Only UI. The logic is in [ItemsSectionController]. Here are only things
+/// that need a `BuildContext`: sheets and snackbars. The app bar is in
+/// `ListDetailScreen`.
 ///
-/// Multi-select and rearrange are both entered from a row's hold-menu
-/// ("Select more…" / "Rearrange list") rather than long-press directly,
-/// since that gesture already opens the menu.
+/// Select and rearrange mode start from the hold menu ("Select more…" /
+/// "Rearrange list"), because holding already opens the menu.
 class ItemsSection extends ConsumerWidget {
   const ItemsSection({required this.list, super.key});
 
@@ -58,11 +56,10 @@ class ItemsSection extends ConsumerWidget {
       ItemsSectionState(isLoading: true) => const Center(
         child: CircularProgressIndicator(),
       ),
-      // Search bypasses the shop filter and the open/done split entirely
-      // (§16: "one flat list across all shops").
+      // Search shows one list across all shops, without the open/done split.
       ItemsSectionState(mode: ItemsMode.search) => SearchResults(
-        // Not 'search' -- the app bar's own search TextField already owns
-        // that key, and both are mounted at once.
+        // Not 'search': the search field in the app bar already uses that
+        // key, and both exist at the same time.
         key: const ValueKey('search-results'),
         state: s,
         vm: vm,
@@ -86,16 +83,14 @@ class ItemsSection extends ConsumerWidget {
       ),
     };
 
-    // A Stack, not a docked bottom bar: the design's FAB floats over the
-    // list rather than shrinking it to make room. _ItemList carries its own
-    // bottom padding so its last rows clear the floating cluster.
+    // A Stack, so the add button floats over the list (the list doesn't
+    // get smaller). The list has bottom padding so the last row isn't
+    // hidden under the button.
     return Stack(
       children: [
         Positioned.fill(child: body),
-        // Neither the celebration nor the add control has anything to do
-        // while selecting, searching or rearranging -- selection has its own
-        // contextual bar in the app bar, and search offers its own "Add to
-        // list" inside its no-results state.
+        // No "all done" card and no add button while selecting, searching
+        // or rearranging. (Search has its own "Add to list" button.)
         if (s.mode == ItemsMode.browse && !s.isLoading)
           Positioned(
             left: 0,
@@ -108,9 +103,9 @@ class ItemsSection extends ConsumerWidget {
   }
 }
 
-/// The flows that need a `BuildContext` -- sheets and snackbars -- on top of
-/// the view model's actions. Rebuilt with the widget, so it always sees the
-/// current state.
+/// Helper for the actions that need a `BuildContext` (sheets, snackbars),
+/// on top of the controller's actions. Made fresh on every build, so it
+/// always has the current state.
 class _ItemFlows {
   const _ItemFlows({
     required this.context,
@@ -124,8 +119,8 @@ class _ItemFlows {
   final ItemsSectionController vm;
   final Translations t;
 
-  /// A failed write is the snackbar tier: the screen behind it is still
-  /// usable, so it gets a message and a way to retry, not a replacement.
+  /// Shows a failed save as a snackbar (with Retry). The screen is still
+  /// fine, so no full error screen.
   void report(Failure? failure, {VoidCallback? onRetry}) {
     if (failure == null || !context.mounted) return;
     showFailureSnackBar(context, failure: failure, t: t, onRetry: onRetry);
@@ -161,9 +156,8 @@ class _ItemFlows {
     }
   }
 
-  /// QuickAddBar's onOpenDetails contract: returns whether something was
-  /// actually added, so it knows whether to clear/collapse itself or leave
-  /// the typed text in place for a retry.
+  /// Opens the item sheet. Returns true if an item was added. Then
+  /// QuickAddBar clears and closes; if false, it keeps the typed text.
   Future<bool> addWithDetails(String initialName) async {
     final outcome = await showModalBottomSheet<ItemSheetOutcome>(
       context: context,
@@ -187,15 +181,15 @@ class _ItemFlows {
     return failure == null;
   }
 
-  /// Same contract as [addWithDetails].
+  /// Quick add. Returns true if it worked (same as [addWithDetails]).
   Future<bool> quickAdd(String name) async {
     final failure = await vm.quickAdd(name);
     report(failure);
     return failure == null;
   }
 
-  /// The quick-add duplicate card's primary action. Same bool contract as
-  /// [quickAdd] -- false leaves the card up so the tap can be retried.
+  /// "Make it x{n}" on the "already on the list" card. Returns true if it
+  /// worked. If false, the card stays so the user can try again.
   Future<bool> bumpDuplicate(ShoppingItem item) async {
     final failure = await vm.bumpQuantity(item);
     report(failure);
@@ -203,8 +197,8 @@ class _ItemFlows {
   }
 }
 
-/// What floats above the rows in browse mode: the completion celebration
-/// (when it applies) and the add control.
+/// What floats over the rows normally: the "all done" card (if needed)
+/// and the add button.
 class _FloatingCluster extends StatelessWidget {
   const _FloatingCluster({
     required this.s,
@@ -250,15 +244,15 @@ class _FloatingCluster extends StatelessWidget {
   }
 }
 
-/// Clears the floating add control that sits on top of the items area, so
-/// neither the last row nor the empty-state copy renders underneath it.
+/// Bottom padding, so the last row (or empty-state text) isn't hidden under
+/// the floating add button.
 const double _floatingClusterInset = 84;
 
-/// The rows themselves, split into open and Done -- checked items collect
-/// below a collapsible [DoneDivider] with a "Clear checked" action.
+/// The rows: open items first, then checked items under a [DoneDivider]
+/// (which can fold them away and has "Clear checked").
 ///
-/// Selection and rearrange only ever apply to open rows: a settled, checked
-/// item has its own bulk action already ("Clear checked").
+/// Only open rows can be selected or rearranged. Checked rows already have
+/// "Clear checked".
 class _ItemList extends StatelessWidget {
   const _ItemList({
     required this.state,
@@ -292,16 +286,16 @@ class _ItemList extends StatelessWidget {
       bool selectable = false,
       int? index,
     }) => SwipeToDelete(
-      // The row's key lives on this outermost widget: ReorderableListView
-      // requires it on each direct child, and this is that child.
+      // The key goes on this outer widget: ReorderableListView needs a key
+      // on each direct child.
       key: ValueKey(item.id.value),
       dismissKey: ValueKey('swipe-${item.id.value}'),
       semanticLabel: t.common.delete,
-      // Off in multi-select and rearrange: the horizontal swipe must not
-      // race the reorder drag or the selection taps (Motion spec §10).
+      // No swipe-to-delete in select or rearrange mode, so it doesn't fight
+      // with dragging or selecting.
       enabled: !selectionMode && state.mode != ItemsMode.rearrange,
-      // Undo, not a confirm: the row goes now, the snackbar can bring it
-      // back for as long as the delete is actually held.
+      // No "are you sure?". The row goes now, and the snackbar's Undo can
+      // bring it back.
       onSwipe: () async => true,
       onDismissed: () => deleteWithUndo(item),
       child: ItemTile(
@@ -319,7 +313,7 @@ class _ItemList extends StatelessWidget {
             ? () => vm.toggleSelection(item.id)
             : null,
         onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
-        // On "All", the menu's "Rearrange list" row just closes the menu.
+        // Only open rows (not checked ones) can start rearranging.
         onRearrange: selectable && state.canRearrange
             ? vm.startRearrange
             : null,
@@ -372,9 +366,9 @@ class _ItemList extends StatelessWidget {
   }
 }
 
-/// The empty state for the items area, in its two forms, since the design
-/// draws them differently (an empty shop tab names the shop and
-/// tints to its colour; an empty list points at adding the first item).
+/// What the items area shows when there are no items. Two versions:
+/// - an empty shop tab: names the shop, in its colour, with an add button;
+/// - an empty list: points at adding the first item.
 class _ItemsEmptyState extends StatelessWidget {
   const _ItemsEmptyState({
     required this.shop,
@@ -382,14 +376,13 @@ class _ItemsEmptyState extends StatelessWidget {
     required this.onAdd,
   });
 
-  /// The filtered-to shop, or null on "All" (or a filter whose shop hasn't
-  /// loaded) -- both of which get the generic copy.
+  /// The selected shop, or null on "All" (or if the shop hasn't loaded).
+  /// Null shows the general text.
   final Shop? shop;
   final Translations t;
 
-  /// Opens the add flow, pre-filled to the active shop filter. Only offered
-  /// on the shop-tab empty -- the brand-new-list empty has no action, just
-  /// the FAB pulsing (Motion spec §11).
+  /// Opens the add sheet with the selected shop. Only on an empty shop tab.
+  /// A brand-new list has no button here; the add button pulses instead.
   final VoidCallback onAdd;
 
   @override
@@ -408,11 +401,8 @@ class _ItemsEmptyState extends StatelessWidget {
               title: t.items.emptyShopTitle(shop: shop.name),
               body: t.items.emptyShopBody,
               tint: shop.color.toColor(),
-              // Shop-tinted automatically: this empty state sits inside the
-              // shop's own AnimatedTheme (list_detail_screen.dart, decisions
-              // #73), so a plain FilledButton already reads as
-              // colorScheme.primary = the shop's colour, same as the design's
-              // tinted "Add a product" pill.
+              // Automatically in the shop's colour: this is inside the shop's
+              // theme (decisions.md #73), so a normal FilledButton uses it.
               action: FilledButton(
                 onPressed: onAdd,
                 child: Text(t.items.emptyShopAction),

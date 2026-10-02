@@ -14,15 +14,12 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Search's results list (§16): one flat list across every shop, regardless
-/// of the active tab, with a small dot standing in for the shop column
-/// disambiguating rows that would otherwise be indistinguishable.
+/// The search results: one list with matches from all shops (ignoring the
+/// selected tab). A small dot shows each item's shop.
 ///
-/// A separate widget from [ItemsSection]'s normal list rather than a fourth
-/// mode threaded through it: search bypasses the shop filter entirely, does
-/// not split into open/done, and none of [ItemTile]'s selection or drag
-/// wiring applies here -- keeping it its own small widget is plainer than
-/// growing the other one's branching further.
+/// A separate widget, not another mode of [ItemsSection]'s list: search
+/// has no shop filter, no open/done split, and no select or drag. Simpler
+/// as its own small widget.
 class SearchResults extends StatelessWidget {
   /// Creates the results list for [state]'s query.
   const SearchResults({
@@ -35,11 +32,11 @@ class SearchResults extends StatelessWidget {
     super.key,
   });
 
-  /// The items section's derived state: the query, its matches (across every
-  /// shop and checked state), and the list for member names.
+  /// The items state: search text, matches, and the list (for member
+  /// names).
   final ItemsSectionState state;
 
-  /// Every action goes through the view model, same as the normal rows.
+  /// The controller. All actions go through it, like in the normal list.
   final ItemsSectionController vm;
 
   final Translations t;
@@ -48,16 +45,13 @@ class SearchResults extends StatelessWidget {
   /// Called when the user wants to edit [item].
   final void Function(ShoppingItem item) onEdit;
 
-  /// The shop dot's colour for a row, or `null` for an untagged item.
+  /// The shop dot colour for an item, or `null` if it has no shop.
   final Color? Function(ShopId? shopId) dotFor;
 
   @override
   Widget build(BuildContext context) {
     final trimmed = state.trimmedQuery;
-    // Nothing typed yet: not a blank canvas any more -- §06's "Recently
-    // bought" is exactly the browseable "everything, grouped" view for this
-    // moment, distinct from the shop tabs' own purpose (browsing this list's
-    // *current* items, not its history).
+    // Nothing typed yet: show "Recently bought" (the list's history).
     if (trimmed.isEmpty) {
       return SearchRecentlyBought(
         listId: state.list.id,
@@ -120,11 +114,9 @@ class SearchResults extends StatelessWidget {
   }
 }
 
-/// The no-results empty state's "Add '{query}' to this list" action -- a
-/// haptic on tap and a guard against a rapid double-tap starting the add
-/// twice, the same shape [_ReAddButton] in `search_recently_bought.dart`
-/// uses (no pop animation here: §06's "pop" is spec'd for the Recently
-/// bought "+" specifically, not this button).
+/// The "Add '{query}' to this list" button, shown when search finds
+/// nothing. Vibrates on tap, and blocks a fast double-tap from adding
+/// twice.
 class _AddToListButton extends ConsumerStatefulWidget {
   const _AddToListButton({required this.label, required this.onPressed});
 

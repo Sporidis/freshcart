@@ -13,22 +13,23 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'items_section_controller.g.dart';
 
-/// The view model behind the list detail screen's items: composes the
-/// list's items, shops, filter and [ItemsUiController] into one derived
-/// [ItemsSectionState], and owns the multi-step actions ("delete, then leave
-/// selection mode only if that worked").
+/// The controller for the items on the list screen.
 ///
-/// The items widgets talk to this notifier and nothing else, which is why it
-/// also carries one-line forwards: one door per screen beats making every
-/// widget know which of four providers owns which action. It never touches
-/// `BuildContext` -- sheets, snackbars and text fields stay in the widget.
-/// Actions hand back a [Failure] (or null) and the screen decides how to
-/// show it.
+/// It combines the items, shops, shop filter and [ItemsUiController] into
+/// one [ItemsSectionState]. It also runs actions with several steps (for
+/// example "delete, then leave select mode, but only if it worked").
 ///
-/// Keyed by the whole [ShoppingList] rather than its id because that's what
-/// the screen is handed, and the header needs its name and members; a
-/// changed list (freezed equality) simply gets a fresh instance, which is
-/// safe because all mode state lives in [ItemsUiController].
+/// The item widgets only talk to this controller. That's why it also has
+/// simple one-line methods that just pass a call on: widgets don't need to
+/// know which of the four providers does what.
+///
+/// It never uses `BuildContext`. Sheets and snackbars stay in the widget.
+/// Methods return a [Failure] (or null), and the screen decides how to show
+/// it.
+///
+/// It takes the whole [ShoppingList] (not just its id), because the header
+/// needs the name and members. If the list changes, a new controller is
+/// made. That's fine, because the mode state lives in [ItemsUiController].
 @riverpod
 class ItemsSectionController extends _$ItemsSectionController {
   ListId get _listId => list.id;
@@ -49,9 +50,8 @@ class ItemsSectionController extends _$ItemsSectionController {
     final shopFilter = ref.watch(shopFilterControllerProvider(listId));
     final ui = ref.watch(itemsUiControllerProvider(listId));
 
-    // The (in)completion side effects -- forgetting "Keep list", the
-    // auto-clear -- live in their own provider; see [listCompletion] for
-    // why they can't be a listener here.
+    // What happens when the list becomes complete (or not) is in its own
+    // provider. See [listCompletion] for why it can't be done here.
     ref.watch(listCompletionProvider(list));
 
     return ItemsSectionState(
@@ -64,8 +64,7 @@ class ItemsSectionController extends _$ItemsSectionController {
       selection: ui.selection,
       searchQuery: ui.searchQuery,
       doneCollapsed: ui.doneCollapsed,
-      // Mutually exclusive with the auto-clear above: two ways of handling
-      // the same moment, not layered on top of each other.
+      // Either the celebration card or the auto-clear, never both.
       showCelebration:
           !list.clearCheckedAfterShopping &&
           allChecked(allItems) &&
@@ -75,7 +74,8 @@ class ItemsSectionController extends _$ItemsSectionController {
     );
   }
 
-  /// Ranks the mode flags into the one [ItemsMode] the screen draws.
+  /// Turns the mode flags into one [ItemsMode]. If several are on, this
+  /// decides which wins.
   static ItemsMode _modeFor(ItemsUiState ui) {
     if (ui.rearranging) return ItemsMode.rearrange;
     if (ui.selection.isNotEmpty) return ItemsMode.select;
@@ -83,7 +83,7 @@ class ItemsSectionController extends _$ItemsSectionController {
     return ItemsMode.browse;
   }
 
-  /// Re-fetches the items after a failed load -- the error state's Retry.
+  /// Loads the items again. Used by the Retry button.
   void retryLoad() => ref.invalidate(itemsControllerProvider(_listId));
 
   // ── Rows ────────────────────────────────────────────────────────────────
@@ -114,25 +114,25 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   Future<Failure?> remove(ShoppingItem item) => _items.remove(item);
 
-  /// Hides the row now and returns its undo; the write lands later.
+  /// Hides the row now and returns an undo function. The real delete
+  /// happens a few seconds later.
   void Function() swipeDelete(ShoppingItem item) => _items.swipeDelete(item);
 
   Future<Failure?> clearChecked() => _items.clearChecked();
 
   void toggleDoneCollapsed() => _ui.toggleDoneCollapsed();
 
-  /// "Keep list" on the completion celebration.
+  /// The "Keep list" button on the "all done" card.
   void dismissCelebration() => _ui.dismissCelebration();
 
   // ── Adding ──────────────────────────────────────────────────────────────
 
-  /// The add bar's one-tap path: tagged to whichever shop tab is showing.
+  /// Quick add (type + Enter). Uses the shop of the selected tab.
   Future<Failure?> quickAdd(String name) =>
       _items.add(name: name, shopId: state.shopFilter);
 
-  /// The quick-add duplicate card's "Make it x{n}" action -- reuses
-  /// [setQuantity] rather than a second write path for what is, underneath,
-  /// exactly the same edit.
+  /// The "Make it x{n}" button on the "already on the list" card. Just
+  /// calls [setQuantity], because it's the same change.
   Future<Failure?> bumpQuantity(ShoppingItem item) =>
       setQuantity(item, item.quantity + 1);
 
@@ -150,7 +150,7 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   // ── Rearrange ───────────────────────────────────────────────────────────
 
-  /// Enters rearrange mode, if [ItemsSectionState.canRearrange] allows it.
+  /// Starts rearrange mode, if [ItemsSectionState.canRearrange] allows it.
   void startRearrange() {
     if (state.canRearrange) _ui.startRearrange();
   }
@@ -159,9 +159,9 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   /// Moves the open row at [oldIndex] to [newIndex].
   ///
-  /// `onReorderItem`'s newIndex is already adjusted for the dragged row's
-  /// own removal, so it names the insertion slot in the list *without* that
-  /// row directly -- no "subtract one if moving down" bookkeeping.
+  /// [newIndex] is already the position in the list WITHOUT the dragged
+  /// row (Flutter's `onReorderItem` does that), so no "minus one when
+  /// moving down" is needed.
   Future<Failure?> reorderOpen(int oldIndex, int newIndex) {
     final open = state.openItems;
     final item = open[oldIndex];
@@ -179,16 +179,16 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   void clearSelection() => _ui.clearSelection();
 
-  /// Deletes the selection; leaves selection mode only on success, so a
-  /// failed write never costs the user what they picked.
+  /// Deletes the selected items. Only leaves select mode if it worked, so
+  /// on an error the user keeps their selection.
   Future<Failure?> deleteSelected() async {
     final failure = await _items.removeSelected(state.selection);
     if (failure == null) clearSelection();
     return failure;
   }
 
-  /// Re-tags the selection to [shopId] (null = untagged); same
-  /// clear-only-on-success rule as [deleteSelected].
+  /// Moves the selected items to [shopId] (null = no shop). Like
+  /// [deleteSelected], only leaves select mode if it worked.
   Future<Failure?> moveSelected(ShopId? shopId) async {
     final failure = await _items.moveSelected(state.selection, shopId);
     if (failure == null) clearSelection();
@@ -203,6 +203,6 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   void updateQuery(String query) => _ui.updateQuery(query);
 
-  /// Search's "add" paths: untagged, since search ignores the shop tab.
+  /// Adding from search: no shop, because search ignores the shop tabs.
   Future<Failure?> addFromSearch(String name) => _items.add(name: name);
 }

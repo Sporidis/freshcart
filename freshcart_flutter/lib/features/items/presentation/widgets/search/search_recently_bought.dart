@@ -13,24 +13,17 @@ import 'package:freshcart_flutter/features/items/application/item_history/recenc
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Search's pre-typing state (§06, "Recently bought"): browse every distinct
-/// product name this list has had before, grouped by how recently it was
-/// last added -- "the weekly-staples shortcut without building a template
-/// feature," in the design's own words. Each row's "+" re-adds the name with
-/// a pop, through [ItemsSectionController.addFromSearch] -- the same
-/// optimistic add the quick-add control already rides.
+/// "Recently bought": shown in search before typing anything.
 ///
-/// Rendered inline in `SearchResults` rather than as its own destination:
-/// the interactive prototype never models a separate "Recently bought"
-/// screen or names how one would be reached, and the search screen already
-/// has its own header (open, with a Cancel action) -- reusing it avoids
-/// inventing a navigation destination the design doesn't actually specify.
+/// Lists every item name this list ever had, grouped by when it was last
+/// added (this week, last week, earlier). Each row has a "+" to add it
+/// again, using [ItemsSectionController.addFromSearch]. A quick way to
+/// re-add your usual items.
 ///
-/// Deliberately no shop dot per row, unlike every other item row in the app:
-/// `NameHistoryEntry` doesn't carry one (see its own doc comment for why),
-/// and guessing one from data that doesn't exist would be exactly the kind
-/// of faked collaboration state `docs/design-gap-plan.md` repeatedly warns
-/// against elsewhere in this codebase.
+/// Shown inside `SearchResults`, not as its own screen.
+///
+/// No shop dot on these rows: the history doesn't store a shop
+/// (`NameHistoryEntry`), and we don't guess one.
 class SearchRecentlyBought extends ConsumerWidget {
   /// Creates the browse view for [listId].
   const SearchRecentlyBought({
@@ -41,7 +34,7 @@ class SearchRecentlyBought extends ConsumerWidget {
     super.key,
   });
 
-  /// The list whose history is being browsed.
+  /// The list whose history to show.
   final ListId listId;
 
   final Translations t;
@@ -51,8 +44,7 @@ class SearchRecentlyBought extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final buckets = ref.watch(recentlyBoughtProvider(listId));
-    // A brand-new list, or one where nothing has ever been added, simply has
-    // no history yet -- not an error state, just nothing to show.
+    // No history yet (new list). Not an error, just nothing to show.
     if (buckets.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
@@ -128,12 +120,8 @@ class SearchRecentlyBought extends ConsumerWidget {
   }
 }
 
-/// The circular "+" that re-adds a name, with the design's own "pop" on tap
-/// (§06: "Each + re-adds with a pop") -- the same overshoot-then-settle
-/// shape `ItemTile`'s own `_iconPop` already uses for its swipe-to-delete
-/// icon, just a smaller overshoot for a smaller, less urgent gesture -- plus
-/// the `lightImpact()` haptic the spec calls for alongside it, which the pop
-/// alone used to be missing.
+/// The round "+" that adds a name again. On tap it does a small "pop"
+/// (grows a bit, then back) and a light vibration.
 class _ReAddButton extends ConsumerStatefulWidget {
   const _ReAddButton({required this.tooltip, required this.onPressed});
 
@@ -146,10 +134,7 @@ class _ReAddButton extends ConsumerStatefulWidget {
 
 class _ReAddButtonState extends ConsumerState<_ReAddButton>
     with SingleTickerProviderStateMixin {
-  /// Guards against a rapid double-tap starting a second add before the
-  /// first has answered -- `QuickAddBar`'s own `_busy` shape, missing here
-  /// before since nothing awaited [_ReAddButton.onPressed] to know when to
-  /// release it.
+  /// True while adding. Stops a fast double-tap from adding twice.
   bool _busy = false;
 
   late final AnimationController _pop = AnimationController(

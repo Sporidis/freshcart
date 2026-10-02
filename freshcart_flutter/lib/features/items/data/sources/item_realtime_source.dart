@@ -7,12 +7,11 @@ import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapp
 import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_store.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
 
-/// Turns the server's change deltas into a live list of items.
+/// Gives a live list of items for one list.
 ///
-/// The wire carries one [dto.ItemChange] per edit, because a list can hold
-/// hundreds of items and a change usually touches one. Keeping the merged list
-/// is therefore the client's job, and this is where that happens — above the
-/// transport, below anything that knows what a widget is.
+/// The server only sends what changed ([dto.ItemChange]), not the whole
+/// list, because a list can have hundreds of items and a change usually
+/// touches one. This class applies each change to the full list.
 class ItemRealtimeSource {
   /// Creates the source against a generated Serverpod [dto.Client].
   const ItemRealtimeSource(
@@ -25,14 +24,12 @@ class ItemRealtimeSource {
   final ConnectivityAdapter _connectivityAdapter;
   final CachedItemsStore _cache;
 
-  /// Emits the full list of items on [listId], re-emitting on every change.
+  /// Sends all items of [listId] now, and again after every change.
   ///
-  /// Seeds with a normal fetch, then applies deltas. A dropped connection no
-  /// longer ends this stream: [resilientWatch] keeps the last good value and
-  /// reconnects transparently once [ConnectivityAdapter] reports we're back
-  /// online (see `docs/offline-sync-plan.md` Phase F). Every snapshot is also
-  /// written through to [_cache], and a cold start with no connection falls
-  /// back to reading it (§4's "cached reads") instead of failing outright.
+  /// First loads everything, then applies changes one by one. Uses
+  /// [resilientWatch]: if the connection drops, it keeps the last items and
+  /// reconnects when we're back online. Every update is also saved to
+  /// [_cache], so the app can show it when starting offline.
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
     final listUuid = dto.UuidValue.withValidation(listId.value);
 
@@ -44,21 +41,19 @@ class ItemRealtimeSource {
       reduce: (current, event) =>
           List<ShoppingItem>.unmodifiable(applyChange(current, event)),
       online: _connectivityAdapter.watchIsOnline,
-      // Best-effort: a failed write here (e.g. the app closing the database
-      // mid-write) must not surface as an uncaught error on a stream nobody
-      // awaits this against -- the live watch above already has its value,
-      // cached reads are only a fallback for a cold offline start.
+      // Save to the offline cache, without waiting. If saving fails,
+      // ignore it: the cache is only a backup.
       cacheWrite: (items) =>
           unawaited(_cache.replaceForList(listId, items).catchError((_) {})),
       cacheRead: () => _cache.readForList(listId),
     );
   }
 
-  /// Merges one change into [current].
+  /// Applies one change to [current] and returns the new list.
   ///
-  /// Exposed for testing: the merge is the part with the rules in it, and it is
-  /// worth pinning without a socket. An upsert for an unknown id appends, which
-  /// is how another person's new item arrives.
+  /// Public so it can be tested without a real connection. An update for an
+  /// id we don't have yet is added at the end (that's how someone else's
+  /// new item arrives).
   static List<ShoppingItem> applyChange(
     List<ShoppingItem> current,
     dto.ItemChange change,
@@ -72,8 +67,8 @@ class ItemRealtimeSource {
         ];
       case dto.ItemChangeKind.upserted:
         final incoming = change.item?.toDomain();
-        // An upsert with no payload is a malformed event; dropping it is safer
-        // than guessing, and the next full read will correct the list.
+        // An update without the item is broken. Ignore it; the next full
+        // load will fix the list.
         if (incoming == null) return current;
         final known = current.any((item) => item.id == id);
         if (!known) return [...current, incoming];

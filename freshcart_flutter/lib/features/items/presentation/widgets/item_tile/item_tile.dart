@@ -10,7 +10,17 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
+/// One item row on the list.
+///
+/// - Tap: check or uncheck it (with a strike-through animation).
+/// - Hold: the row lifts up and a menu appears (edit, delete, select,
+///   rearrange).
+/// - In select mode, tap selects the row instead.
+///
+/// This widget only handles the gestures and animations. Saving is done by
+/// the parent, through the callbacks.
 class ItemTile extends StatefulWidget {
+  /// Creates the row for [item].
   const ItemTile({
     required this.item,
     required this.shopColor,
@@ -30,85 +40,60 @@ class ItemTile extends StatefulWidget {
     super.key,
   });
 
+  /// The item to show.
   final ShoppingItem item;
+
+  /// The colour of the item's shop (for its dot), or null if it has no shop.
   final Color? shopColor;
 
-  /// Translations for the active locale -- the menu's own option labels and
-  /// the "Checked off by {name}" caption both need it.
+  /// Translations (for the menu labels and "Checked off by {name}").
   final Translations t;
 
-  /// Called once local state has already flipped optimistically -- the
-  /// caller owns actually persisting it (and rolling back on failure).
+  /// Called after the row already shows the new checked state. The parent
+  /// saves it (and undoes it if saving fails).
   final VoidCallback onToggle;
 
-  /// Called from the hold-menu's "Edit details" and "Move to shop" rows --
-  /// both open the same edit flow, since neither this design nor the app has
-  /// a separate move-to-shop-only flow (item_tile.dart doesn't either; shop
-  /// is just a field on the same edit sheet).
+  /// Called from the hold menu's "Edit details" and "Move to shop". Both
+  /// open the same edit sheet (the shop is a field in it).
   final VoidCallback onEdit;
 
-  /// Called from the hold-menu's "Delete" row, after the menu has already
-  /// closed.
+  /// Called from the hold menu's "Delete", after the menu has closed.
   final VoidCallback onDelete;
 
-  /// Called with the new absolute quantity from the stepper's +/- buttons --
-  /// not a delta, so the caller (which already owns the real edit flow via
-  /// [onEdit]) can just fold it into the same `ItemsController.edit` call
-  /// without recomputing anything from a +1/-1 signal.
+  /// Called with the new quantity (not +1/-1) when the stepper is tapped.
   final ValueChanged<int> onQuantityChanged;
 
-  /// Whether this row is part of the current multi-selection. Only
-  /// meaningful while [selectionMode] is true -- reuses the same circle
-  /// `CheckCircle` otherwise shows the checked state in, since a
-  /// selectable row is never simultaneously a checked one (selection only
-  /// ever applies to the open section -- see `ItemsSection`).
+  /// Whether this row is selected. Only matters in select mode. Uses the
+  /// same circle as "checked" (selected rows are never checked, because you
+  /// can only select open items).
   final bool selected;
 
-  /// Whether the list is in multi-select right now. While true, this row's
-  /// own hold-to-menu gesture is suppressed and a plain tap toggles
-  /// [onSelectionToggle] instead of the checked state -- selection has its
-  /// own contextual bar for bulk actions, so there is nothing this row's own
-  /// menu would add.
+  /// Whether the list is in select mode. Then a tap selects the row instead
+  /// of checking it, and holding doesn't open the menu.
   final bool selectionMode;
 
-  /// Toggles this row's membership in the selection. Only used while
-  /// [selectionMode] is true.
+  /// Selects or unselects this row. Only used in select mode.
   final VoidCallback? onSelectionToggle;
 
-  /// Called from the hold-menu's "Select more…" row, after the menu has
-  /// already closed -- seeds the selection with this row, which is how
-  /// selection mode is entered (there is no long-press for it here; that
-  /// gesture already means "open the menu"). Null leaves the row that
-  /// option closes the menu with no further effect, same as before this was
-  /// wired up.
+  /// Called from the hold menu's "Select more…". Starts select mode with
+  /// this row selected. If null, the option just closes the menu.
   final VoidCallback? onSelectMore;
 
-  /// Called from the hold-menu's "Rearrange list" row, after the menu has
-  /// already closed -- puts the whole list into rearrange mode, which is
-  /// where [dragHandle] comes from. Null (the default) leaves that option
-  /// closing the menu with no further effect -- the same behavior before
-  /// reorder existed at all, and what a caller with nothing to reorder into
-  /// (the "All" tab, say) should still pass.
+  /// Called from the hold menu's "Rearrange list". Puts the list in
+  /// rearrange mode. If null (for checked rows), the option just closes
+  /// the menu.
   final VoidCallback? onRearrange;
 
-  /// The drag handle to show at the row's leading edge while the list is in
-  /// rearrange mode -- typically a
-  /// `ReorderableDragStartListener`-wrapped icon, supplied by whoever owns
-  /// the `ReorderableListView` this row sits in. Null (the default, and
-  /// always true outside rearrange mode) renders no handle at all; this
-  /// widget stays dumb about *how* dragging actually works, the same
-  /// division of responsibility it already has for everything else.
+  /// The drag handle shown at the start of the row in rearrange mode.
+  /// Given by the parent list (usually wrapped in a
+  /// `ReorderableDragStartListener`). Null outside rearrange mode.
   final Widget? dragHandle;
 
-  /// Who checked this item off, if anyone -- shown as a caption below the
-  /// name once checked, the same priority `item_tile.dart`'s own
-  /// `_buildSubtitle` gives: a note always wins over "checked by", since
-  /// the note is the shopper's own instruction and stays visible even after
-  /// the item is in the trolley.
+  /// Who checked this item off, shown under the name. If the item has a
+  /// note, the note is shown instead.
   final ListMember? checkedByMember;
 
-  /// Search's query, passed straight through to [ItemRowContent] -- see its
-  /// own doc comment. Null everywhere this row isn't a search result.
+  /// The search text, to make matching letters bold. Null outside search.
   final String? highlightQuery;
 
   @override
@@ -119,9 +104,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   static const _longPressThreshold = Duration(milliseconds: 450);
   static const _liftDuration = Duration(milliseconds: 300);
   static const _liftScale = 1.015;
-  // Partway through the lift, not a fixed "menu is open" constant — this is
-  // what actually gives the quantity's AnimatedSwitcher a before/after state
-  // to transition between, instead of being born already switched.
+  // Halfway through the lift animation, the quantity switches to the
+  // stepper. Switching at a point in the animation (not right away) gives
+  // the AnimatedSwitcher a "before" and "after" to animate between.
   static const _quantityMorphThreshold = 0.5;
 
   late final AnimationController _animationController;
@@ -147,9 +132,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       duration: AppMotion.quick,
       value: _isChecked ? 1 : 0,
     );
-    // 340ms bouncy, matching item_tile.dart's own _checkFill -- the overshoot
-    // curve is applied at the widget that reads this, not here, since it
-    // only applies going forward (checking), not on the plain reverse.
+    // The check circle filling in (340 ms). The bounce curve is added where
+    // it's used, because it only applies when checking, not unchecking.
     _checkFillController = AnimationController(
       vsync: this,
       duration: AppMotion.bouncy,
@@ -170,11 +154,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     _pressScaleController.dispose();
     _longPressTimer?.cancel();
     _pressTellTimer?.cancel();
-    // Not `_closeMenu()`: that calls `setState`, which is illegal here even
-    // guarded by `mounted` -- `mounted` is still true for the duration of
-    // `dispose()` itself, but the Element is already defunct as part of
-    // being torn down. Only the actual cleanup (removing the entry) belongs
-    // here; nothing will read `_isMenuOpen` again regardless.
+    // Remove the menu directly, not through `_closeMenu()`. That one calls
+    // `setState`, which isn't allowed inside `dispose()` (even though
+    // `mounted` is still true here).
     _menuEntry?.remove();
     super.dispose();
   }
@@ -182,16 +164,14 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   @override
   void didUpdateWidget(covariant ItemTile oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Re-sync if the real checked state changed for a reason other than our
-    // own optimistic flip below -- a realtime update from another member, or
-    // the controller rolling an optimistic change back after a failure.
+    // If the checked state changed from outside (someone else checked it,
+    // or saving failed and it was undone), update our local copy.
     if (widget.item.isChecked != oldWidget.item.isChecked &&
         widget.item.isChecked != _isChecked) {
       _animateChecked(widget.item.isChecked);
     }
-    // Reuses the same fill controller _CheckCircle animates checking with --
-    // a row in selection mode is never also checked (selection is
-    // open-section-only), so the two never compete for it.
+    // Selecting uses the same circle animation as checking. That's fine:
+    // only open items can be selected, so a row is never both.
     if (widget.selectionMode && widget.selected != oldWidget.selected) {
       if (widget.selected) {
         _checkFillController.forward();
@@ -218,10 +198,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   }
 
   // ── Press and hold ──────────────────────────────────────────────────────
-  // A tap checks the row; holding past [_longPressThreshold] opens the menu
-  // instead. Timers rather than a LongPressGestureRecognizer so the tap and
-  // the hold can share one gesture and the "keep holding" tell can start
-  // partway through.
+  // A tap checks the row. Holding longer than [_longPressThreshold] opens
+  // the menu instead. Done with timers (not a long-press recognizer), so
+  // tap and hold are one gesture and we can show a hint halfway.
 
   void _onPressStart() {
     _longPressTimer?.cancel();
@@ -230,9 +209,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       _pressScaleController.animateTo(1, curve: AppMotion.pop);
       _openMenu();
     });
-    // The "keep holding" tell: a subtle press-down 300ms into the hold --
-    // "has 300ms passed" is a plain wall-clock question independent of
-    // whatever the lift animation is doing.
+    // After 300 ms of holding, the row shrinks a little as a hint to keep
+    // holding.
     _pressTellTimer?.cancel();
     _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
       _pressScaleController.animateTo(0.97);
@@ -248,9 +226,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   void _onPressEnd() {
     _pressTellTimer?.cancel();
     _pressScaleController.animateTo(1, curve: AppMotion.pop);
-    // Still pending means the hold threshold never fired — a real tap,
-    // released early — so this is where checking happens. Once it has
-    // fired, `_openMenu` already ran and owns this gesture instead.
+    // If the hold timer is still running, the finger was lifted early: it's
+    // a tap, so check the item. If the timer already fired, the menu is
+    // open and the tap is ignored here.
     if (_longPressTimer?.isActive ?? false) {
       _longPressTimer!.cancel();
       _setChecked(!_isChecked);
@@ -264,10 +242,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     _animationController.forward(from: 0);
 
     _menuEntry = OverlayEntry(
-      // `context` below resolves to this State's own `context` getter, not
-      // to this builder's parameter — naming that parameter `context` would
-      // shadow it and silently capture the overlay's own (wrong) RenderBox
-      // instead of the row's.
+      // Careful: `context` below must be the row's context, not the
+      // overlay's. That's why the builder's parameter isn't called
+      // `context`; it would hide the row's one.
       builder: (_) {
         final renderBox = context.findRenderObject() as RenderBox;
         final globalPosition = renderBox.localToGlobal(Offset.zero);
@@ -342,8 +319,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       onTapDown: (_) => _onPressStart(),
       onTapCancel: _onPressCancel,
       onTapUp: (_) => _onPressEnd(),
-      // Kept mounted (not removed from the list) while the menu is open, so
-      // the list never reflows or loses scroll position — just hidden.
+      // While the menu is open, the row is only hidden, not removed. So the
+      // list doesn't jump or lose its scroll position.
       child: AnimatedBuilder(
         animation: _pressScaleController,
         builder: (context, child) =>

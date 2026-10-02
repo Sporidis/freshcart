@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// A pill-shaped minus/count/plus control.
+/// A pill with "−  2  +" to change the quantity.
 ///
-/// The glyphs are hand-painted rather than pulled from [Icons.add]/
-/// [Icons.remove] -- Flutter's classic Material Icons font is a single
-/// fixed weight with no way to make it visibly bolder, and the design calls
-/// for a thicker line than that font draws.
+/// The − and + are drawn by hand, not with [Icons.add]/[Icons.remove],
+/// because the icon font's lines are too thin for the design.
 class QuantityStepper extends StatelessWidget {
   const QuantityStepper({
     required this.quantity,
@@ -19,8 +17,7 @@ class QuantityStepper extends StatelessWidget {
   final VoidCallback? onDecrement;
   final VoidCallback? onIncrement;
 
-  // 30px, per Flow 03's hold-menu stepper -- not IconButton's default 48px,
-  // which would read far too chunky for an inline pill control.
+  // 30 px buttons (IconButton's default 48 px is too big here).
   static const _circleSize = 30.0;
 
   @override
@@ -29,9 +26,7 @@ class QuantityStepper extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        // `outlineVariant`, not a fixed low-alpha black -- that hairline
-        // read fine on the light card this was designed against, but all
-        // but vanished against a dark one.
+        // Theme border colour, so it's visible in dark mode too.
         border: Border.all(color: scheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
@@ -57,9 +52,8 @@ class QuantityStepper extends StatelessWidget {
           DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              // Same ink-on-paper pairing as `_CheckCircle` -- a fixed
-              // `AppColors.bgDark` circle used to stay near-black in dark
-              // mode, disappearing against an already-dark row.
+              // Theme colours (like CheckCircle), so it's visible in dark
+              // mode too.
               color: scheme.onSurface,
             ),
             child: _StepperButton(

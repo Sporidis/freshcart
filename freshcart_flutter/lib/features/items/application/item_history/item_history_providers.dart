@@ -6,25 +6,19 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'item_history_providers.g.dart';
 
-/// Product name suggestions for [listId] matching [query], most recently
-/// used first -- what [QuickAddBar]'s chip row reads from (§09, decisions
-/// #64).
+/// Item name suggestions for [listId] that match [query], most recent
+/// first. Shown as chips above the add field (decisions.md #64).
 ///
-/// autoDispose (the default for a plain function provider): each keystroke
-/// makes this a new `(listId, query)` key, and nothing needs yesterday's
-/// query's result sitting in the cache once nothing is watching it any more.
-/// [QuickAddBar] debounces before it ever watches this, so the query here is
-/// already settled, not fired on every keystroke.
+/// Auto-disposed: old queries aren't kept in memory. [QuickAddBar] waits
+/// until typing pauses before asking, so this isn't called on every key.
 @riverpod
 Future<List<String>> itemSuggestions(
   Ref ref, {
   required ListId listId,
   required String query,
 }) async {
-  // Mirrors the server's own floor (ItemService.suggestNames) -- matching
-  // one character would surface most of a list's history at once, which is
-  // noise, not a suggestion. Checked here too so a too-short query never
-  // even reaches the network.
+  // At least 2 letters, same as the server. One letter would match almost
+  // everything. Checked here too, so we don't even send the request.
   if (query.trim().length < 2) return const [];
   final result = await ref
       .watch(itemRepositoryProvider)
@@ -34,32 +28,27 @@ Future<List<String>> itemSuggestions(
       );
   return switch (result) {
     Ok<List<String>>(:final value) => value,
-    // A failed fetch just means no chips this keystroke, not an error worth
-    // interrupting typing over -- there is nothing here for a retry to do
-    // that typing the next character does not already redo.
+    // If it fails, just show no chips. Typing the next letter tries again
+    // anyway.
     Err<List<String>>() => const [],
   };
 }
 
-/// Every distinct product name [listId] has had before, most recently used
-/// first -- "Recently bought" (§06). [itemSuggestionsProvider]'s sibling:
-/// that one filters by a typed query with a two-character floor, this one is
-/// an unfiltered browse.
+/// Every item name list [listId] ever had, most recent first. For "Recently
+/// bought" in search. Like [itemSuggestionsProvider], but without a search
+/// query.
 @riverpod
 Future<List<NameHistoryEntry>> recentNames(Ref ref, ListId listId) async {
   final result = await ref.watch(itemRepositoryProvider).recentNames(listId);
   return switch (result) {
     Ok<List<NameHistoryEntry>>(:final value) => value,
-    // Nothing to browse this load; a retry (reopening the screen) redoes the
-    // same fetch, so there is no separate error state worth building here.
+    // If it fails, show nothing. Reopening search tries again.
     Err<List<NameHistoryEntry>>() => const [],
   };
 }
 
-/// [recentNamesProvider], grouped into "This week" / "Last week" /
-/// "Earlier" against [clockProvider] -- what `SearchRecentlyBought` draws.
-/// Empty buckets all round while loading, the same "nothing to show yet" a
-/// brand-new list gets.
+/// [recentNamesProvider], split into "This week" / "Last week" / "Earlier".
+/// Used by `SearchRecentlyBought`. All groups are empty while loading.
 @riverpod
 RecencyBuckets recentlyBought(Ref ref, ListId listId) => bucketByRecency(
   ref.watch(recentNamesProvider(listId)).value ?? const <NameHistoryEntry>[],

@@ -1,17 +1,16 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Which of its mutually exclusive modes the items section is in.
+/// What the items area is doing right now. Only one at a time.
 ///
-/// One value instead of three independent booleans (rearranging, selecting,
-/// searching) that the UI would otherwise have to rank against each other in
-/// every nested ternary -- the ranking lives once, in `ItemsSectionController`.
+/// One value instead of three booleans (rearranging, selecting, searching).
+/// With booleans, every widget would need to decide which one wins.
+/// `ItemsSectionController` decides that once.
 enum ItemsMode { browse, search, select, rearrange }
 
-/// Everything `ItemsSection` renders, already derived.
+/// The data `ItemsSection` shows.
 ///
-/// Pure Dart on purpose (domain types only, [HexColor] rather than Flutter's
-/// `Color`): the screen converts at the last moment, and this stays
-/// unit-testable without a widget tree.
+/// Plain Dart (no Flutter types, so [HexColor] instead of `Color`), so it
+/// can be tested without widgets.
 class ItemsSectionState {
   const ItemsSectionState({
     required this.list,
@@ -31,39 +30,39 @@ class ItemsSectionState {
   final ShoppingList list;
   final ItemsMode mode;
 
-  /// Every item on the list, ignoring the shop filter -- search and the
-  /// completion celebration both span all shops.
+  /// All items, ignoring the shop tab. Search and the "all done" check use
+  /// all shops.
   final List<ShoppingItem> allItems;
 
   final List<Shop> shops;
   final ShopId? shopFilter;
 
-  /// The signed-in user's own membership, for the header avatar.
+  /// Your own member entry, for the avatar in the header.
   final ListMember? me;
 
   final Set<ItemId> selection;
   final String searchQuery;
   final bool doneCollapsed;
 
-  /// Fully checked, not yet dismissed via "Keep list", and the list isn't
-  /// set to clear itself instead (decisions #79).
+  /// Whether to show the "all done" card: everything is checked, the user
+  /// didn't tap "Keep list", and auto-clear is off (decisions.md #79).
   final bool showCelebration;
 
-  /// Items haven't arrived yet -- distinct from "arrived and empty", so the
-  /// screen shows a spinner rather than flashing the empty state.
+  /// Still loading (not the same as "loaded, but empty"). Shows a spinner,
+  /// so the empty state doesn't flash.
   final bool isLoading;
 
-  /// The items failed to load at all (not a failed write -- those come back
-  /// from the action that caused them).
+  /// Set when the items couldn't load. (Failed saves aren't here; the save
+  /// method returns those.)
   final Failure? loadFailure;
 
-  /// The rows under the shop filter -- unlike [allItems], which ignores it.
+  /// The items in the selected shop tab (unlike [allItems]).
   List<ShoppingItem> get _visible => [
     for (final i in allItems)
       if (i.matchesShopFilter(shopFilter)) i,
   ];
 
-  /// The filtered rows, split the way the screen draws them.
+  /// The items in the tab, split into open and checked.
   List<ShoppingItem> get openItems => [
     for (final i in _visible)
       if (!i.isChecked) i,
@@ -73,11 +72,11 @@ class ItemsSectionState {
       if (i.isChecked) i,
   ];
 
-  /// What was typed, without the stray spaces a keyboard leaves behind.
+  /// The search text, without spaces at the start or end.
   String get trimmedQuery => searchQuery.trim();
 
-  /// Every item whose name contains the query, ignoring case and shop filter
-  /// (§16: search spans all shops).
+  /// Items whose name contains the search text (ignoring upper/lower case),
+  /// in all shops.
   List<ShoppingItem> get searchMatches {
     final q = trimmedQuery.toLowerCase();
     return [
@@ -88,10 +87,11 @@ class ItemsSectionState {
 
   bool get isEmpty => _visible.isEmpty;
 
-  /// If rearranging is allowed for the current shop tab (can change so 'all' tab may differ).
+  /// Whether rearranging is allowed. Always true right now (on every tab).
   bool get canRearrange => true;
 
-  /// No filter and nothing on the list yet: the add bar's first-run prompt.
+  /// True for a brand-new empty list (on "All"). The add button then pulses
+  /// to get attention.
   bool get firstRun => shopFilter == null && allItems.isEmpty;
 
   Shop? get activeShop => shopFor(shopFilter);
@@ -99,11 +99,11 @@ class ItemsSectionState {
   Shop? shopFor(ShopId? id) =>
       id == null ? null : shops.where((s) => s.id == id).firstOrNull;
 
-  /// The existing item in [shopId] whose name exactly matches [name]
-  /// (trimmed, case-insensitive), or null -- the quick-add control's
-  /// duplicate check (Component Library §03, "Duplicate warning"). A match
-  /// in a different shop isn't a duplicate and doesn't count, per Flow
-  /// Screens v2's "Already on the list".
+  /// An item in shop [shopId] with exactly the name [name] (ignoring
+  /// spaces at the ends and upper/lower case), or null.
+  ///
+  /// Used for the "Already on the list" warning. The same name in another
+  /// shop doesn't count.
   ShoppingItem? duplicateFor(String name, ShopId? shopId) {
     final target = name.trim().toLowerCase();
     if (target.isEmpty) return null;
