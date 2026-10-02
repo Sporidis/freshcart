@@ -6,7 +6,6 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
-import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
@@ -18,6 +17,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/delete_ite
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_results.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -299,6 +299,10 @@ class _ItemList extends StatelessWidget {
         t: t,
         item: item,
         shopColor: dotFor(item.shopId),
+        // On All the row is the only sign of its shop; on a tab it's obvious.
+        shopName: state.shopFilter == null
+            ? state.shopFor(item.shopId)?.name
+            : null,
         onToggle: () async => report(await vm.toggle(item)),
         onEdit: () => onEdit(item),
         onDelete: () => deleteWithUndo(item),
@@ -352,7 +356,7 @@ class _ItemList extends StatelessWidget {
             label: t.items.doneCount(n: done.length),
             collapsed: state.doneCollapsed,
             onToggle: vm.toggleDoneCollapsed,
-            clearLabel: t.items.clearChecked,
+            clearLabel: t.items.clear,
             onClear: () async => report(await vm.clearChecked()),
           ),
           if (!state.doneCollapsed)
@@ -363,9 +367,8 @@ class _ItemList extends StatelessWidget {
   }
 }
 
-/// What the items area shows when there are no items. Two versions:
-/// - an empty shop tab: names the shop, in its colour, with an add button;
-/// - an empty list: points at adding the first item.
+/// What the items area shows when there are no items: [ItemsEmptyState],
+/// naming the shop on a shop tab. Both versions start adding.
 class _ItemsEmptyState extends StatelessWidget {
   const _ItemsEmptyState({
     required this.shop,
@@ -378,32 +381,30 @@ class _ItemsEmptyState extends StatelessWidget {
   final Shop? shop;
   final Translations t;
 
-  /// Opens the add sheet with the selected shop. Only on an empty shop tab.
-  /// A brand-new list has no button here; the add button pulses instead.
+  /// Opens the add sheet, with the selected shop if there is one.
   final VoidCallback onAdd;
 
   @override
   Widget build(BuildContext context) {
     final shop = this.shop;
-    return Padding(
+    // Scrolls, like the list it stands in for: with the ghost card it's
+    // taller than a small phone's list area. Top-aligned, as in the design.
+    return SingleChildScrollView(
       padding: const EdgeInsets.only(bottom: _floatingClusterInset),
+      // On a shop tab this sits inside the shop's theme (decisions.md #73),
+      // so the ghost rings and the pill's plus take the shop's colour.
       child: shop == null
-          ? EmptyState(
-              icon: Icons.shopping_basket_outlined,
+          ? ItemsEmptyState(
               title: t.items.emptyTitle,
               body: t.items.emptyBody,
+              actionLabel: t.items.emptyShopAction,
+              onAction: onAdd,
             )
-          : EmptyState(
-              icon: Icons.shopping_basket_outlined,
+          : ItemsEmptyState(
               title: t.items.emptyShopTitle(shop: shop.name),
               body: t.items.emptyShopBody,
-              tint: shop.color.toColor(),
-              // Automatically in the shop's colour: this is inside the shop's
-              // theme (decisions.md #73), so a normal FilledButton uses it.
-              action: FilledButton(
-                onPressed: onAdd,
-                child: Text(t.items.emptyShopAction),
-              ),
+              actionLabel: t.items.addTo(shop: shop.name),
+              onAction: onAdd,
             ),
     );
   }

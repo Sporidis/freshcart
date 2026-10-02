@@ -3,29 +3,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/reveal/tint_wave.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
+import 'package:freshcart_flutter/core/ui/mode_bar.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/move_to_shop_sheet.dart';
 import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/list_menu.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/member_avatar_button.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
+import 'package:go_router/go_router.dart';
 
-/// The app bar of the list screen. It changes with the [ItemsMode] (normal,
-/// selecting, searching, rearranging), which it reads from
-/// [ItemsSectionController], same as the items.
+/// The list screen's header (design v3).
 ///
-/// [list] is null while loading. Then it only shows the app name.
+/// Its background carries the tab's colour, faintly: the shop's colour at
+/// 10% (18% in dark), or ink at 3.5% on All. It changes with the same wave
+/// as the items, from the same point ([TintWave]).
+///
+/// Browsing: menu · "Basket" eyebrow over the list name · search · the
+/// household's avatars (→ List settings), with the tab's progress bar
+/// underneath. Selecting or rearranging: the ink [ModeBar] takes the top
+/// row's place, so the whole header reads as "you're in a mode". Searching:
+/// a search field.
+///
+/// It reads the [ItemsMode] from [ItemsSectionController], same as the
+/// items. [list] is null while loading; then only the app name shows.
 class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const ListDetailAppBar({
     required this.list,
     required this.searchField,
+    required this.waveOrigin,
     super.key,
   });
+
+  /// Where the shop-switch wave started; see [TintWave.originOf].
+  final Offset? Function() waveOrigin;
 
   final ShoppingList? list;
 
@@ -33,8 +51,11 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   /// opens or closes, so old text never shows.
   final TextEditingController searchField;
 
+  static const double _rowHeight = ModeBar.height;
+  static const double _progressHeight = 22;
+
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  Size get preferredSize => const Size.fromHeight(_rowHeight + _progressHeight);
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -65,156 +86,388 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
       report(await vm.moveSelected(outcome.shopId));
     }
 
+    final Widget row;
+    if (list == null || items == null || vm == null) {
+      row = _BrowseRow(key: const ValueKey('loading'), list: null, t: t);
+    } else {
+      final hasSelection = items.selection.isNotEmpty;
+      row = switch (mode) {
+        ItemsMode.browse => _BrowseRow(
+          key: const ValueKey('browse'),
+          list: list,
+          t: t,
+          onSearch: () {
+            searchField.clear();
+            vm.openSearch();
+          },
+        ),
+        ItemsMode.search => _SearchRow(
+          key: const ValueKey('search'),
+          controller: searchField,
+          t: t,
+          onChanged: vm.updateQuery,
+          onCancel: () {
+            searchField.clear();
+            vm.closeSearch();
+          },
+        ),
+        ItemsMode.select => ModeBar(
+          key: const ValueKey('select'),
+          title: Text(t.items.selectedCount(n: items.selection.length)),
+          onClose: vm.clearSelection,
+          closeLabel: t.common.cancel,
+          actions: [
+            ModeBarPill(
+              label: t.common.move,
+              onTap: hasSelection ? moveSelected : null,
+            ),
+            ModeBarPill(
+              label: t.common.delete,
+              destructive: true,
+              onTap: hasSelection
+                  ? () async => report(await vm.deleteSelected())
+                  : null,
+            ),
+          ],
+        ),
+        ItemsMode.rearrange => ModeBar(
+          key: const ValueKey('rearrange'),
+          title: Text(t.items.rearrangeHeader),
+          subtitle: switch (items.activeShop) {
+            null => t.items.rearrangeScopeAll(list: list.name),
+            final shop => t.items.rearrangeScopeShop(shop: shop.name),
+          },
+          actions: [
+            ModeBarPill(
+              label: t.common.done,
+              emphasized: true,
+              onTap: vm.stopRearrange,
+            ),
+          ],
+        ),
+      };
+    }
+
+    final accent =
+        items?.activeShop?.color.toColor() ?? theme.colorScheme.onSurface;
+    final tintAlpha = items?.activeShop == null
+        ? .035
+        : theme.brightness == Brightness.dark
+        ? .18
+        : .10;
+    final tint = Color.alphaBlend(
+      accent.withValues(alpha: tintAlpha),
+      theme.scaffoldBackgroundColor,
+    );
+
     return AppBar(
-      // In select mode, the menu button becomes an X to stop selecting.
-      // (Opening the drawer would lose the selection.) Search has its own
-      // "Cancel" on the right.
-      leading: mode == ItemsMode.select
-          ? IconButton(
-              icon: const Icon(Icons.close),
-              tooltip: t.common.cancel,
-              onPressed: vm?.clearSelection,
-            )
-          : null,
-      // Fades between list name, selection count, search field and
-      // rearrange title, so it feels like one bar changing its text.
-      title: _title(
-        context,
-        ref,
-        theme: theme,
-        t: t,
-        mode: mode,
-        items: items,
-        vm: vm,
+      automaticallyImplyLeading: false,
+      // Under the status bar too, as one tinted block with the header.
+      flexibleSpace: TintWave(color: tint, originOf: waveOrigin),
+      toolbarHeight: _rowHeight,
+      // The row widgets lay themselves out edge to edge, so the mode bar's
+      // ink reaches both sides.
+      titleSpacing: 0,
+      title: AnimatedSwitcher(
+        duration: AppMotion.durationFor(context, AppMotion.modeBar),
+        switchInCurve: AppMotion.ios,
+        switchOutCurve: AppMotion.exitStd,
+        layoutBuilder: (current, previous) => Stack(
+          alignment: Alignment.centerLeft,
+          children: [...previous, ?current],
+        ),
+        child: row,
       ),
-      actions: list == null || vm == null
-          ? const []
-          : switch (mode) {
-              ItemsMode.rearrange => [
-                TextButton(
-                  onPressed: vm.stopRearrange,
-                  child: Text(t.common.done),
-                ),
-              ],
-              ItemsMode.select => [
-                TextButton(onPressed: moveSelected, child: Text(t.common.move)),
-                TextButton(
-                  onPressed: () async => report(await vm.deleteSelected()),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
+      bottom: _ProgressBar(
+        height: _progressHeight,
+        // Search looks across every tab, so the tab's progress means
+        // nothing there.
+        visible: items != null && mode != ItemsMode.search,
+        done: items?.doneItems.length ?? 0,
+        total: (items?.openItems.length ?? 0) + (items?.doneItems.length ?? 0),
+        color: items?.activeShop?.color.toColor() ?? theme.colorScheme.primary,
+        t: t,
+      ),
+    );
+  }
+}
+
+/// Menu · eyebrow and list name · search · avatars.
+class _BrowseRow extends StatelessWidget {
+  const _BrowseRow({
+    required this.list,
+    required this.t,
+    this.onSearch,
+    super.key,
+  });
+
+  final ShoppingList? list;
+  final Translations t;
+  final VoidCallback? onSearch;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final list = this.list;
+    final onSearch = this.onSearch;
+    return SizedBox(
+      height: ListDetailAppBar._rowHeight,
+      child: Row(
+        children: [
+          const SizedBox(width: 2),
+          const _MenuButton(),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.items.listEyebrow,
+                  style: AppTextStyles.secondaryStrong.copyWith(
+                    fontSize: 13,
+                    height: 16 / 13,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  child: Text(t.common.delete),
                 ),
+                if (list == null)
+                  Text(t.appName, style: _titleStyle(theme))
+                else
+                  _ListTitle(list: list, t: t, style: _titleStyle(theme)),
               ],
-              ItemsMode.search => [
-                TextButton(
-                  onPressed: () {
-                    searchField.clear();
-                    vm.closeSearch();
-                  },
-                  child: Text(t.common.cancel),
-                ),
-              ],
-              ItemsMode.browse => [
-                IconButton(
-                  icon: const Icon(Icons.search),
-                  tooltip: t.search.hint,
-                  onPressed: () {
-                    searchField.clear();
-                    vm.openSearch();
-                  },
-                ),
-                MemberAvatarButton(list: list),
-                ListMenu(list: list, t: t),
-              ],
-            },
+            ),
+          ),
+          if (onSearch != null)
+            IconButton(
+              icon: const Icon(Icons.search),
+              tooltip: t.search.hint,
+              onPressed: onSearch,
+            ),
+          if (list != null) _MembersButton(list: list, t: t),
+          const SizedBox(width: 10),
+        ],
+      ),
     );
   }
 
-  Widget _title(
-    BuildContext context,
-    WidgetRef ref, {
-    required ThemeData theme,
-    required Translations t,
-    required ItemsMode mode,
-    required ItemsSectionState? items,
-    required ItemsSectionController? vm,
-  }) {
-    final list = this.list;
-    return AnimatedSwitcher(
-      // 280 ms, from the design. One AnimatedSwitcher can only have one
-      // duration, so all modes use this.
-      duration: AppMotion.durationFor(
-        context,
-        const Duration(milliseconds: 280),
+  static TextStyle _titleStyle(ThemeData theme) =>
+      AppTextStyles.screenTitle.copyWith(
+        height: 32 / 26,
+        letterSpacing: -0.4,
+        color: theme.colorScheme.onSurface,
+      );
+}
+
+/// The menu glyph: two full lines and a short one, so it reads as "lists",
+/// not as a generic hamburger. Opens the drawer when there is one.
+///
+/// An [IconButton] with the standard drawer tooltip, so screen readers (and
+/// tests) know it by name rather than by its look.
+class _MenuButton extends StatelessWidget {
+  const _MenuButton();
+
+  @override
+  Widget build(BuildContext context) {
+    final ink = Theme.of(context).colorScheme.onSurface;
+    Widget line(double width) => Container(
+      width: width,
+      height: 2,
+      decoration: BoxDecoration(
+        color: ink,
+        borderRadius: BorderRadius.circular(1),
       ),
-      switchInCurve: AppMotion.enter,
-      switchOutCurve: AppMotion.enter,
-      child: switch (mode) {
-        ItemsMode.rearrange => Text(
-          t.items.rearrangeHeader,
-          key: const ValueKey('rearrange'),
+    );
+    final scaffold = Scaffold.maybeOf(context);
+    return IconButton(
+      tooltip: MaterialLocalizations.of(context).openAppDrawerTooltip,
+      onPressed: scaffold != null && scaffold.hasDrawer
+          ? scaffold.openDrawer
+          : null,
+      icon: SizedBox(
+        width: 18,
+        height: 14,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [line(18), line(18), line(11)],
         ),
-        ItemsMode.select => Text(
-          t.items.selectedCount(n: items?.selection.length ?? 0),
-          key: const ValueKey('selection'),
+      ),
+    );
+  }
+}
+
+/// The household's avatars. Tapping them opens List settings, where the
+/// household, shops and the list's own actions live.
+class _MembersButton extends StatelessWidget {
+  const _MembersButton({required this.list, required this.t});
+
+  final ShoppingList list;
+  final Translations t;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: t.lists.settingsTitle,
+    excludeSemantics: true,
+    child: TapTarget(
+      onTap: () => context.push(Routes.listSettings(list.id)),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xs),
+        child: MemberAvatarStack(
+          members: list.members,
+          diameter: 30,
+          overlap: 8,
+          borderColor: Theme.of(context).scaffoldBackgroundColor,
         ),
-        ItemsMode.search => TextField(
-          key: const ValueKey('search'),
-          controller: searchField,
-          autofocus: true,
-          textInputAction: TextInputAction.search,
-          style: theme.textTheme.bodyLarge,
-          decoration: InputDecoration(
-            hintText: t.search.hint,
-            isDense: true,
-            prefixIcon: Icon(
-              Icons.search,
-              size: 18,
-              color: theme.colorScheme.onSurfaceVariant,
-            ),
-            contentPadding: const EdgeInsets.symmetric(
-              vertical: 10,
-              horizontal: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadii.input),
-              borderSide: BorderSide(color: theme.colorScheme.onSurface),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadii.input),
-              borderSide: BorderSide(color: theme.colorScheme.onSurface),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadii.input),
-              borderSide: BorderSide(
-                color: theme.colorScheme.onSurface,
-                width: 1.5,
+      ),
+    ),
+  );
+}
+
+/// The search field with Cancel.
+class _SearchRow extends StatelessWidget {
+  const _SearchRow({
+    required this.controller,
+    required this.t,
+    required this.onChanged,
+    required this.onCancel,
+    super.key,
+  });
+
+  final TextEditingController controller;
+  final Translations t;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onCancel;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final border = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(AppRadii.input),
+      borderSide: BorderSide(color: theme.colorScheme.onSurface),
+    );
+    return SizedBox(
+      height: ListDetailAppBar._rowHeight,
+      child: Row(
+        children: [
+          const SizedBox(width: AppSpacing.screen),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              autofocus: true,
+              textInputAction: TextInputAction.search,
+              style: theme.textTheme.bodyLarge,
+              decoration: InputDecoration(
+                hintText: t.search.hint,
+                isDense: true,
+                prefixIcon: Icon(
+                  Icons.search,
+                  size: 18,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 10,
+                  horizontal: 12,
+                ),
+                border: border,
+                enabledBorder: border,
+                focusedBorder: border.copyWith(
+                  borderSide: BorderSide(
+                    color: theme.colorScheme.onSurface,
+                    width: 1.5,
+                  ),
+                ),
               ),
+              onChanged: onChanged,
             ),
           ),
-          onChanged: vm?.updateQuery,
-        ),
-        ItemsMode.browse => KeyedSubtree(
-          key: const ValueKey('normal'),
-          child: list == null
-              ? Text(t.appName)
-              : Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // The app name, small, above the list name.
-                    Text(
-                      t.appName,
-                      style: AppTextStyles.labelStrong.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
+          TextButton(onPressed: onCancel, child: Text(t.common.cancel)),
+          const SizedBox(width: AppSpacing.sm),
+        ],
+      ),
+    );
+  }
+}
+
+/// The tab's progress: a 4px bar in the tab's colour and "3 of 10". Lined
+/// up with the title (60px in), not the menu button.
+class _ProgressBar extends StatelessWidget implements PreferredSizeWidget {
+  const _ProgressBar({
+    required this.height,
+    required this.visible,
+    required this.done,
+    required this.total,
+    required this.color,
+    required this.t,
+  });
+
+  final double height;
+  final bool visible;
+  final int done;
+  final int total;
+  final Color color;
+  final Translations t;
+
+  @override
+  Size get preferredSize => Size.fromHeight(height);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final fraction = total == 0 ? 0.0 : done / total;
+    return AnimatedOpacity(
+      opacity: visible ? 1 : 0,
+      duration: AppMotion.durationFor(context, AppMotion.quick),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(60, 0, AppSpacing.screen, 6),
+        child: Row(
+          children: [
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(2),
+                child: SizedBox(
+                  height: 4,
+                  child: ColoredBox(
+                    color: theme.colorScheme.surfaceContainer,
+                    child: TweenAnimationBuilder<double>(
+                      tween: Tween(end: fraction),
+                      duration: AppMotion.durationFor(
+                        context,
+                        const Duration(milliseconds: 420),
+                      ),
+                      curve: AppMotion.enter,
+                      builder: (context, value, _) => FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: value,
+                        child: AnimatedContainer(
+                          duration: AppMotion.durationFor(
+                            context,
+                            AppMotion.standard,
+                          ),
+                          decoration: BoxDecoration(
+                            color: color,
+                            borderRadius: BorderRadius.circular(2),
+                          ),
+                        ),
                       ),
                     ),
-                    _ListTitle(list: list, t: t),
-                  ],
+                  ),
                 ),
+              ),
+            ),
+            if (total > 0) ...[
+              const SizedBox(width: AppSpacing.md),
+              Text(
+                t.items.progressOf(done: done, total: total),
+                style: AppTextStyles.secondaryStrong.copyWith(
+                  fontSize: 13,
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ],
+          ],
         ),
-      },
+      ),
     );
   }
 }
@@ -223,10 +476,11 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
 /// [ListDetailScreenController], while the app bar uses the items
 /// controller (rule: one controller per widget).
 class _ListTitle extends ConsumerWidget {
-  const _ListTitle({required this.list, required this.t});
+  const _ListTitle({required this.list, required this.t, required this.style});
 
   final ShoppingList list;
   final Translations t;
+  final TextStyle style;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -237,6 +491,7 @@ class _ListTitle extends ConsumerWidget {
     return EditableListTitle(
       name: list.name,
       enabled: isOwner,
+      style: style,
       onRename: (name) async {
         final failure = await ref
             .read(listDetailScreenControllerProvider(list.id).notifier)

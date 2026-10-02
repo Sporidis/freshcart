@@ -45,13 +45,14 @@
     "namePlaceholder": "De quoi avez-vous besoin ?",
     "notePlaceholder": "Note (facultatif)",
     "checkedBy": "Coché par {{name}}",
-    "emptyTitle": "Rien sur la liste",
-    "emptyBody": "Ajoutez votre premier produit ci-dessous.",
-    "emptyShopTitle": "Rien pour {{shop}}",
-    "emptyShopBody": "Les articles ajoutés ici apparaîtront sur cet onglet.",
+    "emptyTitle": "Votre liste est vide",
+    "emptyBody": "Ajoutez le premier produit. Tout le foyer le voit aussitôt.",
+    "emptyShopTitle": "Rien pour {{shop}} pour l'instant",
+    "emptyShopBody": "Les produits ajoutés ici vont directement dans ce magasin.",
     "emptyShopAction": "Ajouter un produit",
     "doneCount": "Terminé · {{n}}",
     "clearChecked": "Effacer cochés",
+    "clear": "Effacer",
     "itemRemoved": "{{name}} supprimé",
     "selectedCount": "{{n}} sélectionné(s)",
     "celebrateCount": {
@@ -75,7 +76,11 @@
     "menuMoveToShop": "Déplacer vers un magasin",
     "menuRearrangeList": "Réorganiser la liste",
     "menuSelectMore": "Sélectionner plus…",
-    "rearrangeHeader": "Glisser pour réorganiser"
+    "rearrangeHeader": "Glisser pour réorganiser",
+    "listEyebrow": "Panier",
+    "progressOf": "{{done}} sur {{total}}",
+    "rearrangeScopeAll": "Ordre de tout dans {{list}}",
+    "rearrangeScopeShop": "Ordre pour {{shop}}"
   },
   "shops": {
     "all": "Tous les magasins",

@@ -29,6 +29,7 @@ class ItemMenu extends StatelessWidget {
     this.onSelectMore,
     this.onRearrange,
     this.shopColor,
+    this.shopName,
     this.checkedByMember,
     super.key,
   });
@@ -53,6 +54,7 @@ class ItemMenu extends StatelessWidget {
   final ListMember? checkedByMember;
   final bool isMenuClosed;
   final Color? shopColor;
+  final String? shopName;
 
   @override
   Widget build(BuildContext context) {
@@ -119,6 +121,7 @@ class ItemMenu extends StatelessWidget {
                         fillProgress: fillProgress,
                         isMenuClosed: isMenuClosed,
                         shopColor: shopColor,
+                        shopName: shopName,
                         onQuantityChanged: onQuantityChanged,
                         t: t,
                         checkedByMember: checkedByMember,

@@ -56,6 +56,12 @@ class ShopThemeRevealState extends State<ShopThemeReveal>
   Offset? _localOrigin;
   RevealWaveGeometry? _waveGeometry;
 
+  /// Where the last wave started, in global coordinates (a tapped pill, or
+  /// a screen edge after a swipe). Read by the header's [TintWave], so both
+  /// waves grow from the same point.
+  Offset? get lastGlobalOrigin => _lastGlobalOrigin;
+  Offset? _lastGlobalOrigin;
+
   late final AnimationController _fallbackController;
   Color? _fallbackFrom;
 
@@ -93,6 +99,7 @@ class ShopThemeRevealState extends State<ShopThemeReveal>
   void beginReveal(Offset globalOrigin) {
     // Vibrate even with reduced motion on. Vibration isn't motion.
     if (widget.hapticsOn) unawaited(HapticFeedback.lightImpact());
+    _lastGlobalOrigin = globalOrigin;
     if (AppMotion.reduced(context)) return;
     final renderObject = _boundaryKey.currentContext?.findRenderObject();
     if (renderObject is! RenderRepaintBoundary || !renderObject.attached) {

@@ -45,13 +45,14 @@
     "namePlaceholder": "Wat heb je nodig?",
     "notePlaceholder": "Notitie (optioneel)",
     "checkedBy": "Afgevinkt door {{name}}",
-    "emptyTitle": "Nog niets op de lijst",
-    "emptyBody": "Voeg hieronder je eerste product toe.",
-    "emptyShopTitle": "Niets voor {{shop}}",
-    "emptyShopBody": "Wat je hier toevoegt, verschijnt op dit tabblad.",
+    "emptyTitle": "Je lijst is leeg",
+    "emptyBody": "Voeg het eerste product toe. Iedereen in het huishouden ziet het meteen.",
+    "emptyShopTitle": "Nog niets voor {{shop}}",
+    "emptyShopBody": "Wat je hier toevoegt, gaat meteen naar deze winkel.",
     "emptyShopAction": "Product toevoegen",
     "doneCount": "Klaar · {{n}}",
     "clearChecked": "Afgevinkte wissen",
+    "clear": "Wissen",
     "itemRemoved": "{{name}} verwijderd",
     "selectedCount": "Geselecteerd · {{n}}",
     "celebrateCount": {
@@ -75,7 +76,11 @@
     "menuMoveToShop": "Naar winkel verplaatsen",
     "menuRearrangeList": "Lijst herschikken",
     "menuSelectMore": "Meer selecteren…",
-    "rearrangeHeader": "Sleep om te herschikken"
+    "rearrangeHeader": "Sleep om te herschikken",
+    "listEyebrow": "Mandje",
+    "progressOf": "{{done}} van {{total}}",
+    "rearrangeScopeAll": "Volgorde van alles in {{list}}",
+    "rearrangeScopeShop": "Volgorde voor {{shop}}"
   },
   "shops": {
     "all": "Alle winkels",

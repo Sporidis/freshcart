@@ -25,6 +25,13 @@ final Finder _addPillIcon = find.descendant(
   matching: find.byIcon(Icons.add),
 );
 
+/// A tab pill by its label, scoped to the bar: on All, rows also show their
+/// shop's name in the subtitle.
+Finder pill(String label) => find.descendant(
+  of: find.byType(ShopFilterBar),
+  matching: find.textContaining(label),
+);
+
 void main() {
   setUpAll(configurePluralResolvers);
 
@@ -206,7 +213,7 @@ void main() {
 
       // Chip labels carry a remaining count ("Colruyt · 1"), so match the
       // shop name as a substring rather than the bare name.
-      await tester.tap(find.textContaining('Colruyt'));
+      await tester.tap(pill('Colruyt'));
       await tester.pumpAndSettle();
 
       expect(find.text('Milk'), findsOneWidget);
@@ -215,16 +222,16 @@ void main() {
       // ShopTabPill is a tab, not a toggle chip: tapping the already-active
       // tab again is a no-op, not a deselect -- "All" is the one way back,
       // matching how a real TabBar behaves.
-      await tester.tap(find.textContaining('Colruyt'));
+      await tester.tap(pill('Colruyt'));
       await tester.pumpAndSettle();
       expect(find.text('Cake'), findsNothing);
 
       // "All shops" is the way back, from any shop's tab.
-      await tester.tap(find.textContaining('Bakery'));
+      await tester.tap(pill('Bakery'));
       await tester.pumpAndSettle();
       expect(find.text('Milk'), findsNothing);
 
-      await tester.tap(find.textContaining('All shops'));
+      await tester.tap(pill('All shops'));
       await tester.pumpAndSettle();
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Cake'), findsOneWidget);

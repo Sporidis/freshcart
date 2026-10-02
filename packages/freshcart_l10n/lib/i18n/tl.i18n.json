@@ -45,13 +45,14 @@
     "namePlaceholder": "Ano ang kailangan mo?",
     "notePlaceholder": "Tala (opsyonal)",
     "checkedBy": "Minarkahan ni {{name}}",
-    "emptyTitle": "Wala pang laman ang listahan",
-    "emptyBody": "Idagdag ang iyong unang produkto sa ibaba.",
-    "emptyShopTitle": "Wala para sa {{shop}}",
-    "emptyShopBody": "Lalabas sa tab na ito ang mga idinagdag mo rito.",
+    "emptyTitle": "Walang laman ang listahan mo",
+    "emptyBody": "Idagdag ang unang produkto. Makikita ito agad ng buong sambahayan.",
+    "emptyShopTitle": "Wala pa para sa {{shop}}",
+    "emptyShopBody": "Diretso sa tindahang ito ang mga produktong idaragdag mo rito.",
     "emptyShopAction": "Magdagdag ng produkto",
     "doneCount": "Tapos · {{n}}",
     "clearChecked": "Alisin ang naka-check",
+    "clear": "Alisin",
     "itemRemoved": "Naalis ang {{name}}",
     "selectedCount": "{{n}} napili",
     "celebrateCount": {
@@ -75,7 +76,11 @@
     "menuMoveToShop": "Ilipat sa tindahan",
     "menuRearrangeList": "Ayusin ulit ang listahan",
     "menuSelectMore": "Pumili pa…",
-    "rearrangeHeader": "I-drag para ayusin"
+    "rearrangeHeader": "I-drag para ayusin",
+    "listEyebrow": "Basket",
+    "progressOf": "{{done}} sa {{total}}",
+    "rearrangeScopeAll": "Ayos ng lahat sa {{list}}",
+    "rearrangeScopeShop": "Ayos para sa {{shop}}"
   },
   "shops": {
     "all": "Lahat ng tindahan",

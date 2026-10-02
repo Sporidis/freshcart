@@ -45,13 +45,14 @@
     "namePlaceholder": "What do you need?",
     "notePlaceholder": "Note (optional)",
     "checkedBy": "Checked off by {{name}}",
-    "emptyTitle": "Nothing on the list yet",
-    "emptyBody": "Add your first product below.",
-    "emptyShopTitle": "Nothing for {{shop}}",
-    "emptyShopBody": "Items you add here will show on this tab.",
+    "emptyTitle": "Your list is empty",
+    "emptyBody": "Add the first product. Everyone in the household sees it straight away.",
+    "emptyShopTitle": "Nothing for {{shop}} yet",
+    "emptyShopBody": "Products you add here go straight to this shop.",
     "emptyShopAction": "Add a product",
     "doneCount": "Done · {{n}}",
     "clearChecked": "Clear checked",
+    "clear": "Clear",
     "itemRemoved": "{{name}} removed",
     "selectedCount": "{{n}} selected",
     "celebrateCount": {
@@ -75,7 +76,11 @@
     "menuMoveToShop": "Move to shop",
     "menuRearrangeList": "Rearrange list",
     "menuSelectMore": "Select more…",
-    "rearrangeHeader": "Drag to reorder"
+    "rearrangeHeader": "Drag to reorder",
+    "listEyebrow": "Basket",
+    "progressOf": "{{done}} of {{total}}",
+    "rearrangeScopeAll": "Order of everything in {{list}}",
+    "rearrangeScopeShop": "Order for {{shop}}"
   },
   "shops": {
     "all": "All shops",

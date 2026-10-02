@@ -86,7 +86,12 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
       drawer: s.canOpenDrawer
           ? ListsDrawer(currentListId: widget.listId)
           : null,
-      appBar: ListDetailAppBar(list: list, searchField: _searchField),
+      appBar: ListDetailAppBar(
+        list: list,
+        searchField: _searchField,
+        // The header's tint grows from wherever the items' wave did.
+        waveOrigin: () => _revealKey.currentState?.lastGlobalOrigin,
+      ),
       // Everything in the body uses the selected shop's colour. The drawer
       // and app bar are outside it, so they stay neutral.
       body: list == null

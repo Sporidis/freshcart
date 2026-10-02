@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
@@ -359,9 +360,16 @@ void main() {
 
       await pump(tester, currentUserId: 'user-1');
 
-      await tester.tap(find.byType(PopupMenuButton<void>));
+      // Design v3: the list's own actions live in List settings, behind
+      // the header's avatars.
+      await tester.tap(find.byType(MemberAvatarStack));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete list'));
+      await tester.scrollUntilVisible(
+        find.text('Delete for everyone'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Delete for everyone'));
       await tester.pumpAndSettle();
 
       expect(find.text('Delete Groceries?'), findsOneWidget);
@@ -378,7 +386,9 @@ void main() {
       // this list -- update the fake to match, since ListsController.delete
       // refreshes its own state as part of a successful delete.
       repository.myListsResult = const Ok([]);
-      await tester.tap(find.text('Delete for everyone'));
+      // The dialog's confirm button; the settings row behind it has the
+      // same label.
+      await tester.tap(find.text('Delete for everyone').last);
       await tester.pumpAndSettle();
 
       expect(repository.deleteCalls.single, list.id);
@@ -389,7 +399,7 @@ void main() {
   });
 
   group('navigation', () {
-    testWidgets('the household avatar opens the household screen', (
+    testWidgets("the household's avatars open List settings", (
       tester,
     ) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
@@ -400,12 +410,11 @@ void main() {
 
       expect(find.text('Groceries'), findsOneWidget);
 
-      // Household — join code and members — lives one tap away, behind the
-      // app bar's own avatar, not inline on this screen.
-      await tester.tap(find.byType(CircleAvatar));
+      // Design v3: the avatars are the door to List settings, where the
+      // household, shops and the list's own actions live.
+      await tester.tap(find.byType(MemberAvatarStack));
       await tester.pumpAndSettle();
-      expect(find.textContaining('ABC23'), findsOneWidget);
-      expect(find.text('Nikolaos'), findsOneWidget);
+      expect(find.text('List settings'), findsOneWidget);
     });
 
     testWidgets('the hamburger opens a switcher to the other lists', (
@@ -425,7 +434,7 @@ void main() {
 
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byTooltip('Open navigation menu'));
       await tester.pumpAndSettle();
 
       // Both lists, the open one distinguishable from the other.
@@ -451,7 +460,7 @@ void main() {
 
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byTooltip('Open navigation menu'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
@@ -506,7 +515,9 @@ void main() {
         addTearDown(repository.dispose);
 
         await pump(tester, currentUserId: 'user-1');
-        await tester.tap(find.byType(CircleAvatar));
+        await tester.tap(find.byType(MemberAvatarStack));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Household').first);
         await tester.pumpAndSettle();
         expect(find.text('Mom'), findsNothing);
 

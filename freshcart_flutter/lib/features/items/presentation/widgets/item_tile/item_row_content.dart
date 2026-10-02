@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/check_circle.dart';
@@ -7,7 +8,8 @@ import 'package:freshcart_flutter/core/ui/checked_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// What an item row looks like (dot, name, quantity...).
+/// What an item row looks like (design v3): check ring, name with an
+/// optional subtitle, and "×2" on the right.
 ///
 /// Used in the list, and also at the top of `ItemMenu` when the row lifts
 /// up. Same widget in both places, so they always look the same.
@@ -22,6 +24,8 @@ class ItemRowContent extends StatelessWidget {
     required this.t,
     this.isMenuClosed = true,
     this.shopColor,
+    this.shopName,
+    this.isSelecting = false,
     this.dragHandle,
     this.checkedByMember,
     this.highlightQuery,
@@ -34,7 +38,19 @@ class ItemRowContent extends StatelessWidget {
   final Animation<double> strikeProgress;
   final Animation<double> fillProgress;
   final bool isMenuClosed;
+
+  /// The item's shop colour: the check fills with it. Null is "No shop",
+  /// which fills grey.
   final Color? shopColor;
+
+  /// Shown before the note in the subtitle. Pass it on the All tab only:
+  /// there the row has no other sign of its shop; on a shop tab, it's
+  /// already obvious.
+  final String? shopName;
+
+  /// In select mode the circle means "selected", so it fills with ink, not
+  /// the shop colour.
+  final bool isSelecting;
   final ValueChanged<int> onQuantityChanged;
   final Translations t;
 
@@ -76,78 +92,85 @@ class ItemRowContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSpacing.rowVertical,
-        horizontal: 16,
-      ),
-      child: Row(
-        children: [
-          if (dragHandle != null) ...[dragHandle!, const SizedBox(width: 8)],
-          CheckCircle(
-            value: isChecked,
-            onChanged: onChanged,
-            fillProgress: fillProgress,
-          ),
-          const SizedBox(width: AppSpacing.gap),
-          Container(
-            decoration: BoxDecoration(
-              color: shopColor ?? Colors.transparent,
-              shape: BoxShape.circle,
+    final fill = isSelecting ? null : shopColor ?? AppColors.shopColorFallback;
+    // A checked row has gone to Done: it steps back to 45%.
+    final faded = isChecked && !isSelecting;
+    final fade = AppMotion.durationFor(context, AppMotion.standard);
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: faded ? 52 : 58),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7, horizontal: 20),
+        child: Row(
+          spacing: 14,
+          children: [
+            ?dragHandle,
+            AnimatedOpacity(
+              opacity: faded ? .45 : 1,
+              duration: fade,
+              child: CheckCircle(
+                value: isChecked,
+                onChanged: onChanged,
+                fillProgress: fillProgress,
+                color: fill,
+                tickColor: fill == null ? null : AppTheme.onColorFor(fill),
+              ),
             ),
-            width: AppSizes.shopDot,
-            height: AppSizes.shopDot,
-          ),
-
-          const SizedBox(width: AppSpacing.gap),
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                StrikeThrough(
-                  progress: strikeProgress,
-                  color: muted,
-                  child: _nameText(theme.textTheme.bodyLarge),
+            Expanded(
+              child: AnimatedOpacity(
+                opacity: faded ? .45 : 1,
+                duration: fade,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    StrikeThrough(
+                      progress: strikeProgress,
+                      color: muted,
+                      child: _nameText(
+                        theme.textTheme.bodyLarge?.copyWith(height: 21 / 16),
+                      ),
+                    ),
+                    ?_buildSubtitle(muted),
+                  ],
                 ),
-                ?_buildSubtitle(muted),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-
-          AnimatedSwitcher(
-            duration: AppMotion.quick,
-            child: isMenuClosed
-                ? Text(
-                    'x${item.quantity}',
-                    style: theme.textTheme.bodySmall,
-                  )
-                : QuantityStepper(
-                    quantity: item.quantity,
-                    // At 1, the minus button is removed (not just disabled),
-                    // because the quantity can't go below 1.
-                    onDecrement: item.quantity > 1
-                        ? () => onQuantityChanged(item.quantity - 1)
-                        : null,
-                    onIncrement: () => onQuantityChanged(item.quantity + 1),
-                  ),
-          ),
-        ],
+            AnimatedSwitcher(
+              duration: AppMotion.quick,
+              child: isMenuClosed
+                  ? _Quantity(quantity: item.quantity, faded: faded)
+                  : QuantityStepper(
+                      quantity: item.quantity,
+                      // At 1, the minus button is removed (not just
+                      // disabled), because the quantity can't go below 1.
+                      onDecrement: item.quantity > 1
+                          ? () => onQuantityChanged(item.quantity - 1)
+                          : null,
+                      onIncrement: () => onQuantityChanged(item.quantity + 1),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  /// The line under the name: the note if there is one, otherwise (when
-  /// checked) who checked it. The note wins because it's an instruction
-  /// for the shopper.
+  /// The line under the name: the shop (All tab only) and the note, joined
+  /// with " · ". Without either, a checked row says who checked it. The
+  /// note wins over that because it's an instruction for the shopper.
   Widget? _buildSubtitle(Color muted) {
-    if (item.hasNote) {
+    final style = AppTextStyles.caption.copyWith(
+      fontSize: 13,
+      height: 17 / 13,
+      color: muted,
+    );
+    final parts = [?shopName, if (item.hasNote) item.note!.text];
+    if (parts.isNotEmpty) {
       return Text(
-        item.note!.text,
+        parts.join(' · '),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: AppTextStyles.caption.copyWith(color: muted),
+        style: style,
       );
     }
 
@@ -157,7 +180,33 @@ class ItemRowContent extends StatelessWidget {
       t.items.checkedBy(name: member.displayName),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: AppTextStyles.caption.copyWith(color: muted),
+      style: style,
+    );
+  }
+}
+
+/// "×2" in secondary ink, nothing for 1: one of something is the default and
+/// doesn't need saying.
+class _Quantity extends StatelessWidget {
+  const _Quantity({required this.quantity, required this.faded});
+
+  final int quantity;
+  final bool faded;
+
+  @override
+  Widget build(BuildContext context) {
+    if (quantity <= 1) return const SizedBox.shrink();
+    return AnimatedOpacity(
+      opacity: faded ? .6 : 1,
+      duration: AppMotion.durationFor(context, AppMotion.standard),
+      child: Text(
+        '×$quantity',
+        style: AppTextStyles.body.copyWith(
+          fontSize: 15,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ),
     );
   }
 }
