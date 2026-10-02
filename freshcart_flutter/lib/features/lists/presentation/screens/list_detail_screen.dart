@@ -19,11 +19,12 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filte
 import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
 import 'package:go_router/go_router.dart';
 
-/// One shopping list: the route shell around [ListDetailAppBar] and the
-/// items.
+/// The screen for one shopping list: the app bar ([ListDetailAppBar]) and
+/// the items.
 ///
-/// Reads [ListDetailScreenController]; owns only what must outlive a
-/// rebuild -- the search field's controller and the colour reveal's key.
+/// Data comes from [ListDetailScreenController]. This widget only keeps
+/// things that must survive a rebuild: the search text controller and the
+/// colour wave's key.
 class ListDetailScreen extends ConsumerStatefulWidget {
   /// Creates the detail screen for [listId].
   const ListDetailScreen({required this.listId, super.key});
@@ -36,15 +37,12 @@ class ListDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
-  /// Backs the header's search field once it is open. Its own controller
-  /// rather than `TextEditingController(text: ...)` rebuilt from provider
-  /// state every frame, which would fight the user's cursor position on
-  /// every keystroke.
+  /// The search field's text controller. Kept here, not recreated on every
+  /// build, otherwise the cursor would jump while typing.
   final TextEditingController _searchField = TextEditingController();
 
-  /// Lets [ShopFilterBar], a sibling of the reveal rather than a
-  /// descendant of it, reach across to trigger the items area's colour
-  /// reveal from wherever the shop-filter tap or swipe landed.
+  /// Lets [ShopFilterBar] start the colour wave in the items area. It needs
+  /// a key because the bar isn't inside the wave widget.
   final GlobalKey<ShopThemeRevealState> _revealKey =
       GlobalKey<ShopThemeRevealState>();
 
@@ -59,20 +57,16 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final t = ref.watch(translationsProvider);
     final s = ref.watch(listDetailScreenControllerProvider(widget.listId));
 
-    // A failed *load* is the screen tier: the list is what this route is for,
-    // so without it there is no screen to decorate with an error message.
-    // It replaces the Scaffold rather than sitting inside its body.
+    // If the list couldn't load, show a full error screen instead of the
+    // normal one.
     final loadFailure = s.loadFailure;
     if (loadFailure != null) {
       return ErrorScreen(
         failure: loadFailure,
         t: t,
-        // Refreshed before navigating, not just after: /lists redirects
-        // straight to whichever list comes first in the cached collection,
-        // so if this list's own disappearance never made it into that
-        // cache, the redirect would bounce straight back into the same
-        // error. Refreshing first lets it find a still-valid list instead
-        // (or the real empty state, if none are left).
+        // Reload the lists BEFORE going to /lists. If the old lists still
+        // contain this broken list, /lists would send us straight back
+        // here, to the same error.
         onExit: () {
           unawaited(
             ref
@@ -93,18 +87,15 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
           ? ListsDrawer(currentListId: widget.listId)
           : null,
       appBar: ListDetailAppBar(list: list, searchField: _searchField),
-      // Everything under body/ — tabs, checks, focused inputs, the quick-add
-      // control, empty-state tint — sees the active shop's colour. The
-      // drawer and app bar above are siblings of this, not descendants, so
-      // they stay on the app's own neutral theme regardless.
+      // Everything in the body uses the selected shop's colour. The drawer
+      // and app bar are outside it, so they stay neutral.
       body: list == null
           ? const Center(child: CircularProgressIndicator())
           : _Body(
               list: list,
               showFilter: s.showShopFilter,
-              // Scoped, not global: this is the one piece of the screen that
-              // tints with the active shop. Null means "All" -- the neutral
-              // brand seed, same as the rest of the app.
+              // Only this part changes colour with the shop. Null means
+              // "All" (neutral colours).
               seed: s.activeShopColor?.toColor() ?? AppTheme.brandSeed,
               hapticsOn: ref.watch(hapticsControllerProvider).value ?? true,
               revealKey: _revealKey,
@@ -113,8 +104,8 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
   }
 }
 
-/// The loaded screen: the shop filter strip (hidden while searching or
-/// rearranging) above the items.
+/// The screen once loaded: shop tabs (hidden while searching or
+/// rearranging), with the items below.
 class _Body extends StatelessWidget {
   const _Body({
     required this.list,
@@ -134,21 +125,16 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // The tab strip slides away while searching (§16): search results
-        // already span every shop, so a filter that would only narrow them
-        // back down has nothing to do here.
+        // The tabs slide away while searching, because search looks in
+        // all shops anyway.
         AnimatedSize(
           duration: AppMotion.durationFor(context, AppMotion.standard),
           curve: AppMotion.enter,
           child: !showFilter
               ? const SizedBox(width: double.infinity)
-              // A plain AnimatedTheme, not ShopThemeReveal: this strip
-              // is small, low-saturation chrome (outline/onSurface
-              // tones), not the flat colour blocks the spatial reveal
-              // exists for, and it has to stay live the whole time so
-              // ShopTabPill's own active/inactive AnimatedContainer
-              // transition is never hidden under the reveal's frozen
-              // snapshot -- see decisions #86.
+              // A simple fade here, not the colour wave. The tabs have
+              // their own selected/unselected animation, and the wave's
+              // screenshot would hide it. See decisions.md #86.
               : AnimatedTheme(
                   data: Theme.of(context).brightness == Brightness.dark
                       ? AppTheme.dark(seed)

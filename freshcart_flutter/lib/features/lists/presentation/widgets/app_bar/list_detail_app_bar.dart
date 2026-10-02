@@ -15,12 +15,11 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/me
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The list screen's app bar, in whichever of the four [ItemsMode]s the
-/// items are in -- read from the same [ItemsSectionController] the items
-/// area uses, so the header and the rows can never disagree.
+/// The app bar of the list screen. It changes with the [ItemsMode] (normal,
+/// selecting, searching, rearranging), which it reads from
+/// [ItemsSectionController], same as the items.
 ///
-/// [list] is null while the list is still loading: the bar then shows just
-/// the app name, with no actions to offer yet.
+/// [list] is null while loading. Then it only shows the app name.
 class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const ListDetailAppBar({
     required this.list,
@@ -30,9 +29,8 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
 
   final ShoppingList? list;
 
-  /// Owned by the screen (it outlives this bar's rebuilds); cleared here
-  /// whenever search opens or closes, so reopening never flashes the text
-  /// from last time.
+  /// The search text controller (owned by the screen). Cleared when search
+  /// opens or closes, so old text never shows.
   final TextEditingController searchField;
 
   @override
@@ -57,8 +55,7 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
     }
 
     Future<void> moveSelected() async {
-      // Cancelling (null) leaves the selection exactly as it was -- the
-      // sheet is a detour, not a commitment the moment it opens.
+      // Cancelled (null): keep the selection as it was.
       final outcome = await showMoveToShopSheet(
         context,
         shops: items?.shops ?? const <Shop>[],
@@ -69,9 +66,9 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
     }
 
     return AppBar(
-      // A way out of selection mode, replacing the drawer hamburger:
-      // switching lists mid-select would abandon the selection. Search has
-      // its own way out (the trailing "Cancel"), so it leaves this alone.
+      // In select mode, the menu button becomes an X to stop selecting.
+      // (Opening the drawer would lose the selection.) Search has its own
+      // "Cancel" on the right.
       leading: mode == ItemsMode.select
           ? IconButton(
               icon: const Icon(Icons.close),
@@ -79,9 +76,8 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
               onPressed: vm?.clearSelection,
             )
           : null,
-      // Cross-fades between the list name, the selection count, the search
-      // field and the rearrange header (§16), so it reads as one bar
-      // changing what it says, not a screen change.
+      // Fades between list name, selection count, search field and
+      // rearrange title, so it feels like one bar changing its text.
       title: _title(
         context,
         ref,
@@ -146,9 +142,8 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }) {
     final list = this.list;
     return AnimatedSwitcher(
-      // 280 ms per §16 -- its own value, distinct from the 260 ms token
-      // the selection cross-fade uses; one switcher can only run one
-      // duration, so this is what both transitions share.
+      // 280 ms, from the design. One AnimatedSwitcher can only have one
+      // duration, so all modes use this.
       duration: AppMotion.durationFor(
         context,
         const Duration(milliseconds: 280),
@@ -208,10 +203,7 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // The app's own name as a small kicker over the
-                    // list's, the way the design's every list screen
-                    // carries it — this is whose product this is,
-                    // not what kind of screen it is.
+                    // The app name, small, above the list name.
                     Text(
                       t.appName,
                       style: AppTextStyles.labelStrong.copyWith(
@@ -227,9 +219,9 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   }
 }
 
-/// The tap-to-rename title. Its own widget so the rename goes through
-/// [ListDetailScreenController] -- the app bar around it already talks to
-/// the items view model, and a widget gets one notifier.
+/// The list name; tap to rename. A separate widget because it uses
+/// [ListDetailScreenController], while the app bar uses the items
+/// controller (rule: one controller per widget).
 class _ListTitle extends ConsumerWidget {
   const _ListTitle({required this.list, required this.t});
 
@@ -238,9 +230,7 @@ class _ListTitle extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Renaming is owner-only (§15's permissions table: it's one of the
-    // things listed under what the owner can do *beyond* a member) --
-    // ListMenu already reads the same field for its own Delete/Leave split.
+    // Only the owner can rename.
     final isOwner = ref.watch(
       listDetailScreenControllerProvider(list.id).select((s) => s.isOwner),
     );

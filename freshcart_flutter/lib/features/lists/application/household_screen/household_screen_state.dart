@@ -1,6 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Everything `HouseholdScreen` renders, already derived.
+/// The data `HouseholdScreen` shows.
 class HouseholdScreenState {
   const HouseholdScreenState({
     required this.list,
@@ -12,19 +12,19 @@ class HouseholdScreenState {
   /// The list; null until it has loaded.
   final ShoppingList? list;
 
-  /// The signed-in user; null until the identity resolves.
+  /// The signed-in user; null until known.
   final UserId? me;
 
   /// Whether the signed-in user owns the list.
   final bool isOwner;
 
-  /// The list failed to load at all: the screen tier.
+  /// Set when the list couldn't load. Then a full error screen is shown.
   final Failure? loadFailure;
 
   bool isMe(ListMember member) => member.userId == me;
 
-  /// Only the owner is offered the destructive verbs, and never against
-  /// themselves -- the server enforces both, this only keeps the UI from
-  /// offering what it knows will be refused.
+  /// Whether to show "remove" / "make owner" for [member]. Only for the
+  /// owner, and never on themselves. The server checks this too; this just
+  /// hides buttons that would fail anyway.
   bool canManage(ListMember member) => isOwner && !isMe(member);
 }

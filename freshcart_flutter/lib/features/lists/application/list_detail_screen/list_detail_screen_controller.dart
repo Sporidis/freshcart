@@ -11,12 +11,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_detail_screen_controller.g.dart';
 
-/// The view model behind `ListDetailScreen` and its header menu: the live
-/// list, whether you own it, the active shop colour and the items mode, plus
-/// the list-level actions (rename, delete, leave).
+/// The controller for `ListDetailScreen` and its menu: the list, whether
+/// you own it, the selected shop's colour, the items mode, and the list
+/// actions (rename, delete, leave).
 ///
-/// The rows have their own view model, `ItemsSectionController`; this one
-/// only reads its mode.
+/// The item rows have their own controller, `ItemsSectionController`. This
+/// one only reads its mode.
 @riverpod
 class ListDetailScreenController extends _$ListDetailScreenController {
   ListsController get _lists => ref.read(listsControllerProvider.notifier);
@@ -38,24 +38,24 @@ class ListDetailScreenController extends _$ListDetailScreenController {
     );
   }
 
-  /// Renames this list -- the header's tap-to-edit title.
+  /// Renames this list (from tapping the title).
   Future<Failure?> rename(String name) async =>
       (await _lists.rename(listId, name)).failureOrNull;
 
-  /// Deletes this list for everyone on it. Owner only, enforced server-side.
+  /// Deletes this list for everyone. Only the owner can (the server checks).
   Future<Failure?> deleteList() async =>
       (await _lists.delete(listId)).failureOrNull;
 
-  /// Leaves this list; it carries on for everyone else.
+  /// Leaves this list. It still exists for the others.
   Future<Failure?> leaveList() async =>
       (await _lists.leave(listId)).failureOrNull;
 
-  /// Forces a fresh fetch of the user's lists -- the error screen's exit
-  /// needs it so `/lists` doesn't redirect straight back to a gone list.
+  /// Reloads the user's lists. Called before leaving an error screen, so
+  /// `/lists` doesn't send the user back to a list that's gone.
   Future<void> refreshLists() => _lists.refresh();
 
-  /// How many products the delete dialog says will go with the list. Read
-  /// at the moment of asking, not watched: it is shown once, in a dialog.
+  /// How many items will be deleted with the list (shown in the delete
+  /// dialog). Read once when asked, not watched.
   int itemCountForDialog() =>
       ref.read(itemsControllerProvider(listId)).dataOrNull?.length ?? 0;
 }

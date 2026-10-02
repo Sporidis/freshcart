@@ -1,10 +1,10 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Maps a [dto.ListSummary] wire object to the domain entity.
+/// Converts a Serverpod [dto.ListSummary] into our domain [ListSummary].
 ///
-/// One-way only: a summary is read-only, computed server-side on demand
-/// (`ListService.summaries`) -- nothing in the app ever writes one back.
+/// Only one direction: summaries are calculated by the server and never
+/// sent back.
 extension ListSummaryDtoX on dto.ListSummary {
   /// Converts to the domain [ListSummary].
   ListSummary toDomain() => ListSummary(

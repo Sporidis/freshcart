@@ -9,11 +9,10 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The list's join code, with a copy button that confirms itself.
+/// The list's join code, with a copy button.
 ///
-/// The button morphs to a checkmark for 1.6 s rather than firing a snackbar:
-/// the feedback belongs on the control that was pressed, and a snackbar for
-/// something this small would cover the very thing they are about to share.
+/// After copying, the button shows a checkmark for 1.6 s. No snackbar,
+/// because it would cover the code.
 class InviteCard extends ConsumerStatefulWidget {
   /// Creates the card for [joinCode].
   const InviteCard({required this.joinCode, required this.t, super.key});
@@ -61,8 +60,8 @@ class _InviteCardState extends ConsumerState<InviteCard> {
         AppSpacing.gapSmall,
         AppSpacing.gapSmall,
       ),
-      // The app's own subtle surface: AppTheme pins every surfaceContainer
-      // role to it, so it no longer tints with the seed behind it.
+      // Light grey background (set in AppTheme, so it never gets a colour
+      // tint).
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainer,
         border: Border.all(color: theme.colorScheme.outlineVariant),
@@ -87,9 +86,8 @@ class _InviteCardState extends ConsumerState<InviteCard> {
                   ? const Icon(
                       Icons.check_circle,
                       key: ValueKey('copied'),
-                      // The app's success green -- `tertiary` is a hue M3
-                      // derives from the seed, which for this ink theme is
-                      // an arbitrary colour, not "done".
+                      // Our own success green. Not `tertiary`: in our theme
+                      // that's a random colour, not green.
                       color: AppColors.success,
                     )
                   : const Icon(Icons.copy_outlined, key: ValueKey('copy')),

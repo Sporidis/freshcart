@@ -22,24 +22,19 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_f
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// A list's own settings: the single home for everything list-scoped
-/// (Flow 10) -- its name, its shops, its household, its behaviour, and
-/// leaving or deleting it.
+/// Settings for one list: name, shops, household, behaviour, and leave or
+/// delete.
 ///
-/// Reached from each list's own row in Settings' "Lists & shops" group.
-/// The "Managing" card at the top re-scopes the whole screen to another
-/// list in place, so nobody goes back out just to switch.
+/// Opened from a list's row in Settings. The "Managing" card at the top
+/// lets you switch to another list without leaving this screen.
 ///
-/// Household and shop *management* are doors -- rows that open the existing
-/// `HouseholdScreen` and `ManageShopsScreen` (decisions #69) -- rather than
-/// second copies of those screens rebuilt inline here. Which shops are *on*
-/// this list is the one shop question answered here, as switches.
+/// Household and shop management are links to their own screens
+/// (`HouseholdScreen`, `ManageShopsScreen`), not copies of them
+/// (decisions.md #69). Here you can only turn shops on or off.
 ///
-/// "Clear checked after shopping" (decisions #79) means the whole list
-/// becoming fully checked, the same moment `ItemsSection`'s own completion
-/// celebration already detects -- turning this on suppresses that card
-/// entirely for this list and clears checked items the instant the trigger
-/// fires, with no prompt.
+/// "Clear checked after shopping" (decisions.md #79): when every item is
+/// checked, the checked items are removed right away, without asking, and
+/// the "all done" card isn't shown.
 class ListSettingsScreen extends ConsumerStatefulWidget {
   /// Creates the screen for [listId].
   const ListSettingsScreen({required this.listId, super.key});
@@ -60,23 +55,21 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   Failure? _nameFailure;
   bool _savingName = false;
 
-  /// The name as last saved (or loaded) -- what "unsaved" is measured
-  /// against, so leaving or blurring only writes when something changed.
+  /// The name as last saved. Used to check if the name changed, so we only
+  /// save when it did.
   String? _savedName;
 
   @override
   void initState() {
     super.initState();
     _name = TextEditingController();
-    // There is no Save button for the name, so it must not depend on the
-    // keyboard's submit key alone: tapping elsewhere saves it too.
+    // There's no Save button for the name, so tapping somewhere else saves
+    // it too (not only the keyboard's Done key).
     _nameFocus = FocusNode()
       ..addListener(() {
-        // Two guards, each against one save happening twice:
-        // - not while a save is running: submitting disables the field,
-        //   which itself drops focus;
-        // - not while the route is closing: leaving drops focus too, and
-        //   PopScope below already owns the save on the way out.
+        // Don't save twice:
+        // - not while already saving (saving also removes focus);
+        // - not while leaving the screen (PopScope below saves then).
         final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
         if (!_nameFocus.hasFocus && _nameIsDirty && !_savingName && isCurrent) {
           unawaited(_saveName());
@@ -104,9 +97,8 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     return saved != null && _name.text.trim() != saved;
   }
 
-  // Same reasoning as EditProfileScreen's own _nameSeeded: the list is
-  // async, so the field cannot be seeded synchronously in initState --
-  // seeded instead the first time build actually sees a loaded list.
+  // The list may still be loading in initState, so the name is filled in
+  // the first time build() has the list (same as EditProfileScreen).
   void _seedNameOnce(String name) {
     if (_savedName != null) return;
     _savedName = name;
@@ -139,8 +131,8 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
       showFailureSnackBar(context, failure: failure, t: t);
     }
 
-    // A failed load is the screen tier: without the list there is no form
-    // to show, so this replaces the Scaffold rather than spinning forever.
+    // If the list couldn't load, show an error screen. Without the list
+    // there's no form to show.
     final loadFailure = s.loadFailure;
     if (loadFailure != null) {
       return ErrorScreen(
@@ -153,14 +145,14 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
       );
     }
 
-    // A local, not s.list, so the null check below promotes it.
+    // Copied into a local variable, so Dart knows it's not null after the
+    // check below.
     final list = s.list;
     if (list != null) _seedNameOnce(list.name);
 
     return PopScope(
-      // Leaving with an unsaved name saves it on the way out rather than
-      // dropping it silently. The write goes through the app-wide lists
-      // controller, so it lands even after this screen is gone.
+      // Leaving with an unsaved name: save it. It goes through the lists
+      // controller, which keeps existing after this screen closes.
       onPopInvokedWithResult: (didPop, _) {
         if (didPop && _nameIsDirty) unawaited(_vm.rename(_name.text));
       },
@@ -200,8 +192,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                     shops: s.shops,
                     onToggle: (shop) async =>
                         report(await _vm.toggleShopActive(shop)),
-                    // The same create flow as ManageShopsScreen and the
-                    // shop strip's "+" pill -- one flow, every entry point.
+                    // Same "add shop" flow as everywhere else.
                     onAdd: () => addShop(context, ref, widget.listId, s.shops),
                     onManage: () =>
                         context.push(Routes.manageShops(widget.listId)),
@@ -226,8 +217,8 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                           ],
                         ),
                       ),
-                      // The household screen is where the invite code
-                      // lives -- this is a second, plainer door to it.
+                      // Opens the household screen, which has the invite
+                      // code.
                       SettingRow(
                         leading: Icon(
                           Icons.person_add_alt_1_outlined,
@@ -257,8 +248,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                     ],
                   ),
                   const SizedBox(height: AppSpacing.screen),
-                  // "Destructive actions sit alone at the bottom with a rule
-                  // above them" -- the design's own words for this screen.
+                  // Leave/delete go at the very bottom, with a line above.
                   const Divider(),
                   if (s.isOwner)
                     _DangerRow(
@@ -288,11 +278,10 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   }
 }
 
-/// "Shops on this list": which shops this list has a tab for, with each
-/// shop's dot -- the only place its colour shows on this screen.
+/// "Shops on this list": each shop with its colour dot and an on/off switch
+/// for its tab.
 ///
-/// Always drawn, even with no shops: its "Add a shop" row is exactly what a
-/// list with none needs (it used to vanish along with the rest).
+/// Always shown, even with no shops, because it has the "Add a shop" row.
 class _ShopsSection extends StatelessWidget {
   const _ShopsSection({
     required this.shops,
@@ -347,13 +336,12 @@ class _ShopsSection extends StatelessWidget {
   }
 }
 
-/// The design's "Managing" card: which list this screen is about, and --
-/// with more than one list -- a switcher that expands in place, no sheet and
-/// no route change of its own, each row carrying that list's member count.
+/// The "Managing" card at the top: which list you're editing. With more
+/// than one list, tapping it opens a list to switch to (in place, with each
+/// list's member count).
 ///
-/// Replaces a Material `DropdownMenu`, which is a text field underneath:
-/// it invited typing into the list's name, and sized itself off the screen
-/// width rather than the layout.
+/// Not a Material `DropdownMenu`: that one is a text field underneath, so
+/// it looked like you could type in it.
 class _ManagingSwitcher extends StatefulWidget {
   const _ManagingSwitcher({
     required this.current,
@@ -374,8 +362,7 @@ class _ManagingSwitcher extends StatefulWidget {
 class _ManagingSwitcherState extends State<_ManagingSwitcher> {
   bool _open = false;
 
-  /// The card's border: the design's 1.5 px, heavier than a row's hairline
-  /// so it reads as a control rather than a row.
+  /// Border width (1.5 px). Thicker than normal rows, so it looks tappable.
   static const double _border = 1.5;
 
   @override
@@ -523,8 +510,8 @@ class _SwitcherRow extends StatelessWidget {
   }
 }
 
-/// A destructive row: red, no chevron (it ends something rather than going
-/// somewhere), always behind a confirm.
+/// A red row for leave/delete. No ">" arrow. Always asks "are you sure?"
+/// first.
 class _DangerRow extends StatelessWidget {
   const _DangerRow({required this.title, required this.onTap});
 

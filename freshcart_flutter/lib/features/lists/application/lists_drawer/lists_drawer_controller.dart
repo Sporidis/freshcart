@@ -8,12 +8,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'lists_drawer_controller.g.dart';
 
-/// The view model behind `ListsDrawer`: one ready-to-draw row per list, and
-/// remembering which one gets opened.
+/// The controller for `ListsDrawer`: one row per list, and remembering
+/// which list was opened.
 ///
-/// Null until the lists load. A failure is null too -- not worth its own
-/// screen tier here: the drawer falls back to "nothing to switch to", and
-/// the list already open keeps working regardless.
+/// Null while loading, and also if loading failed. Then the drawer just
+/// shows no lists. The open list keeps working.
 @riverpod
 class ListsDrawerController extends _$ListsDrawerController {
   @override
@@ -21,12 +20,12 @@ class ListsDrawerController extends _$ListsDrawerController {
     final lists = ref.watch(listsControllerProvider).dataOrNull;
     if (lists == null) return null;
 
-    // Missing while loading or failed: rows show their member count instead
-    // for that frame/load, rather than blocking the drawer on it.
+    // Item counts. If not loaded (or failed), rows show the member count
+    // instead.
     final summaries =
         ref.watch(listSummariesProvider).value ?? const <ListId, ListSummary>{};
-    // Null for the one frame before identity resolves: everyone is shown
-    // rather than blocking the drawer on it.
+    // Null until we know who the user is. Until then, everyone's avatar is
+    // shown (including yours).
     final me = ref.watch(signedInUserIdProvider);
 
     return [
@@ -57,10 +56,9 @@ class ListsDrawerRow {
 
   final ShoppingList list;
 
-  /// Item counts ("6 left" / "All done"); null until they load.
+  /// Item counts ("6 left" / "All done"), or null until loaded.
   final ListSummary? summary;
 
-  /// Everyone on [list] except the viewer -- "the avatars of who else is in
-  /// them" (the design's own words).
+  /// Everyone on [list] except you. Shown as avatars.
   final List<ListMember> othersInList;
 }

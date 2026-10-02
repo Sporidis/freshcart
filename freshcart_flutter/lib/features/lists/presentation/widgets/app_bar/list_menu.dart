@@ -7,12 +7,11 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/list_dange
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The list's overflow menu.
+/// The "..." menu on a list.
 ///
-/// Owners and members see different verbs on purpose: leaving takes you out of
-/// a list that carries on without you, while deleting ends it for the whole
-/// household. Offering the wrong one is how someone destroys a shared list
-/// meaning to walk away from it.
+/// The owner sees "Delete", members see "Leave". Leaving only removes you.
+/// Deleting removes the list for everyone. Showing the wrong one could make
+/// someone delete a shared list when they only wanted to leave.
 class ListMenu extends ConsumerWidget {
   const ListMenu({required this.list, required this.t, super.key});
 
@@ -28,15 +27,12 @@ class ListMenu extends ConsumerWidget {
 
     return PopupMenuButton<void>(
       itemBuilder: (context) => [
-        // Household itself is reached through the avatar in the app bar now,
-        // not the menu -- one door, not two, into the same screen.
+        // No "Household" here: the avatar in the app bar opens it.
         PopupMenuItem<void>(
           onTap: () => context.go(Routes.manageShops(list.id)),
           child: Text(t.shops.manage),
         ),
-        // Owners delete, members leave -- one verb each, never both. The
-        // wrong one on the wrong account is how a shared list gets destroyed
-        // by somebody who only meant to walk away from it.
+        // Owner: Delete. Member: Leave. Never both.
         if (isOwner)
           PopupMenuItem<void>(
             onTap: () => confirmDeleteList(

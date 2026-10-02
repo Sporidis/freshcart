@@ -6,15 +6,11 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// The list name in the app bar, editable in place.
+/// A list name that turns into a text field when tapped, so it can be
+/// renamed right there (no dialog).
 ///
-/// Renaming happens here rather than in a sheet or a dialog, per the design:
-/// the title *is* the field, so there is no modal to open, no second copy of
-/// the name to reconcile, and no doubt about what is being renamed.
-///
-/// Commits on submit or on blur. Blur counts as intent because the alternative
-/// — silently discarding what someone typed when they tap away — is the more
-/// surprising of the two.
+/// Saves when the user presses Done or taps somewhere else. Throwing away
+/// what they typed would be more surprising.
 class EditableListTitle extends StatefulWidget {
   /// Creates the title for [name].
   const EditableListTitle({
@@ -29,25 +25,21 @@ class EditableListTitle extends StatefulWidget {
   /// The current name.
   final String name;
 
-  /// Called with the new name. Returning an error message keeps the field
-  /// open so it can be corrected; null means it was accepted.
+  /// Called with the new name. Return an error message to keep the field
+  /// open, or null if it worked.
   final Future<String?> Function(String name) onRename;
 
-  /// Whether renaming is offered at all.
+  /// Whether renaming is allowed.
   final bool enabled;
 
-  /// Whether tapping the title itself starts editing (the app bar's own
-  /// behaviour -- there, nothing else on the title competes for the tap).
-  /// False when some other gesture on the same element already means
-  /// something else (the drawer row's tap opens the list) -- editing then
-  /// starts only through [EditableListTitleState.startEditing], called
-  /// externally via a [GlobalKey] from whatever gesture *does* mean "rename"
-  /// there (the drawer's long-press).
+  /// Whether tapping the title starts editing. True in the app bar.
+  ///
+  /// False in the drawer, where tapping opens the list. There, a long-press
+  /// calls [EditableListTitleState.startEditing] through a [GlobalKey].
   final bool tapToEdit;
 
-  /// The text style for both the static title and the field. Defaults to
-  /// the app bar's own title style, which is all every caller but the
-  /// drawer needs.
+  /// Text style for the title and the field. Defaults to the app bar title
+  /// style.
   final TextStyle? style;
 
   @override
@@ -57,11 +49,10 @@ class EditableListTitle extends StatefulWidget {
 class EditableListTitleState extends State<EditableListTitle> {
   final FocusNode _focus = FocusNode();
 
-  /// Lives as long as the widget does, rather than being created per edit.
+  /// Created once, not on every edit.
   ///
-  /// The switcher below keeps the outgoing field on screen while it fades, so
-  /// a controller disposed the moment editing ends is still being read by a
-  /// widget that has not finished leaving.
+  /// When editing ends, the field fades out for a moment and still uses the
+  /// controller. Disposing it right away would crash.
   final TextEditingController _controller = TextEditingController();
 
   bool _editing = false;
@@ -83,22 +74,19 @@ class EditableListTitleState extends State<EditableListTitle> {
   }
 
   void _onFocusChange() {
-    // Blurring commits. Silently discarding what someone typed when they tap
-    // away is the more surprising of the two options.
+    // Tapping somewhere else saves.
     if (_focus.hasFocus || !_editing || _saving) return;
     unawaited(_commit());
   }
 
-  /// Starts editing, same as tapping the title does when [tapToEdit] is
-  /// true. Public so a caller that suppresses that tap (passing
-  /// `tapToEdit: false`) can trigger it from its own gesture instead, via a
-  /// `GlobalKey<EditableListTitleState>`.
+  /// Starts editing. Public so the drawer can call it on long-press, using
+  /// a `GlobalKey<EditableListTitleState>`.
   void startEditing() {
     if (!widget.enabled) return;
     _controller
       ..text = widget.name
-      // Cursor at the end, not a full selection: renaming is usually a tweak
-      // to the existing name rather than a replacement.
+      // Cursor at the end (not everything selected), because people usually
+      // change a name a little, not replace it.
       ..selection = TextSelection.collapsed(offset: widget.name.length);
     setState(() => _editing = true);
     _focus.requestFocus();
@@ -116,8 +104,7 @@ class EditableListTitleState extends State<EditableListTitle> {
     if (!mounted) return;
     setState(() => _saving = false);
     if (error != null) {
-      // Rejected: stay open holding what they typed, so it can be corrected
-      // rather than retyped.
+      // Didn't work: stay open with the typed text, so they can fix it.
       _focus.requestFocus();
       return;
     }

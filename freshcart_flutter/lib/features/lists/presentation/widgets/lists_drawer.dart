@@ -18,24 +18,19 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_l
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-// No @Preview here: this widget's only content comes from
-// listsDrawerControllerProvider, which reaches the real ListRepository.
-// previewApp deliberately takes no overrides (see preview_harness.dart), so
-// showing this with real-looking data needs an in-memory fake living in
-// lib/ — the same gap already noted for screen-level previews, not
-// something to improvise as a side effect of this change.
+// No @Preview here: the drawer gets its data from the real ListRepository,
+// and previews can't override providers (see preview_harness.dart).
 
-/// Switches between the user's lists — per the design (Flow 10), the *only*
-/// place that answers "which list?" at all. There is no separate "all lists"
-/// screen to be a door back to any more (decisions.md #68): creating and
-/// joining are inline rows in this same scrollable list (decisions #65), and
-/// "Settings" is the one footer action left for whatever isn't list-scoped.
+/// The side drawer to switch between lists. It's the only place that shows
+/// all your lists (decisions.md #68).
+///
+/// "New list" and "Join a list" are rows in the list (decisions.md #65).
+/// At the bottom there's "Settings".
 class ListsDrawer extends ConsumerWidget {
   /// Creates the drawer, highlighting [currentListId] among the others.
   const ListsDrawer({required this.currentListId, super.key});
 
-  /// The list already open, so it reads as the current one rather than a
-  /// plain entry to tap.
+  /// The list that's open now, so it can be highlighted.
   final ListId currentListId;
 
   @override
@@ -85,15 +80,12 @@ class ListsDrawer extends ConsumerWidget {
   }
 }
 
-/// The profile row at the top of the drawer (Flow 10): avatar, name, and a
-/// "N lists · N people" summary across every list the viewer belongs to --
-/// enough to place the drawer among "my stuff" before it even answers
-/// "which list?". Opens Settings, the one screen that summary leads to.
+/// The top of the drawer: your avatar, name, and "N lists · N people".
+/// Tap to open Settings.
 class _DrawerHeader extends ConsumerWidget {
   const _DrawerHeader({required this.rows, required this.t});
 
-  /// Null while the rows are still loading -- the summary line is omitted
-  /// rather than guessed at for that one frame.
+  /// Null while loading. Then the "N lists · N people" line is hidden.
   final List<ListsDrawerRow>? rows;
   final Translations t;
 
@@ -105,9 +97,7 @@ class _DrawerHeader extends ConsumerWidget {
     final rows = this.rows;
     String? summary;
     if (rows != null) {
-      // Every distinct person across every one of the viewer's lists,
-      // themselves included -- "2 people" in the design's own frame reads
-      // as the household, not "everyone but me".
+      // Count each person once across all lists, including yourself.
       final people = <UserId>{};
       for (final row in rows) {
         for (final member in row.list.members) {
@@ -172,7 +162,7 @@ class _DrawerHeader extends ConsumerWidget {
   }
 }
 
-/// The scrollable part: one row per list, then the inline create/join rows.
+/// The scrollable part: one row per list, then "New list" and "Join a list".
 class _ListRows extends StatelessWidget {
   const _ListRows({
     required this.rows,
@@ -194,10 +184,10 @@ class _ListRows extends StatelessWidget {
         : t.lists.itemsLeft(n: summary.remaining);
   }
 
-  /// Pops the drawer, then opens [dialog]. The container is grabbed *before*
-  /// the pop, not a WidgetRef: popping unmounts the drawer, and by the time
-  /// the dialog's onSubmit runs (once someone types), a ref from an
-  /// unmounted widget is unsafe to read. See showCreateListDialog's doc.
+  /// Closes the drawer, then opens [dialog].
+  ///
+  /// Gets the [ProviderContainer] BEFORE closing, because after closing the
+  /// drawer's `ref` can't be used. See `showCreateListDialog`.
   Future<void> _popThen(
     BuildContext context,
     Future<void> Function(BuildContext, ProviderContainer, Translations) dialog,
@@ -232,8 +222,8 @@ class _ListRows extends StatelessWidget {
             onTap: () => onOpen(row.list.id),
             t: t,
           ),
-        // Inline, not in the footer: the design draws these as part of the
-        // scrollable list of lists itself -- they add to *this* collection.
+        // Part of the scrolling list (not the footer), because they add to
+        // these lists.
         _InlineAction(
           icon: Icons.add,
           label: t.lists.create,
@@ -249,14 +239,12 @@ class _ListRows extends StatelessWidget {
   }
 }
 
-/// One list, with a monogram avatar rather than a bare radio glyph — the
-/// same visual language Household already uses for member rows, so a row
-/// that means "a specific list" or "a specific person" reads the same way
-/// everywhere in the app.
+/// One list in the drawer, with a letter avatar (like member rows in
+/// Household).
 ///
-/// Stateful (not the plain [StatelessWidget] this used to be): renaming
-/// needs a [GlobalKey] onto [EditableListTitleState] that survives this
-/// row's own rebuilds, so a fresh one can't be minted inline in `build()`.
+/// Stateful because it keeps a [GlobalKey] to [EditableListTitleState] (for
+/// long-press rename). A key made inside `build()` would be new every
+/// rebuild.
 class _ListRow extends ConsumerStatefulWidget {
   const _ListRow({
     required this.list,
@@ -271,12 +259,11 @@ class _ListRow extends ConsumerStatefulWidget {
   final ShoppingList list;
   final bool isCurrent;
 
-  /// The row's subtitle: a remaining-item count ("6 left" / "All done") once
-  /// its summary has loaded, the member count as a placeholder until then.
+  /// The second line: "6 left" / "All done", or the member count until the
+  /// item counts load.
   final String subtitleLabel;
 
-  /// Every member of [list] except the viewer -- "the avatars of who else
-  /// is in them" (design's own words).
+  /// Everyone on [list] except you. Shown as avatars.
   final List<ListMember> othersInList;
   final VoidCallback onTap;
   final Translations t;
@@ -286,17 +273,16 @@ class _ListRow extends ConsumerStatefulWidget {
 }
 
 class _ListRowState extends ConsumerState<_ListRow> {
-  /// Lets the row's own long-press start editing [EditableListTitle]
-  /// externally -- its own tap is suppressed here (`tapToEdit: false`)
-  /// since the row's tap already means "open this list".
+  /// Lets a long-press start renaming. (A normal tap opens the list, so
+  /// `tapToEdit` is false.)
   final _titleKey = GlobalKey<EditableListTitleState>();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final initial = initialFor(widget.list.name);
-    // Renaming is owner-only (§15) -- EditableListTitle already no-ops
-    // `startEditing` when disabled, so this is the only gate needed.
+    // Only the owner can rename. If not allowed, `startEditing` does
+    // nothing.
     final isOwner = ref.watch(isListOwnerProvider(widget.list));
 
     return Padding(
@@ -357,11 +343,8 @@ class _ListRowState extends ConsumerState<_ListRow> {
   }
 }
 
-/// A footer row: "All lists", "Settings". Same shape, so the two read as a
-/// pair rather than one being an afterthought under the other.
-/// "New list" / "Join a list" -- drawn inline with the lists themselves
-/// (design's own frame), in the same accent colour as any other link-style
-/// action in the app, rather than the neutral ink of an ordinary row.
+/// The "New list" / "Join a list" rows, shown with the lists. Styled like a
+/// link, not like a normal row.
 class _InlineAction extends StatelessWidget {
   const _InlineAction({
     required this.icon,

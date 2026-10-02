@@ -4,48 +4,45 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'lists_controller.g.dart';
 
-/// Every list the signed-in user belongs to.
+/// All lists the signed-in user is on.
 @riverpod
 class ListsController extends _$ListsController {
   @override
   Future<Result<List<ShoppingList>>> build() =>
       ref.watch(listRepositoryProvider).myLists();
 
-  /// Creates a list and refreshes the collection on success.
+  /// Creates a list, then reloads the lists if it worked.
   ///
-  /// Returns the [Result] rather than folding it into state so the calling
-  /// dialog can show a validation message against its own text field instead of
-  /// replacing the whole screen with an error.
+  /// Returns the [Result] (instead of putting an error in the state), so
+  /// the dialog can show the error under its text field.
   Future<Result<ShoppingList>> create(String name) async {
     final result = await CreateList(ref.read(listRepositoryProvider))(name);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
 
-  /// Joins a list by code and refreshes the collection on success.
+  /// Joins a list with a code, then reloads the lists if it worked.
   Future<Result<ShoppingList>> join(String rawCode) async {
     final result = await JoinList(ref.read(listRepositoryProvider))(rawCode);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
 
-  /// Renames a list and refreshes the collection on success.
+  /// Renames a list, then reloads the lists if it worked.
   ///
-  /// Like [create], the [Result] comes back rather than becoming state: the
-  /// title is being edited in place, so a rejected name belongs beside that
-  /// field, not on top of the screen.
+  /// Returns the [Result] like [create], so the error shows next to the
+  /// name being edited.
   Future<Result<ShoppingList>> rename(ListId id, String name) async {
     final result = await RenameList(ref.read(listRepositoryProvider))(id, name);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
 
-  /// Sets whether [id] clears its checked items automatically once
-  /// everything on it is checked (decisions #79).
+  /// Sets whether list [id] removes checked items automatically once
+  /// everything is checked (decisions.md #79).
   ///
-  /// A direct repository call, not a use case: there is nothing to validate
-  /// on a plain bool, the same "trivial forward" reasoning
-  /// `EditProfileScreen`'s own `setAvatarColor` already follows.
+  /// Calls the repository directly (no use case), because a true/false
+  /// has nothing to validate.
   Future<Result<ShoppingList>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
@@ -57,25 +54,24 @@ class ListsController extends _$ListsController {
     return result;
   }
 
-  /// Leaves a list, and refreshes so it drops out of the collection.
+  /// Leaves a list, then reloads so it disappears from the user's lists.
   ///
-  /// Leaving is not deleting: the list carries on for everyone else. Only the
-  /// owner can delete it for the household, and that operation does not exist
-  /// on the server yet.
+  /// Leaving isn't deleting: the list still exists for the others. To
+  /// delete it for everyone, the owner uses [delete].
   Future<Result<void>> leave(ListId id) async {
     final result = await ref.read(listRepositoryProvider).leave(id);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
 
-  /// Deletes a list for everyone on it. Owner only, enforced server-side.
+  /// Deletes a list for everyone. Only the owner can (the server checks).
   Future<Result<void>> delete(ListId id) async {
     final result = await ref.read(listRepositoryProvider).delete(id);
     if (result.isOk) _refreshIfAlive();
     return result;
   }
 
-  /// Removes another member, on the owner's authority.
+  /// Removes another member. Only the owner can do this.
   Future<Result<void>> removeMember(ListId id, UserId userId) async {
     final result = await ref
         .read(listRepositoryProvider)
@@ -84,7 +80,7 @@ class ListsController extends _$ListsController {
     return result;
   }
 
-  /// Hands ownership to another member.
+  /// Makes another member the owner.
   Future<Result<ShoppingList>> transferOwnership(
     ListId id,
     UserId userId,
@@ -96,17 +92,14 @@ class ListsController extends _$ListsController {
     return result;
   }
 
-  /// Re-reads this controller's own collection, if it is still alive.
+  /// Reloads the lists, but only if this provider still exists.
   ///
-  /// A write can outlive the screen that started it: the household screen
-  /// removes a member and routes away, and nothing there watches this
-  /// provider, so it auto-disposes while the request is still in flight.
-  /// Refreshing a cache that no longer exists is not an error — there is
-  /// simply nothing left to refresh.
+  /// The screen can close while a save is still running. Then this provider
+  /// is already disposed, and there's nothing to reload. That's fine.
   void _refreshIfAlive() {
     if (ref.mounted) ref.invalidateSelf();
   }
 
-  /// Re-reads the lists, for pull-to-refresh and after leaving a list.
+  /// Reloads the lists (pull-to-refresh, after leaving a list).
   Future<void> refresh() async => ref.invalidateSelf();
 }
