@@ -3,10 +3,8 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// Draws a strike-through across [child] as [progress] runs 0 to 1.
 ///
-/// Painted rather than set as [TextDecoration.lineThrough], which would snap
-/// on the frame the value flips. The line wipes left to right instead, which
-/// is what makes checking something off feel like an action rather than a
-/// state change.
+/// The line is drawn left to right, like crossing something off with a pen.
+/// [TextDecoration.lineThrough] can't animate, it would just appear.
 class StrikeThrough extends StatelessWidget {
   const StrikeThrough({
     required this.progress,
@@ -21,8 +19,8 @@ class StrikeThrough extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // With motion reduced there is nothing to wipe, so it is drawn or it is
-    // not -- but it is still drawn, because it carries meaning, not polish.
+    // With reduced motion, skip the animation but still show the line,
+    // because it tells the user the item is done.
     if (AppMotion.reduced(context)) {
       return CustomPaint(
         foregroundPainter: _StrikePainter(
@@ -71,14 +69,11 @@ class _StrikePainter extends CustomPainter {
       old.progress != progress || old.color != color;
 }
 
-/// Fades [child] toward [maxFade] as [progress] runs 0 to 1 -- the "already
-/// in the trolley" treatment for a checked-off row, meant to pair with
-/// [StrikeThrough] driven by the same [progress].
+/// Makes [child] more see-through as [progress] goes from 0 to 1, down to
+/// [maxFade]. Used for checked-off rows, together with [StrikeThrough].
 ///
-/// Kept separate from [StrikeThrough] rather than folded into one widget:
-/// the strike only ever wraps a name's [Text], while this fade typically
-/// wraps a whole row (dot, quantity, everything), so the two apply at
-/// different points in a row's widget tree.
+/// A separate widget because the line only goes around the item's name,
+/// but the fade goes around the whole row.
 class CheckedFade extends StatelessWidget {
   const CheckedFade({
     required this.progress,

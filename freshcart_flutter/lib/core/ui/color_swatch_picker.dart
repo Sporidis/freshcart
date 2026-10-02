@@ -8,13 +8,11 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 /// A row of colour circles to pick one from: a shop's tab colour, or a
 /// person's avatar colour.
 ///
-/// One widget in `core/ui` because three screens drew their own copy (edit
-/// shop, onboarding's add-a-shop sheet, edit profile) at three different
-/// sizes with two different "selected" looks. The design has one: a 32 px
-/// circle that gains an ink ring and a small white centre when picked.
+/// Used by edit shop, onboarding and edit profile. Each circle is 32 px and
+/// gets a dark ring with a white dot when selected.
 ///
-/// Each circle sits in a 44 px tap target, so the visible gap between
-/// circles comes from that target rather than from extra spacing.
+/// Each circle sits in a 44 px tap area. That tap area is also what creates
+/// the space between the circles.
 class ColorSwatchPicker extends StatelessWidget {
   /// Creates the picker over [colors], with [selected] picked (if any).
   const ColorSwatchPicker({
@@ -33,24 +31,23 @@ class ColorSwatchPicker extends StatelessWidget {
   /// The picked colour, or null when none of [colors] is.
   final Color? selected;
 
-  /// Called with the tapped colour. Null disables every swatch (e.g. while a
-  /// previous pick is still saving).
+  /// Called with the tapped colour. If null, nothing can be tapped (for
+  /// example while the last choice is still saving).
   final ValueChanged<Color>? onSelected;
 
-  /// What a screen reader announces before each swatch's position ("Tab
-  /// colour 3"). Without a number, eight swatches would all sound the same.
+  /// What a screen reader says for each circle, followed by its number
+  /// ("Tab colour 3").
   final String? semanticLabel;
 
-  /// Colours already taken, by ARGB value, each with a note a screen reader
-  /// reads after the swatch ("Used by Albert Heijn").
+  /// Colours other shops already use, with a note for screen readers
+  /// ("Used by Albert Heijn"). The key is the colour's ARGB value.
   ///
-  /// Marked, never disabled (design: "still offered but marked"): two shops
-  /// the same colour defeats the dots, but forbidding it outright is worse
-  /// when a household really does shop at two blue supermarkets.
+  /// These can still be picked, they just get a mark. Two shops can have the
+  /// same colour if the user really wants.
   final Map<int, String> marked;
 
-  /// Prefix for each swatch's key, followed by its ARGB value -- lets a test
-  /// tap one specific colour instead of guessing at an index.
+  /// Start of each circle's key (followed by its ARGB value), so tests can
+  /// tap a specific colour.
   final String keyPrefix;
 
   final WrapAlignment alignment;
@@ -91,9 +88,8 @@ class _Swatch extends StatelessWidget {
   final Color color;
   final bool selected;
 
-  /// Already used by another shop: a hollow white ring inside the circle.
-  /// Selected wins -- a picked swatch shows the filled dot instead -- so the
-  /// two marks never sit on top of each other.
+  /// Already used by another shop: shows a white ring inside the circle.
+  /// If the circle is also selected, only the selected look is shown.
   final bool taken;
   final String label;
   final VoidCallback? onTap;

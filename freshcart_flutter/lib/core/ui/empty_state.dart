@@ -4,15 +4,12 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// The one empty-state layout, used by every empty screen in the app.
+/// What a screen shows when there's nothing in it ("No items yet").
 ///
-/// The design's rule (Motion spec §11) is that all four empties are the same
-/// centred stack — a light line-illustration slot, a title, one line of
-/// secondary copy, and *at most* one action — so they are one widget rather
-/// than four look-alikes that drift apart.
+/// Every empty screen uses this, so they all look the same: an icon, a
+/// title, one line of text, and at most one button, all centred.
 ///
-/// It fades and rises in because switching to an empty shop tab would
-/// otherwise be a blank flash.
+/// It fades in, so switching to an empty tab doesn't look like a flash.
 class EmptyState extends StatelessWidget {
   /// Creates an empty state.
   const EmptyState({
@@ -25,23 +22,23 @@ class EmptyState extends StatelessWidget {
     super.key,
   });
 
-  /// The line illustration. Rendered at 22px inside a 48px slot.
+  /// The icon. 22px, inside a 48px box.
   final IconData icon;
 
-  /// One short line naming what is missing.
+  /// A short line saying what's missing.
   final String title;
 
-  /// One line of copy saying what to do about it.
+  /// One line saying what the user can do about it.
   final String body;
 
-  /// Tints the illustration to a shop's colour. Ink when null.
+  /// Colours the icon with a shop's colour. Dark ink if null.
   final Color? tint;
 
-  /// At most one action. More than one belongs in [footer].
+  /// One button. If you need more, use [footer].
   final Widget? action;
 
-  /// The exception to "at most one action": the no-lists empty offers two,
-  /// because a dead end there has no other way out.
+  /// Extra buttons. Only used when there are no lists at all, because then
+  /// the user needs more than one way forward.
   final Widget? footer;
 
   @override
@@ -49,7 +46,7 @@ class EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     final ink = theme.colorScheme.onSurface;
 
-    // 12% ink for the slot border, 22% for the glyph — the design's weights.
+    // Icon box border at 12% opacity, icon at 22%, as in the design.
     final slotBorder = (tint ?? ink).withValues(
       alpha: tint == null ? 0.13 : 0.35,
     );
@@ -99,12 +96,10 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// Fades and rises its child in once, on first build.
+/// Fades the child in and slides it up a little, once, when first shown.
 ///
-/// The spec asks for 300 ms, which is not one of the six motion tokens it also
-/// insists everything is built from. [AppMotion.standard] is the nearest token
-/// and the rule about the token set is the stronger of the two, so this uses
-/// it rather than introducing a seventh duration.
+/// Uses [AppMotion.standard], the closest existing duration to the design's
+/// 300 ms.
 class _FadeAndRise extends StatefulWidget {
   const _FadeAndRise({required this.child});
 
@@ -138,8 +133,8 @@ class _FadeAndRiseState extends State<_FadeAndRise>
       child: AppMotion.reduced(context)
           ? widget.child
           : SlideTransition(
-              // 12 px of travel, expressed as a fraction of the child's height
-              // by the enclosing SlideTransition's own sizing.
+              // SlideTransition moves by a fraction of the child's height,
+              // so this works out to about 12 px.
               position: Tween<Offset>(
                 begin: const Offset(0, 0.04),
                 end: Offset.zero,

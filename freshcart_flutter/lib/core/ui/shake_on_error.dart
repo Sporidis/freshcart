@@ -8,13 +8,11 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// Shakes its child once each time [errorText] becomes non-null.
 ///
-/// The design's §07 rule: ±6 px, four oscillations over 320 ms, with
-/// `HapticFeedback.vibrate()`. The shake is not decoration — it is what draws
-/// the eye back to a field the user has already looked away from.
+/// Moves 6 px left and right, 4 times in 320 ms, and vibrates. It pulls the
+/// user's eye back to the field with the error.
 ///
-/// [shake] exists because not every inline error deserves one. A typo earns
-/// "look again"; an expired invite or an unreachable server is not the user's
-/// mistake, and shaking at them for it is just rude.
+/// Set [shake] to false for errors that aren't the user's fault (no
+/// internet, expired invite). Then the error just appears, without shaking.
 class ShakeOnError extends ConsumerStatefulWidget {
   /// Wraps [child].
   const ShakeOnError({
@@ -71,8 +69,8 @@ class _ShakeOnErrorState extends ConsumerState<ShakeOnError>
     animation: _controller,
     builder: (context, child) {
       if (!_controller.isAnimating) return child!;
-      // A decaying sine: the last oscillation is smaller than the first, so it
-      // settles rather than stopping dead.
+      // Each shake is smaller than the one before, so it calms down
+      // instead of stopping suddenly.
       final decay = 1 - Curves.easeOut.transform(_controller.value);
       final offset =
           math.sin(_controller.value * _oscillations * 2 * math.pi) *

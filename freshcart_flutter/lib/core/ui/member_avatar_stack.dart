@@ -4,12 +4,10 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 
-/// Overlapping monogram avatars for who is on a list -- capped at three
-/// with a "+N" cap for the rest: a glance, not a roster (that is what
-/// Household is for).
+/// Small overlapping avatars of who's on a list. Shows at most three, then
+/// "+N" for the rest. The full list is on the Household screen.
 ///
-/// In `core/ui` because two features draw it: the drawer's list rows and
-/// list settings' Household row.
+/// Used in the drawer and in list settings.
 class MemberAvatarStack extends StatelessWidget {
   const MemberAvatarStack({required this.members, super.key});
 

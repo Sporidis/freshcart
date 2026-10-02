@@ -3,12 +3,9 @@ import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 
 /// A settings row that only reports a value — no switch, no tap target.
 ///
-/// For a preference with nothing behind it to toggle, like reduce motion:
-/// that state comes straight from the OS (`AppMotion.reduced`), so an
-/// interactive-looking row would invite a tap that does nothing
-/// (`docs/design-gap-plan.md`'s own decision on this: "read-only status, not
-/// a toggle"). [SettingToggleOption] and [SettingDropdownOption] both look
-/// tappable because they are; this one deliberately doesn't.
+/// For settings the app can't change itself, like reduce motion, which
+/// comes from the phone's settings. It doesn't look tappable, because
+/// tapping it wouldn't do anything.
 class SettingStatusOption extends StatelessWidget {
   const SettingStatusOption({
     required this.title,

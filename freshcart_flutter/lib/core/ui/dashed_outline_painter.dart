@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 
-/// A dashed rounded-rectangle outline -- Flutter has no built-in dashed
-/// [Border], and a small hand-rolled painter beats pulling in a dependency
-/// for one outline.
+/// Draws a dashed border with rounded corners.
 ///
-/// The design uses the dash for exactly one meaning, "add another": the shop
-/// strip's permanent "+" pill and onboarding's "Add a shop not listed" row.
-/// One painter for both keeps that meaning looking identical in both places.
+/// Flutter has no dashed [Border], and this is too small to need a package.
+/// In the design, a dashed border always means "add something".
 class DashedOutlinePainter extends CustomPainter {
-  /// Paints a dashed outline in [color]. A null [radius] draws a stadium
-  /// (fully rounded ends, `height / 2`) -- the pill shape.
+  /// Draws a dashed border in [color]. If [radius] is null, the ends are
+  /// fully round (a pill shape).
   const DashedOutlinePainter({required this.color, this.radius});
 
   final Color color;
 
-  /// Corner radius, or null for a stadium.
+  /// Corner radius, or null for a pill shape.
   final double? radius;
 
   static const double _dash = 4;

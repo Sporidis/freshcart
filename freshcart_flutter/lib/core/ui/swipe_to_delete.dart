@@ -9,23 +9,22 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// The app's one swipe-to-delete (Motion spec §10), for item rows and shop
-/// rows alike.
+/// Swipe a row to the left to delete it. Used for items and shops.
 ///
-/// - Right-to-left only; left-to-right stays free for a future "move".
-/// - Commits at 40% of the row's width.
-/// - A red background whose trash icon grows from 70% to full size over the
-///   first 30% of the drag, then pops to 115% the moment the threshold is
-///   crossed -- with `mediumImpact`, the spec's pre-commit warning.
-/// - Below the threshold the row springs back (`Dismissible`'s own recoil,
-///   decisions #52); a committed row collapses over 220 ms.
+/// - Only right-to-left. Left-to-right is kept free for later.
+/// - You have to swipe 40% of the row's width to delete.
+/// - Behind the row is a red background with a trash icon. The icon grows
+///   while you swipe, and pops bigger (with a vibration) once you've swiped
+///   far enough.
+/// - If you let go too early, the row slides back (decisions.md #52).
 ///
-/// [onSwipe] decides what a committed swipe means. Return true and the row
-/// goes, then [onDismissed] runs (an item: hidden now, undo snackbar). Return
-/// false and the row springs back (a shop: its delete sheet asks first).
+/// [onSwipe] decides what happens after a full swipe:
+/// - return true: the row is removed, then [onDismissed] runs (items do
+///   this and show an undo snackbar);
+/// - return false: the row slides back (shops do this and ask first).
 ///
-/// A swipe is invisible to a screen reader and unreachable by keyboard, so
-/// the same action is also offered as a custom semantics action.
+/// Screen readers can't swipe, so "delete" is also offered as an
+/// accessibility action.
 class SwipeToDelete extends ConsumerStatefulWidget {
   /// Wraps [child]. [dismissKey] must be unique and stable per row.
   const SwipeToDelete({
@@ -41,7 +40,7 @@ class SwipeToDelete extends ConsumerStatefulWidget {
 
   final Key dismissKey;
 
-  /// The semantics action's name ("Delete", "Delete shop").
+  /// What screen readers call the delete action ("Delete", "Delete shop").
   final String semanticLabel;
 
   /// Runs once the swipe commits. True removes the row; false springs it
@@ -51,13 +50,12 @@ class SwipeToDelete extends ConsumerStatefulWidget {
   /// Runs after the row has gone.
   final VoidCallback? onDismissed;
 
-  /// Rounds the red background to match a card-shaped row; null for a
-  /// full-bleed list row.
+  /// Rounded corners for the red background, for rows that look like
+  /// cards. Null for normal full-width rows.
   final BorderRadius? borderRadius;
 
-  /// Off while another gesture owns the row -- multi-select and rearrange,
-  /// where a horizontal swipe racing the reorder drag is the one ambiguity
-  /// the spec says to design out.
+  /// Set to false in select mode and reorder mode, so swiping doesn't
+  /// fight with dragging.
   final bool enabled;
 
   final Widget child;

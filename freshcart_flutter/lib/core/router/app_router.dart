@@ -17,9 +17,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'app_router.g.dart';
 
-/// Route paths, in one place so no screen hard-codes a string.
+/// All route paths, so no screen has to type a URL string itself.
+///
+/// A `...Pattern` is the piece used when defining the route below.
+/// The method with the same name builds the full URL to navigate to.
 abstract final class Routes {
-  /// The signed-in user's lists — the app's home.
+  /// The user's lists. This is the home screen.
   static const String lists = '/lists';
 
   /// The path pattern for one list's detail screen.
@@ -47,14 +50,12 @@ abstract final class Routes {
   static String listSettings(ListId listId) =>
       '/lists/${listId.value}/settings';
 
-  /// Account-level settings, not scoped to any one list.
+  /// App-wide settings (not for one specific list).
   static const String settings = '/settings';
 
-  /// The path pattern for the Edit profile screen, nested under settings.
+  /// The path pattern for the Edit profile screen, under settings.
   ///
-  /// Temporary: its real home is a profile row on the restructured Settings
-  /// screen (`docs/design-gap-plan.md` §5), which does not exist yet — see
-  /// [EditProfileScreen]'s own doc comment.
+  /// Temporary location. See `docs/design-gap-plan.md` §5.
   static const String editProfilePattern = 'profile';
 
   /// The concrete path to Edit profile.
@@ -66,8 +67,8 @@ abstract final class Routes {
   /// The concrete path to Notifications.
   static const String notifications = '$settings/$notificationsPattern';
 
-  /// The splash screen — the app's actual initial route. Shown for exactly
-  /// as long as sign-in takes; it redirects itself onward once it knows.
+  /// The splash screen. The app always starts here. It stays up while the
+  /// user is being signed in, then moves on to the right screen.
   static const String splash = '/splash';
 
   /// The welcome screen.
@@ -76,29 +77,25 @@ abstract final class Routes {
   /// The onboarding flow.
   static const String onboarding = '/onboarding';
 
-  /// Joining an existing list from an invite code, for someone who has not
-  /// been through onboarding yet — Welcome's second exit.
+  /// Joining a list with an invite code, for a new user who hasn't done
+  /// onboarding. This is the second button on the Welcome screen.
   static const String join = '/join';
 }
 
-/// Notifies [ListsScreen] when it is revealed again because the route above
-/// it (list detail, or one of its own sub-routes) was popped -- including by
-/// the OS back-swipe gesture, which is otherwise invisible to a plain
-/// [ModalRoute.isCurrent] check. See [ListsScreen]'s own `didPopNext`.
+/// Tells [ListsScreen] when the user comes back to it, for example by
+/// pressing back or swiping back from a list. See `didPopNext` in
+/// [ListsScreen].
 final listsRouteObserver = RouteObserver<PageRoute<void>>();
 
 /// The app's [GoRouter].
 ///
-/// `keepAlive` because the router owns navigation history; rebuilding it would
-/// throw the user back to the start.
+/// `keepAlive` because the router holds the navigation history. If it were
+/// rebuilt, the user would be sent back to the first screen.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) => GoRouter(
   observers: [listsRouteObserver],
-  // Always Splash — it is the one place that knows whether to send a new
-  // identity to Welcome or a restored one straight to Lists (whose own empty
-  // state already covers "no lists left", a distinct case from "never
-  // onboarded"), and it needs to be an actual route, not a pre-`runApp`
-  // gate, for its mark to `Hero` into Welcome's instead of just cutting.
+  // Always start on the splash screen. It decides where to go next:
+  // new users go to Welcome, returning users go straight to their lists.
   initialLocation: Routes.splash,
   routes: <RouteBase>[
     GoRoute(
@@ -164,9 +161,8 @@ GoRouter appRouter(Ref ref) => GoRouter(
             ),
           ],
           builder: (context, state) {
-            // A malformed id in a pasted or stale link is a routing concern,
-            // not a domain one, so it is caught here and redirected rather
-            // than allowed to throw out of ListId's constructor.
+            // A bad link with an empty id goes back to the lists screen,
+            // instead of crashing inside ListId.
             final raw = state.pathParameters['listId'];
             if (raw == null || raw.isEmpty) return const ListsScreen();
             return ListDetailScreen(listId: ListId(raw));
@@ -175,9 +171,8 @@ GoRouter appRouter(Ref ref) => GoRouter(
       ],
     ),
   ],
-  // The auth guard attaches here in phase 10, and list membership is already
-  // enforced server-side — ListService.requireMembership answers
-  // NotAMemberException, which the detail screen renders as "no access".
-  // Duplicating that check client-side would be a second source of truth.
+  // No redirects for now. The server already checks if you're a member of a
+  // list, and the detail screen shows "no access" if not. Checking again here
+  // would mean two places deciding the same thing.
   redirect: (context, state) => null,
 );
