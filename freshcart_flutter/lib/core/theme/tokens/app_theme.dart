@@ -114,7 +114,7 @@ class AppRadii {
   static const double card = 14; // rows, list cards, buttons
   static const double button = 14;
   static const double input = 12;
-  static const double snackbar = 12;
+  static const double snackbar = 14;
   static const double pill = 999; // tabs, chips, avatars
 
   /// For the app icon on the splash screen. Matches the rounding of iOS app
@@ -313,7 +313,7 @@ class AppTheme {
           ),
         ),
         showDragHandle: true,
-        dragHandleSize: const Size(36, 4),
+        dragHandleSize: const Size(36, 5),
         dragHandleColor: isDark ? Colors.white24 : Colors.black12,
       ),
 
@@ -480,7 +480,7 @@ class AppTheme {
         backgroundColor: surface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
-        width: 272,
+        width: 300,
         shape: const RoundedRectangleBorder(),
       ),
 
