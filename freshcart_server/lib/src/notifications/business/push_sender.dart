@@ -1,6 +1,6 @@
 import 'package:serverpod/serverpod.dart';
 
-/// A push message ready to be delivered.
+/// A push notification, ready to send.
 class PushMessage {
   /// Creates a message for [tokens].
   const PushMessage({
@@ -10,7 +10,7 @@ class PushMessage {
     required this.listId,
   });
 
-  /// The FCM registration tokens to deliver to.
+  /// The phones (FCM tokens) to send to.
   final List<String> tokens;
 
   /// Notification title.
@@ -19,27 +19,26 @@ class PushMessage {
   /// Notification body.
   final String body;
 
-  /// The list the notification concerns, so tapping it can deep-link.
+  /// The list it's about, so tapping it can open that list.
   final UuidValue listId;
 }
 
-/// Delivers push messages.
+/// Sends push notifications.
 ///
-/// An interface, not a Firebase call, so the *decision* logic — who to notify,
-/// what to say, when — is testable without a network or a Firebase project, and
-/// so swapping FCM for something else later touches one class
-/// (`docs/decisions.md` #7).
+/// An interface (not Firebase directly), so the logic (who, what, when)
+/// can be tested without Firebase, and FCM could be replaced by changing
+/// one class (decisions.md #7).
 abstract interface class PushSender {
-  /// Delivers [message]. Implementations must not throw: a failed push must
-  /// never fail the write that triggered it.
+  /// Sends [message]. Must never throw: a failed push must not make the
+  /// save fail.
   Future<void> send(Session session, PushMessage message);
 }
 
-/// The development [PushSender]: logs instead of delivering.
+/// A [PushSender] for development: logs the notification instead of
+/// sending it.
 ///
-/// Used until a Firebase project and service-account credentials are
-/// configured. Logging rather than silently discarding means the aggregation
-/// and recipient logic can be watched working end to end without FCM.
+/// Used when there's no Firebase key. Logging (instead of doing nothing)
+/// lets you see the notification logic work without Firebase.
 class LoggingPushSender implements PushSender {
   /// Creates the logging sender.
   const LoggingPushSender();

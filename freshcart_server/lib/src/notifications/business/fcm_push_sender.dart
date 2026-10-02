@@ -6,14 +6,13 @@ import 'package:googleapis_auth/auth_io.dart' as auth;
 import 'package:http/http.dart' as http;
 import 'package:serverpod/serverpod.dart';
 
-/// Delivers push through the FCM HTTP v1 API, authenticated as a service
-/// account.
+/// Sends push notifications with Firebase (FCM HTTP v1 API), logged in as
+/// a service account.
 ///
-/// There is no official Firebase Admin SDK for Dart, so this speaks the REST
-/// API directly: one signed-in [http.Client] from `googleapis_auth`, one POST
-/// per token to `projects/{projectId}/messages:send`. `googleapis_auth`
-/// refreshes the access token itself, so the client is created once and
-/// reused for the life of the server.
+/// There's no official Firebase Admin SDK for Dart, so this calls the REST
+/// API directly: one POST per phone to `projects/{projectId}/messages:send`.
+/// The [http.Client] from `googleapis_auth` refreshes its own access token,
+/// so it's created once and reused.
 class FcmPushSender implements PushSender {
   const FcmPushSender._(this._client, this._projectId);
 
@@ -22,13 +21,12 @@ class FcmPushSender implements PushSender {
 
   static const _scopes = ['https://www.googleapis.com/auth/firebase.messaging'];
 
-  /// Builds a sender from the service-account key at [keyPath], or returns
-  /// `null` if that file does not exist.
+  /// Creates a sender from the key file at [keyPath], or `null` if the file
+  /// doesn't exist.
   ///
-  /// `null`, not a thrown exception: a missing key is the expected state for
-  /// every developer who has not downloaded one (see
-  /// `docs/decisions.md` #7), and the server must still start and fall back
-  /// to [LoggingPushSender] rather than refuse to boot.
+  /// Returns null (doesn't throw), because most developers won't have the
+  /// key file. The server should still start, and use [LoggingPushSender]
+  /// instead (decisions.md #7).
   static Future<FcmPushSender?> tryCreate(String keyPath) async {
     final file = File(keyPath);
     if (!file.existsSync()) return null;
@@ -43,9 +41,8 @@ class FcmPushSender implements PushSender {
 
   @override
   Future<void> send(Session session, PushMessage message) async {
-    // One request per token: the v1 API has no multicast endpoint (that was
-    // a v0/legacy-API feature), and a failed token must not stop the rest
-    // from being delivered.
+    // One request per phone: the v1 API can't send to many at once. And one
+    // failing phone must not stop the others.
     for (final token in message.tokens) {
       try {
         final response = await _client.post(
@@ -62,17 +59,15 @@ class FcmPushSender implements PushSender {
           }),
         );
         if (response.statusCode != 200) {
-          // An unregistered/expired token is routine (uninstalled app, opted
-          // out) and not worth more than a log line; there is no per-token
-          // cleanup use case yet to react to it with.
+          // An old token (app uninstalled, notifications off) is normal. Just
+          // log it. (Old tokens aren't cleaned up yet.)
           session.log(
             '[fcm] delivery failed (${response.statusCode}): ${response.body}',
             level: LogLevel.warning,
           );
         }
       } on Object catch (error) {
-        // The interface's contract: must not throw. A push failure must
-        // never fail the write that triggered it.
+        // Must never throw: a failed push must not make the save fail.
         session.log('[fcm] delivery error: $error', level: LogLevel.warning);
       }
     }

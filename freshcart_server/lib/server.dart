@@ -16,24 +16,24 @@ void run(List<String> args) async {
   // Initialize Serverpod and connect it with your generated code.
   final pod = Serverpod(args, Protocol(), Endpoints());
 
-  // Initialize authentication services for the server.
-  // Token managers will be used to validate and issue authentication keys,
-  // and the identity providers will be the authentication options available for users.
-  // Shared with the integration tests, so both run the same providers.
+  // Set up login. Token managers create and check login keys; identity
+  // providers are the ways users can log in. The same setup is used by the
+  // integration tests.
   pod.initializeAuthServices(
     tokenManagerBuilders: AuthConfiguration.tokenManagerBuilders,
     identityProviderBuilders: AuthConfiguration.identityProviderBuilders,
   );
 
-  // Buffered item changes are summarised into one push per list per window.
+  // Item changes are collected and sent as one push notification per list
+  // (every 20 seconds), instead of one per change.
   pod.registerFutureCall(
     FlushNotificationsCall(),
     NotificationService.flushCallName,
   );
 
-  // Real FCM delivery once a service-account key exists; every developer
-  // without one keeps the logging sender, and the server still starts
-  // (docs/decisions.md #7).
+  // Real push (FCM) if a Firebase service-account key file exists.
+  // Without it, notifications are only logged, and the server still starts
+  // (decisions.md #7).
   final fcmSender = await FcmPushSender.tryCreate(
     'config/firebase-service-account.json',
   );

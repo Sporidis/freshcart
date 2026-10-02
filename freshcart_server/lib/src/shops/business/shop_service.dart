@@ -2,9 +2,9 @@ import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Business operations on the shops belonging to a list.
+/// The logic for a list's shops.
 abstract final class ShopService {
-  /// Every shop on [listId], for a caller who belongs to it.
+  /// All shops on [listId] (the caller must be a member).
   static Future<List<Shop>> byList(
     Session session,
     UuidValue listId,
@@ -29,7 +29,7 @@ abstract final class ShopService {
     );
   }
 
-  /// Writes [incoming] back, keeping it on the list it started on.
+  /// Saves [incoming]. It always stays on its own list.
   static Future<Shop> save(
     Session session,
     Shop incoming,
@@ -39,18 +39,15 @@ abstract final class ShopService {
     if (stored == null) throw ShopNotFoundException();
     await ListService.requireMembership(session, stored.listId, userId);
 
-    // listId is server-owned, as with items: a shop cannot be moved to another
-    // list by editing a field.
+    // listId is set by the server only (like items), so a shop can't be
+    // moved to another list.
     return Shop.db.updateRow(
       session,
       incoming.copyWith(listId: stored.listId),
     );
   }
 
-  /// How many products are tagged to [shopId].
-  ///
-  /// The delete sheet leads with this number, because "delete Colruyt" reads
-  /// very differently when it is holding six things than when it is empty.
+  /// How many items shop [shopId] has. Shown in the delete sheet.
   static Future<int> itemCount(
     Session session,
     UuidValue shopId,
@@ -65,15 +62,14 @@ abstract final class ShopService {
     );
   }
 
-  /// Deletes a shop, disposing of its products as [disposition] says.
+  /// Deletes a shop. [disposition] says what happens to its items.
   ///
-  /// The caller must choose: products are never destroyed silently, and never
-  /// silently kept either when someone meant to clear them out. Untagging is
-  /// the safe default the schema already provides (ON DELETE SET NULL on
-  /// `shopId`), but it is still stated rather than assumed.
+  /// The caller must choose, so items are never deleted (or kept) without
+  /// the user deciding. (The database would untag them anyway, with ON
+  /// DELETE SET NULL, but we still make it explicit.)
   ///
-  /// Runs in a transaction: moving six products and then failing to delete the
-  /// shop would leave the list in a state the user never asked for.
+  /// In a transaction: moving the items and then failing to delete the
+  /// shop would leave things half done.
   static Future<void> remove(
     Session session,
     UuidValue shopId,
@@ -90,8 +86,7 @@ abstract final class ShopService {
         throw ShopNotFoundException();
       }
       final target = await Shop.db.findById(session, moveToShopId);
-      // A shop from another list is not a valid destination: it would move
-      // products off the list they belong to.
+      // Can't move items to a shop on another list (they'd leave their list).
       if (target == null || target.listId != stored.listId) {
         throw ShopNotFoundException();
       }

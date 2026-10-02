@@ -4,21 +4,21 @@ import 'package:freshcart_server/src/notifications/business/notification_prefere
 import 'package:freshcart_server/src/notifications/business/push_sender.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Decides who gets notified about what, and when.
+/// Decides who gets which push notification, and when.
 abstract final class NotificationService {
-  /// How long changes are buffered before being summarised into one push.
+  /// How long changes are collected before sending one push.
   ///
-  /// Long enough that adding several items in a row is one notification, short
-  /// enough that a collaborator is not left waiting.
+  /// Long enough that adding several items is one notification, short
+  /// enough that others don't wait long.
   static const Duration aggregationWindow = Duration(seconds: 20);
 
-  /// The name the flush future call is registered under.
+  /// The name of the scheduled "send collected changes" job.
   static const String flushCallName = 'flushListNotifications';
 
-  /// The sender used for delivery. Swapped for a fake in tests.
+  /// What actually sends the push. Tests use a fake.
   static PushSender sender = const LoggingPushSender();
 
-  /// Buffers a change and makes sure a flush is scheduled.
+  /// Saves a change, and makes sure sending is scheduled.
   static Future<void> enqueue(
     Session session, {
     required UuidValue listId,
@@ -38,15 +38,12 @@ abstract final class NotificationService {
       ),
     );
 
-    // Keyed on the list, so a second change inside the window joins the
-    // existing batch instead of scheduling a competing flush.
+    // One scheduled job per list, so a second change in the same window
+    // joins the same batch.
     //
-    // `futureCallWithDelay` is marked deprecated in 3.4.13 in favour of
-    // "generated future call methods", but running `serverpod generate` against
-    // a project-defined FutureCall produces no such dispatcher in this version —
-    // the replacement is not shipped yet. This is the only working API, so the
-    // deprecation is suppressed deliberately rather than worked around.
-    // Revisit when the generated dispatcher appears.
+    // `futureCallWithDelay` is deprecated in Serverpod 3.4.13, but the
+    // replacement isn't available yet in this version. So we use it anyway
+    // and hide the warning. Change this when the replacement exists.
     // ignore: deprecated_member_use
     await session.serverpod.futureCallWithDelay(
       flushCallName,
@@ -56,15 +53,14 @@ abstract final class NotificationService {
     );
   }
 
-  /// The device tokens that should receive news about [listId].
+  /// The phones that should get a notification about [listId].
   ///
-  /// Excludes the actor — nobody wants a phone buzzing about their own edit —
-  /// and anyone who has muted the list. [isEnabled] adds a second, independent
-  /// silencing knob on top of that: "not this list" (mute) and "not this kind
-  /// of thing" (a [NotificationPreferences] field) both apply, checked after
-  /// mute since it is the cheaper exclusion. Defaults to notifying everyone
-  /// left after mute, for callers that only ever cared about actor/mute
-  /// exclusion before this parameter existed (decisions #80, phase 2).
+  /// Leaves out:
+  /// - the person who made the change (no buzz for your own edit);
+  /// - people who muted this list;
+  /// - people who turned off this kind of notification ([isEnabled]).
+  ///
+  /// If [isEnabled] isn't given, everyone else gets it (decisions.md #80).
   static Future<List<DeviceToken>> recipientTokens(
     Session session,
     UuidValue listId,
@@ -108,7 +104,8 @@ abstract final class NotificationService {
 
   static bool _alwaysNotified(NotificationPreferences _) => true;
 
-  /// Summarises and sends everything buffered for [listId], then clears it.
+  /// Sends one notification for everything collected for [listId], then
+  /// clears it.
   static Future<void> flush(Session session, UuidValue listId) async {
     final pending = await PendingItemNotification.db.find(
       session,
@@ -116,8 +113,8 @@ abstract final class NotificationService {
     );
     if (pending.isEmpty) return;
 
-    // Cleared first: a delivery failure must not leave a batch that replays
-    // the same notification on the next flush.
+    // Clear first. If sending fails, the same notification must not be sent
+    // again next time.
     await PendingItemNotification.db.deleteWhere(
       session,
       where: (t) => t.listId.equals(listId),
@@ -138,11 +135,10 @@ abstract final class NotificationService {
     await _deliver(session, listId, digest, tokens);
   }
 
-  /// Sends "Someone joins a list" the instant [newMemberId] actually joins --
-  /// not a re-tap of an already-valid invite link (`ListService.join`'s own
-  /// `existing == null` guard decides when this is called at all). Immediate,
-  /// not batched: a join is always exactly one event, unlike item adds
-  /// (decisions #80, phase 2).
+  /// Sends "Someone joins a list" right away when [newMemberId] joins (not
+  /// when an existing member taps the invite again; `ListService.join`
+  /// checks that). Not collected like item changes, because a join is
+  /// always one event (decisions.md #80).
   static Future<void> notifyMemberJoined(
     Session session,
     UuidValue listId, {
@@ -160,11 +156,11 @@ abstract final class NotificationService {
     await _deliver(session, listId, copy, tokens);
   }
 
-  /// Sends "A list is finished" once, the instant its last open item gets
-  /// checked. Called only when `ItemService.save` just transitioned one item
-  /// into checked, never when a save leaves an already-checked item checked
-  /// -- so editing something else about a done row never re-fires this
-  /// (decisions #80, phase 2).
+  /// Sends "A list is finished" once, when the last item gets checked.
+  ///
+  /// Only called when an item just BECAME checked (`ItemService.save`
+  /// decides). So editing an already-checked item doesn't send it again
+  /// (decisions.md #80).
   static Future<void> maybeNotifyListFinished(
     Session session,
     UuidValue listId, {
@@ -180,7 +176,7 @@ abstract final class NotificationService {
       session,
       where: (t) => t.listId.equals(listId),
     );
-    // An empty list isn't "finished" -- there was nothing to finish.
+    // An empty list isn't "finished".
     if (total == 0) return;
 
     final list = await ShoppingList.db.findById(session, listId);

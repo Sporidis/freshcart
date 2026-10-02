@@ -1,7 +1,7 @@
-// Aliased: this file's own ShoppingItem (below) is the generated Serverpod
-// model, and the domain package's entity of the same name is only reached
-// for sortOrderGap -- the one constant that has to agree with the pure
-// midpoint arithmetic in ShoppingItem.sortOrderBetween on the client.
+// The domain import has a prefix (`domain.`), because Serverpod's
+// generated model is also called ShoppingItem. We only need the domain one
+// for `sortOrderGap` and `sameProduct`, so server and app use the same
+// numbers and rules.
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
@@ -9,20 +9,20 @@ import 'package:freshcart_server/src/notifications/business/notification_service
 import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Business operations on the items of a list.
+/// The logic for items on a list.
 abstract final class ItemService {
-  /// The message channel carrying changes for one list.
+  /// The channel name for item updates on one list.
   ///
-  /// Per list, not global: a client watching one list should not be woken by
-  /// traffic on every other list on the server.
+  /// One channel per list, so someone watching one list doesn't get
+  /// messages about all other lists.
   static String channelFor(UuidValue listId) => 'list-items-$listId';
 
-  /// Broadcasts a change to everyone watching [listId], and buffers it for a
-  /// background push.
+  /// Sends a change to everyone watching [listId], and saves it for a push
+  /// notification.
   ///
-  /// Two layers, on purpose: the stream reaches clients that have the app
-  /// **open**, the buffered push reaches those that do not. Fire-and-forget by
-  /// design — a dropped notification must never fail the write that caused it.
+  /// Two ways on purpose: the live stream reaches people with the app open,
+  /// the push reaches people with the app closed. Not awaited: if sending
+  /// fails, the save that caused it must still succeed.
   static Future<void> _announce(
     Session session,
     UuidValue listId,
@@ -40,9 +40,9 @@ abstract final class ItemService {
     );
   }
 
-  /// Every item on [listId], in manual sort order (ties -- everything
-  /// predating the sortOrder column shares the same default -- broken by
-  /// creation order), for a caller who belongs to it.
+  /// All items on [listId], in the user's order (then by creation date for
+  /// old items that all have the same sortOrder). The caller must be a
+  /// member.
   static Future<List<ShoppingItem>> byList(
     Session session,
     UuidValue listId,
@@ -59,13 +59,11 @@ abstract final class ItemService {
     );
   }
 
-  /// The sortOrder that appends past the current end of [listId], for a
-  /// freshly-added item.
+  /// The sortOrder for a new item: after the last item on [listId].
   ///
-  /// A read-then-write rather than a single `MAX(sortOrder)` SQL expression:
-  /// Serverpod's query builder has no aggregate-function escape hatch short
-  /// of raw SQL, and one extra indexed lookup on `add` -- not a hot path --
-  /// is a smaller cost than hand-writing SQL for it.
+  /// Reads the last item first, instead of `MAX(sortOrder)` in SQL, because
+  /// Serverpod's query builder can't do that without raw SQL. One extra
+  /// read when adding is fine.
   static Future<double> _appendSortOrder(
     Session session,
     UuidValue listId, {
@@ -81,20 +79,16 @@ abstract final class ItemService {
     return (last?.sortOrder ?? 0) + domain.ShoppingItem.sortOrderGap;
   }
 
-  /// Appends an item to [listId] -- or, if an open row already on the list
-  /// names the same product (same name, shop and note text -- see
-  /// `domain.ShoppingItem.sameProduct`), bumps that row's quantity instead.
+  /// Adds an item to [listId]. If the same product is already on the list
+  /// and not checked (same name, shop and note, see
+  /// `domain.ShoppingItem.sameProduct`), it adds to that item's quantity
+  /// instead.
   ///
-  /// Reverses decisions #77's "a second row is allowed" stance: re-adding
-  /// the same product repeatedly (the "Recently bought" `+`, most of all) is
-  /// meant to read as "I need more of this," not "here is a second, separate
-  /// line for the same thing." A checked-off row never counts as a match --
-  /// a fresh add for a name already bought starts a new open row.
+  /// Adding the same thing again means "I need more", not "add a second
+  /// row". A checked item doesn't count: then a new row is made.
   ///
-  /// The whole match-then-update-or-insert decision runs inside one
-  /// transaction, the same shape [save]/[clearChecked]/[removeMany]/
-  /// [moveMany] already use, so two near-simultaneous adds of the same
-  /// product cannot both see "no match" and each insert a row.
+  /// All in one transaction, so two adds at the same moment can't both
+  /// make a new row.
   static Future<ShoppingItem> add(
     Session session,
     UuidValue listId,
@@ -108,11 +102,9 @@ abstract final class ItemService {
     final now = DateTime.now().toUtc();
 
     final result = await session.db.transaction((transaction) async {
-      // A list's open items are always a small set -- this is a shopping
-      // list, not a table scan -- so matching in Dart via the one shared
-      // domain rule is simpler than pushing name/note comparison into SQL,
-      // and sidesteps depending on whether the query builder can filter
-      // inside the JSON `note` column at all.
+      // A list only has a few open items, so we compare them in Dart (with
+      // the domain rule). Simpler than doing it in SQL, especially for the
+      // note, which is stored as JSON.
       final open = await ShoppingItem.db.find(
         session,
         where: (t) => t.listId.equals(listId) & t.isChecked.equals(false),
@@ -178,20 +170,20 @@ abstract final class ItemService {
       ),
       itemName: result.name,
     );
-    // Best-effort bookkeeping for suggestions -- must never fail the add
-    // itself, the same reasoning as _announce's own fire-and-forget push.
+    // Save the name for suggestions. If this fails, the add must still
+    // succeed.
     try {
       await _recordNameHistory(session, listId, name);
     } on Object catch (_) {
-      // Swallowed on purpose: the item was already added/merged successfully.
+      // Ignored on purpose: the item was already added.
     }
     return result;
   }
 
-  /// Records that [name] was just added to [listId], so it can be suggested
-  /// again later -- upserts rather than always inserting, since the unique
-  /// index on (listId, name) means a repeat add updates [lastUsedAt] on the
-  /// existing row instead of failing on the constraint.
+  /// Remembers that [name] was added to [listId], for suggestions later.
+  ///
+  /// Updates the existing row if the name is already there (there's a
+  /// unique index on listId + name), otherwise inserts one.
   static Future<void> _recordNameHistory(
     Session session,
     UuidValue listId,
@@ -215,12 +207,11 @@ abstract final class ItemService {
     }
   }
 
-  /// Product names typed on [listId] before, matching [query], most
-  /// recently used first -- the add control's suggestion chips.
+  /// Item names used on [listId] before that match [query], newest first.
+  /// For the suggestion chips.
   ///
-  /// Empty for anything under two characters: matching against one letter
-  /// would surface most of a list's history at once, which is noise, not a
-  /// suggestion.
+  /// Empty for less than 2 letters: one letter would match almost
+  /// everything.
   static Future<List<String>> suggestNames(
     Session session,
     UuidValue listId,
@@ -241,13 +232,8 @@ abstract final class ItemService {
     return [for (final row in rows) row.name];
   }
 
-  /// Every distinct product name typed on [listId] before, most recently
-  /// used first -- "Recently bought" (§06: "the weekly-staples shortcut
-  /// without building a template feature").
-  ///
-  /// Unlike [suggestNames], a browse rather than a filtered search: no
-  /// query text, and no two-character floor to defend against, since there
-  /// is no per-keystroke request here.
+  /// Every item name ever used on [listId], newest first. For "Recently
+  /// bought". Like [suggestNames], but without a search text.
   static Future<List<ItemNameHistory>> recentNames(
     Session session,
     UuidValue listId,
@@ -264,14 +250,12 @@ abstract final class ItemService {
     );
   }
 
-  /// Writes [incoming] back, refusing the write if someone else got there
-  /// first.
+  /// Saves [incoming], unless someone else changed the item first.
   ///
-  /// The optimistic-concurrency check is the whole point of this method: the
-  /// client sends the `updatedAt` it last saw, and if the stored row has since
-  /// moved on we throw [EditConflictException] rather than silently discarding
-  /// the other person's change. Two people editing one shopping list at the
-  /// same time is the normal case here, not an edge case.
+  /// The app sends the `updatedAt` it last saw. If the saved item is newer,
+  /// we throw [EditConflictException] instead of overwriting the other
+  /// person's change. On a shared list, two people editing at once is
+  /// normal.
   static Future<ShoppingItem> save(
     Session session,
     ShoppingItem incoming,
@@ -290,14 +274,12 @@ abstract final class ItemService {
         throw EditConflictException();
       }
 
-      // listId, addedBy and createdAt are server-owned: a client cannot move an
-      // item to another list or rewrite its provenance by editing a field.
+      // listId, addedBy and createdAt are set by the server only. The app
+      // can't move an item to another list or change who added it.
       //
-      // The check attribution is server-owned too. The client says *whether*
-      // the item is checked; the server decides *who* checked it and *when*,
-      // from the session. Otherwise any member could attribute their tick to
-      // someone else, and the "checked off by" label would be unreliable —
-      // which on a shared list is the one thing it must not be.
+      // Same for who checked it: the app only says IF it's checked. The
+      // server fills in WHO and WHEN from the session. Otherwise someone
+      // could fake "checked off by" someone else.
       final now = DateTime.now().toUtc();
       final becameChecked = incoming.isChecked && !stored.isChecked;
       final becameUnchecked = !incoming.isChecked && stored.isChecked;
@@ -336,9 +318,8 @@ abstract final class ItemService {
       return (saved: saved, becameChecked: becameChecked);
     });
 
-    // Outside the transaction and best-effort, same reasoning as enqueue's
-    // own fire-and-forget push: whether this item happened to complete the
-    // list must never fail the save that got it there.
+    // After the transaction, and errors are ignored: the "list finished"
+    // notification must never make the save fail.
     if (result.becameChecked) {
       await NotificationService.maybeNotifyListFinished(
         session,
@@ -349,7 +330,7 @@ abstract final class ItemService {
     return result.saved;
   }
 
-  /// Deletes an item, if the caller belongs to its list.
+  /// Deletes an item (the caller must be on its list).
   static Future<void> remove(
     Session session,
     UuidValue itemId,
@@ -371,12 +352,10 @@ abstract final class ItemService {
     );
   }
 
-  /// Deletes every checked item on [listId] in one operation, returning how
-  /// many were removed.
+  /// Deletes all checked items on [listId]. Returns how many.
   ///
-  /// One transaction, not a loop of [remove] calls: a client tapping "Clear
-  /// checked" means all of them or a clear failure, never half a trolley
-  /// silently left behind because the third delete happened to fail.
+  /// One transaction (not [remove] in a loop): either all are deleted, or
+  /// none. Never half.
   static Future<int> clearChecked(
     Session session,
     UuidValue listId,
@@ -405,15 +384,11 @@ abstract final class ItemService {
     });
   }
 
-  /// Deletes exactly the items in [itemIds] that belong to [listId], in one
-  /// operation, returning how many were removed.
+  /// Deletes the items in [itemIds] that are on [listId]. Returns how many.
   ///
-  /// One transaction, not a loop of [remove] calls, for the same reason as
-  /// [clearChecked]: a multi-select "Delete" is one promise ("these, all of
-  /// them"), and a loop can fail partway through and leave the selection half
-  /// gone with nothing clean to report. Scoped to [listId] so a stale or
-  /// tampered id from another list can only fail to match, never delete
-  /// something the caller does not have through this list.
+  /// One transaction, like [clearChecked]: all or nothing. Only items on
+  /// [listId] match, so an id from another list can never be deleted
+  /// through this.
   static Future<int> removeMany(
     Session session,
     UuidValue listId,
@@ -444,13 +419,11 @@ abstract final class ItemService {
     });
   }
 
-  /// Reassigns every item in [itemIds] that belongs to [listId] to [shopId]
-  /// (null untags them), in one transaction, returning how many moved.
+  /// Moves the items in [itemIds] (on [listId]) to [shopId] (null = no
+  /// shop). Returns how many.
   ///
-  /// One transaction, not a loop of individual saves -- same reasoning as
-  /// [removeMany]: a multi-select "Move" is one promise ("these, all of
-  /// them, to this shop"), and a loop that fails partway through would leave
-  /// the selection split across two shops with nothing clean to report.
+  /// One transaction, like [removeMany]: all or nothing, so items never end
+  /// up split over two shops.
   static Future<int> moveMany(
     Session session,
     UuidValue listId,

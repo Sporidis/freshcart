@@ -3,29 +3,25 @@ import 'dart:typed_data';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// The cloud-storage bucket avatar photos live in.
+/// Where avatar photos are stored.
 ///
-/// Serverpod's own zero-config, database-backed storage, served publicly
-/// over plain HTTP by default -- no external service or credentials to
-/// manage, which fits this project's "no secrets in the repo" rule better
-/// than reaching for S3 or Google Cloud Storage (`docs/decisions.md` #65).
+/// Serverpod's built-in storage (saved in the database, public over HTTP).
+/// No external service or passwords needed, unlike S3 or Google Cloud
+/// Storage (decisions.md #65).
 const String _avatarStorageId = 'public';
 
-/// Reads and writes the caller's FreshCart profile.
+/// Reads and saves the user's profile (name, colour, photo).
 abstract final class ProfileService {
-  /// The name shown to collaborators when a profile has not been set yet.
+  /// The name shown when a user hasn't picked one yet.
   ///
-  /// Anonymous-first means a user reaches a shared list before they have
-  /// chosen a name; the UI nudges them to change this early, because a list
-  /// full of "Someone" is unreadable.
+  /// Users can be on a list before they pick a name, so the app asks for
+  /// one early (a list full of "Someone" isn't helpful).
   static const String fallbackDisplayName = 'Someone';
 
-  /// The largest avatar photo accepted, in bytes.
+  /// The biggest avatar photo allowed, in bytes.
   ///
-  /// Mirrors `AuthUser.maxAvatarPhotoBytes` on the client -- checked here too
-  /// as a backstop against a client that skipped its own downsizing step,
-  /// the same defence-in-depth reasoning `suggestNames`' two-character floor
-  /// already uses (`docs/decisions.md` #64).
+  /// Same as `AuthUser.maxAvatarPhotoBytes` in the app. Checked here too, in
+  /// case an app doesn't make the photo smaller first.
   static const int maxAvatarPhotoBytes = 5 * 1024 * 1024;
 
   static Future<MemberProfile?> _profileFor(
@@ -36,7 +32,7 @@ abstract final class ProfileService {
     where: (t) => t.authUserId.equals(authUserId),
   );
 
-  /// The caller's display name, or [fallbackDisplayName] if none is set.
+  /// The user's name, or [fallbackDisplayName] if they haven't set one.
   static Future<String> displayNameFor(
     Session session,
     UuidValue authUserId,
@@ -44,14 +40,13 @@ abstract final class ProfileService {
       (await _profileFor(session, authUserId))?.displayName ??
       fallbackDisplayName;
 
-  /// The caller's chosen avatar colour, or `null` if they have not set one.
+  /// The user's avatar colour, or `null` if they haven't set one.
   static Future<int?> avatarColorArgbFor(
     Session session,
     UuidValue authUserId,
   ) async => (await _profileFor(session, authUserId))?.avatarColorArgb;
 
-  /// The caller's avatar photo, resolved to a public URL, or `null` if they
-  /// have not set one.
+  /// The public URL of the user's avatar photo, or `null`.
   static Future<String?> avatarPhotoUrlFor(
     Session session,
     UuidValue authUserId,
@@ -60,9 +55,9 @@ abstract final class ProfileService {
     (await _profileFor(session, authUserId))?.avatarPhotoPath,
   );
 
-  /// The profiles of everyone in [authUserIds], keyed by auth user id, in
-  /// one query -- what a list's member rows are filled in from. Anyone with
-  /// no profile yet is simply missing from the map.
+  /// The profiles of everyone in [authUserIds] (in one query), by user id.
+  /// Used to fill in a list's members. People without a profile aren't in
+  /// the map.
   static Future<Map<UuidValue, MemberProfile>> profilesFor(
     Session session,
     Set<UuidValue> authUserIds,
@@ -75,11 +70,10 @@ abstract final class ProfileService {
     return {for (final p in profiles) p.authUserId: p};
   }
 
-  /// The public URL for a stored avatar [path], or `null` for no photo.
+  /// The public URL for a stored photo [path], or `null` for no photo.
   ///
-  /// Recomputed on every read rather than stored (see `avatarPhotoPath`'s
-  /// own doc comment), so it is one helper both the caller's own profile
-  /// and every list's member rows go through.
+  /// Calculated on every read (not stored), and used for both your own
+  /// profile and list members.
   static Future<String?> photoUrlFor(Session session, String? path) async {
     if (path == null) return null;
     final url = await session.storage.getPublicUrl(
@@ -89,7 +83,7 @@ abstract final class ProfileService {
     return url?.toString();
   }
 
-  /// Creates or updates the caller's profile.
+  /// Creates or updates the user's profile.
   static Future<MemberProfile> setDisplayName(
     Session session,
     UuidValue authUserId,
@@ -112,11 +106,8 @@ abstract final class ProfileService {
     );
   }
 
-  /// Sets the caller's avatar colour.
-  ///
-  /// Not restricted to a preset swatch list here either -- see
-  /// [AuthPort.setAvatarColor]'s own note on the client: a picker offering
-  /// only presets is a UI choice, not a rule this layer enforces.
+  /// Sets the user's avatar colour. Any colour is allowed (only showing
+  /// preset colours is a choice of the app's UI).
   static Future<MemberProfile> setAvatarColor(
     Session session,
     UuidValue authUserId,
@@ -140,13 +131,12 @@ abstract final class ProfileService {
     );
   }
 
-  /// Uploads and sets the caller's avatar photo, replacing any existing one.
+  /// Uploads a new avatar photo, replacing the old one.
   ///
-  /// Every upload gets a *new* path, and the previous file is deleted once
-  /// the new one is stored. Overwriting one fixed path kept the public URL
-  /// identical across uploads, and image caches -- Flutter's `NetworkImage`,
-  /// a browser, a CDN -- key on the URL, so everyone kept seeing the old
-  /// photo (docs/decisions.md #98).
+  /// Every upload gets a NEW file path, then the old file is deleted. If we
+  /// reused the same path, the URL wouldn't change, and image caches (in
+  /// Flutter, browsers) would keep showing the old photo
+  /// (decisions.md #98).
   static Future<MemberProfile> setAvatarPhoto(
     Session session,
     UuidValue authUserId,
@@ -179,8 +169,8 @@ abstract final class ProfileService {
             session,
             existing.copyWith(avatarPhotoPath: path),
           );
-    // Only once the row points at the new file: a failure before this line
-    // leaves the old photo intact and still referenced, never a dangling one.
+    // Delete the old file only now, after the profile points to the new one.
+    // If something failed before this, the old photo still works.
     if (previousPath != null && previousPath != path) {
       await session.storage.deleteFile(
         storageId: _avatarStorageId,
@@ -190,11 +180,10 @@ abstract final class ProfileService {
     return saved;
   }
 
-  /// Removes the caller's avatar photo, if they have one.
+  /// Removes the user's avatar photo.
   ///
-  /// Reverts them to their stored colour, or the automatic hash-based one if
-  /// they never set either -- there is nothing else to clear here, the
-  /// client works that fallback out for itself from a `null` photo.
+  /// The app then shows their colour (or the automatic one). Nothing else
+  /// to do here.
   static Future<MemberProfile?> clearAvatarPhoto(
     Session session,
     UuidValue authUserId,

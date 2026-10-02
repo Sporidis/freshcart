@@ -3,25 +3,23 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
 import 'package:serverpod_auth_idp_server/providers/email.dart';
 
-/// The identity providers and token managers FreshCart runs with.
+/// The login setup (identity providers and token managers).
 ///
-/// Extracted from `server.dart` so the integration tests can initialise the
-/// *same* configuration. `withServerpod` does not run the server's `run()`, so
-/// without this the admin APIs used by account linking would throw
-/// "AuthServices is not set" in tests while working in production — the worst
-/// kind of divergence between the two.
+/// In its own file so the integration tests use the exact same setup. Tests
+/// don't run `server.dart`'s `run()`, and without this the account linking
+/// code would fail in tests ("AuthServices is not set") but work in
+/// production.
 abstract final class AuthConfiguration {
-  /// JWT for authentication keys towards the server.
+  /// Uses JWT for login keys.
   static List<TokenManagerBuilder> get tokenManagerBuilders => [
     JwtConfigFromPasswords(),
   ];
 
-  /// The providers a user can authenticate with.
+  /// The ways a user can log in.
   static List<IdentityProviderBuilder> get identityProviderBuilders => [
-    // Anonymous-first: users reach a working list without a signup form, and
-    // keep the same authUserId when they later link a provider. The default
-    // per-IP rate limit is kept — an unauthenticated account-creation endpoint
-    // is exactly the sort of thing that gets abused.
+    // Anonymous login, so there's no signup form. The default limit per IP
+    // address is kept, because anyone can call this without logging in, so
+    // it could be abused to create lots of accounts.
     const AnonymousIdpConfig(),
     EmailIdpConfigFromPasswords(
       sendRegistrationVerificationCode: sendRegistrationCode,
@@ -29,10 +27,10 @@ abstract final class AuthConfiguration {
     ),
   ];
 
-  /// Delivers a registration code.
+  /// Sends a registration code.
   ///
-  /// Logs it for now. Wiring a real mail service is a deployment concern, not
-  /// an architectural one.
+  /// For now it's only logged. A real email service can be added when
+  /// deploying.
   static void sendRegistrationCode(
     Session session, {
     required String email,
@@ -43,7 +41,7 @@ abstract final class AuthConfiguration {
     session.log('[EmailIdp] Registration code ($email): $verificationCode');
   }
 
-  /// Delivers a password reset code.
+  /// Sends a password reset code (only logged for now).
   static void sendPasswordResetCode(
     Session session, {
     required String email,

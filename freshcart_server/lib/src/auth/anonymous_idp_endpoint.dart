@@ -1,12 +1,11 @@
 import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
 
-/// Exposes the anonymous identity provider to clients.
+/// Endpoint for anonymous login.
 ///
-/// FreshCart is anonymous-first: a user gets a stable `authUserId` on first
-/// launch with no signup form, and Google/email are *linked* to that same id
-/// later (`docs/decisions.md` #6). Every endpoint sets `requireLogin`, so
-/// without this the app could not call anything at all.
+/// Users get an account on first launch, without a signup form. Later they
+/// can link email or Google to the same `authUserId` (decisions.md #6).
+/// Every endpoint requires login, so without this the app couldn't call
+/// anything.
 ///
-/// Extending the base endpoint is what publishes it — the Flutter side looks
-/// the endpoint up by type and fails loudly if a server has not exposed it.
+/// Just extending the base class is enough to make it available.
 class AnonymousIdpEndpoint extends AnonymousIdpBaseEndpoint {}
