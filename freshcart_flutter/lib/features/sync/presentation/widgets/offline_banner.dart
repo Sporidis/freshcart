@@ -4,9 +4,9 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
-/// The strip above the list that says the device is offline, or still
-/// pushing queued writes. Which of the two (if either) is decided by
-/// [syncBannerProvider]; this only draws it.
+/// The bar above the list that says "offline" or "syncing".
+///
+/// [syncBannerProvider] decides which one. This widget only draws it.
 class OfflineSyncingBanner extends ConsumerWidget {
   const OfflineSyncingBanner({super.key});
 
@@ -27,9 +27,8 @@ class OfflineSyncingBanner extends ConsumerWidget {
   }
 }
 
-/// The strip itself. The theme's inverse surface -- dark in light mode,
-/// light in dark mode -- so it stands apart from the list in both, the same
-/// pairing a snackbar uses.
+/// The bar itself. Dark in light mode and light in dark mode (like a
+/// snackbar), so it stands out.
 class _BuildBanner extends StatelessWidget {
   const _BuildBanner({required this.icon, required this.message});
 

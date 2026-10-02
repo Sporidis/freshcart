@@ -1,15 +1,14 @@
 import 'package:drift/drift.dart';
 
-/// What kind of write a [PendingOperations] row is waiting to replay.
+/// What kind of change a queued row is.
 ///
-/// One value per distinct repository method that gets queued, combined with
-/// [PendingEntityType] to know which one to call on replay — except `create`
-/// (shared by `item.add`/`list.create`: each entity type has exactly one
-/// creation op, so `entityType` alone disambiguates) and `edit` (item `save`
-/// only — `toggle`/`edit`/`reorder` all funnel through that one method, so
-/// the repository layer genuinely can't tell them apart; this is the *only*
-/// value allowed to stay coarse, for that reason). `joinByCode` has no value
-/// here — it's not queued, see offline-sync-plan.md Phase C.
+/// Together with [PendingEntityType] (item or list), this tells
+/// [QueueDrainer] which repository method to call.
+///
+/// - `create` is used for both new items and new lists.
+/// - `edit` covers every item change (check, rename, reorder...), because
+///   they all go through the same `save()` method.
+/// - Joining a list isn't here: it can't be done offline.
 enum PendingOpType {
   create,
   edit,
@@ -25,14 +24,12 @@ enum PendingOpType {
   removeMember,
 }
 
-/// Which repository a [PendingOperations] row belongs to, so a replay knows
-/// which one to call it against.
+/// Whether a queued change is about an item or a list.
 enum PendingEntityType { item, list }
 
-/// A write that couldn't reach the server and is waiting to be replayed.
+/// Database table: changes made offline, waiting to be sent to the server.
 ///
-/// See offline-sync-plan.md §3 Phase B — this is the durable record behind
-/// the in-memory queue idea, built to survive the app being killed.
+/// One row per change. [payload] is the change's data as JSON.
 class PendingOperations extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get entityType => textEnum<PendingEntityType>()();

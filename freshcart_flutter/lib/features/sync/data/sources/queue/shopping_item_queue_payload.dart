@@ -1,14 +1,13 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Converts a [ShoppingItem] to and from the JSON shape a queued `edit`
-/// stores — the full entity, not just the fields a user edit changed, since
-/// replaying it means calling `save()`, which needs a complete item.
+/// Converts a [ShoppingItem] to JSON and back, for the offline queue.
 ///
-/// Both directions live here, together, so the writer (`ItemRepositoryImpl
-/// .save`'s `onUnreachable`) and the reader (`QueueDrainer`) can never drift
-/// out of sync on which keys exist.
+/// Stores the whole item, not just what changed, because `save()` needs a
+/// complete item.
+///
+/// Both directions are in one file so the keys always match.
 extension ShoppingItemQueuePayload on ShoppingItem {
-  /// Serializes this item for [PendingOperationsQueue.enqueue].
+  /// Turns this item into JSON.
   Map<String, dynamic> toQueuePayload() => {
     'itemId': id.value,
     'listId': listId.value,
@@ -28,8 +27,8 @@ extension ShoppingItemQueuePayload on ShoppingItem {
   };
 }
 
-/// Rebuilds the [ShoppingItem] a queued `edit` was captured from —
-/// the inverse of [ShoppingItemQueuePayload.toQueuePayload].
+/// Turns JSON from [ShoppingItemQueuePayload.toQueuePayload] back into a
+/// [ShoppingItem].
 ShoppingItem shoppingItemFromQueuePayload(Map<String, dynamic> payload) {
   final noteText = payload['noteText'] as String?;
   return ShoppingItem(
