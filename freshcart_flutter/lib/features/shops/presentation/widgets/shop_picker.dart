@@ -4,14 +4,13 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// A row of pills to pick a shop: "No shop", then one per shop. Used in
 /// the item sheet and the "Move to shop" sheet.
 ///
-/// Uses the same [ShopTabPill] as the shop tabs, so a picked shop looks
-/// exactly like its tab.
+/// Uses [ShopPickerPill], not the tab pill: a tab filters, this chooses.
 ///
 /// [onSelected] gets null for "No shop". Leave [isSelected] out if nothing
 /// should look selected (like the Move sheet). Pass it to show the current
@@ -32,18 +31,20 @@ class ShopPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // TapTarget gives each 40px pill 2px of tap margin above and below, so
+    // the visual gap between rows stays 8.
     return Wrap(
       spacing: AppSpacing.gapSmall,
-      runSpacing: AppSpacing.gapSmall,
+      runSpacing: AppSpacing.xs,
       children: [
-        _Choice(
+        ShopPickerPill(
           label: t.shops.none,
           color: null,
           selected: isSelected?.call(null) ?? false,
           onTap: () => onSelected(null),
         ),
         for (final shop in shops)
-          _Choice(
+          ShopPickerPill(
             label: shop.name,
             color: shop.color.toColor(),
             selected: isSelected?.call(shop.id) ?? false,
@@ -52,33 +53,6 @@ class ShopPicker extends StatelessWidget {
       ],
     );
   }
-}
-
-/// One pill, plus telling screen readers whether it's selected.
-class _Choice extends StatelessWidget {
-  const _Choice({
-    required this.label,
-    required this.color,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String label;
-  final Color? color;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: selected,
-    child: ShopTabPill(
-      label: label,
-      active: selected,
-      color: color,
-      onTap: onTap,
-    ),
-  );
 }
 
 @Preview(group: 'Shops', name: 'Shop picker', size: Size(393, 120))

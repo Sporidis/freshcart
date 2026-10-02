@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -135,101 +136,87 @@ class _ItemSheetState extends State<ItemSheet> {
     final theme = Theme.of(context);
     final t = widget.t;
 
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.sheetH,
-        0,
-        AppSpacing.sheetH,
-        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            widget.isEditing
-                ? t.items.editProductTitle
-                : t.items.newProductTitle,
-            style: theme.textTheme.headlineSmall,
-          ),
+    return AppSheetScaffold(
+      title: widget.isEditing
+          ? t.items.editProductTitle
+          : t.items.newProductTitle,
+      children: [
+        _fieldLabel(context, t.items.nameLabel),
+        TextField(
+          controller: _name,
+          autofocus: !widget.isEditing,
+          textCapitalization: TextCapitalization.sentences,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(hintText: t.items.namePlaceholder),
+          onSubmitted: (_) => _save(),
+        ),
+        // Shop comes before Amount, as in the design.
+        if (widget.shops.isNotEmpty) ...[
           const SizedBox(height: AppSpacing.gap),
-          _fieldLabel(context, t.items.nameLabel),
-          TextField(
-            controller: _name,
-            autofocus: !widget.isEditing,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.done,
-            decoration: InputDecoration(hintText: t.items.namePlaceholder),
-            onSubmitted: (_) => _save(),
+          _fieldLabel(context, t.items.shopLabel),
+          ShopPicker(
+            shops: widget.shops,
+            t: t,
+            isSelected: (id) => id == _shopId,
+            onSelected: (id) => setState(() => _shopId = id),
           ),
-          // Shop comes before Amount, as in the design.
-          if (widget.shops.isNotEmpty) ...[
-            const SizedBox(height: AppSpacing.gap),
-            _fieldLabel(context, t.items.shopLabel),
-            ShopPicker(
-              shops: widget.shops,
-              t: t,
-              isSelected: (id) => id == _shopId,
-              onSelected: (id) => setState(() => _shopId = id),
-            ),
-          ],
-          const SizedBox(height: AppSpacing.gap),
-          DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(
-                top: BorderSide(color: theme.colorScheme.outlineVariant),
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.only(top: AppSpacing.gap),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(t.items.amountLabel, style: theme.textTheme.bodyLarge),
-                  QuantityStepper(
-                    quantity: _quantity,
-                    // Minimum is 1. Zero of something makes no sense on a
-                    // shopping list (and AddItem rejects it).
-                    onDecrement: _quantity > 1
-                        ? () => setState(() => _quantity--)
-                        : null,
-                    onIncrement: () => setState(() => _quantity++),
-                  ),
-                ],
-              ),
+        ],
+        const SizedBox(height: AppSpacing.gap),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(
+              top: BorderSide(color: theme.colorScheme.outlineVariant),
             ),
           ),
-          const SizedBox(height: AppSpacing.gap),
-          _fieldLabel(context, t.items.notePlaceholder),
-          TextField(
-            controller: _note,
-            textCapitalization: TextCapitalization.sentences,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _save(),
+          child: Padding(
+            padding: const EdgeInsets.only(top: AppSpacing.gap),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(t.items.amountLabel, style: theme.textTheme.bodyLarge),
+                QuantityStepper(
+                  quantity: _quantity,
+                  // Minimum is 1. Zero of something makes no sense on a
+                  // shopping list (and AddItem rejects it).
+                  onDecrement: _quantity > 1
+                      ? () => setState(() => _quantity--)
+                      : null,
+                  onIncrement: () => setState(() => _quantity++),
+                ),
+              ],
+            ),
           ),
-          const SizedBox(height: AppSpacing.gap),
+        ),
+        const SizedBox(height: AppSpacing.gap),
+        _fieldLabel(context, t.items.notePlaceholder),
+        TextField(
+          controller: _note,
+          textCapitalization: TextCapitalization.sentences,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _save(),
+        ),
+        const SizedBox(height: AppSpacing.gap),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _save,
+            child: Text(widget.isEditing ? t.common.save : t.items.add),
+          ),
+        ),
+        if (widget.isEditing) ...[
+          const SizedBox(height: AppSpacing.sm),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              onPressed: _save,
-              child: Text(widget.isEditing ? t.common.save : t.items.add),
+            child: TextButton(
+              onPressed: _remove,
+              style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error,
+              ),
+              child: Text(t.items.remove),
             ),
           ),
-          if (widget.isEditing) ...[
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: TextButton(
-                onPressed: _remove,
-                style: TextButton.styleFrom(
-                  foregroundColor: Theme.of(context).colorScheme.error,
-                ),
-                child: Text(t.items.remove),
-              ),
-            ),
-          ],
         ],
-      ),
+      ],
     );
   }
 }

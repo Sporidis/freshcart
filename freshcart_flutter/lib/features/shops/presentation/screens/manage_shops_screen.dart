@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/core/ui/dashed_add_row.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_state.dart';
@@ -186,10 +187,8 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
   }
 
   Future<void> _edit(Translations t) async {
-    await showModalBottomSheet<void>(
+    await showAppSheet<void>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => EditShopSheet(
         shop: shop,
         siblings: widget.siblings,
@@ -213,10 +212,8 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
     }
     if (!mounted) return;
 
-    final choice = await showModalBottomSheet<ShopDeletion>(
+    final choice = await showAppSheet<ShopDeletion>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => DeleteShopSheet(
         shop: shop,
         itemCount: count,

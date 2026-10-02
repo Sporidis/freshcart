@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
@@ -127,10 +128,8 @@ class _ItemFlows {
   }
 
   Future<void> edit(ShoppingItem item) async {
-    final outcome = await showModalBottomSheet<ItemSheetOutcome>(
+    final outcome = await showAppSheet<ItemSheetOutcome>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => ItemSheet.edit(item: item, shops: s.shops, t: t),
     );
     switch (outcome) {
@@ -159,10 +158,8 @@ class _ItemFlows {
   /// Opens the item sheet. Returns true if an item was added. Then
   /// QuickAddBar clears and closes; if false, it keeps the typed text.
   Future<bool> addWithDetails(String initialName) async {
-    final outcome = await showModalBottomSheet<ItemSheetOutcome>(
+    final outcome = await showAppSheet<ItemSheetOutcome>(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
       builder: (_) => ItemSheet.add(
         initialName: initialName,
         shops: s.shops,

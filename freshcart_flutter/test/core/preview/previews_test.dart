@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
+import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
@@ -28,6 +30,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -82,6 +85,9 @@ void main() {
     'colour swatch picker': colorSwatchPickerPreview,
     'setting row': settingRowPreview,
     'shop picker': shopPickerPreview,
+    'shop picker pill': shopPickerPillPreview,
+    'sheet scaffold': appSheetScaffoldPreview,
+    'mode bar': modeBarPreview,
   };
 
   for (final MapEntry(key: name, value: build) in previews.entries) {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 
@@ -21,10 +22,8 @@ Future<void> addShop(
   final controller = ref.read(shopsControllerProvider(listId).notifier);
   final t = ref.read(translationsProvider);
 
-  await showModalBottomSheet<void>(
+  await showAppSheet<void>(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => EditShopSheet(
       shop: null,
       siblings: siblings,

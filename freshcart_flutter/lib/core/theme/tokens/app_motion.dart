@@ -40,7 +40,9 @@ class AppMotion {
   static const Curve exitStd = Cubic(0.4, 0, 0.6, 1);
 
   static const Duration shopHighlight = Duration(milliseconds: 280);
-  static const Duration listSlide = Duration(milliseconds: 220); // +24ms stagger, 28px travel
+  static const Duration listSlide = Duration(
+    milliseconds: 220,
+  ); // +24ms stagger, 28px travel
   static const Duration colorWave = Duration(milliseconds: 400); // restartable
   static const Duration sharedTitle = Duration(milliseconds: 380);
   static const Duration sheetOpen = Duration(milliseconds: 440);
@@ -62,7 +64,9 @@ class AppMotion {
   static const Duration reflow = Duration(milliseconds: 380);
   static const Duration toastIn = Duration(milliseconds: 380);
   static const Duration toastHold = Duration(milliseconds: 3400);
-  static const Duration onboardingStep = Duration(milliseconds: 340); // 36px, 40ms stagger
+  static const Duration onboardingStep = Duration(
+    milliseconds: 340,
+  ); // 36px, 40ms stagger
   static const double pressScale = 0.97;
 
   static const SpringDescription spring = SpringDescription(

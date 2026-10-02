@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -20,10 +20,8 @@ Future<MoveToShopOutcome?> showMoveToShopSheet(
   BuildContext context, {
   required List<Shop> shops,
   required Translations t,
-}) => showModalBottomSheet<MoveToShopOutcome>(
+}) => showAppSheet<MoveToShopOutcome>(
   context: context,
-  isScrollControlled: true,
-  showDragHandle: true,
   builder: (_) => _MoveToShopSheet(shops: shops, t: t),
 );
 
@@ -37,32 +35,15 @@ class _MoveToShopSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AppSpacing.sheetH,
-          0,
-          AppSpacing.sheetH,
-          AppSpacing.xl,
+    return AppSheetScaffold(
+      title: t.items.moveTo,
+      children: [
+        ShopPicker(
+          shops: shops,
+          t: t,
+          onSelected: (id) => Navigator.of(context).pop(MoveToShopOutcome(id)),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              t.items.moveTo,
-              style: Theme.of(context).textTheme.headlineSmall,
-            ),
-            const SizedBox(height: AppSpacing.gap),
-            ShopPicker(
-              shops: shops,
-              t: t,
-              onSelected: (id) =>
-                  Navigator.of(context).pop(MoveToShopOutcome(id)),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 }

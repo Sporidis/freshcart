@@ -29,8 +29,9 @@ class ItemsController extends _$ItemsController {
   /// same row.
   final Map<ItemId, ShoppingItem> _pendingRemoval = {};
 
-  /// How long the user can undo a swipe-delete (same as the Undo snackbar).
-  static const swipeUndoWindow = Duration(seconds: 4);
+  /// How long the user can undo a delete. Matches the v3 toast's hold
+  /// (`AppMotion.toastHold`), so Undo works exactly while it's on screen.
+  static const swipeUndoWindow = Duration(milliseconds: 3400);
 
   @override
   Future<Result<List<ShoppingItem>>> build(ListId listId) {
