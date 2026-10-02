@@ -2616,3 +2616,32 @@ token system rather than in its middle:
 **Left as is:** `CheckCircle` stays 22px because the whole item row is its tap target. The
 quantity stepper's 30px buttons are under 44, but fixing them would visibly change the stepper's
 ring, so that's a design call rather than a refactor.
+
+## 106. Design v3: adopt the new interaction model on top of the existing features
+
+**Problem:** the design bundle was re-exported with a "v3 · current design" layer: the list is
+home, lists live in the drawer, a hold opens everything else, ticks settle in batches, and every
+bulk or destructive action ends in an undo toast. Each spec doc says its v3 section wins where it
+disagrees with older flows. The colours are unchanged; the theme changed in two small places, and
+`app_motion.dart` gained curves (`ios`, `emphasized`, `exitStd`) and one named duration per
+interaction.
+
+**Decision:**
+- **v3 is a presentation change.** The domain already has `sortOrder`, `sortOrderBetween()` and
+  `ReorderItem`, and reordering inside a shop tab only needs the visible neighbours, so v3 needs
+  no domain, server or data change. The work stays in `presentation/`, `core/` and the UI
+  controllers.
+- **The v3 motion tokens sit beside the old ones**, not instead of them. Existing widgets keep
+  their tokens until they're restyled, so each phase changes only what it restyles.
+- **Silence isn't deletion.** v3 doesn't show search, swipe-to-delete, the FAB suggestions or the
+  celebration card. All four are kept and restyled; the prototype shows one path through the app,
+  not a list of removals.
+- **The ⋮ menu goes**; its actions already exist in List settings, which the avatars now open.
+- **New list and Edit profile become sheets; Join stays a screen**, because it is also the
+  deep-link and first-launch entry, with a name step for people who are new.
+- **Pushes stay Cupertino.** v3's single push (350ms, `ios` curve, the outgoing page moving −30%)
+  is close enough to the Cupertino transition that a custom one wouldn't earn its code.
+- **The 22px check circle becomes 26px.** #105 left that to a design call, and v3 makes it.
+- **Small theme changes now:** sheet drag handle 36×5, drawer 300px, toast radius 14. The 98px
+  "above the FAB" offset belongs to the list's undo toast, not to every SnackBar, so it lives in
+  `showUndoToast`, not in the theme.

@@ -26,6 +26,45 @@ class AppMotion {
   static const Curve sheet = Curves.easeOutQuint;
   static const Curve press = Curves.easeOut;
 
+  // ---- Design v3 interaction tokens (the main prototype) ----
+  // Where these disagree with the older tokens above, the v3 value wins for
+  // anything built or restyled to the v3 design.
+
+  /// iOS sheet and push curve.
+  static const Curve ios = Cubic(0.32, 0.72, 0, 1);
+
+  /// Emphasised decelerate: shared elements, batch moves, toasts.
+  static const Curve emphasized = Cubic(0.2, 0.8, 0.2, 1);
+
+  /// Accelerating exit for sheets and the drawer.
+  static const Curve exitStd = Cubic(0.4, 0, 0.6, 1);
+
+  static const Duration shopHighlight = Duration(milliseconds: 280);
+  static const Duration listSlide = Duration(milliseconds: 220); // +24ms stagger, 28px travel
+  static const Duration colorWave = Duration(milliseconds: 400); // restartable
+  static const Duration sharedTitle = Duration(milliseconds: 380);
+  static const Duration sheetOpen = Duration(milliseconds: 440);
+  static const Duration sheetClose = Duration(milliseconds: 300);
+  static const Duration drawerOpen = Duration(milliseconds: 360);
+  static const Duration drawerClose = Duration(milliseconds: 260);
+  static const Duration push = Duration(milliseconds: 350);
+  static const Duration fabRollOpen = Duration(milliseconds: 380);
+  static const Duration fabRollClose = Duration(milliseconds: 280);
+  static const Duration holdDelay = Duration(milliseconds: 450);
+  static const Duration holdMenuIn = Duration(milliseconds: 340);
+
+  /// Quiet period after the last tick before checked rows move to Done.
+  static const Duration checkSettle = Duration(milliseconds: 750);
+
+  /// [checkSettle] under reduced motion.
+  static const Duration checkSettleReduced = Duration(milliseconds: 300);
+  static const Duration batchMove = Duration(milliseconds: 480); // 45ms stagger
+  static const Duration reflow = Duration(milliseconds: 380);
+  static const Duration toastIn = Duration(milliseconds: 380);
+  static const Duration toastHold = Duration(milliseconds: 3400);
+  static const Duration onboardingStep = Duration(milliseconds: 340); // 36px, 40ms stagger
+  static const double pressScale = 0.97;
+
   static const SpringDescription spring = SpringDescription(
     mass: 1,
     stiffness: 180,
