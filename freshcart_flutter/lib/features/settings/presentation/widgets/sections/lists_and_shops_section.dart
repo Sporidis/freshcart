@@ -11,17 +11,19 @@ import 'package:freshcart_flutter/features/settings/application/settings_screen/
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Settings screen's "Lists & shops" group: doors into each list's
-/// settings, and into making a new one. Draws [rows] as given -- counts and
-/// "Open now" are already decided by `SettingsScreenController`.
+/// The "Lists & shops" section in Settings: a row per list (opens that
+/// list's settings), and a "New list" row.
+///
+/// Just draws [rows]. `SettingsScreenController` already worked out the
+/// counts and "Open now".
 class ListsAndShopsSection extends StatelessWidget {
   const ListsAndShopsSection({required this.t, required this.rows, super.key});
 
   final Translations t;
   final List<SettingsListRow> rows;
 
-  /// "Open now · 2 shops · 2 members" -- one string, so a long list name's
-  /// summary wraps or truncates as a unit instead of overflowing a Row.
+  /// Builds "Open now · 2 shops · 2 members" as one string, so it wraps
+  /// nicely instead of overflowing.
   String _summary(SettingsListRow row) {
     final members = row.list.members.length;
     final shopCount = row.shopCount;
@@ -45,10 +47,8 @@ class ListsAndShopsSection extends StatelessWidget {
             subtitle: _summary(row),
             onTap: () => context.push(Routes.listSettings(row.list.id)),
           ),
-        // Always present -- it used to render only when at least one list
-        // already existed, which hid the one door someone with *no* lists
-        // needs. Same dialog the drawer and the empty lists screen open:
-        // one flow, three doors. Styled like the drawer's own inline action.
+        // Always shown, even with no lists. Opens the same "new list"
+        // dialog as the drawer and the empty lists screen.
         SettingRow(
           leading: Icon(Icons.add, color: primary),
           title: t.lists.create,

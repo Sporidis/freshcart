@@ -6,26 +6,24 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'profile_controller.g.dart';
 
-/// The signed-in user's profile, and every change a screen can make to it.
+/// The signed-in user's profile, and all the changes that can be made to it.
 ///
-/// Screens never call the [AuthPort] themselves: each action here returns a
-/// [Failure] (or null on success) and keeps this provider's state in step,
-/// so the widget only decides how to *show* the outcome -- a message, a
-/// navigation -- the same split `ItemsSectionController` makes.
+/// Screens don't call [AuthPort] directly, they call this. Each method
+/// returns a [Failure], or null if it worked. The screen only decides how
+/// to show the result.
 @Riverpod(keepAlive: true)
 class ProfileController extends _$ProfileController {
   AuthPort get _auth => ref.read(authRepositoryProvider);
 
-  /// Signs in (restoring or creating an anonymous session) and follows the
-  /// identity as it changes underneath us.
+  /// Signs in (with the saved session, or a new anonymous one), then keeps
+  /// listening for changes to the user.
   @override
   Future<Result<AuthUser>> build() async {
     final auth = ref.watch(authRepositoryProvider);
-    // Adopts the published user rather than invalidating: the port publishes
-    // after *every* call, including the `signInAnonymously()` just below, so
-    // re-running build() on each event re-published, re-ran build(), and
-    // looped -- thousands of sign-ins a second. Only a sign-out (null) needs
-    // a genuine re-read.
+    // When a new user arrives, just put it in the state. Don't call
+    // `invalidateSelf()`: that re-runs build(), which signs in, which sends
+    // a new user, which re-runs build()... an endless loop. Only a sign-out
+    // (null) needs a full reload.
     final subscription = auth.authStateChanges().listen((user) {
       if (user == null) {
         ref.invalidateSelf();
@@ -37,26 +35,28 @@ class ProfileController extends _$ProfileController {
     return auth.signInAnonymously();
   }
 
+  /// Changes the user's name.
   Future<Failure?> setDisplayName(String name) =>
       _write(() => SetDisplayName(ref.read(authRepositoryProvider))(name));
 
+  /// Changes the user's avatar colour.
   Future<Failure?> setAvatarColor(HexColor color) =>
       _write(() => _auth.setAvatarColor(color));
 
+  /// Uploads [bytes] as the user's avatar photo.
   Future<Failure?> setAvatarPhoto(Uint8List bytes) =>
       _write(() => SetAvatarPhoto(ref.read(authRepositoryProvider))(bytes));
 
   Future<Failure?> clearAvatarPhoto() => _write(_auth.clearAvatarPhoto);
 
-  /// Upgrades the anonymous account to email + password, so losing the
-  /// device no longer loses every shared list.
+  /// Adds an email and password to the anonymous account. Then the user
+  /// doesn't lose their lists if they lose their phone.
   Future<Failure?> linkEmail({
     required String email,
     required String password,
   }) => _write(() => _auth.linkEmail(email: email, password: password));
 
-  /// Signs out. Returns no user, so on success the profile is simply
-  /// re-read from scratch.
+  /// Signs out. If it works, the profile is loaded again from scratch.
   Future<Failure?> signOut() async {
     switch (await _auth.signOut()) {
       case Ok():
@@ -67,7 +67,7 @@ class ProfileController extends _$ProfileController {
     }
   }
 
-  /// Runs one profile write and keeps [state] in step with it.
+  /// Runs one profile change and updates [state] with the result.
   Future<Failure?> _write(
     Future<Result<AuthUser>> Function() action,
   ) async {

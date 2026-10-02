@@ -12,12 +12,10 @@ import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/edit_profile_screen/edit_profile_screen_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Edits the signed-in user's own profile: display name, avatar colour, and
-/// an optional avatar photo.
+/// The screen where users edit their name, avatar colour and avatar photo.
 ///
-/// Reached from the Settings profile header's Edit link (Flow 10). Laid out
-/// the way the design orders it: the avatar first, since the household
-/// recognises you by it, then its colour, then the name.
+/// Opened from the "Edit" link in Settings. Order from top to bottom:
+/// avatar, colour, name.
 class EditProfileScreen extends ConsumerStatefulWidget {
   /// Creates the screen.
   const EditProfileScreen({super.key});
@@ -32,24 +30,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   late final TextEditingController _nameController;
 
-  // The saving flags and failures live here, not in the VM's state -- see
-  // EditProfileScreenState for why. Failures stay as Failure and are only
-  // turned into text in build, so a language switch re-translates them.
+  // "Saving..." flags and errors are kept here, not in the controller (see
+  // EditProfileScreenState for why). Errors are stored as Failure and only
+  // turned into text in build(), so they update if the language changes.
   Failure? _nameFailure;
   bool _savingName = false;
 
-  // One flag for all three avatar actions (colour tap, photo pick, photo
-  // remove): a person can only be doing one of them at a time, and they all
-  // reach for the same preview, so there is nothing a single flag loses.
+  // One flag for all avatar actions (colour, choose photo, remove photo).
+  // The user can only do one at a time anyway.
   bool _busyAvatar = false;
   Failure? _avatarFailure;
 
-  // The profile is async — it has not necessarily resolved by the time
-  // `initState` runs, so the field cannot be seeded from a synchronous
-  // read here (it would just start empty and never catch up, since a
-  // `TextEditingController` set once in `initState` does not react to a
-  // later rebuild). Seeded instead the first time `build` actually sees a
-  // value, in `_seedNameOnce`.
+  // The profile may still be loading in `initState`, so we can't fill in
+  // the name there. Instead, `_seedNameOnce` fills it in the first time
+  // build() has the profile.
   bool _nameSeeded = false;
 
   @override
@@ -81,13 +75,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       _savingName = false;
       _nameFailure = failure;
     });
-    // Save is the header's "done" action, so a successful one closes the
-    // screen; a failed one stays, with its message inline on the field.
+    // If saving works, close the screen. If not, stay and show the error
+    // under the field.
     if (failure == null) await Navigator.of(context).maybePop();
   }
 
-  /// Runs one avatar action from the VM, owning only the busy flag and the
-  /// error beside it -- what the action *does* is the VM's business.
+  /// Runs one avatar action from the controller. This method only handles
+  /// the busy flag and the error. The controller does the actual work.
   Future<void> _runAvatarAction(
     Future<Failure?> Function() action,
   ) async {
@@ -108,9 +102,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final t = ref.watch(translationsProvider);
     final s = ref.watch(editProfileScreenControllerProvider);
 
-    // A failed load is the screen tier here too (see list_settings_screen.dart's
-    // identical guard): without a profile there is no form to show, so this
-    // replaces the screen instead of leaving the spinner up forever.
+    // If the profile couldn't load, show an error screen. Without a
+    // profile there's no form to show, and the spinner would spin forever.
     final loadFailure = s.loadFailure;
     if (loadFailure != null) {
       return ErrorScreen(
@@ -120,7 +113,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
     }
 
-    // A local, not s.user, so the null check below promotes it.
+    // Copied into a local variable, so Dart knows it's not null after the
+    // check below.
     final user = s.user;
     if (user != null) _seedNameOnce(user.displayName);
 
@@ -128,9 +122,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       appBar: AppBar(
         title: Text(t.profile.title),
         leading: BackButton(onPressed: () => Navigator.of(context).pop()),
-        // Save lives in the header (Flow 10): it only ever applies the name
-        // -- colour and photo save the moment they are picked -- so it is a
-        // "done with the name" action, not a form submit at the bottom.
+        // Save is in the top bar. It only saves the name: colour and photo
+        // are saved immediately when picked.
         actions: [
           if (user != null)
             Padding(
@@ -151,8 +144,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           : ListView(
               padding: const EdgeInsets.all(AppSpacing.screen),
               children: [
-                // The avatar follows the name field as it is typed, so the
-                // preview is always what the household will actually see.
+                // The avatar letter updates while typing, so the preview
+                // matches what others will see.
                 ValueListenableBuilder(
                   valueListenable: _nameController,
                   builder: (context, value, _) =>
@@ -188,9 +181,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   }
 }
 
-/// Choose / remove photo, as quiet text actions directly under the avatar
-/// they change -- the photo is part of the avatar, not a separate form
-/// section competing with the name.
+/// The "Choose photo" / "Remove photo" text buttons under the avatar.
 class _PhotoActions extends StatelessWidget {
   const _PhotoActions({
     required this.user,
@@ -231,8 +222,7 @@ class _PhotoActions extends StatelessWidget {
   }
 }
 
-/// "Your colour on shared lists": centred under the avatar it recolours,
-/// as in the design, so cause and effect sit on one axis.
+/// The "Your colour on shared lists" picker, centred under the avatar.
 class _ColorSection extends StatelessWidget {
   const _ColorSection({
     required this.user,
@@ -323,11 +313,10 @@ class _AvatarPreview extends StatelessWidget {
 
   final AuthUser user;
 
-  /// The name as currently typed, not as saved -- see the builder above.
+  /// The name as typed right now (not the saved one).
   final String name;
 
-  /// The design's 88 px profile avatar: the largest one in the app, since
-  /// this is the one screen that is *about* it.
+  /// The biggest avatar in the app (88 px).
   static const double _size = 88;
 
   @override

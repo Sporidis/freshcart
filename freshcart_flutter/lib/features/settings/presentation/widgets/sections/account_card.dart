@@ -3,12 +3,10 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/upgrade_nudge.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The card nudging an anonymous account to link an email (decisions #56:
-/// always visible while anonymous, no dismiss).
+/// The card in Settings asking an anonymous user to add an email.
 ///
-/// Shown only while anonymous. Once linked, [ProfileHeader]'s email line and
-/// its verified tick already say "secured" -- a second card repeating the
-/// same address just below it added nothing.
+/// Always shown while anonymous, and can't be closed (decisions.md #56).
+/// Hidden once an email is linked: [ProfileHeader] shows the email then.
 class AccountCard extends StatelessWidget {
   const AccountCard({required this.t, super.key});
 
@@ -37,8 +35,7 @@ class AccountCard extends StatelessWidget {
                   const SizedBox(height: AppSpacing.gapSmall),
                   Text(t.account.body, style: theme.textTheme.bodyMedium),
                   const SizedBox(height: AppSpacing.gap),
-                  // The app's themed primary -- the same ink button every
-                  // other main action uses, not M3's untinted FilledButton.
+                  // Our themed main button, same as everywhere else.
                   ElevatedButton(
                     onPressed: () => showLinkEmailDialog(context),
                     child: Text(t.account.action),

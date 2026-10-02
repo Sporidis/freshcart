@@ -14,8 +14,8 @@ import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Settings screen's "Preferences" group: appearance, language,
-/// notifications, and the local-only toggles.
+/// The "Preferences" section in Settings: theme, language, notifications,
+/// and settings that are only saved on this phone.
 class PreferencesSection extends ConsumerWidget {
   const PreferencesSection({required this.t, super.key});
 
@@ -76,10 +76,9 @@ class PreferencesSection extends ConsumerWidget {
           title: t.settings.notifications,
           onTap: () => context.push(Routes.notifications),
         ),
-        // "Keep checked items" is not here on purpose: it became the
-        // per-list "Clear checked after shopping" toggle in list settings
-        // (decisions #69, #79). A global switch for a per-list preference
-        // would be the wrong shape.
+        // No "Keep checked items" here: that's a setting per list now
+        // ("Clear checked after shopping" in list settings).
+        // See decisions.md #69 and #79.
         SettingToggleOption(
           title: t.settings.haptics,
           value: haptics,

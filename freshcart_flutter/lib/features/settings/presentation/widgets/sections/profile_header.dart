@@ -10,14 +10,8 @@ import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The Settings screen's own header: avatar, name, and -- once the account
-/// is linked -- the email securing it, plus the door into
-/// [EditProfileScreen].
-///
-/// The email lives here and only here. It used to show in this header *and*
-/// in a "Your account is secured" card right below it; now a linked account
-/// has no card at all, and a small verified tick beside the address says
-/// the same thing in one place.
+/// The top of Settings: avatar, name, the email (if linked, with a tick),
+/// and an "Edit" link to [EditProfileScreen].
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({required this.user, required this.t, super.key});
 
@@ -68,9 +62,8 @@ class ProfileHeader extends StatelessWidget {
             ],
           ),
         ),
-        // A text link in the drawer's action style (ink, bold), not a
-        // default TextButton -- it is one more door, not a button competing
-        // with the rows below.
+        // Styled as a bold text link (like in the drawer), so it doesn't
+        // stand out more than the rows below.
         TextButton(
           onPressed: () => context.push(Routes.editProfile),
           style: TextButton.styleFrom(
