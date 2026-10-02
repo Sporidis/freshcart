@@ -5,12 +5,11 @@ import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
 
-/// The marketing site.
+/// The marketing website.
 ///
-/// Multi-page routing, so this component runs only on the server during
-/// pre-rendering. Nothing here is interactive, which is the point: a
-/// marketing page should be HTML a crawler can read, not an application that
-/// happens to render text (`docs/decisions.md` #11).
+/// Only runs on the server, while the pages are built into HTML. Nothing is
+/// interactive on purpose: search engines should get plain HTML they can
+/// read, not an app (decisions.md #11).
 class App extends StatelessComponent {
   /// Creates the site root.
   const App({super.key});
