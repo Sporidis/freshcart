@@ -44,7 +44,6 @@ class AppColors {
   static const Color destructive = Color(0xFFC0392B);
   static const Color success = Color(0xFF2E9E5B);
   static const Color info = Color(0xFF2456A6);
-  static const Color undoAccent = Color(0xFFF0A868); // on dark snackbars
 
   // ── Shop swatches (retailer-agnostic) ────────────────────────────────
   static const Color swatchBlue = Color(0xFF2456A6);

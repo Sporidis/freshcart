@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -125,83 +126,69 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     final t = ref.watch(translationsProvider);
     final clash = _clashesWith;
 
-    // Scrollable, because with the keyboard open it doesn't all fit on a
-    // small phone.
-    return SingleChildScrollView(
-      padding: EdgeInsets.fromLTRB(
-        AppSpacing.sheetH,
-        0,
-        AppSpacing.sheetH,
-        MediaQuery.viewInsetsOf(context).bottom + AppSpacing.xl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _isCreate ? t.shops.add : t.shops.edit,
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.gap),
-          Text(t.shops.nameLabel, style: theme.textTheme.bodySmall),
-          const SizedBox(height: AppSpacing.gapSmall),
-          TextField(
-            controller: _name,
-            enabled: !_saving,
-            // New shop: open the keyboard for the name straight away.
-            // Existing shop: don't, so the keyboard doesn't hide the colours.
-            autofocus: _isCreate,
-            textCapitalization: TextCapitalization.words,
-            textInputAction: TextInputAction.done,
-            onSubmitted: (_) => _saving ? null : _save(),
-            decoration: InputDecoration(errorText: _error),
-          ),
-          const SizedBox(height: AppSpacing.screen),
-          Text(t.shops.colorLabel, style: theme.textTheme.bodySmall),
-          const SizedBox(height: AppSpacing.gapSmall),
-          ColorSwatchPicker(
-            colors: AppColors.presetShopColors,
-            selected: Color(_color.argb),
-            semanticLabel: t.shops.colorLabel,
-            marked: _takenSwatches(t),
-            onSelected: (color) => _pick(HexColor.fromArgb(color.toARGB32())),
-          ),
-          // Only a warning: similar colours are allowed, just not a great
-          // idea.
-          AnimatedSize(
-            duration: AppMotion.durationFor(context, AppMotion.quick),
-            alignment: Alignment.topLeft,
-            child: clash == null
-                ? const SizedBox(width: double.infinity)
-                : Padding(
-                    padding: const EdgeInsets.only(top: AppSpacing.gapSmall),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: AppSizes.quantityIcon,
-                          color: theme.colorScheme.onSurface,
-                        ),
-                        const SizedBox(width: AppSpacing.gapSmall),
-                        Expanded(
-                          child: Text(
-                            t.shops.closeTo(name: clash.name),
-                            style: AppTextStyles.captionStrong.copyWith(
-                              color: theme.colorScheme.onSurface,
-                            ),
+    // AppSheetScaffold scrolls, because with the keyboard open it doesn't
+    // all fit on a small phone.
+    return AppSheetScaffold(
+      title: _isCreate ? t.shops.add : t.shops.edit,
+      children: [
+        Text(t.shops.nameLabel, style: theme.textTheme.bodySmall),
+        const SizedBox(height: AppSpacing.gapSmall),
+        TextField(
+          controller: _name,
+          enabled: !_saving,
+          // New shop: open the keyboard for the name straight away.
+          // Existing shop: don't, so the keyboard doesn't hide the colours.
+          autofocus: _isCreate,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          onSubmitted: (_) => _saving ? null : _save(),
+          decoration: InputDecoration(errorText: _error),
+        ),
+        const SizedBox(height: AppSpacing.screen),
+        Text(t.shops.colorLabel, style: theme.textTheme.bodySmall),
+        const SizedBox(height: AppSpacing.gapSmall),
+        ColorSwatchPicker(
+          colors: AppColors.presetShopColors,
+          selected: Color(_color.argb),
+          semanticLabel: t.shops.colorLabel,
+          marked: _takenSwatches(t),
+          onSelected: (color) => _pick(HexColor.fromArgb(color.toARGB32())),
+        ),
+        // Only a warning: similar colours are allowed, just not a great
+        // idea.
+        AnimatedSize(
+          duration: AppMotion.durationFor(context, AppMotion.quick),
+          alignment: Alignment.topLeft,
+          child: clash == null
+              ? const SizedBox(width: double.infinity)
+              : Padding(
+                  padding: const EdgeInsets.only(top: AppSpacing.gapSmall),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline,
+                        size: AppSizes.quantityIcon,
+                        color: theme.colorScheme.onSurface,
+                      ),
+                      const SizedBox(width: AppSpacing.gapSmall),
+                      Expanded(
+                        child: Text(
+                          t.shops.closeTo(name: clash.name),
+                          style: AppTextStyles.captionStrong.copyWith(
+                            color: theme.colorScheme.onSurface,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-          ),
-          const SizedBox(height: AppSpacing.screen),
-          ElevatedButton(
-            onPressed: _saving ? null : _save,
-            child: Text(_isCreate ? t.shops.add : t.shops.saveChanges),
-          ),
-        ],
-      ),
+                ),
+        ),
+        const SizedBox(height: AppSpacing.screen),
+        ElevatedButton(
+          onPressed: _saving ? null : _save,
+          child: Text(_isCreate ? t.shops.add : t.shops.saveChanges),
+        ),
+      ],
     );
   }
 }

@@ -435,11 +435,14 @@ class AppTheme {
 
       dividerTheme: DividerThemeData(color: divider, thickness: 1, space: 1),
 
+      // v3 toast: the ink-on-paper button colours, so it inverts in dark
+      // mode like the primary button. Actions (Retry) use the same text
+      // colour; the old orange accent had poor contrast on a light toast.
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: isDark ? AppColors.surfaceDark : AppColors.ink,
-        contentTextStyle: AppTextStyles.label.copyWith(color: Colors.white),
-        actionTextColor: AppColors.undoAccent,
+        backgroundColor: buttonBg,
+        contentTextStyle: AppTextStyles.label.copyWith(color: buttonFg),
+        actionTextColor: buttonFg,
         insetPadding: const EdgeInsets.all(16),
         elevation: 0,
         shape: RoundedRectangleBorder(

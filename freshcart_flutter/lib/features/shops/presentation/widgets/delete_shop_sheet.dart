@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 
 /// What the user chose to do with a shop's products.
 typedef ShopDeletion = ({ShopItemDisposition disposition, ShopId? moveTo});
@@ -47,96 +48,78 @@ class DeleteShopSheet extends ConsumerWidget {
 
     final muted = theme.colorScheme.onSurfaceVariant;
 
-    // Scrollable, because there's one option per shop. With many shops it
-    // wouldn't fit.
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.sheetH,
-        0,
-        AppSpacing.sheetH,
-        AppSpacing.xl,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            t.shops.deleteTitle(name: shop.name),
-            style: theme.textTheme.headlineSmall,
-          ),
-          const SizedBox(height: AppSpacing.gapSmall),
-          Text(
-            itemCount == 0
-                ? t.shops.deleteEmpty
-                : t.shops.deleteHolds(name: shop.name, n: itemCount),
-            style: theme.textTheme.bodyMedium,
-          ),
-          const SizedBox(height: AppSpacing.screen),
-          if (itemCount > 0) ...[
-            // Safe options first: these keep all the items.
-            for (final target in destinations)
-              _Option(
-                leading: _Dot(color: target.color.toColor()),
-                title: t.shops.moveTo(name: target.name),
-                subtitle: t.shops.moveKeeps(n: itemCount),
-                onTap: () => Navigator.of(context).pop((
-                  disposition: ShopItemDisposition.moveToShop,
-                  moveTo: target.id,
-                )),
-              ),
+    // AppSheetScaffold scrolls, because there's one option per shop. With
+    // many shops it wouldn't fit.
+    return AppSheetScaffold(
+      title: t.shops.deleteTitle(name: shop.name),
+      subtitle: itemCount == 0
+          ? t.shops.deleteEmpty
+          : t.shops.deleteHolds(name: shop.name, n: itemCount),
+      children: [
+        if (itemCount > 0) ...[
+          // Safe options first: these keep all the items.
+          for (final target in destinations)
             _Option(
-              leading: Icon(
-                Icons.label_off_outlined,
-                size: AppSizes.quantityIcon,
-                color: muted,
-              ),
-              title: t.shops.untag,
+              leading: _Dot(color: target.color.toColor()),
+              title: t.shops.moveTo(name: target.name),
               subtitle: t.shops.moveKeeps(n: itemCount),
               onTap: () => Navigator.of(context).pop((
-                disposition: ShopItemDisposition.untag,
-                moveTo: null,
+                disposition: ShopItemDisposition.moveToShop,
+                moveTo: target.id,
               )),
             ),
-            // Then a gap, and the option that deletes the items, so it's
-            // clearly different from the ones above.
-            const SizedBox(height: AppSpacing.gapSmall),
-            const Divider(),
-            const SizedBox(height: AppSpacing.gap),
-            _Option(
-              leading: Icon(
-                Icons.delete_outline,
-                size: AppSizes.quantityIcon,
-                color: Theme.of(context).colorScheme.error,
-              ),
-              title: t.shops.deleteItemsToo,
-              subtitle: t.shops.deleteItemsBody(n: itemCount),
-              destructive: true,
-              onTap: () => Navigator.of(context).pop((
-                disposition: ShopItemDisposition.deleteItems,
-                moveTo: null,
-              )),
+          _Option(
+            leading: Icon(
+              Icons.label_off_outlined,
+              size: AppSizes.quantityIcon,
+              color: muted,
             ),
-          ] else
-            // Red button, saying exactly what it deletes.
-            DestructiveButton.block(
-              onPressed: () => Navigator.of(context).pop((
-                disposition: ShopItemDisposition.untag,
-                moveTo: null,
-              )),
-              child: Text(t.shops.deleteConfirm(name: shop.name)),
-            ),
-          const SizedBox(height: AppSpacing.gapSmall),
-          // A plain text button, so it doesn't stand out.
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: TextButton.styleFrom(
-              foregroundColor: muted,
-              textStyle: AppTextStyles.secondaryStrong,
-            ),
-            child: Text(t.common.cancel),
+            title: t.shops.untag,
+            subtitle: t.shops.moveKeeps(n: itemCount),
+            onTap: () => Navigator.of(context).pop((
+              disposition: ShopItemDisposition.untag,
+              moveTo: null,
+            )),
           ),
-        ],
-      ),
+          // Then a gap, and the option that deletes the items, so it's
+          // clearly different from the ones above.
+          const SizedBox(height: AppSpacing.gapSmall),
+          const Divider(),
+          const SizedBox(height: AppSpacing.gap),
+          _Option(
+            leading: Icon(
+              Icons.delete_outline,
+              size: AppSizes.quantityIcon,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            title: t.shops.deleteItemsToo,
+            subtitle: t.shops.deleteItemsBody(n: itemCount),
+            destructive: true,
+            onTap: () => Navigator.of(context).pop((
+              disposition: ShopItemDisposition.deleteItems,
+              moveTo: null,
+            )),
+          ),
+        ] else
+          // Red button, saying exactly what it deletes.
+          DestructiveButton.block(
+            onPressed: () => Navigator.of(context).pop((
+              disposition: ShopItemDisposition.untag,
+              moveTo: null,
+            )),
+            child: Text(t.shops.deleteConfirm(name: shop.name)),
+          ),
+        const SizedBox(height: AppSpacing.gapSmall),
+        // A plain text button, so it doesn't stand out.
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          style: TextButton.styleFrom(
+            foregroundColor: muted,
+            textStyle: AppTextStyles.secondaryStrong,
+          ),
+          child: Text(t.common.cancel),
+        ),
+      ],
     );
   }
 }

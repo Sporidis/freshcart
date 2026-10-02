@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/dashed_add_row.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
@@ -59,10 +60,8 @@ class AddShopStep extends ConsumerWidget {
             index: s.shopOptions.length + 2,
             child: DashedAddRow(
               label: t.onboarding.addShop,
-              onTap: () => showModalBottomSheet<void>(
+              onTap: () => showAppSheet<void>(
                 context: context,
-                isScrollControlled: true,
-                showDragHandle: true,
                 builder: (_) => AddShopSheet(onAdd: controller.addShop),
               ),
             ),
