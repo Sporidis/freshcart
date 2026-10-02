@@ -7,20 +7,15 @@ import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// A "No shop" pill followed by one pill per shop -- the one shop picker,
-/// wherever a shop is chosen (the item sheet, the multi-select Move sheet).
+/// A row of pills to pick a shop: "No shop", then one per shop. Used in
+/// the item sheet and the "Move to shop" sheet.
 ///
-/// Built from the strip's own [ShopTabPill], not Material `ChoiceChip`s. A
-/// selected `ChoiceChip` drew its checkmark *over* the shop's colour dot on
-/// an ink fill, so the moment a shop was picked its colour vanished -- while
-/// the tab strip on the same screen showed the same choice as a pill filled
-/// with that colour. Now a picked shop looks exactly like its own tab, and
-/// "No shop" behaves like "All": ink when picked.
+/// Uses the same [ShopTabPill] as the shop tabs, so a picked shop looks
+/// exactly like its tab.
 ///
-/// [onSelected] receives null for "No shop" (untagged, a real choice). Leave
-/// [isSelected] out for a one-tap picker that highlights nothing, like the
-/// Move sheet; pass it for a field that shows its current value, like the
-/// item sheet.
+/// [onSelected] gets null for "No shop". Leave [isSelected] out if nothing
+/// should look selected (like the Move sheet). Pass it to show the current
+/// shop (like the item sheet).
 class ShopPicker extends StatelessWidget {
   const ShopPicker({
     required this.shops,
@@ -59,8 +54,7 @@ class ShopPicker extends StatelessWidget {
   }
 }
 
-/// One pill, with the selection state a screen reader needs -- the visual
-/// pill alone only *shows* "selected".
+/// One pill, plus telling screen readers whether it's selected.
 class _Choice extends StatelessWidget {
   const _Choice({
     required this.label,

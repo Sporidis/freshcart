@@ -7,13 +7,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'manage_shops_screen_controller.g.dart';
 
-/// The view model behind `ManageShopsScreen`: one list's shops, and the
-/// edit and delete flows around them.
+/// The controller for `ManageShopsScreen`: one list's shops, plus editing
+/// and deleting them.
 ///
-/// Earns its place by combining [ShopsController] with the colour preview,
-/// and by owning the rule that a preview never outlives the edit sheet --
-/// see [endEdit]. The sheets themselves stay in the widget, which asks this
-/// for each step.
+/// Combines [ShopsController] with the colour preview, and makes sure the
+/// preview is cleared when the edit sheet closes (see [endEdit]). The
+/// sheets themselves are opened by the widget.
 @riverpod
 class ManageShopsScreenController extends _$ManageShopsScreenController {
   @override
@@ -27,29 +26,29 @@ class ManageShopsScreenController extends _$ManageShopsScreenController {
     );
   }
 
-  /// Fetched fresh on every use, since holding on to a notifier instance
-  /// could outlive it.
+  /// Read again every time, instead of stored in a field. A stored notifier
+  /// could be disposed while we still hold it.
   ShopsController get _shops =>
       ref.read(shopsControllerProvider(listId).notifier);
 
-  /// Re-fetches the shops after a failed load -- the error state's Retry.
+  /// Loads the shops again. Used by the Retry button.
   void retry() => ref.invalidate(shopsControllerProvider(listId));
 
-  /// Saves a rename and/or recolour of [shop].
+  /// Saves a new name and/or colour for [shop].
   Future<Failure?> edit(Shop shop, {String? name, HexColor? color}) async =>
       (await _shops.edit(shop, name: name, color: color)).failureOrNull;
 
-  /// Ends an edit, saved or dismissed alike: an abandoned colour left
-  /// tinting the app would be a lie about what is stored.
+  /// Call when the edit sheet closes, saved or not. Clears the colour
+  /// preview, so the app shows the real saved colour again.
   void endEdit() =>
       ref.read(shopColorPreviewControllerProvider.notifier).clear();
 
-  /// How many items [shop] holds -- fetched before asking, because it is the
-  /// question: an empty shop needs no decision, a full one needs a real one.
+  /// How many items [shop] has. Checked before deleting: an empty shop can
+  /// just be deleted, a shop with items needs the user to decide.
   Future<Result<int>> itemCountForDelete(Shop shop) =>
       _shops.itemCount(shop.id);
 
-  /// Deletes [shop], doing with its items what [disposition] says.
+  /// Deletes [shop]. [disposition] says what happens to its items.
   Future<Failure?> remove(
     Shop shop, {
     required ShopItemDisposition disposition,

@@ -7,7 +7,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'shop_repository_impl.g.dart';
 
-/// The Serverpod-backed [ShopRepository].
+/// The real [ShopRepository], talking to the Serverpod server.
 class ShopRepositoryImpl implements ShopRepository {
   /// Creates the repository against a generated Serverpod [dto.Client].
   const ShopRepositoryImpl(this._client);
