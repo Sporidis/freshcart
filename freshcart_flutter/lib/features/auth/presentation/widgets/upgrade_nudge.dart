@@ -26,10 +26,11 @@ class UpgradeNudge extends ConsumerWidget {
     if (!ref.watch(showUpgradeNudgeProvider)) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    // A neutral grey background. Not secondaryContainer: our theme doesn't
+    // v3's translucent fill, so it reads as a band set into the page in
+    // both light and dark mode. Not secondaryContainer: our theme doesn't
     // set that one, so it would come out slightly green.
     return Material(
-      color: theme.colorScheme.surfaceContainerHighest,
+      color: theme.colorScheme.fill,
       child: ListTile(
         leading: Icon(
           Icons.shield_outlined,

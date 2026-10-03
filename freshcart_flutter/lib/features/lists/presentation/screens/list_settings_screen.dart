@@ -371,7 +371,7 @@ class _ManagingSwitcherState extends State<_ManagingSwitcher> {
     final theme = Theme.of(context);
     final t = widget.t;
     final canSwitch = widget.lists.length > 1;
-    final openFill = theme.colorScheme.surfaceContainer;
+    final openFill = theme.colorScheme.fill;
     final duration = AppMotion.durationFor(context, AppMotion.standard);
 
     return AnimatedContainer(
