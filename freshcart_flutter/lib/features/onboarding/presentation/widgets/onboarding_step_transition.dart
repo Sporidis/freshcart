@@ -24,9 +24,7 @@ class OnboardingStepTransition extends StatefulWidget {
   /// +1 moving forward, -1 moving back, for the [OnboardingEntrance]s
   /// below [context]. +1 when there's no transition above (previews).
   static int directionOf(BuildContext context) =>
-      context
-          .dependOnInheritedWidgetOfExactType<_StepDirection>()
-          ?.direction ??
+      context.dependOnInheritedWidgetOfExactType<_StepDirection>()?.direction ??
       1;
 
   @override

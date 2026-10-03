@@ -57,7 +57,11 @@ class OnboardingStepIndicator extends ConsumerWidget {
   }
 }
 
-@Preview(group: 'Onboarding', name: 'Step dots · all four', size: Size(393, 160))
+@Preview(
+  group: 'Onboarding',
+  name: 'Step dots · all four',
+  size: Size(393, 160),
+)
 Widget onboardingStepIndicatorPreview() => previewPiece(
   Column(
     mainAxisSize: MainAxisSize.min,
