@@ -14,13 +14,16 @@ import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
 import 'package:freshcart_flutter/core/ui/undo_toast.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/item_arrivals.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/delete_item_with_undo.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/arrival_flash.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/pending_edge.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_results.dart';
@@ -110,10 +113,16 @@ class ItemsSection extends ConsumerWidget {
         Positioned.fill(
           // Outside the state switch, so it survives an empty tab between
           // two full ones.
-          child: _TabSwitchMotion(
-            filter: s.shopFilter,
-            order: [null, for (final shop in s.shops) shop.id],
-            child: body,
+          child: _ArrivalScope(
+            // Null while loading, so the first load isn't "everything
+            // arrived".
+            items: s.isLoading ? null : s.allItems,
+            me: s.me?.userId,
+            child: _TabSwitchMotion(
+              filter: s.shopFilter,
+              order: [null, for (final shop in s.shops) shop.id],
+              child: body,
+            ),
           ),
         ),
         // No "all done" card and no add button while selecting, searching
@@ -340,50 +349,64 @@ class _ItemList extends StatelessWidget {
           duration: inDone && state.lastSettled.contains(item.id)
               ? AppMotion.batchMove
               : AppMotion.reflow,
-          child: ItemTile(
-            t: t,
-            item: item,
-            inDone: inDone,
-            shopColor: dotFor(item.shopId),
-            // On All the row is the only sign of its shop; on a tab it's
-            // obvious.
-            shopName: state.shopFilter == null
-                ? state.shopFor(item.shopId)?.name
-                : null,
-            // Saved at once, but held in place until the ticks settle.
-            onToggle: () async => report(
-              await vm.toggle(
-                item,
-                settleAfter: AppMotion.reduced(context)
-                    ? AppMotion.checkSettleReduced
-                    : AppMotion.checkSettle,
+          child: PendingEdge(
+            // v3 Flow 07: a dashed edge while this row's change waits
+            // in the offline queue.
+            pending: item.pending,
+            index: position,
+            child: ArrivalFlash(
+              isNew: _ArrivalScope.isNew(context, item.id),
+              mine: _ArrivalScope.isMine(context, item),
+              color: dotFor(item.shopId),
+              child: ItemTile(
+                t: t,
+                item: item,
+                inDone: inDone,
+                shopColor: dotFor(item.shopId),
+                // On All the row is the only sign of its shop; on a tab it's
+                // obvious.
+                shopName: state.shopFilter == null
+                    ? state.shopFor(item.shopId)?.name
+                    : null,
+                // Saved at once, but held in place until the ticks settle.
+                onToggle: () async => report(
+                  await vm.toggle(
+                    item,
+                    settleAfter: AppMotion.reduced(context)
+                        ? AppMotion.checkSettleReduced
+                        : AppMotion.checkSettle,
+                  ),
+                ),
+                onEdit: () => onEdit(item),
+                shops: state.shops,
+                onMove: (shopId) async =>
+                    report(await vm.moveItem(item, shopId)),
+                onDelete: () => deleteWithUndo(item),
+                onQuantityChanged: (quantity) async =>
+                    report(await vm.setQuantity(item, quantity)),
+                selected: selectable && state.selection.contains(item.id),
+                selectionMode: selectable && selectionMode,
+                onSelectionToggle: selectable
+                    ? () => vm.toggleSelection(item.id)
+                    : null,
+                onSelectMore: selectable
+                    ? () => vm.toggleSelection(item.id)
+                    : null,
+                // Only open rows (not checked ones) can start rearranging.
+                onRearrange: selectable && state.canRearrange
+                    ? vm.startRearrange
+                    : null,
+                dragHandle: index == null
+                    ? null
+                    : ReorderableDragStartListener(
+                        index: index,
+                        child: const Icon(Icons.drag_handle, size: 16),
+                      ),
+                checkedByMember: item.checkedBy == null
+                    ? null
+                    : state.list.memberFor(item.checkedBy!),
               ),
             ),
-            onEdit: () => onEdit(item),
-            shops: state.shops,
-            onMove: (shopId) async => report(await vm.moveItem(item, shopId)),
-            onDelete: () => deleteWithUndo(item),
-            onQuantityChanged: (quantity) async =>
-                report(await vm.setQuantity(item, quantity)),
-            selected: selectable && state.selection.contains(item.id),
-            selectionMode: selectable && selectionMode,
-            onSelectionToggle: selectable
-                ? () => vm.toggleSelection(item.id)
-                : null,
-            onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
-            // Only open rows (not checked ones) can start rearranging.
-            onRearrange: selectable && state.canRearrange
-                ? vm.startRearrange
-                : null,
-            dragHandle: index == null
-                ? null
-                : ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(Icons.drag_handle, size: 16),
-                  ),
-            checkedByMember: item.checkedBy == null
-                ? null
-                : state.list.memberFor(item.checkedBy!),
           ),
         ),
       ),
@@ -498,6 +521,71 @@ class _ItemsEmptyState extends StatelessWidget {
             ),
     );
   }
+}
+
+/// Works out which items just arrived (see [itemArrivals]) by keeping the
+/// previous list, and offers that to the rows below, for [ArrivalFlash].
+///
+/// Outside the state switch, like [_TabSwitchMotion], so an empty tab in
+/// between doesn't forget the previous items.
+class _ArrivalScope extends StatefulWidget {
+  const _ArrivalScope({
+    required this.items,
+    required this.me,
+    required this.child,
+  });
+
+  /// Every item on the list, or null while still loading.
+  final List<ShoppingItem>? items;
+  final UserId? me;
+  final Widget child;
+
+  static _ArrivalInfo? _of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_ArrivalInfo>();
+
+  /// Whether [id] arrived in the latest update.
+  static bool isNew(BuildContext context, ItemId id) =>
+      _of(context)?.arrived.contains(id) ?? false;
+
+  /// Whether the signed-in user added [item].
+  static bool isMine(BuildContext context, ShoppingItem item) =>
+      _of(context)?.me == item.addedBy;
+
+  @override
+  State<_ArrivalScope> createState() => _ArrivalScopeState();
+}
+
+class _ArrivalScopeState extends State<_ArrivalScope> {
+  Set<ItemId> _arrived = const {};
+
+  @override
+  void didUpdateWidget(_ArrivalScope oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final items = widget.items;
+    // Only a new list of items can bring arrivals. Any other rebuild keeps
+    // the last answer, so a row that's flashing isn't cut short.
+    if (items == null || identical(items, oldWidget.items)) return;
+    _arrived = itemArrivals(oldWidget.items, items);
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      _ArrivalInfo(arrived: _arrived, me: widget.me, child: widget.child);
+}
+
+class _ArrivalInfo extends InheritedWidget {
+  const _ArrivalInfo({
+    required this.arrived,
+    required this.me,
+    required super.child,
+  });
+
+  final Set<ItemId> arrived;
+  final UserId? me;
+
+  @override
+  bool updateShouldNotify(_ArrivalInfo oldWidget) =>
+      !identical(arrived, oldWidget.arrived) || me != oldWidget.me;
 }
 
 /// Slides the rows in from the side of the tab you moved to (design v3:

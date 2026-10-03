@@ -60,11 +60,10 @@ class _InviteCardState extends ConsumerState<InviteCard> {
         AppSpacing.gapSmall,
         AppSpacing.gapSmall,
       ),
-      // Light grey background (set in AppTheme, so it never gets a colour
-      // tint).
+      // v3's translucent fill with no border, like the code boxes in
+      // onboarding, so the code looks the same wherever it's shown.
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainer,
-        border: Border.all(color: theme.colorScheme.outlineVariant),
+        color: theme.colorScheme.fill,
         borderRadius: BorderRadius.circular(AppRadii.input),
       ),
       child: Row(

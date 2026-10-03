@@ -17,26 +17,29 @@ abstract final class ItemService {
   /// messages about all other lists.
   static String channelFor(UuidValue listId) => 'list-items-$listId';
 
-  /// Sends a change to everyone watching [listId], and saves it for a push
-  /// notification.
+  /// Sends a change to everyone watching [listId] (the live stream, for
+  /// people with the app open).
   ///
-  /// Two ways on purpose: the live stream reaches people with the app open,
-  /// the push reaches people with the app closed. Not awaited: if sending
-  /// fails, the save that caused it must still succeed.
+  /// With [notifyAddedName], also queues a push for people with the app
+  /// closed: only when an item was *added*. Ticking, unticking, editing,
+  /// moving and deleting stay live-only; a push for those read as "X added
+  /// Milk" (every change used to be queued, and the summary called them all
+  /// additions) and woke phones for things nobody needs to hear about away
+  /// from the list.
   static Future<void> _announce(
     Session session,
     UuidValue listId,
     ItemChange change, {
-    required String itemName,
+    String? notifyAddedName,
   }) async {
     await session.messages.postMessage(channelFor(listId), change);
-    await NotificationService.enqueue(
+    if (notifyAddedName == null) return;
+    await NotificationService.enqueueAddition(
       session,
       listId: listId,
       actorId: change.actorId,
       actorName: await ProfileService.displayNameFor(session, change.actorId),
-      itemName: itemName,
-      kind: change.kind,
+      itemName: notifyAddedName,
     );
   }
 
@@ -168,7 +171,7 @@ abstract final class ItemService {
         item: result,
         actorId: userId,
       ),
-      itemName: result.name,
+      notifyAddedName: result.name,
     );
     // Save the name for suggestions. If this fails, the add must still
     // succeed.
@@ -313,7 +316,6 @@ abstract final class ItemService {
           item: saved,
           actorId: userId,
         ),
-        itemName: saved.name,
       );
       return (saved: saved, becameChecked: becameChecked);
     });
@@ -348,7 +350,6 @@ abstract final class ItemService {
         itemId: stored.id!,
         actorId: userId,
       ),
-      itemName: stored.name,
     );
   }
 
@@ -377,7 +378,6 @@ abstract final class ItemService {
             itemId: item.id!,
             actorId: userId,
           ),
-          itemName: item.name,
         );
       }
       return removed.length;
@@ -412,7 +412,6 @@ abstract final class ItemService {
             itemId: item.id!,
             actorId: userId,
           ),
-          itemName: item.name,
         );
       }
       return removed.length;
@@ -454,7 +453,6 @@ abstract final class ItemService {
             item: item,
             actorId: userId,
           ),
-          itemName: item.name,
         );
       }
       return moved.length;

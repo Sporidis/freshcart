@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/features/auth/data/sources/current_user_provid
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/arrival_flash.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
@@ -714,6 +715,69 @@ void main() {
         ),
         findsOneWidget,
       );
+    },
+  );
+
+  testWidgets(
+    'a row changed offline carries a dashed edge until it has synced',
+    (tester) async {
+      addTearDown(items.dispose);
+      final milk = buildItem(name: 'Milk');
+      items.byListResult = Ok([milk.copyWith(pending: true)]);
+
+      await pump(tester);
+
+      double edgeOpacity() => tester
+          .widget<AnimatedOpacity>(find.byKey(const ValueKey('pending-edge')))
+          .opacity;
+      expect(edgeOpacity(), 1);
+
+      // The queue drained: the same row arrives, no longer pending.
+      items.live.add(Ok([milk]));
+      await tester.pump();
+      // Past the row's stagger and the fade.
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(edgeOpacity(), 0);
+    },
+  );
+
+  testWidgets(
+    'a newly arrived item drops in with a flash; rows already there do not',
+    (tester) async {
+      addTearDown(items.dispose);
+      final milk = buildItem(id: 'milk', name: 'Milk');
+      items.byListResult = Ok([milk]);
+
+      await pump(tester);
+
+      // The opacity the row's arrival gives it (1 when at rest).
+      double arrivalOpacity(String name) => tester
+          .widget<Opacity>(
+            find
+                .ancestor(
+                  of: find.text(name),
+                  matching: find.descendant(
+                    of: find.byType(ArrivalFlash),
+                    matching: find.byType(Opacity),
+                  ),
+                )
+                .last,
+          )
+          .opacity;
+
+      // The first load brings nothing "new".
+      expect(arrivalOpacity('Milk'), 1);
+
+      // Someone adds Bread.
+      items.live.add(Ok([milk, buildItem(id: 'bread', name: 'Bread')]));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+      expect(arrivalOpacity('Bread'), lessThan(1));
+      expect(arrivalOpacity('Milk'), 1);
+
+      await tester.pumpAndSettle();
+      expect(arrivalOpacity('Bread'), 1);
     },
   );
 

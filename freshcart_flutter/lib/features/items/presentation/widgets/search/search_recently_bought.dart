@@ -7,6 +7,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/cascade_in.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';
@@ -24,7 +25,14 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 ///
 /// No shop dot on these rows: the history doesn't store a shop
 /// (`NameHistoryEntry`), and we don't guess one.
+///
+/// Design v3: 52px rows that cascade in, and the "+" turns into a filled
+/// tick for a moment after adding, so it's clear it worked (the pop alone
+/// was easy to miss, and with reduced motion there was nothing).
 class SearchRecentlyBought extends ConsumerWidget {
+  /// v3 row height, the same as the settings rows.
+  static const double _rowHeight = 52;
+
   /// Creates the browse view for [listId].
   const SearchRecentlyBought({
     required this.listId,
@@ -63,26 +71,36 @@ class SearchRecentlyBought extends ConsumerWidget {
       ),
     );
 
-    Widget row(NameHistoryEntry entry) => Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.screen,
-        vertical: AppSpacing.rowVertical - 3,
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              entry.name,
-              style: AppTextStyles.body.copyWith(
-                color: theme.colorScheme.onSurface,
+    var position = 0;
+    Widget row(NameHistoryEntry entry) => CascadeIn(
+      index: position++,
+      step: const Duration(milliseconds: 30),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(minHeight: _rowHeight),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  entry.name,
+                  style: AppTextStyles.body.copyWith(
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
               ),
-            ),
+              _ReAddButton(
+                tooltip: t.search.addAgain,
+                addedLabel: t.search.added,
+                onPressed: () async {
+                  final failure = await vm.addFromSearch(entry.name);
+                  report(failure);
+                  return failure == null;
+                },
+              ),
+            ],
           ),
-          _ReAddButton(
-            tooltip: t.search.addAgain,
-            onPressed: () async => report(await vm.addFromSearch(entry.name)),
-          ),
-        ],
+        ),
       ),
     );
 
@@ -123,10 +141,19 @@ class SearchRecentlyBought extends ConsumerWidget {
 /// The round "+" that adds a name again. On tap it does a small "pop"
 /// (grows a bit, then back) and a light vibration.
 class _ReAddButton extends ConsumerStatefulWidget {
-  const _ReAddButton({required this.tooltip, required this.onPressed});
+  const _ReAddButton({
+    required this.tooltip,
+    required this.addedLabel,
+    required this.onPressed,
+  });
 
   final String tooltip;
-  final Future<void> Function() onPressed;
+
+  /// Read out, and shown as a tick, for a moment after adding.
+  final String addedLabel;
+
+  /// Adds the name again; true if it worked.
+  final Future<bool> Function() onPressed;
 
   @override
   ConsumerState<_ReAddButton> createState() => _ReAddButtonState();
@@ -136,6 +163,12 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
     with SingleTickerProviderStateMixin {
   /// True while adding. Stops a fast double-tap from adding twice.
   bool _busy = false;
+
+  /// True for a moment after adding: the "+" shows a tick.
+  bool _added = false;
+  Timer? _settle;
+
+  static const Duration _addedHold = Duration(milliseconds: 1200);
 
   late final AnimationController _pop = AnimationController(
     vsync: this,
@@ -148,6 +181,7 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
 
   @override
   void dispose() {
+    _settle?.cancel();
     _pop.dispose();
     super.dispose();
   }
@@ -157,18 +191,30 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
     setState(() => _busy = true);
     if (!AppMotion.reduced(context)) unawaited(_pop.forward(from: 0));
     ref.haptic(HapticFeedback.lightImpact);
-    await widget.onPressed();
-    if (mounted) setState(() => _busy = false);
+    final added = await widget.onPressed();
+    if (!mounted) return;
+    setState(() {
+      _busy = false;
+      _added = added;
+    });
+    if (!added) return;
+    _settle?.cancel();
+    _settle = Timer(_addedHold, () {
+      if (mounted) setState(() => _added = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final ink = Theme.of(context).colorScheme.onSurface;
+    final scheme = Theme.of(context).colorScheme;
+    final ink = scheme.onSurface;
+    final quick = AppMotion.durationFor(context, AppMotion.quick);
     return TapTarget(
       onTap: _busy ? null : _handleTap,
       child: Semantics(
         button: true,
-        label: widget.tooltip,
+        liveRegion: _added,
+        label: _added ? widget.addedLabel : widget.tooltip,
         child: InkWell(
           onTap: _busy ? null : _handleTap,
           customBorder: const CircleBorder(),
@@ -176,17 +222,34 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
             animation: _overshoot,
             builder: (context, child) =>
                 Transform.scale(scale: 1 + _overshoot.value, child: child),
-            child: Container(
+            child: AnimatedContainer(
+              duration: quick,
               width: 26,
               height: 26,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
+                color: _added ? scheme.primary : ink.withValues(alpha: 0),
                 border: Border.all(
-                  color: ink.withValues(alpha: 0.15),
+                  color: _added ? scheme.primary : ink.withValues(alpha: 0.15),
                   width: 1.5,
                 ),
               ),
-              child: Icon(Icons.add, size: 14, color: ink),
+              child: AnimatedSwitcher(
+                duration: quick,
+                child: _added
+                    ? Icon(
+                        Icons.check_rounded,
+                        key: const ValueKey('added'),
+                        size: 14,
+                        color: scheme.onPrimary,
+                      )
+                    : Icon(
+                        Icons.add,
+                        key: const ValueKey('add'),
+                        size: 14,
+                        color: ink,
+                      ),
+              ),
             ),
           ),
         ),

@@ -21,12 +21,13 @@ void main() {
     return container.read(syncBannerProvider);
   }
 
-  test('offline says offline, queued writes or not', () async {
-    expect(await banner(status: SyncStatus.offline), isA<SyncBannerOffline>());
-    expect(
-      await banner(status: SyncStatus.offline, pending: 3),
-      isA<SyncBannerOffline>(),
-    );
+  test('offline says offline, with how many changes are waiting', () async {
+    final none = await banner(status: SyncStatus.offline);
+    expect(none, isA<SyncBannerOffline>());
+    expect((none as SyncBannerOffline).pending, 0);
+
+    final three = await banner(status: SyncStatus.offline, pending: 3);
+    expect((three as SyncBannerOffline).pending, 3);
   });
 
   test('online with writes still queued says how many are syncing', () async {
