@@ -159,14 +159,20 @@ GoRouter appRouter(Ref ref) => GoRouter(
             final screen = raw == null || raw.isEmpty
                 ? const ListsScreen()
                 : ListDetailScreen(listId: ListId(raw), titleFlight: flight);
+            // One page key per list. go_router's own key is the route
+            // pattern ('/lists/:listId'), the same for every list, so the
+            // Navigator treated a switch as "same page, new data" and
+            // reused the old screen: its state (search text, the title's
+            // played flight) carried over to the next list.
+            final key = ValueKey<String>('list-detail-$raw');
             // Switching lists from the drawer happens in place (design
             // v3): a quick fade, no sideways push, while the name flies
             // into the header. Any other way in keeps the usual push.
             if (flight == null) {
-              return MaterialPage<void>(key: state.pageKey, child: screen);
+              return MaterialPage<void>(key: key, child: screen);
             }
             return CustomTransitionPage<void>(
-              key: state.pageKey,
+              key: key,
               child: screen,
               transitionDuration: AppMotion.listSwitch,
               reverseTransitionDuration: AppMotion.listSwitch,

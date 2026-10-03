@@ -484,13 +484,13 @@ void main() {
       await tester.pump(const Duration(milliseconds: 60));
 
       // The header's own title, which waits while the copy flies in.
-      double headerTitleOpacity() => tester
+      double headerTitleOpacity(String name) => tester
           .widget<Opacity>(
             find
                 .ancestor(
                   of: find.descendant(
                     of: find.byType(AppBar),
-                    matching: find.text('Hardware'),
+                    matching: find.text(name),
                   ),
                   matching: find.byType(Opacity),
                 )
@@ -498,12 +498,26 @@ void main() {
           )
           .opacity;
 
-      expect(headerTitleOpacity(), 0);
+      expect(headerTitleOpacity('Hardware'), 0);
 
       await tester.pumpAndSettle();
-      expect(headerTitleOpacity(), 1);
+      expect(headerTitleOpacity('Hardware'), 1);
       // Landed: only the header's title is left.
       expect(find.text('Hardware'), findsOneWidget);
+
+      // And again, back the other way. Every list used to share one page,
+      // so from the second switch on the old screen was reused, its title
+      // had already flown, and nothing moved.
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+      repository.byIdResult = Ok(groceries);
+      await tester.tap(find.text('Groceries'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+
+      expect(headerTitleOpacity('Groceries'), 0);
+      await tester.pumpAndSettle();
+      expect(headerTitleOpacity('Groceries'), 1);
     });
 
     testWidgets('the drawer\'s Settings entry navigates to Settings', (
