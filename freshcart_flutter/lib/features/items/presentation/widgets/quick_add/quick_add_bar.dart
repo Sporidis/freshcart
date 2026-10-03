@@ -103,7 +103,16 @@ class _QuickAddBarState extends State<QuickAddBar>
   /// The open/close animation: 0 is the round button, 1 is the open pill.
   late final AnimationController _reveal = AnimationController(
     vsync: this,
-    duration: AppMotion.standard,
+    duration: AppMotion.fabRollOpen,
+    reverseDuration: AppMotion.fabRollClose,
+  );
+
+  /// [_reveal] with the v3 curves: it rolls open on the iOS curve and
+  /// closes on the accelerating exit, each with its own duration.
+  late final CurvedAnimation _openness = CurvedAnimation(
+    parent: _reveal,
+    curve: AppMotion.ios,
+    reverseCurve: AppMotion.exitStd,
   );
 
   /// The first-run pulse: 3 small pulses, 900 ms apart, then it stops.
@@ -148,6 +157,7 @@ class _QuickAddBarState extends State<QuickAddBar>
     _controller.removeListener(_handleTextChanged);
     _controller.dispose();
     _focus.dispose();
+    _openness.dispose();
     _reveal.dispose();
     _pulse.dispose();
     super.dispose();
@@ -289,9 +299,7 @@ class _QuickAddBarState extends State<QuickAddBar>
               builder: (context, constraints) => AnimatedBuilder(
                 animation: Listenable.merge([_reveal, _pulse]),
                 builder: (context, child) {
-                  // _reveal runs at a constant speed. We apply a curve
-                  // (AppMotion.sheet) so the opening slows down at the end.
-                  final openness = AppMotion.sheet.transform(_reveal.value);
+                  final openness = _openness.value;
                   final width = lerpDouble(
                     _diameter,
                     constraints.maxWidth,
@@ -333,7 +341,8 @@ class _QuickAddBarState extends State<QuickAddBar>
                                   focusNode: _focus,
                                   enabled: !_busy,
                                   placeholder: placeholder,
-                                  showShopDot: widget.activeShopName != null,
+                                  // v3: always, in the accent (ink on All).
+                                  showShopDot: true,
                                   onSubmitted: _handleSubmit,
                                 )
                               : null,

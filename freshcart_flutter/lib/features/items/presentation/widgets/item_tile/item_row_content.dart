@@ -143,6 +143,8 @@ class ItemRowContent extends StatelessWidget {
                   ? _Quantity(quantity: item.quantity, faded: faded)
                   : QuantityStepper(
                       quantity: item.quantity,
+                      decreaseLabel: t.items.decrease,
+                      increaseLabel: t.items.increase,
                       // At 1, the minus button is removed (not just
                       // disabled), because the quantity can't go below 1.
                       onDecrement: item.quantity > 1

@@ -10,8 +10,15 @@ class QuantityStepper extends StatelessWidget {
     required this.quantity,
     this.onDecrement,
     this.onIncrement,
+    this.decreaseLabel,
+    this.increaseLabel,
     super.key,
   });
+
+  /// What a screen reader calls the − and + ("Fewer", "More"). The glyphs
+  /// are drawn, so without these they'd be unnamed buttons.
+  final String? decreaseLabel;
+  final String? increaseLabel;
 
   final int quantity;
   final VoidCallback? onDecrement;
@@ -37,6 +44,7 @@ class QuantityStepper extends StatelessWidget {
             isAdd: false,
             color: scheme.onSurface,
             onTap: onDecrement,
+            label: decreaseLabel,
           ),
           SizedBox(
             width: 24,
@@ -60,6 +68,7 @@ class QuantityStepper extends StatelessWidget {
               isAdd: true,
               color: scheme.surface,
               onTap: onIncrement,
+              label: increaseLabel,
             ),
           ),
         ],
@@ -73,27 +82,35 @@ class _StepperButton extends StatelessWidget {
     required this.isAdd,
     required this.color,
     required this.onTap,
+    this.label,
   });
 
   final bool isAdd;
   final Color color;
   final VoidCallback? onTap;
+  final String? label;
 
   static const _tapSize = QuantityStepper._circleSize;
   static const _glyphSize = 10.0;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: SizedBox(
-        width: _tapSize,
-        height: _tapSize,
-        child: Center(
-          child: CustomPaint(
-            size: const Size.square(_glyphSize),
-            painter: _StepperGlyphPainter(isAdd: isAdd, color: color),
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: _tapSize,
+          height: _tapSize,
+          child: Center(
+            child: CustomPaint(
+              size: const Size.square(_glyphSize),
+              painter: _StepperGlyphPainter(isAdd: isAdd, color: color),
+            ),
           ),
         ),
       ),
