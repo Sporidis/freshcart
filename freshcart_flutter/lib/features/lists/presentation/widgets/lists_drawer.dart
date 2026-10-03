@@ -18,6 +18,7 @@ import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
     show showCreateListDialog, showJoinListDialog;
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -41,9 +42,16 @@ class ListsDrawer extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
     final rows = ref.watch(listsDrawerControllerProvider);
 
-    Future<void> openList(ListId id) async {
+    // [titleAt] is where the tapped name sits, so it can fly into the new
+    // list's header (design v3). Not under reduced motion.
+    Future<void> openList(ListId id, Rect? titleAt) async {
+      final flight = titleAt == null || AppMotion.reduced(context)
+          ? null
+          : ListTitleFlight(from: titleAt);
       Navigator.of(context).pop();
-      if (id != currentListId) context.go(Routes.listDetail(id));
+      if (id != currentListId) {
+        context.go(Routes.listDetail(id), extra: flight);
+      }
       await ref.read(listsDrawerControllerProvider.notifier).openList(id);
     }
 
@@ -160,7 +168,7 @@ class _ListRows extends StatelessWidget {
   final List<ListsDrawerRow> rows;
   final ListId currentListId;
   final Translations t;
-  final void Function(ListId id) onOpen;
+  final void Function(ListId id, Rect? titleAt) onOpen;
 
   /// Closes the drawer, then opens [dialog].
   ///
@@ -200,7 +208,7 @@ class _ListRows extends StatelessWidget {
             child: _ListTile(
               row: row,
               isCurrent: row.list.id == currentListId,
-              onTap: () => onOpen(row.list.id),
+              onTap: (titleAt) => onOpen(row.list.id, titleAt),
               t: t,
             ),
           ),
@@ -238,7 +246,9 @@ class _ListTile extends ConsumerStatefulWidget {
 
   final ListsDrawerRow row;
   final bool isCurrent;
-  final VoidCallback onTap;
+
+  /// Opens the list, with where its name is on screen right now.
+  final ValueChanged<Rect?> onTap;
   final Translations t;
 
   @override
@@ -249,6 +259,13 @@ class _ListTileState extends ConsumerState<_ListTile> {
   /// Lets a long-press start renaming. (A tap opens the list, so
   /// `tapToEdit` is false.)
   final _titleKey = GlobalKey<EditableListTitleState>();
+
+  /// The name's box in global coordinates, for the title flight.
+  Rect? _titleRect() {
+    final box = _titleKey.currentContext?.findRenderObject();
+    if (box is! RenderBox || !box.hasSize) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -268,7 +285,7 @@ class _ListTileState extends ConsumerState<_ListTile> {
         borderRadius: BorderRadius.circular(AppRadii.card),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppRadii.card),
-          onTap: widget.onTap,
+          onTap: () => widget.onTap(_titleRect()),
           onLongPress: () => _titleKey.currentState?.startEditing(),
           child: Semantics(
             selected: widget.isCurrent,

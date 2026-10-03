@@ -46,6 +46,10 @@ class AppMotion {
   ); // +24ms stagger, 28px travel
   static const Duration colorWave = Duration(milliseconds: 400); // restartable
   static const Duration sharedTitle = Duration(milliseconds: 380);
+
+  /// The new list fading in when you switch lists from the drawer (v3's
+  /// `listIn` runs 280ms; the switch itself has no push).
+  static const Duration listSwitch = Duration(milliseconds: 280);
   static const Duration sheetOpen = Duration(milliseconds: 440);
   static const Duration sheetClose = Duration(milliseconds: 300);
   static const Duration drawerOpen = Duration(milliseconds: 360);

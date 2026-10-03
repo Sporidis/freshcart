@@ -1,9 +1,11 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_settings_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/join_flow_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/onboarding_screen.dart';
@@ -147,12 +149,30 @@ GoRouter appRouter(Ref ref) => GoRouter(
               },
             ),
           ],
-          builder: (context, state) {
+          pageBuilder: (context, state) {
             // A bad link with an empty id goes back to the lists screen,
             // instead of crashing inside ListId.
             final raw = state.pathParameters['listId'];
-            if (raw == null || raw.isEmpty) return const ListsScreen();
-            return ListDetailScreen(listId: ListId(raw));
+            final flight = state.extra is ListTitleFlight
+                ? state.extra! as ListTitleFlight
+                : null;
+            final screen = raw == null || raw.isEmpty
+                ? const ListsScreen()
+                : ListDetailScreen(listId: ListId(raw), titleFlight: flight);
+            // Switching lists from the drawer happens in place (design
+            // v3): a quick fade, no sideways push, while the name flies
+            // into the header. Any other way in keeps the usual push.
+            if (flight == null) {
+              return MaterialPage<void>(key: state.pageKey, child: screen);
+            }
+            return CustomTransitionPage<void>(
+              key: state.pageKey,
+              child: screen,
+              transitionDuration: AppMotion.listSwitch,
+              reverseTransitionDuration: AppMotion.listSwitch,
+              transitionsBuilder: (context, animation, _, child) =>
+                  FadeTransition(opacity: animation, child: child),
+            );
           },
         ),
       ],

@@ -462,6 +462,50 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Hardware'), findsOneWidget);
     });
 
+    testWidgets('picking a list in the drawer flies its name into the header', (
+      tester,
+    ) async {
+      final groceries = buildList(name: 'Groceries', members: [buildMember()]);
+      final hardware = buildList(
+        id: '00000000-0000-4000-8000-000000000002',
+        name: 'Hardware',
+        members: [buildMember()],
+      );
+      repository.myListsResult = Ok([groceries, hardware]);
+      repository.byIdResult = Ok(groceries);
+
+      await pump(tester);
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+
+      repository.byIdResult = Ok(hardware);
+      await tester.tap(find.text('Hardware'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+
+      // The header's own title, which waits while the copy flies in.
+      double headerTitleOpacity() => tester
+          .widget<Opacity>(
+            find
+                .ancestor(
+                  of: find.descendant(
+                    of: find.byType(AppBar),
+                    matching: find.text('Hardware'),
+                  ),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          )
+          .opacity;
+
+      expect(headerTitleOpacity(), 0);
+
+      await tester.pumpAndSettle();
+      expect(headerTitleOpacity(), 1);
+      // Landed: only the header's title is left.
+      expect(find.text('Hardware'), findsOneWidget);
+    });
+
     testWidgets('the drawer\'s Settings entry navigates to Settings', (
       tester,
     ) async {
