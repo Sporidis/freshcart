@@ -12,9 +12,12 @@ final class SyncBannerHidden extends SyncBanner {
   const SyncBannerHidden();
 }
 
-/// No internet. Changes are saved on the phone until it's back.
+/// No internet. Changes are saved on the phone until it's back; [pending]
+/// of them are waiting (0 if none were made offline yet).
 final class SyncBannerOffline extends SyncBanner {
-  const SyncBannerOffline();
+  const SyncBannerOffline([this.pending = 0]);
+
+  final int pending;
 }
 
 /// Back online, still sending [pending] saved changes to the server.

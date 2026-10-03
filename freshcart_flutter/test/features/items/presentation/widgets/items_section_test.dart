@@ -717,6 +717,30 @@ void main() {
     },
   );
 
+  testWidgets(
+    'a row changed offline carries a dashed edge until it has synced',
+    (tester) async {
+      addTearDown(items.dispose);
+      final milk = buildItem(name: 'Milk');
+      items.byListResult = Ok([milk.copyWith(pending: true)]);
+
+      await pump(tester);
+
+      double edgeOpacity() => tester
+          .widget<AnimatedOpacity>(find.byKey(const ValueKey('pending-edge')))
+          .opacity;
+      expect(edgeOpacity(), 1);
+
+      // The queue drained: the same row arrives, no longer pending.
+      items.live.add(Ok([milk]));
+      await tester.pump();
+      // Past the row's stagger and the fade.
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+      expect(edgeOpacity(), 0);
+    },
+  );
+
   testWidgets("the row menu's options are translated, not hardcoded English", (
     tester,
   ) async {

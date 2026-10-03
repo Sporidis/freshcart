@@ -290,6 +290,15 @@
   },
   "sync": {
     "offline": "Offline – changes will sync",
+    "offlineWaiting": {
+      "one": "Offline – {{n}} change will sync",
+      "other": "Offline – {{n}} changes will sync"
+    },
+    "upToDate": "Up to date",
+    "conflicts": {
+      "one": "{{n}} change couldn't be applied – someone changed it first",
+      "other": "{{n}} changes couldn't be applied – someone changed them first"
+    },
     "syncing": {
       "one": "Syncing {{n}} change…",
       "other": "Syncing {{n}} changes…"

@@ -290,6 +290,15 @@
   },
   "sync": {
     "offline": "Offline – masi-sync ang mga pagbabago mamaya",
+    "offlineWaiting": {
+      "one": "Offline – masi-sync mamaya ang {{n}} pagbabago",
+      "other": "Offline – masi-sync mamaya ang {{n}} na pagbabago"
+    },
+    "upToDate": "Updated na",
+    "conflicts": {
+      "one": "Hindi nailapat ang {{n}} pagbabago – may nauna nang nagbago nito",
+      "other": "Hindi nailapat ang {{n}} na pagbabago – may nauna nang nagbago nito"
+    },
     "syncing": {
       "one": "Sini-sync ang {{n}} pagbabago…",
       "other": "Sini-sync ang {{n}} pagbabago…"

@@ -21,6 +21,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/delete_ite
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/pending_edge.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_results.dart';
@@ -340,50 +341,58 @@ class _ItemList extends StatelessWidget {
           duration: inDone && state.lastSettled.contains(item.id)
               ? AppMotion.batchMove
               : AppMotion.reflow,
-          child: ItemTile(
-            t: t,
-            item: item,
-            inDone: inDone,
-            shopColor: dotFor(item.shopId),
-            // On All the row is the only sign of its shop; on a tab it's
-            // obvious.
-            shopName: state.shopFilter == null
-                ? state.shopFor(item.shopId)?.name
-                : null,
-            // Saved at once, but held in place until the ticks settle.
-            onToggle: () async => report(
-              await vm.toggle(
-                item,
-                settleAfter: AppMotion.reduced(context)
-                    ? AppMotion.checkSettleReduced
-                    : AppMotion.checkSettle,
+          child: PendingEdge(
+            // v3 Flow 07: a dashed edge while this row's change waits
+            // in the offline queue.
+            pending: item.pending,
+            index: position,
+            child: ItemTile(
+              t: t,
+              item: item,
+              inDone: inDone,
+              shopColor: dotFor(item.shopId),
+              // On All the row is the only sign of its shop; on a tab it's
+              // obvious.
+              shopName: state.shopFilter == null
+                  ? state.shopFor(item.shopId)?.name
+                  : null,
+              // Saved at once, but held in place until the ticks settle.
+              onToggle: () async => report(
+                await vm.toggle(
+                  item,
+                  settleAfter: AppMotion.reduced(context)
+                      ? AppMotion.checkSettleReduced
+                      : AppMotion.checkSettle,
+                ),
               ),
+              onEdit: () => onEdit(item),
+              shops: state.shops,
+              onMove: (shopId) async => report(await vm.moveItem(item, shopId)),
+              onDelete: () => deleteWithUndo(item),
+              onQuantityChanged: (quantity) async =>
+                  report(await vm.setQuantity(item, quantity)),
+              selected: selectable && state.selection.contains(item.id),
+              selectionMode: selectable && selectionMode,
+              onSelectionToggle: selectable
+                  ? () => vm.toggleSelection(item.id)
+                  : null,
+              onSelectMore: selectable
+                  ? () => vm.toggleSelection(item.id)
+                  : null,
+              // Only open rows (not checked ones) can start rearranging.
+              onRearrange: selectable && state.canRearrange
+                  ? vm.startRearrange
+                  : null,
+              dragHandle: index == null
+                  ? null
+                  : ReorderableDragStartListener(
+                      index: index,
+                      child: const Icon(Icons.drag_handle, size: 16),
+                    ),
+              checkedByMember: item.checkedBy == null
+                  ? null
+                  : state.list.memberFor(item.checkedBy!),
             ),
-            onEdit: () => onEdit(item),
-            shops: state.shops,
-            onMove: (shopId) async => report(await vm.moveItem(item, shopId)),
-            onDelete: () => deleteWithUndo(item),
-            onQuantityChanged: (quantity) async =>
-                report(await vm.setQuantity(item, quantity)),
-            selected: selectable && state.selection.contains(item.id),
-            selectionMode: selectable && selectionMode,
-            onSelectionToggle: selectable
-                ? () => vm.toggleSelection(item.id)
-                : null,
-            onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
-            // Only open rows (not checked ones) can start rearranging.
-            onRearrange: selectable && state.canRearrange
-                ? vm.startRearrange
-                : null,
-            dragHandle: index == null
-                ? null
-                : ReorderableDragStartListener(
-                    index: index,
-                    child: const Icon(Icons.drag_handle, size: 16),
-                  ),
-            checkedByMember: item.checkedBy == null
-                ? null
-                : state.list.memberFor(item.checkedBy!),
           ),
         ),
       ),

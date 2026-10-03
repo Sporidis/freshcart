@@ -144,6 +144,8 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        // v3 Flow 07: between the header and the tabs.
+        const OfflineSyncingBanner(),
         // The tabs slide away while searching, because search looks in
         // all shops anyway.
         AnimatedSize(
@@ -165,7 +167,6 @@ class _Body extends StatelessWidget {
                   child: ShopFilterBar(listId: list.id, revealKey: revealKey),
                 ),
         ),
-        const OfflineSyncingBanner(),
         Expanded(
           child: ShopThemeReveal(
             key: revealKey,
