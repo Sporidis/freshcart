@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -17,13 +18,14 @@ void main() {
 
   late StreamController<SyncStatus> status;
   late StreamController<int> pending;
+  late ProviderContainer container;
 
   Future<void> pumpBanner(WidgetTester tester) async {
     status = StreamController<SyncStatus>();
     pending = StreamController<int>();
     addTearDown(status.close);
     addTearDown(pending.close);
-    final container = ProviderContainer(
+    container = ProviderContainer(
       overrides: [
         syncProvider.overrideWith((ref) => status.stream),
         pendingWriteCountProvider.overrideWith((ref) => pending.stream),
@@ -81,6 +83,22 @@ void main() {
     expect(find.text('Up to date'), findsNothing);
     expect(find.byType(LinearProgressIndicator), findsNothing);
   });
+
+  testWidgets(
+    'changes turned down while syncing are explained in a toast',
+    (tester) async {
+      await pumpBanner(tester);
+      await set(tester, to: SyncStatus.online, waiting: 0);
+
+      container.read(syncConflictsControllerProvider.notifier).add(1);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text("1 change couldn't be applied – someone changed it first"),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('a quiet launch, online with nothing queued, shows no bar', (
     tester,

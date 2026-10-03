@@ -7,7 +7,9 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/undo_toast.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -22,6 +24,11 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// [syncBannerProvider] decides offline/syncing/hidden; the short "Up to
 /// date" moment is only this widget's, because it's about what the user
 /// just saw (it only shows after syncing, never on a quiet launch).
+///
+/// It also says when syncing had to drop changes because someone else
+/// changed the same thing first ([SyncConflictsController]): a toast, the
+/// snackbar tier of decision #42, since the app is fine and the list
+/// already shows what's really there.
 class OfflineSyncingBanner extends ConsumerStatefulWidget {
   const OfflineSyncingBanner({super.key});
 
@@ -63,6 +70,16 @@ class _OfflineSyncingBannerState extends ConsumerState<OfflineSyncingBanner> {
         _hold?.cancel();
         setState(() => _upToDate = false);
       }
+    });
+
+    ref.listen(syncConflictsControllerProvider, (previous, next) {
+      final dropped = next - (previous ?? 0);
+      if (dropped <= 0) return;
+      showUndoToast(
+        context,
+        message: t.sync.conflicts(n: dropped),
+        t: t,
+      );
     });
 
     final banner = ref.watch(syncBannerProvider);

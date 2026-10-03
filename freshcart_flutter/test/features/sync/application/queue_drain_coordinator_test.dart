@@ -3,8 +3,10 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/queue_drainer.dart';
 
 /// Counts how often [drain] is called. Set [gate] to keep a drain "running"
@@ -13,11 +15,14 @@ class _FakeDrainer implements QueueDrainer {
   int calls = 0;
   Completer<void>? gate;
 
+  /// What [drain] reports as turned down by the server.
+  List<PendingOperation> conflicted = const [];
+
   @override
   Future<List<PendingOperation>> drain() async {
     calls++;
     await gate?.future;
-    return const [];
+    return conflicted;
   }
 }
 
@@ -53,6 +58,28 @@ void main() {
     status.add(value);
     await pumpEventQueue();
   }
+
+  test('changes the server turned down are counted, for the toast', () async {
+    final container = start();
+    PendingOperation op(int id) => PendingOperation(
+      id: id,
+      entityType: PendingEntityType.item,
+      opType: PendingOpType.edit,
+      payload: '{}',
+      queuedAt: DateTime.utc(2026, 10),
+    );
+    drainer.conflicted = [op(1), op(2)];
+
+    await emit(SyncStatus.online);
+
+    expect(container.read(syncConflictsControllerProvider), 2);
+  });
+
+  test('a drain with nothing turned down counts nothing', () async {
+    final container = start();
+    await emit(SyncStatus.online);
+    expect(container.read(syncConflictsControllerProvider), 0);
+  });
 
   test('drains when the app starts already online', () async {
     start();

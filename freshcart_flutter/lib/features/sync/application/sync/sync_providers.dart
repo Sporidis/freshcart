@@ -4,6 +4,7 @@ import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_b
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
+import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
 
 import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
@@ -77,7 +78,10 @@ void queueDrainCoordinator(Ref ref) {
       // then would fail with "unauthorized", so wait for it.
       final session = await ref.read(authBootstrapProvider.future);
       if (!session.authenticated) return;
-      await ref.read(queueDrainerProvider).drain();
+      // Changes the server turned down (someone changed the same thing
+      // first) are dropped from the queue; tell the user.
+      final conflicted = await ref.read(queueDrainerProvider).drain();
+      ref.read(syncConflictsControllerProvider.notifier).add(conflicted.length);
     } finally {
       draining = false;
     }
