@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/core/ui/cascade_in.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/edit_profile_sheet.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_controller.dart';
@@ -96,8 +97,9 @@ class _DrawerHeader extends ConsumerWidget {
 
     return InkWell(
       onTap: () async {
+        // Close the drawer first, so the sheet rises over the list.
         Navigator.of(context).pop();
-        await context.push(Routes.editProfile);
+        await showEditProfileSheet(context);
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(

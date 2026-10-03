@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -98,7 +99,8 @@ void main() {
       list: buildList(name: 'Groceries', members: [buildMember()]),
     );
 
-    expect(find.widgetWithText(AppBar, 'List settings'), findsOneWidget);
+    // v3: a large title in the page, not in the bar.
+    expect(find.text('List settings'), findsOneWidget);
     expect(
       tester.widget<TextField>(nameField()).controller?.text,
       'Groceries',
@@ -325,20 +327,60 @@ void main() {
     expect(repository.renameCalls.single.name, 'Weekly');
   });
 
-  testWidgets('the Household row opens the household screen', (
-    tester,
-  ) async {
+  testWidgets('a member row opens the household screen', (tester) async {
     await pump(
       tester,
-      list: buildList(name: 'Groceries', members: [buildMember()]),
+      list: buildList(
+        name: 'Groceries',
+        members: [buildMember(displayName: 'Sam De Vos')],
+      ),
     );
 
-    final row = find.text('Invite someone');
+    final row = find.text('Sam De Vos');
     await tester.ensureVisible(row);
     await tester.pumpAndSettle();
     await tester.tap(row);
     await tester.pumpAndSettle();
 
     expect(find.byType(HouseholdScreen), findsOneWidget);
+  });
+
+  testWidgets('the invite code is shown inline, and a tap copies it', (
+    tester,
+  ) async {
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await pump(
+      tester,
+      list: buildList(name: 'Groceries', members: [buildMember()]),
+    );
+
+    final code = find.text('ABC23');
+    await tester.ensureVisible(code);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invite code'));
+    await tester.pump();
+
+    expect(copied, 'ABC23');
+    expect(find.text('Copied'), findsOneWidget);
+
+    // Back to the code once the confirmation has had its moment.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(find.text('ABC23'), findsOneWidget);
   });
 }

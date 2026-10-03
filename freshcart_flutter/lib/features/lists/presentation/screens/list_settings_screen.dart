@@ -1,28 +1,32 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/lists/application/list_settings_screen/list_settings_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// Settings for one list: name, shops, household, behaviour, and leave or
+/// Settings for one list: name, shops, household, behavior, and leave or
 /// delete.
 ///
 /// Opened from a list's row in Settings. The "Managing" card at the top
@@ -98,7 +102,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   }
 
   // The list may still be loading in initState, so the name is filled in
-  // the first time build() has the list (same as EditProfileScreen).
+  // the first time build() has the list (same as EditProfileSheet).
   void _seedNameOnce(String name) {
     if (_savedName != null) return;
     _savedName = name;
@@ -157,22 +161,29 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
         if (didPop && _nameIsDirty) unawaited(_vm.rename(_name.text));
       },
       child: Scaffold(
+        // v3: the bar only holds Back; the title is large, in the page.
         appBar: AppBar(
-          title: Text(t.lists.settingsTitle),
           leading: BackButton(onPressed: () => Navigator.of(context).pop()),
         ),
         body: list == null
             ? const Center(child: CircularProgressIndicator())
             : ListView(
-                padding: const EdgeInsets.all(AppSpacing.screen),
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  0,
+                  AppSpacing.screen,
+                  40,
+                ),
                 children: [
+                  Text(t.lists.settingsTitle, style: AppTextStyles.largeTitle),
+                  const SizedBox(height: AppSpacing.xl),
                   _ManagingSwitcher(
                     current: list,
                     lists: s.allLists,
                     t: t,
                     onPick: (id) => context.go(Routes.listSettings(id)),
                   ),
-                  const SizedBox(height: AppSpacing.screen),
+                  const SizedBox(height: AppSpacing.xl),
                   Text(t.lists.nameLabel, style: theme.textTheme.bodySmall),
                   const SizedBox(height: AppSpacing.gapSmall),
                   TextField(
@@ -187,7 +198,7 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                     ),
                     onSubmitted: (_) => _saveName(),
                   ),
-                  const SizedBox(height: AppSpacing.screen),
+                  const SizedBox(height: _sectionGap),
                   _ShopsSection(
                     shops: s.shops,
                     onToggle: (shop) async =>
@@ -198,42 +209,25 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                         context.push(Routes.manageShops(widget.listId)),
                     t: t,
                   ),
-                  const SizedBox(height: AppSpacing.screen),
+                  const SizedBox(height: _sectionGap),
                   SettingsSection(
                     label: t.household.title,
                     children: [
-                      SettingRow(
-                        title: t.household.title,
-                        subtitle: t.settings.memberCount(
-                          n: list.members.length,
+                      // Each member opens Household, where members are
+                      // managed (decisions.md #69: link, don't copy).
+                      for (final member in list.members)
+                        _MemberRow(
+                          member: member,
+                          t: t,
+                          onTap: () =>
+                              context.push(Routes.household(widget.listId)),
                         ),
-                        onTap: () =>
-                            context.push(Routes.household(widget.listId)),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            MemberAvatarStack(members: list.members),
-                            const SettingChevron(),
-                          ],
-                        ),
-                      ),
-                      // Opens the household screen, which has the invite
-                      // code.
-                      SettingRow(
-                        leading: Icon(
-                          Icons.person_add_alt_1_outlined,
-                          color: theme.colorScheme.primary,
-                        ),
-                        title: t.household.inviteSomeone,
-                        titleStyle: AppTextStyles.bodyStrong.copyWith(
-                          color: theme.colorScheme.primary,
-                        ),
-                        onTap: () =>
-                            context.push(Routes.household(widget.listId)),
-                      ),
+                      // v3: the code is right here, no need to go to
+                      // Household to find it. Tap to copy.
+                      _InviteCodeRow(code: list.joinCode.value, t: t),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.screen),
+                  const SizedBox(height: _sectionGap),
                   SettingsSection(
                     label: t.lists.behaviour,
                     children: [
@@ -247,35 +241,42 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: AppSpacing.screen),
-                  // Leave/delete go at the very bottom, with a line above.
-                  const Divider(),
-                  if (s.isOwner)
-                    _DangerRow(
-                      title: t.lists.deleteForEveryone,
-                      onTap: () => confirmDeleteList(
-                        context,
-                        list: list,
-                        itemCount: _vm.itemCountForDialog(),
-                        t: t,
-                        delete: _vm.deleteList,
-                      ),
-                    )
-                  else
-                    _DangerRow(
-                      title: t.lists.leave,
-                      onTap: () => confirmLeaveList(
-                        context,
-                        list: list,
-                        t: t,
-                        leave: _vm.leaveList,
-                      ),
-                    ),
+                  const SizedBox(height: _sectionGap),
+                  // Leave/delete: their own card at the very bottom, away
+                  // from everything else.
+                  SettingsSection(
+                    children: [
+                      if (s.isOwner)
+                        _DangerRow(
+                          title: t.lists.deleteForEveryone,
+                          onTap: () => confirmDeleteList(
+                            context,
+                            list: list,
+                            itemCount: _vm.itemCountForDialog(),
+                            t: t,
+                            delete: _vm.deleteList,
+                          ),
+                        )
+                      else
+                        _DangerRow(
+                          title: t.lists.leave,
+                          onTap: () => confirmLeaveList(
+                            context,
+                            list: list,
+                            t: t,
+                            leave: _vm.leaveList,
+                          ),
+                        ),
+                    ],
+                  ),
                 ],
               ),
       ),
     );
   }
+
+  /// Space above each section title (v3: 22).
+  static const double _sectionGap = 22;
 }
 
 /// "Shops on this list": each shop with its colour dot and an on/off switch
@@ -299,7 +300,7 @@ class _ShopsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
     return SettingsSection(
       label: t.lists.shopsOnList,
       subtitle: t.lists.shopsOnListBody,
@@ -308,8 +309,8 @@ class _ShopsSection extends StatelessWidget {
           MergeSemantics(
             child: SettingRow(
               leading: Container(
-                width: AppSizes.shopDotLarge,
-                height: AppSizes.shopDotLarge,
+                width: 12,
+                height: 12,
                 decoration: BoxDecoration(
                   color: shop.color.toColor(),
                   shape: BoxShape.circle,
@@ -324,9 +325,9 @@ class _ShopsSection extends StatelessWidget {
             ),
           ),
         SettingRow(
-          leading: Icon(Icons.add, color: primary),
+          leading: Icon(Icons.add, size: 18, color: muted),
           title: t.shops.add,
-          titleStyle: AppTextStyles.bodyStrong.copyWith(color: primary),
+          titleStyle: AppTextStyles.body.copyWith(color: muted),
           onTap: onAdd,
         ),
         if (shops.isNotEmpty)
@@ -526,4 +527,120 @@ class _DangerRow extends StatelessWidget {
     ),
     onTap: onTap,
   );
+}
+
+/// One household member: avatar, name, and "Owner" for the owner. Opens
+/// Household.
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.member,
+    required this.t,
+    required this.onTap,
+  });
+
+  final ListMember member;
+  final Translations t;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SettingRow(
+      leading: UserAvatar(
+        seed: member.userId.value,
+        initial: initialFor(member.displayName),
+        photoUrl: member.avatarPhotoUrl,
+        color: member.avatarColor,
+        radius: AppSizes.avatarSmall / 2,
+      ),
+      title: member.displayName,
+      onTap: onTap,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (member.isOwner)
+            Text(
+              t.household.owner,
+              style: AppTextStyles.caption.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          const SettingChevron(),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Invite code   K7M2Q" in mono. Tapping copies the code; the code is
+/// swapped for "Copied" for a moment, so the user sees it worked without a
+/// toast covering the screen (same idea as `InviteCard`).
+class _InviteCodeRow extends ConsumerStatefulWidget {
+  const _InviteCodeRow({required this.code, required this.t});
+
+  final String code;
+  final Translations t;
+
+  @override
+  ConsumerState<_InviteCodeRow> createState() => _InviteCodeRowState();
+}
+
+class _InviteCodeRowState extends ConsumerState<_InviteCodeRow> {
+  static const Duration _held = Duration(milliseconds: 1600);
+
+  bool _copied = false;
+  Timer? _reset;
+
+  @override
+  void dispose() {
+    _reset?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.code));
+    ref.haptic(HapticFeedback.lightImpact);
+    if (!mounted) return;
+    setState(() => _copied = true);
+    _reset?.cancel();
+    _reset = Timer(_held, () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final t = widget.t;
+    return Semantics(
+      hint: t.household.copyCode,
+      child: SettingRow(
+        title: t.household.inviteCode,
+        titleStyle: AppTextStyles.body.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        onTap: _copy,
+        trailing: AnimatedSwitcher(
+          duration: AppMotion.durationFor(context, AppMotion.quick),
+          child: _copied
+              ? Text(
+                  t.household.copied,
+                  key: const ValueKey('copied'),
+                  style: AppTextStyles.labelStrong.copyWith(
+                    color: AppColors.success,
+                  ),
+                )
+              : Text(
+                  widget.code,
+                  key: const ValueKey('code'),
+                  style: AppTextStyles.code.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
 }

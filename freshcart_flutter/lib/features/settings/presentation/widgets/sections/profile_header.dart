@@ -2,16 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/edit_profile_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
-import 'package:go_router/go_router.dart';
 
 /// The top of Settings: avatar, name, the email (if linked, with a tick),
-/// and an "Edit" link to [EditProfileScreen].
+/// and an "Edit" link to the `EditProfileSheet`.
 class ProfileHeader extends StatelessWidget {
   const ProfileHeader({required this.user, required this.t, super.key});
 
@@ -65,7 +64,7 @@ class ProfileHeader extends StatelessWidget {
         // Styled as a bold text link (like in the drawer), so it doesn't
         // stand out more than the rows below.
         TextButton(
-          onPressed: () => context.push(Routes.editProfile),
+          onPressed: () => showEditProfileSheet(context),
           style: TextButton.styleFrom(
             foregroundColor: theme.colorScheme.primary,
             textStyle: AppTextStyles.labelStrong,

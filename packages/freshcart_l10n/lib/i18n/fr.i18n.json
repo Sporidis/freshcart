@@ -166,6 +166,7 @@
     "invite": "Inviter",
     "copyCode": "Copier le code",
     "copied": "Copié",
+    "inviteCode": "Code d'invitation",
     "makeOwner": "Rendre propriétaire",
     "removeMember": "Retirer de la liste",
     "removeTitle": "Retirer {{name}} ?",

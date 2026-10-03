@@ -1,6 +1,5 @@
 import 'package:flutter/widgets.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/presentation/screens/edit_profile_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_settings_screen.dart';
@@ -52,14 +51,6 @@ abstract final class Routes {
 
   /// App-wide settings (not for one specific list).
   static const String settings = '/settings';
-
-  /// The path pattern for the Edit profile screen, under settings.
-  ///
-  /// Temporary location. See `docs/design-gap-plan.md` §5.
-  static const String editProfilePattern = 'profile';
-
-  /// The concrete path to Edit profile.
-  static const String editProfile = '$settings/$editProfilePattern';
 
   /// The path pattern for the Notifications screen, nested under settings.
   static const String notificationsPattern = 'notifications';
@@ -118,10 +109,6 @@ GoRouter appRouter(Ref ref) => GoRouter(
       path: Routes.settings,
       builder: (context, state) => const SettingsScreen(),
       routes: <RouteBase>[
-        GoRoute(
-          path: Routes.editProfilePattern,
-          builder: (context, state) => const EditProfileScreen(),
-        ),
         GoRoute(
           path: Routes.notificationsPattern,
           builder: (context, state) => const NotificationsScreen(),

@@ -10,8 +10,9 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 /// ...) are built on this one and only choose what goes in [trailing]. That
 /// way every settings row has the same size and spacing.
 ///
-/// No side padding, so rows line up with the section title above them.
-/// No divider either: `SettingsSection` draws those between rows.
+/// Design v3: at least 52px tall, with 14px inside the card's edges.
+/// `SettingsSection` puts rows on a card and draws the lines between them,
+/// so a row has no divider of its own.
 class SettingRow extends StatelessWidget {
   /// Creates the row.
   const SettingRow({
@@ -43,16 +44,21 @@ class SettingRow extends StatelessWidget {
   /// `AppSpacing`.
   static const double _subtitleGap = 2;
 
+  /// v3 row height and inner side padding.
+  static const double _minHeight = 52;
+  static const double _sidePadding = 14;
+
   @override
   Widget build(BuildContext context) {
     final tileTheme = ListTileTheme.of(context);
     return InkWell(
       onTap: onTap,
       child: ConstrainedBox(
-        constraints: const BoxConstraints(minHeight: AppSpacing.minTapTarget),
+        constraints: const BoxConstraints(minHeight: _minHeight),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            vertical: AppSpacing.rowVertical,
+            horizontal: _sidePadding,
+            vertical: AppSpacing.sm,
           ),
           child: Row(
             children: [
