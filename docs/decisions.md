@@ -2745,4 +2745,7 @@ dashed left edge on pending rows that fades out row by row (40ms apart) as they 
   parked in `await for` only finishes on its next event, so a list's live connection outlived
   leaving the list. Now cancelling lets go at once.
 
-**Not yet:** conflict surfacing (see offline-sync-plan.md Phase E).
+**Conflicts** (server wins, Phase D) now reach the user: the coordinator counts the changes the
+server turned down in `SyncConflictsController`, a running total, and the offline bar shows the
+increase as a toast. A total rather than a list, because the screen only needs "how many more
+since I last looked".

@@ -204,9 +204,13 @@ offline, which the server-only cache didn't). Rows carry a dashed edge while pen
 reads offline / syncing / up to date. Tests: `queued_item_changes_test.dart`, the Phase E group
 in `item_repository_impl_test.dart`, `offline_banner_test.dart`.
 
-**Still to build:** the conflict half. `QueueDrainer.drain()` returns the changes the server
-rejected, but `queueDrainCoordinator` ignores them; they should surface as a snackbar-tier toast
-(decision #42). Lists' own `pending` isn't drawn yet either.
+**Conflicts, built:** `queueDrainCoordinator` passes the changes the server rejected on replay
+to `SyncConflictsController` (a running total), and the offline bar shows the difference as a
+snackbar-tier toast (decision #42): "1 change couldn't be applied – someone changed it first".
+The list itself re-fetches as the change leaves the queue, so it already shows the server's
+version.
+
+**Still open:** a list's own `pending` (a rename made offline) isn't drawn yet.
 
 ### Phase F — in-memory resilience across a live connection drop ✅ built
 
