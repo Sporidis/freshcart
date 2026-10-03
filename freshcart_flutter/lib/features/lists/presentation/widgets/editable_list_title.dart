@@ -117,6 +117,12 @@ class EditableListTitleState extends State<EditableListTitle> {
 
     return AnimatedSwitcher(
       duration: AppMotion.durationFor(context, AppMotion.quick),
+      // Start-aligned, not the default centre: where the title gets the full
+      // width (the drawer's tiles), the default Stack centred the name.
+      layoutBuilder: (current, previous) => Stack(
+        alignment: AlignmentDirectional.centerStart,
+        children: [...previous, ?current],
+      ),
       child: !_editing
           ? (widget.tapToEdit
                 ? TapTarget(

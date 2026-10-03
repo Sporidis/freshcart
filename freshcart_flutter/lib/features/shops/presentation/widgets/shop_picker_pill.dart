@@ -49,9 +49,7 @@ class ShopPickerPill extends StatelessWidget {
       bg = color ?? ink;
       fg = color == null ? inkFg : AppTheme.onColorFor(color);
     } else {
-      bg =
-          color?.withValues(alpha: isDark ? .16 : .09) ??
-          scheme.surfaceContainer;
+      bg = color?.withValues(alpha: isDark ? .16 : .09) ?? scheme.fill;
       fg = ink;
     }
     final shadow =

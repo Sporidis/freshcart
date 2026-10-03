@@ -4,6 +4,9 @@
     "title": "Mijn lijsten",
     "empty": "Nog geen lijsten. Maak er een om te beginnen.",
     "create": "Nieuwe lijst",
+    "nameExample": "bv. Kampeertrip",
+    "createButton": "Lijst maken",
+    "nameSuggestions": ["Kamperen", "Weekend", "Feestje", "Kantoor"],
     "join": "Lijst toevoegen met code",
     "joinCodeLabel": "Deelcode",
     "memberCount": {

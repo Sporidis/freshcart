@@ -12,6 +12,7 @@ import 'package:freshcart_flutter/features/items/data/repositories/item_reposito
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/new_list_sheet.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
@@ -141,11 +142,13 @@ void main() {
       await tester.tap(find.text('New list'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Weekend');
-      await tester.tap(find.text('Save'));
+      // Create list enables on the frame after typing.
+      await tester.pump();
+      await tester.tap(find.text('Create list'));
       await tester.pumpAndSettle();
 
       expect(repository.createCalls.single, 'Weekend');
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NewListSheet), findsNothing);
       expect(
         repository.myListsCallCount,
         greaterThan(callsBefore),
@@ -161,13 +164,16 @@ void main() {
         await tester.tap(find.text('New list'));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField), '   ');
-        await tester.tap(find.text('Save'));
+        // Create list enables on the frame after typing.
+        await tester.pump();
+        await tester.tap(find.text('Create list'));
         await tester.pumpAndSettle();
 
         // The domain rejected it before any network call.
+        // The sheet won't send a blank name: Create list stays disabled,
+        // and the sheet stays open for a real one.
         expect(repository.createCalls, isEmpty);
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.text('Give the list a name'), findsOneWidget);
+        expect(find.byType(NewListSheet), findsOneWidget);
       },
     );
     testWidgets('opens the new list, and remembers it as last opened', (
@@ -185,7 +191,9 @@ void main() {
       await tester.tap(find.text('New list'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Weekend');
-      await tester.tap(find.text('Save'));
+      // Create list enables on the frame after typing.
+      await tester.pump();
+      await tester.tap(find.text('Create list'));
       await tester.pumpAndSettle();
 
       // On the new list's detail screen, not left on the lists screen.

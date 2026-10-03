@@ -4,6 +4,9 @@
     "title": "My lists",
     "empty": "No lists yet. Create one to get started.",
     "create": "New list",
+    "nameExample": "e.g. Camping trip",
+    "createButton": "Create list",
+    "nameSuggestions": ["Camping", "Weekend", "Party", "Office"],
     "join": "Join a list with a code",
     "joinCodeLabel": "Join code",
     "memberCount": {

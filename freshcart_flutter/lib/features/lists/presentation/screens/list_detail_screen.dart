@@ -83,6 +83,8 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
     final list = s.list;
 
     return Scaffold(
+      // v3: the drawer dims the list to 42%.
+      drawerScrimColor: const Color(0x6B141412),
       drawer: s.canOpenDrawer
           ? ListsDrawer(currentListId: widget.listId)
           : null,
