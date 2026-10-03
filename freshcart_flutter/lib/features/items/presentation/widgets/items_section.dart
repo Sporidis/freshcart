@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +12,8 @@ import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/swipe_to_delete.dart';
+import 'package:freshcart_flutter/core/ui/undo_toast.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
@@ -43,6 +46,20 @@ class ItemsSection extends ConsumerWidget {
     final s = ref.watch(itemsSectionControllerProvider(list));
     final vm = ref.read(itemsSectionControllerProvider(list).notifier);
     final flows = _ItemFlows(context: context, s: s, vm: vm, t: t);
+
+    // A burst of ticks just settled into Done: one toast for all of it.
+    ref.listen(
+      itemsSectionControllerProvider(list).select((s) => s.settleCount),
+      (previous, next) {
+        if (previous == null || next <= previous) return;
+        _showSettledToast(
+          context,
+          ref.read(itemsSectionControllerProvider(list)),
+          vm,
+          t,
+        );
+      },
+    );
 
     Color? dotFor(ShopId? shopId) => s.shopFor(shopId)?.color.toColor();
 
@@ -100,13 +117,17 @@ class ItemsSection extends ConsumerWidget {
           ),
         ),
         // No "all done" card and no add button while selecting, searching
-        // or rearranging. (Search has its own "Add to list" button.)
-        if (s.mode == ItemsMode.browse && !s.isLoading)
+        // or rearranging. (Search has its own "Add to list" button.) In v3
+        // it scales out to 0.6 as the mode starts, rather than vanishing.
+        if (!s.isLoading)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _FloatingCluster(s: s, vm: vm, flows: flows, t: t),
+            child: _ScaleOut(
+              visible: s.mode == ItemsMode.browse,
+              child: _FloatingCluster(s: s, vm: vm, flows: flows, t: t),
+            ),
           ),
       ],
     );
@@ -291,6 +312,7 @@ class _ItemList extends StatelessWidget {
       ShoppingItem item, {
       required int position,
       bool selectable = false,
+      bool inDone = false,
       int? index,
     }) => SwipeToDelete(
       // The key goes on this outer widget: ReorderableListView needs a key
@@ -301,44 +323,67 @@ class _ItemList extends StatelessWidget {
       // No swipe-to-delete in select or rearrange mode, so it doesn't fight
       // with dragging or selecting.
       enabled: !selectionMode && state.mode != ItemsMode.rearrange,
-      // No "are you sure?". The row goes now, and the snackbar's Undo can
-      // bring it back.
+      // No "are you sure?". The row goes now, and the toast's Undo can bring
+      // it back.
       onSwipe: () async => true,
       onDismissed: () => deleteWithUndo(item),
       child: _TabSlide(
         position: position,
-        child: ItemTile(
-          t: t,
-          item: item,
-          shopColor: dotFor(item.shopId),
-          // On All the row is the only sign of its shop; on a tab it's obvious.
-          shopName: state.shopFilter == null
-              ? state.shopFor(item.shopId)?.name
-              : null,
-          onToggle: () async => report(await vm.toggle(item)),
-          onEdit: () => onEdit(item),
-          onDelete: () => deleteWithUndo(item),
-          onQuantityChanged: (quantity) async =>
-              report(await vm.setQuantity(item, quantity)),
-          selected: selectable && state.selection.contains(item.id),
-          selectionMode: selectable && selectionMode,
-          onSelectionToggle: selectable
-              ? () => vm.toggleSelection(item.id)
-              : null,
-          onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
-          // Only open rows (not checked ones) can start rearranging.
-          onRearrange: selectable && state.canRearrange
-              ? vm.startRearrange
-              : null,
-          dragHandle: index == null
-              ? null
-              : ReorderableDragStartListener(
-                  index: index,
-                  child: const Icon(Icons.drag_handle, size: 16),
-                ),
-          checkedByMember: item.checkedBy == null
-              ? null
-              : state.list.memberFor(item.checkedBy!),
+        child: _Glide(
+          // The batch that just settled glides down in tap order; anything
+          // else that moves (rows closing a gap, an unticked row going back
+          // up) reflows without a delay.
+          delay: inDone && state.lastSettled.contains(item.id)
+              ? AppMotion.batchStagger * state.lastSettled.indexOf(item.id)
+              : Duration.zero,
+          duration: inDone && state.lastSettled.contains(item.id)
+              ? AppMotion.batchMove
+              : AppMotion.reflow,
+          child: ItemTile(
+            t: t,
+            item: item,
+            inDone: inDone,
+            shopColor: dotFor(item.shopId),
+            // On All the row is the only sign of its shop; on a tab it's
+            // obvious.
+            shopName: state.shopFilter == null
+                ? state.shopFor(item.shopId)?.name
+                : null,
+            // Saved at once, but held in place until the ticks settle.
+            onToggle: () async => report(
+              await vm.toggle(
+                item,
+                settleAfter: AppMotion.reduced(context)
+                    ? AppMotion.checkSettleReduced
+                    : AppMotion.checkSettle,
+              ),
+            ),
+            onEdit: () => onEdit(item),
+            shops: state.shops,
+            onMove: (shopId) async => report(await vm.moveItem(item, shopId)),
+            onDelete: () => deleteWithUndo(item),
+            onQuantityChanged: (quantity) async =>
+                report(await vm.setQuantity(item, quantity)),
+            selected: selectable && state.selection.contains(item.id),
+            selectionMode: selectable && selectionMode,
+            onSelectionToggle: selectable
+                ? () => vm.toggleSelection(item.id)
+                : null,
+            onSelectMore: selectable ? () => vm.toggleSelection(item.id) : null,
+            // Only open rows (not checked ones) can start rearranging.
+            onRearrange: selectable && state.canRearrange
+                ? vm.startRearrange
+                : null,
+            dragHandle: index == null
+                ? null
+                : ReorderableDragStartListener(
+                    index: index,
+                    child: const Icon(Icons.drag_handle, size: 16),
+                  ),
+            checkedByMember: item.checkedBy == null
+                ? null
+                : state.list.memberFor(item.checkedBy!),
+          ),
         ),
       ),
     );
@@ -371,11 +416,21 @@ class _ItemList extends StatelessWidget {
             collapsed: state.doneCollapsed,
             onToggle: vm.toggleDoneCollapsed,
             clearLabel: t.items.clear,
-            onClear: () async => report(await vm.clearChecked()),
+            onClear: () {
+              final (:count, :undo) = vm.clearDoneWithUndo();
+              showUndoToast(
+                context,
+                message: t.items.cleared(n: count),
+                t: t,
+                onUndo: undo,
+                // Visible exactly as long as Undo still works.
+                duration: ItemsController.swipeUndoWindow,
+              );
+            },
           ),
           if (!state.doneCollapsed)
             for (final (i, item) in done.indexed)
-              tileFor(item, position: open.length + 1 + i),
+              tileFor(item, position: open.length + 1 + i, inDone: true),
         ],
       ],
     );
@@ -531,6 +586,184 @@ class _TabSlide extends StatelessWidget {
         offset: Offset(scope.direction * _travel * (1 - t), 0),
         child: child,
       ),
+    );
+  }
+}
+
+/// The toast after a burst of ticks lands in Done: "Pasta checked off",
+/// "3 items checked off", or, when that emptied the tab, "Everything is in
+/// the basket". Undo unchecks the whole burst.
+void _showSettledToast(
+  BuildContext context,
+  ItemsSectionState s,
+  ItemsSectionController vm,
+  Translations t,
+) {
+  final checked = {
+    for (final item in s.allItems)
+      if (item.isChecked) item.id: item,
+  };
+  // A tick the server refused is unchecked again by now; leave it out.
+  final ids = [
+    for (final id in s.lastSettled)
+      if (checked.containsKey(id)) id,
+  ];
+  if (ids.isEmpty) return;
+  final shop = s.activeShop;
+  final message = switch ((s.openItems.isEmpty, ids.length)) {
+    (true, _) when shop != null => t.items.allInShop(shop: shop.name),
+    (true, _) => t.items.allInBasket,
+    (false, 1) => t.items.checkedOffOne(name: checked[ids.single]!.name),
+    (false, final n) => t.items.checkedOff(n: n),
+  };
+  showUndoToast(
+    context,
+    message: message,
+    t: t,
+    tick: true,
+    onUndo: () => unawaited(vm.uncheck(ids)),
+  );
+}
+
+/// Shrinks to 0.6 and fades when hidden, ignoring touches meanwhile.
+/// Anchored bottom-right, where the add button sits.
+class _ScaleOut extends StatelessWidget {
+  const _ScaleOut({required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final duration = AppMotion.durationFor(
+      context,
+      const Duration(milliseconds: 260),
+    );
+    return IgnorePointer(
+      ignoring: !visible,
+      child: AnimatedOpacity(
+        opacity: visible ? 1 : 0,
+        duration: duration,
+        child: AnimatedScale(
+          scale: visible ? 1 : .6,
+          alignment: Alignment.bottomRight,
+          duration: duration,
+          curve: AppMotion.enter,
+          // Out of the semantics tree too, so a screen reader can't reach a
+          // button nobody can see.
+          child: ExcludeSemantics(excluding: !visible, child: child),
+        ),
+      ),
+    );
+  }
+}
+
+/// Moves a row smoothly when the list around it changes (the FLIP
+/// technique): remember where the row was, and when it ends up somewhere
+/// else, start it at the old place and animate to the new one.
+///
+/// One mechanism for every reflow: ticked rows gliding down into Done,
+/// unticked ones gliding back up, and the rows around them closing the gap.
+/// It works because rows are keyed, so Flutter keeps this State when a row
+/// changes position in the list.
+///
+/// Positions are measured in the list's content (screen position plus
+/// scroll offset), so scrolling never starts a glide. During a tab switch
+/// the rows have their own slide, so this only takes note.
+class _Glide extends StatefulWidget {
+  const _Glide({
+    required this.duration,
+    required this.delay,
+    required this.child,
+  });
+
+  final Duration duration;
+  final Duration delay;
+  final Widget child;
+
+  @override
+  State<_Glide> createState() => _GlideState();
+}
+
+class _GlideState extends State<_Glide> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+  );
+  late Animation<double> _progress = _controller;
+
+  /// Where the row was last measured, in content coordinates.
+  double? _lastY;
+
+  /// How far above (negative: below) its real place the glide starts.
+  double _from = 0;
+
+  /// Read in [build]: post-frame callbacks shouldn't look up inherited
+  /// widgets.
+  bool _reduced = false;
+  AnimationController? _tabs;
+
+  /// Rows "lift" a little while they travel, like being picked up.
+  static const double _lift = .015;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double get _offset => _from * (1 - _progress.value);
+
+  void _measure() {
+    if (!mounted) return;
+    final box = context.findRenderObject();
+    if (box is! RenderBox || !box.attached || !box.hasSize) return;
+    final scroll = Scrollable.maybeOf(context)?.position;
+    final y =
+        box.localToGlobal(Offset.zero).dy +
+        (scroll != null && scroll.hasPixels ? scroll.pixels : 0);
+    final last = _lastY;
+    _lastY = y;
+    if (last == null || (y - last).abs() < 1) return;
+
+    if (_reduced || (_tabs?.isAnimating ?? false)) return;
+
+    // Start from where it was on screen, including any glide in progress.
+    _from = last - y + _offset;
+    final total = widget.delay + widget.duration;
+    _controller.duration = total;
+    _progress = CurvedAnimation(
+      parent: _controller,
+      curve: Interval(
+        widget.delay.inMicroseconds / total.inMicroseconds,
+        1,
+        curve: AppMotion.emphasized,
+      ),
+    );
+    unawaited(_controller.forward(from: 0));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _reduced = AppMotion.reduced(context);
+    _tabs = context
+        .dependOnInheritedWidgetOfExactType<_TabSwitchScope>()
+        ?.notifier;
+    // After layout, see whether this row ended up somewhere new.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measure());
+    return AnimatedBuilder(
+      animation: _controller,
+      child: widget.child,
+      builder: (context, child) {
+        if (!_controller.isAnimating) return child!;
+        final t = _progress.value;
+        return Transform.translate(
+          offset: Offset(0, _offset),
+          child: Transform.scale(
+            scale: 1 + _lift * math.sin(math.pi * t),
+            child: child,
+          ),
+        );
+      },
     );
   }
 }

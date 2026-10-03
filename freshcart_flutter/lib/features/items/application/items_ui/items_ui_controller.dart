@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -14,8 +16,14 @@ part 'items_ui_controller.g.dart';
 /// and forth doesn't lose the selection (decisions.md #47).
 @riverpod
 class ItemsUiController extends _$ItemsUiController {
+  /// Fires [settleNow] once the ticks have stopped for a moment.
+  Timer? _settleTimer;
+
   @override
-  ItemsUiState build(ListId listId) => const ItemsUiState();
+  ItemsUiState build(ListId listId) {
+    ref.onDispose(() => _settleTimer?.cancel());
+    return const ItemsUiState();
+  }
 
   // ── Selection ──────────────────────────────────────────────────────────
   // There's no "select mode on" flag. Select mode is on when something is
@@ -55,6 +63,41 @@ class ItemsUiController extends _$ItemsUiController {
 
   void stopRearrange() => state = state.copyWith(rearranging: false);
 
+  // ── Batch check-off ─────────────────────────────────────────────────────
+  // Design v3: a tick fills the circle (and saves) at once, but the row stays
+  // where it is until the ticks stop for a moment. Then everything ticked in
+  // that burst moves to Done together, with one toast. Ticking down a list
+  // in the shop no longer makes the rows jump under your thumb.
+
+  /// [id] was just checked: hold it in place, and restart the wait.
+  void startSettling(ItemId id, Duration wait) {
+    // A Set literal keeps insertion order, so this is also the tap order.
+    state = state.copyWith(settling: {...state.settling, id});
+    _settleTimer?.cancel();
+    _settleTimer = Timer(wait, settleNow);
+  }
+
+  /// [id] was unchecked again before it settled: it just stays open.
+  void stopSettling(ItemId id) {
+    if (!state.settling.contains(id)) return;
+    final rest = {...state.settling}..remove(id);
+    state = state.copyWith(settling: rest);
+    if (rest.isEmpty) _settleTimer?.cancel();
+  }
+
+  /// Releases the held rows to Done now. [ItemsUiState.settleCount] goes up,
+  /// which is what the screen listens to for the toast.
+  void settleNow() {
+    _settleTimer?.cancel();
+    _settleTimer = null;
+    if (state.settling.isEmpty) return;
+    state = state.copyWith(
+      settling: const {},
+      lastSettled: state.settling.toList(),
+      settleCount: state.settleCount + 1,
+    );
+  }
+
   // ── Done section & celebration ─────────────────────────────────────────
 
   /// Folds or unfolds the "Done" section. Remembered per list.
@@ -84,6 +127,9 @@ class ItemsUiState {
     this.rearranging = false,
     this.doneCollapsed = false,
     this.celebrationDismissed = false,
+    this.settling = const {},
+    this.lastSettled = const [],
+    this.settleCount = 0,
   });
 
   final Set<ItemId> selection;
@@ -93,6 +139,16 @@ class ItemsUiState {
   final bool doneCollapsed;
   final bool celebrationDismissed;
 
+  /// Checked, but still held in the open section until the burst settles.
+  final Set<ItemId> settling;
+
+  /// The last batch that moved to Done, in tap order.
+  final List<ItemId> lastSettled;
+
+  /// How many batches have settled. Goes up by one per batch, so a listener
+  /// can tell "a new batch just landed" from any other rebuild.
+  final int settleCount;
+
   ItemsUiState copyWith({
     Set<ItemId>? selection,
     bool? searchActive,
@@ -100,6 +156,9 @@ class ItemsUiState {
     bool? rearranging,
     bool? doneCollapsed,
     bool? celebrationDismissed,
+    Set<ItemId>? settling,
+    List<ItemId>? lastSettled,
+    int? settleCount,
   }) => ItemsUiState(
     selection: selection ?? this.selection,
     searchActive: searchActive ?? this.searchActive,
@@ -107,5 +166,8 @@ class ItemsUiState {
     rearranging: rearranging ?? this.rearranging,
     doneCollapsed: doneCollapsed ?? this.doneCollapsed,
     celebrationDismissed: celebrationDismissed ?? this.celebrationDismissed,
+    settling: settling ?? this.settling,
+    lastSettled: lastSettled ?? this.lastSettled,
+    settleCount: settleCount ?? this.settleCount,
   );
 }

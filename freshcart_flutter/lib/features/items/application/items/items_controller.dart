@@ -255,14 +255,15 @@ class ItemsController extends _$ItemsController {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
 
-    _pending[item.id] = item;
+    // Hidden through [_pendingRemoval], like [clearChecked].
+    _pendingRemoval[item.id] = item;
     _show([
       for (final existing in before)
         if (existing.id != item.id) existing,
     ]);
 
     final result = await ref.read(itemRepositoryProvider).remove(item.id);
-    _pending.remove(item.id);
+    _pendingRemoval.remove(item.id);
 
     switch (result) {
       case Ok<void>():
@@ -314,6 +315,60 @@ class ItemsController extends _$ItemsController {
     };
   }
 
+  /// [swipeDelete] for several items at once (Clear, or Delete in select
+  /// mode): all hidden now, deleted together in one call after
+  /// [swipeUndoWindow], unless the returned undo puts them all back first.
+  ///
+  /// Uses `removeMany` with these ids, not `clearChecked`: an item checked
+  /// during the undo window wasn't part of what the user cleared.
+  void Function() removeManyWithUndo(Iterable<ItemId> ids) {
+    final before = _current;
+    final wanted = ids.toSet();
+    if (before == null || wanted.isEmpty) return () {};
+
+    final removed = [
+      for (final item in before)
+        if (wanted.contains(item.id)) item,
+    ];
+    for (final item in removed) {
+      _pendingRemoval[item.id] = item;
+    }
+    _show([
+      for (final item in before)
+        if (!wanted.contains(item.id)) item,
+    ]);
+
+    // Read now, not in the timer: see [swipeDelete].
+    final repo = ref.read(itemRepositoryProvider);
+    final list = listId;
+    final timer = Timer(swipeUndoWindow, () {
+      for (final item in removed) {
+        _pendingRemoval.remove(item.id);
+      }
+      unawaited(repo.removeMany(list, [for (final item in removed) item.id]));
+    });
+
+    var settled = false;
+    return () {
+      if (settled) return;
+      settled = true;
+      timer.cancel();
+      final back = [
+        for (final item in removed)
+          if (_pendingRemoval.remove(item.id) != null) item,
+      ];
+      if (back.isEmpty || !ref.mounted) return;
+      final current = _current;
+      if (current == null) return;
+      final shown = {for (final item in current) item.id};
+      _show([
+        ...current,
+        for (final item in back)
+          if (!shown.contains(item.id)) item,
+      ]);
+    };
+  }
+
   /// Deletes all checked items. They disappear right away, and all come
   /// back if the server says no.
   ///
@@ -329,8 +384,10 @@ class ItemsController extends _$ItemsController {
     ];
     if (checked.isEmpty) return null;
 
+    // Hidden through [_pendingRemoval], so a live update during the save
+    // can't bring them back (see [moveSelected]).
     for (final item in checked) {
-      _pending[item.id] = item;
+      _pendingRemoval[item.id] = item;
     }
     _show([
       for (final item in before)
@@ -339,7 +396,7 @@ class ItemsController extends _$ItemsController {
 
     final result = await ref.read(itemRepositoryProvider).clearChecked(listId);
     for (final item in checked) {
-      _pending.remove(item.id);
+      _pendingRemoval.remove(item.id);
     }
 
     switch (result) {
@@ -362,8 +419,9 @@ class ItemsController extends _$ItemsController {
       for (final item in before)
         if (ids.contains(item.id)) item,
     ];
+    // Hidden through [_pendingRemoval], like [clearChecked].
     for (final item in selected) {
-      _pending[item.id] = item;
+      _pendingRemoval[item.id] = item;
     }
     _show([
       for (final item in before)
@@ -374,7 +432,7 @@ class ItemsController extends _$ItemsController {
       for (final item in selected) item.id,
     ]);
     for (final item in selected) {
-      _pending.remove(item.id);
+      _pendingRemoval.remove(item.id);
     }
 
     switch (result) {
@@ -397,12 +455,15 @@ class ItemsController extends _$ItemsController {
       for (final item in before)
         if (ids.contains(item.id)) item,
     ];
+    // The MOVED version goes in [_pending]: it's what [_overlay] lays over
+    // any live update that arrives before the server answers. Storing the
+    // old item here put the old shop back on screen, and nothing redrew it
+    // once the save finished.
     for (final item in selected) {
-      _pending[item.id] = item;
+      _pending[item.id] = item.copyWith(shopId: shopId);
     }
     _show([
-      for (final item in before)
-        if (ids.contains(item.id)) item.copyWith(shopId: shopId) else item,
+      for (final item in before) _pending[item.id] ?? item,
     ]);
 
     final result = await ref.read(itemRepositoryProvider).moveMany(listId, [

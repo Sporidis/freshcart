@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
@@ -22,6 +24,14 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 import '../../../../fakes/fake_item_repository.dart';
 import '../../../../fakes/fake_list_repository.dart';
 import '../../../../fakes/fake_shop_repository.dart';
+
+/// Taps a row to (un)check it, then waits out the v3 batch settle, which a
+/// plain pumpAndSettle doesn't: a waiting Timer schedules no frames.
+Future<void> tick(WidgetTester tester, String name) async {
+  await tester.tap(find.text(name));
+  await tester.pump(AppMotion.checkSettle);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   setUpAll(configurePluralResolvers);
@@ -164,7 +174,13 @@ void main() {
       await tester.tap(find.text('Clear'));
       await tester.pumpAndSettle();
 
-      expect(items.clearCheckedCallCount, 1);
+      // Gone at once, but the server only hears once Undo has had its
+      // chance -- and by id, so a later tick can't be swept up with it.
+      expect(find.text('Bread'), findsNothing);
+      expect(items.removeManyCalls, isEmpty);
+      await tester.pump(ItemsController.swipeUndoWindow);
+      expect(items.removeManyCalls.single, [ItemId('b')]);
+      expect(items.clearCheckedCallCount, 0);
     },
   );
 
@@ -192,6 +208,31 @@ void main() {
 
       expect(find.text('Bread'), findsOneWidget);
       expect(find.byType(TextField), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'typing in the open add bar, with suggestions coming in, lays out '
+    'cleanly',
+    (tester) async {
+      items.byListResult = Ok([buildItem(id: 'a', name: 'Milk')]);
+      items.suggestNamesResult = const Ok(['Mint', 'Milk powder']);
+
+      await pump(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final text in ['M', 'Mi', 'Min', 'Milk']) {
+        await tester.enterText(find.byType(TextField), text);
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
     },
   );
 
@@ -224,8 +265,7 @@ void main() {
       await pump(tester);
       expect(find.byType(CompletionCelebrationCard), findsNothing);
 
-      await tester.tap(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await tick(tester, 'Milk');
 
       expect(find.byType(CompletionCelebrationCard), findsOneWidget);
     },
@@ -244,10 +284,8 @@ void main() {
       expect(find.byType(CompletionCelebrationCard), findsNothing);
 
       // Uncheck, then check again: a fresh completion.
-      await tester.tap(find.text('Milk'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await tick(tester, 'Milk');
+      await tick(tester, 'Milk');
 
       expect(find.byType(CompletionCelebrationCard), findsOneWidget);
     },
@@ -261,8 +299,7 @@ void main() {
       items.clearCheckedResult = const Ok(1);
 
       await pump(tester, list: buildList(clearCheckedAfterShopping: true));
-      await tester.tap(find.text('Milk'));
-      await tester.pumpAndSettle();
+      await tick(tester, 'Milk');
 
       expect(items.clearCheckedCallCount, 1);
       expect(find.byType(CompletionCelebrationCard), findsNothing);
@@ -325,6 +362,8 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(items.removeManyCalls, isEmpty, reason: 'Undo still can');
+      await tester.pump(ItemsController.swipeUndoWindow);
       expect(items.removeManyCalls.single.toSet(), {
         ItemId('a'),
         ItemId('b'),
@@ -380,6 +419,68 @@ void main() {
 
       expect(items.savedItems, hasLength(1));
       expect(items.savedItems.single.quantity, 4);
+    },
+  );
+
+  testWidgets(
+    'ticks close together stay put, then land in Done as one batch with one '
+    'toast, and Undo unchecks the whole batch',
+    (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+        buildItem(id: 'c', name: 'Eggs'),
+      ]);
+
+      await pump(tester);
+
+      await tester.tap(find.text('Milk'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Bread'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 600ms in, but only 300ms since the last tick: still held in place.
+      expect(find.textContaining('DONE'), findsNothing);
+
+      await tester.pump(AppMotion.checkSettle);
+      await tester.pumpAndSettle();
+
+      expect(find.text('DONE · 2'), findsOneWidget);
+      expect(find.text('2 items checked off'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('DONE'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a settled row glides from where it was ticked down into Done, instead '
+    'of jumping there',
+    (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+        buildItem(id: 'c', name: 'Eggs'),
+      ]);
+
+      await pump(tester);
+      final before = tester.getTopLeft(find.text('Milk')).dy;
+
+      await tester.tap(find.text('Milk'));
+      await tester.pump(AppMotion.checkSettle);
+      // The settle lands; the glide starts on the next frame.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+      final during = tester.getTopLeft(find.text('Milk')).dy;
+
+      await tester.pumpAndSettle();
+      final after = tester.getTopLeft(find.text('Milk')).dy;
+
+      expect(after, greaterThan(before), reason: 'it went down to Done');
+      expect(during, greaterThan(before));
+      expect(during, lessThan(after), reason: 'mid-glide, not teleported');
     },
   );
 

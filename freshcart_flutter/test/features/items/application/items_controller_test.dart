@@ -619,6 +619,34 @@ void main() {
       expect(await pending, isNull);
     });
 
+    test(
+      'a live event during a move keeps the moved shop, and it stays after '
+      'the save -- not the old shop until something else redraws',
+      () async {
+        final milk = buildItem(name: 'Milk');
+        repository.byListResult = Ok([milk]);
+        final pause = Completer<void>();
+        repository.movePause = pause.future;
+        final bakery = ShopId('00000000-0000-4000-8000-0000000000c1');
+
+        final container = makeContainer();
+        await itemsOf(container);
+        final notifier = container.read(
+          itemsControllerProvider(listId).notifier,
+        );
+
+        final moving = notifier.moveSelected({milk.id}, bakery);
+        // A snapshot from before the server applied the move.
+        repository.live.add(Ok([milk]));
+        await pumpEventQueue();
+        expect(currentItems(container).single.shopId, bakery);
+
+        pause.complete();
+        expect(await moving, isNull);
+        expect(currentItems(container).single.shopId, bakery);
+      },
+    );
+
     test('a dropped connection surfaces without emptying the list', () async {
       repository.byListResult = Ok([buildItem(name: 'Milk')]);
 

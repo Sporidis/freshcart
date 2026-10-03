@@ -26,6 +26,7 @@ class ItemRowContent extends StatelessWidget {
     this.shopColor,
     this.shopName,
     this.isSelecting = false,
+    this.faded = false,
     this.dragHandle,
     this.checkedByMember,
     this.highlightQuery,
@@ -51,6 +52,9 @@ class ItemRowContent extends StatelessWidget {
   /// In select mode the circle means "selected", so it fills with ink, not
   /// the shop colour.
   final bool isSelecting;
+
+  /// The row is in Done: it steps back to 45%.
+  final bool faded;
   final ValueChanged<int> onQuantityChanged;
   final Translations t;
 
@@ -93,8 +97,6 @@ class ItemRowContent extends StatelessWidget {
     final theme = Theme.of(context);
     final muted = theme.colorScheme.onSurfaceVariant;
     final fill = isSelecting ? null : shopColor ?? AppColors.shopColorFallback;
-    // A checked row has gone to Done: it steps back to 45%.
-    final faded = isChecked && !isSelecting;
     final fade = AppMotion.durationFor(context, AppMotion.standard);
     return ConstrainedBox(
       constraints: BoxConstraints(minHeight: faded ? 52 : 58),

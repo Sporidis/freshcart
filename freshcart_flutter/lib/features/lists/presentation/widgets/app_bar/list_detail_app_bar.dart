@@ -12,6 +12,8 @@ import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
+import 'package:freshcart_flutter/core/ui/undo_toast.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/move_to_shop_sheet.dart';
@@ -83,7 +85,40 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
         t: t,
       );
       if (outcome == null || vm == null) return;
-      report(await vm.moveSelected(outcome.shopId));
+      final previous = vm.shopsOfSelection();
+      final failure = await vm.moveSelected(outcome.shopId);
+      if (!context.mounted) return;
+      if (failure != null) return report(failure);
+      final to = outcome.shopId;
+      showUndoToast(
+        context,
+        message: t.items.moved(
+          n: previous.length,
+          shop: to == null
+              ? t.shops.none
+              : items?.shopFor(to)?.name ?? t.shops.none,
+        ),
+        t: t,
+        onUndo: () async => report(await vm.moveBack(previous)),
+      );
+    }
+
+    void deleteSelected() {
+      if (vm == null) return;
+      final (:count, :undo) = vm.deleteSelectedWithUndo();
+      showUndoToast(
+        context,
+        message: t.items.deleted(n: count),
+        t: t,
+        onUndo: undo,
+        // Visible exactly as long as Undo still works.
+        duration: ItemsController.swipeUndoWindow,
+      );
+    }
+
+    void finishRearrange() {
+      vm?.stopRearrange();
+      showUndoToast(context, message: t.items.orderSaved, t: t, tick: true);
     }
 
     final Widget row;
@@ -124,9 +159,7 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ModeBarPill(
               label: t.common.delete,
               destructive: true,
-              onTap: hasSelection
-                  ? () async => report(await vm.deleteSelected())
-                  : null,
+              onTap: hasSelection ? deleteSelected : null,
             ),
           ],
         ),
@@ -141,7 +174,7 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
             ModeBarPill(
               label: t.common.done,
               emphasized: true,
-              onTap: vm.stopRearrange,
+              onTap: finishRearrange,
             ),
           ],
         ),
@@ -183,8 +216,8 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
         // Search looks across every tab, so the tab's progress means
         // nothing there.
         visible: items != null && mode != ItemsMode.search,
-        done: items?.doneItems.length ?? 0,
-        total: (items?.openItems.length ?? 0) + (items?.doneItems.length ?? 0),
+        done: items?.checkedCount ?? 0,
+        total: items?.visibleCount ?? 0,
         color: items?.activeShop?.color.toColor() ?? theme.colorScheme.primary,
         t: t,
       ),

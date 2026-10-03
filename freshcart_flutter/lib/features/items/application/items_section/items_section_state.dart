@@ -21,6 +21,9 @@ class ItemsSectionState {
     required this.me,
     required this.selection,
     required this.searchQuery,
+    this.settling = const {},
+    this.lastSettled = const [],
+    this.settleCount = 0,
     required this.doneCollapsed,
     required this.showCelebration,
     this.isLoading = false,
@@ -42,6 +45,15 @@ class ItemsSectionState {
 
   final Set<ItemId> selection;
   final String searchQuery;
+
+  /// Just checked, held in the open section until the burst of ticks
+  /// settles (design v3). See `ItemsUiController.startSettling`.
+  final Set<ItemId> settling;
+
+  /// The last batch that moved to Done, in tap order, and how many batches
+  /// have settled so far (a listener's cue for the toast).
+  final List<ItemId> lastSettled;
+  final int settleCount;
   final bool doneCollapsed;
 
   /// Whether to show the "all done" card: everything is checked, the user
@@ -62,15 +74,21 @@ class ItemsSectionState {
       if (i.matchesShopFilter(shopFilter)) i,
   ];
 
-  /// The items in the tab, split into open and checked.
+  /// The items in the tab, split into open and checked. A checked item
+  /// that's still [settling] counts as open: it stays where it was tapped.
   List<ShoppingItem> get openItems => [
     for (final i in _visible)
-      if (!i.isChecked) i,
+      if (!i.isChecked || settling.contains(i.id)) i,
   ];
   List<ShoppingItem> get doneItems => [
     for (final i in _visible)
-      if (i.isChecked) i,
+      if (i.isChecked && !settling.contains(i.id)) i,
   ];
+
+  /// For the header's progress: checked items in the tab, counted the
+  /// moment they're ticked (settling or not), out of all items in the tab.
+  int get checkedCount => _visible.where((i) => i.isChecked).length;
+  int get visibleCount => _visible.length;
 
   /// The search text, without spaces at the start or end.
   String get trimmedQuery => searchQuery.trim();

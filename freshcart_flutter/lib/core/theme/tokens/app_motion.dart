@@ -64,7 +64,8 @@ class AppMotion {
 
   /// [checkSettle] under reduced motion.
   static const Duration checkSettleReduced = Duration(milliseconds: 300);
-  static const Duration batchMove = Duration(milliseconds: 480); // 45ms stagger
+  static const Duration batchMove = Duration(milliseconds: 480);
+  static const Duration batchStagger = Duration(milliseconds: 45);
   static const Duration reflow = Duration(milliseconds: 380);
   static const Duration toastIn = Duration(milliseconds: 380);
   static const Duration toastHold = Duration(milliseconds: 3400);
