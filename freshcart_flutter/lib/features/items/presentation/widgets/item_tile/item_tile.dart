@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/checked_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu_motion.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -121,12 +122,6 @@ class ItemTile extends StatefulWidget {
 
 class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   static const _longPressThreshold = Duration(milliseconds: 450);
-  static const _liftDuration = Duration(milliseconds: 300);
-  static const _liftScale = 1.015;
-  // Halfway through the lift animation, the quantity switches to the
-  // stepper. Switching at a point in the animation (not right away) gives
-  // the AnimatedSwitcher a "before" and "after" to animate between.
-  static const _quantityMorphThreshold = 0.5;
 
   /// How long the menu's stepper waits after the last tap before saving.
   /// "+ + +" becomes one save of 4, not three racing saves: the server
@@ -134,7 +129,9 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   /// second tap would otherwise send the first tap's optimistic copy.
   static const _quantityCommitDelay = Duration(milliseconds: 400);
 
-  late final AnimationController _animationController;
+  /// The hold menu's arrival and departure (see [ItemMenuMotion]).
+  late final AnimationController _menuOpen;
+  late final AnimationController _menuClose;
   late final AnimationController _strikeController;
   late final AnimationController _checkFillController;
   late final AnimationController _pressScaleController;
@@ -160,9 +157,13 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   void initState() {
     super.initState();
     _isChecked = widget.item.isChecked;
-    _animationController = AnimationController(
+    _menuOpen = AnimationController(
       vsync: this,
-      duration: _liftDuration,
+      duration: ItemMenuMotion.openDuration,
+    );
+    _menuClose = AnimationController(
+      vsync: this,
+      duration: ItemMenuMotion.closeDuration,
     );
     _strikeController = AnimationController(
       vsync: this,
@@ -185,17 +186,20 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _animationController.dispose();
+    // Remove the menu directly, not through `_closeMenu()`. That one
+    // animates and calls `setState`, neither allowed inside `dispose()`
+    // (even though `mounted` is still true here). Removed before its
+    // controllers go, so nothing listens to a disposed controller.
+    _menuEntry?.remove();
+    _menuEntry = null;
+    _menuOpen.dispose();
+    _menuClose.dispose();
     _strikeController.dispose();
     _checkFillController.dispose();
     _pressScaleController.dispose();
     _longPressTimer?.cancel();
     _pressTellTimer?.cancel();
     _commitQuantity();
-    // Remove the menu directly, not through `_closeMenu()`. That one calls
-    // `setState`, which isn't allowed inside `dispose()` (even though
-    // `mounted` is still true here).
-    _menuEntry?.remove();
     super.dispose();
   }
 
@@ -310,7 +314,17 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
 
   void _openMenu() {
     if (_menuEntry != null) return;
-    _animationController.forward(from: 0);
+    final reduced = AppMotion.reduced(context);
+    _menuOpen.duration = reduced
+        ? AppMotion.micro
+        : ItemMenuMotion.openDuration;
+    _menuClose.value = 0;
+    unawaited(_menuOpen.forward(from: 0));
+    final motion = ItemMenuMotion(
+      open: _menuOpen,
+      close: _menuClose,
+      reduced: reduced,
+    );
 
     _menuEntry = OverlayEntry(
       // Careful: `context` below must be the row's context, not the
@@ -322,36 +336,30 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
         final size = renderBox.size;
 
         return AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            final scale = Tween<double>(begin: 1, end: _liftScale).transform(
-              Curves.easeOutBack.transform(_animationController.value),
-            );
-            return ItemMenu(
-              globalPosition: globalPosition,
-              size: size,
-              scale: scale,
-              item: _menuItem,
-              isChecked: _isChecked,
-              onChanged: _setChecked,
-              onClose: _closeMenu,
-              onEdit: widget.onEdit,
-              onDelete: widget.onDelete,
-              onSelectMore: widget.onSelectMore,
-              shops: widget.shops,
-              onMove: widget.onMove,
-              onRearrange: widget.onRearrange,
-              onQuantityChanged: _onMenuQuantity,
-              strikeProgress: _strikeController,
-              fillProgress: _checkFillController,
-              isMenuClosed:
-                  _animationController.value < _quantityMorphThreshold,
-              shopColor: widget.shopColor,
-              shopName: widget.shopName,
-              t: widget.t,
-              checkedByMember: widget.checkedByMember,
-            );
-          },
+          animation: Listenable.merge([_menuOpen, _menuClose]),
+          builder: (context, child) => ItemMenu(
+            globalPosition: globalPosition,
+            size: size,
+            motion: motion,
+            item: _menuItem,
+            isChecked: _isChecked,
+            onChanged: _setChecked,
+            onClose: _closeMenu,
+            onEdit: widget.onEdit,
+            onDelete: widget.onDelete,
+            onSelectMore: widget.onSelectMore,
+            shops: widget.shops,
+            onMove: widget.onMove,
+            onRearrange: widget.onRearrange,
+            onQuantityChanged: _onMenuQuantity,
+            strikeProgress: _strikeController,
+            fillProgress: _checkFillController,
+            isMenuClosed: !motion.showsStepper,
+            shopColor: widget.shopColor,
+            shopName: widget.shopName,
+            t: widget.t,
+            checkedByMember: widget.checkedByMember,
+          ),
         );
       },
     );
@@ -359,15 +367,28 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     setState(() => _isMenuOpen = true);
   }
 
+  /// Closes the menu: v3 fades it out over 160ms, then it's removed. The
+  /// row underneath shows again straight away, so the card fades out over
+  /// it. Whatever the user picked runs right away, not after the fade.
   void _closeMenu() {
+    final entry = _menuEntry;
+    if (entry == null || _menuClose.isAnimating) return;
     // Don't make the user wait out the delay: closing saves.
     _commitQuantity();
-    _menuEntry?.remove();
-    _menuEntry = null;
     _pressScaleController.animateTo(1, curve: AppMotion.pop);
-    if (mounted) {
-      setState(() => _isMenuOpen = false);
+    if (mounted) setState(() => _isMenuOpen = false);
+
+    void remove() {
+      if (_menuEntry != entry) return;
+      entry.remove();
+      _menuEntry = null;
     }
+
+    if (!mounted || AppMotion.reduced(context)) {
+      remove();
+      return;
+    }
+    unawaited(_menuClose.forward(from: 0).whenComplete(remove));
   }
 
   @override
