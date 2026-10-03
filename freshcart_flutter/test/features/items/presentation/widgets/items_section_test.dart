@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/core/ui/mode_bar.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
@@ -658,7 +659,7 @@ void main() {
   );
 
   testWidgets(
-    'a checked item shows who checked it off, once there is no note',
+    'a checked item shows who checked it off, with their avatar',
     (tester) async {
       items.byListResult = Ok([
         buildItem(name: 'Milk', isChecked: true, checkedBy: 'user-2'),
@@ -675,6 +676,44 @@ void main() {
       );
 
       expect(find.text('Checked off by Sam'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'who checked it off shows on the All tab too, ahead of the shop',
+    (tester) async {
+      // The bug: the shop name took the subtitle, so on All (where nearly
+      // every row names its shop) "Checked off by" never appeared.
+      final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+      shops.byListResult = Ok([colruyt]);
+      items.byListResult = Ok([
+        buildItem(
+          name: 'Milk',
+          isChecked: true,
+          checkedBy: 'user-2',
+          shopId: colruyt.id,
+        ),
+      ]);
+
+      await pump(
+        tester,
+        list: buildList(
+          members: [
+            buildMember(displayName: 'Nikolaos'),
+            buildMember(userId: 'user-2', displayName: 'Sam'),
+          ],
+        ),
+      );
+
+      expect(find.text('Checked off by Sam · Colruyt'), findsOneWidget);
+      // Sam's avatar, with the initial, sits in front of it.
+      expect(
+        find.descendant(
+          of: find.byType(ItemTile),
+          matching: find.byType(UserAvatar),
+        ),
+        findsOneWidget,
+      );
     },
   );
 

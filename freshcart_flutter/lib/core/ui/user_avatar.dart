@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
@@ -68,7 +70,7 @@ class _UserAvatarState extends State<UserAvatar> {
           radius: widget.radius,
           backgroundColor: widget.color!.toColor(),
           foregroundColor: Colors.white,
-          child: Text(widget.initial, style: AppTextStyles.captionStrong),
+          child: Text(widget.initial, style: _initialStyle),
         ),
       );
     }
@@ -82,9 +84,18 @@ class _UserAvatarState extends State<UserAvatar> {
       radius: widget.radius,
       backgroundColor: AppColors.avatarColorFor(widget.seed),
       foregroundColor: Colors.white,
-      child: Text(widget.initial, style: AppTextStyles.captionStrong),
+      child: Text(widget.initial, style: _initialStyle),
     ),
   );
+
+  /// The letter's style: the caption size, but never taller than the
+  /// circle's radius, so it still fits in a tiny avatar (16px on a checked
+  /// row).
+  TextStyle get _initialStyle {
+    const base = AppTextStyles.captionStrong;
+    final size = math.min(base.fontSize ?? 12, widget.radius);
+    return base.copyWith(fontSize: size, height: 1);
+  }
 
   /// Wraps [child] with [border], if one was given.
   Widget _bordered(Widget child) {
