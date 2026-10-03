@@ -2706,3 +2706,38 @@ interaction.
   circle, the add button fades instead of rolling out or scaling, no press-and-hold shrink, no
   re-add pop. The hold menu, onboarding, the welcome cards, the empty state and the title flight
   all fall back to a 120ms fade, or skip the movement entirely.
+
+## 107. Offline Phase E: the queue is the source of truth for "pending"
+
+**Context.** The domain entities had a `pending` flag, set by the repositories on an offline
+write, but it only lived in memory, and the offline cache is written from server data only. So an
+item added offline vanished from the screen if the app restarted before reconnecting, although
+it was safely queued and would still sync.
+
+**Decision.** `watchByList` replays the offline queue on top of whatever the server or cache
+gives (`applyQueuedItemChanges`, a pure function): queued adds appear under their temporary ids,
+edits, ticks and moves apply, deletes hide rows, and every touched row is `pending`. The mark
+clears exactly when its change leaves the queue. Queued adds are attributed to the signed-in user,
+since everything in this phone's queue is theirs.
+
+**The visible half, per design Flow 07:** no colour alarm. A quiet bar under the header ("Offline –
+2 changes will sync", "Syncing 2 changes…" over a 2px line, then "Up to date" for 1.6s), and a
+dashed left edge on pending rows that fades out row by row (40ms apart) as they sync.
+
+**Alongside it:**
+- **New rows** drop in from 6px with an 8% shop-colour flash, plus a haptic for your own adds.
+  What counts as "new" is computed from the data (`itemArrivals`), not from rows being built,
+  since rows also build on first load, tab switches and scrolling. An offline item syncing under
+  its real id doesn't count as new.
+- **Recently bought** moves onto the v3 design: 52px rows that cascade in, and a + that turns into
+  a tick after re-adding.
+
+**Trade-offs.**
+- While the server echoes a just-replayed add and the queue drops it, the temporary row and the
+  real one can both exist for a moment.
+- The combined stream doesn't wait for the server stream's cancel. That stream is an `async*`
+  generator, and cancelling one parked in `await for` only finishes on the next live event, a
+  pre-existing quirk of `resilientWatch` that also means a list's live connection outlives
+  leaving the list until its next update.
+
+**Not yet:** conflict surfacing (see offline-sync-plan.md Phase E).
