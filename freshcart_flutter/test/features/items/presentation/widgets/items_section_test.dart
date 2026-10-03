@@ -147,6 +147,51 @@ void main() {
   );
 
   testWidgets(
+    'switching between two empty tabs plays the empty state in again',
+    (tester) async {
+      final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+      final bakery = buildShop(
+        id: '00000000-0000-4000-8000-0000000000c2',
+        name: 'Bakery',
+        color: '#4CAF50',
+      );
+      shops.byListResult = Ok([colruyt, bakery]);
+      items.byListResult = const Ok(<ShoppingItem>[]);
+
+      final container = await pump(tester);
+      final filter = container.read(
+        shopFilterControllerProvider(listId).notifier,
+      );
+      filter.select(colruyt.id);
+      await tester.pumpAndSettle();
+
+      // The opacity of the part holding [text]: its own entrance fade.
+      double opacityOf(String text) => tester
+          .widget<FadeTransition>(
+            find
+                .ancestor(
+                  of: find.text(text),
+                  matching: find.byType(FadeTransition),
+                )
+                .first,
+          )
+          .opacity
+          .value;
+
+      filter.select(bakery.id);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // A fresh empty state, still arriving -- not the old one reused with
+      // its entrance already over.
+      expect(opacityOf('Nothing for Bakery yet'), lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(opacityOf('Nothing for Bakery yet'), 1);
+    },
+  );
+
+  testWidgets(
     'a checked item collects under Done, collapsible, with a Clear action',
     (tester) async {
       items.byListResult = Ok([
