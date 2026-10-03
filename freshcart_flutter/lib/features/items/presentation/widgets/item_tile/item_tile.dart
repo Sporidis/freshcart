@@ -26,6 +26,7 @@ class ItemTile extends StatefulWidget {
     required this.shopColor,
     required this.onToggle,
     this.shopName,
+    this.inDone = false,
     required this.onEdit,
     required this.onDelete,
     required this.onQuantityChanged,
@@ -35,6 +36,8 @@ class ItemTile extends StatefulWidget {
     this.onSelectionToggle,
     this.onSelectMore,
     this.onRearrange,
+    this.shops = const [],
+    this.onMove,
     this.dragHandle,
     this.checkedByMember,
     this.highlightQuery,
@@ -51,6 +54,10 @@ class ItemTile extends StatefulWidget {
   /// The shop's name for the subtitle. Only on the All tab; see
   /// [ItemRowContent.shopName].
   final String? shopName;
+
+  /// Whether the row sits in the Done section (faded). A row checked a
+  /// moment ago is still settling in the open section and isn't faded yet.
+  final bool inDone;
 
   /// Translations (for the menu labels and "Checked off by {name}").
   final Translations t;
@@ -89,6 +96,12 @@ class ItemTile extends StatefulWidget {
   /// rearrange mode. If null (for checked rows), the option just closes
   /// the menu.
   final VoidCallback? onRearrange;
+
+  /// The list's shops, for the hold menu's inline Move.
+  final List<Shop> shops;
+
+  /// Moves the item to a shop (null = no shop), from the hold menu.
+  final ValueChanged<ShopId?>? onMove;
 
   /// The drag handle shown at the start of the row in rearrange mode.
   /// Given by the parent list (usually wrapped in a
@@ -325,6 +338,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               onEdit: widget.onEdit,
               onDelete: widget.onDelete,
               onSelectMore: widget.onSelectMore,
+              shops: widget.shops,
+              onMove: widget.onMove,
               onRearrange: widget.onRearrange,
               onQuantityChanged: _onMenuQuantity,
               strikeProgress: _strikeController,
@@ -401,6 +416,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
               isMenuClosed: !_isMenuOpen,
               shopColor: widget.shopColor,
               shopName: widget.shopName,
+              faded: widget.inDone,
               onQuantityChanged: widget.onQuantityChanged,
               dragHandle: widget.dragHandle,
               t: widget.t,

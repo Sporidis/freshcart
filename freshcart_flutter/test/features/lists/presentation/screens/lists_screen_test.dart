@@ -7,7 +7,9 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
@@ -698,6 +700,10 @@ void main() {
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
+      // Gone from the list at once; deleted once Undo has had its chance.
+      expect(find.text('Milk'), findsNothing);
+      expect(itemRepository.removeManyCalls, isEmpty);
+      await tester.pump(ItemsController.swipeUndoWindow);
       expect(
         itemRepository.removeManyCalls.single.single,
         ItemId('00000000-0000-4000-8000-0000000000aa'),
@@ -834,6 +840,8 @@ void main() {
         expect(find.text('Cancel'), findsOneWidget);
         // The quick-add field is the only other TextField this screen has.
         expect(find.byType(TextField), findsOneWidget);
+        // Scaled out, not removed (v3): still built, but can't be tapped.
+        expect(find.byType(QuickAddBar).hitTestable(), findsNothing);
       },
     );
 

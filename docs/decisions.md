@@ -2647,6 +2647,14 @@ interaction.
   wherever there's a row, so tab-swiping would only work on empty space.
 - **The colour wave is 400ms** (was 700ms, #85/#89), and the header carries the tab's tint with
   its own wave from the same origin. The header needs no screenshot: it's one flat colour.
+- **Batch check-off holds the row, not the save.** A tick saves at once (sync and the offline
+  queue are unchanged); the row waits in the open section until 750ms pass without a tick, then
+  the burst lands in Done with one toast. The hold lives in `ItemsUiController`, whose state
+  survives item updates; the toast is a `ref.listen` in the widget, so the controller still
+  never touches `BuildContext`. The full "glide to Done" is a lighter arrival cascade for now.
+- **Bulk deletes wait out their Undo**, like swipe-to-delete: Clear and select-mode Delete hide
+  the rows now and call `removeMany` with those ids after the toast's window. By id, not
+  `clearChecked`, so an item ticked during the window isn't swept up.
 - **Small theme changes now:** sheet drag handle 36×5, drawer 300px, toast radius 14. The 98px
   "above the FAB" offset belongs to the list's undo toast, not to every SnackBar, so it lives in
   `showUndoToast`, not in the theme.

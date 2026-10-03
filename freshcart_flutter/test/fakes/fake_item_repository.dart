@@ -70,6 +70,9 @@ class FakeItemRepository implements ItemRepository {
   /// Completes before [save] answers, to observe the optimistic state.
   Future<void>? savePause;
 
+  /// When set, [moveMany] waits for it, so a test can act mid-move.
+  Future<void>? movePause;
+
   /// Completes before [add] answers, to observe state (or a busy guard)
   /// while the add is still in flight.
   Future<void>? addPause;
@@ -129,6 +132,7 @@ class FakeItemRepository implements ItemRepository {
     ShopId? shopId,
   ) async {
     moveManyCalls.add((ids: ids, shopId: shopId));
+    if (movePause != null) await movePause;
     return moveManyResult ?? Ok(ids.length);
   }
 

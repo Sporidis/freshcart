@@ -62,10 +62,15 @@ class ItemsSectionController extends _$ItemsSectionController {
       shopFilter: shopFilter,
       me: ref.watch(myMembershipProvider(list)),
       selection: ui.selection,
+      settling: ui.settling,
+      lastSettled: ui.lastSettled,
+      settleCount: ui.settleCount,
       searchQuery: ui.searchQuery,
       doneCollapsed: ui.doneCollapsed,
-      // Either the celebration card or the auto-clear, never both.
+      // Either the celebration card or the auto-clear, never both. And not
+      // while the last ticks are still settling: they land first.
       showCelebration:
+          ui.settling.isEmpty &&
           !list.clearCheckedAfterShopping &&
           allChecked(allItems) &&
           !ui.celebrationDismissed,
@@ -88,7 +93,32 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   // ── Rows ────────────────────────────────────────────────────────────────
 
-  Future<Failure?> toggle(ShoppingItem item) => _items.toggle(item);
+  /// Checks or unchecks [item], saving at once. A check is also held in the
+  /// open section until no tick has come for [settleAfter] (the v3 batch);
+  /// an uncheck lets go of it.
+  Future<Failure?> toggle(
+    ShoppingItem item, {
+    Duration settleAfter = Duration.zero,
+  }) {
+    if (item.isChecked) {
+      _ui.stopSettling(item.id);
+    } else {
+      _ui.startSettling(item.id, settleAfter);
+    }
+    return _items.toggle(item);
+  }
+
+  /// Undo for a settled batch: unchecks those of [ids] that are still
+  /// checked.
+  Future<Failure?> uncheck(List<ItemId> ids) async {
+    Failure? first;
+    for (final item in state.allItems) {
+      if (ids.contains(item.id) && item.isChecked) {
+        first ??= await _items.toggle(item);
+      }
+    }
+    return first;
+  }
 
   Future<Failure?> setQuantity(ShoppingItem item, int quantity) => _items.edit(
     item,
@@ -119,6 +149,13 @@ class ItemsSectionController extends _$ItemsSectionController {
   void Function() swipeDelete(ShoppingItem item) => _items.swipeDelete(item);
 
   Future<Failure?> clearChecked() => _items.clearChecked();
+
+  /// The Done header's Clear: hides this tab's checked items now, deletes
+  /// them after the toast's undo window. Returns how many, and the undo.
+  ({int count, void Function() undo}) clearDoneWithUndo() {
+    final ids = [for (final item in state.doneItems) item.id];
+    return (count: ids.length, undo: _items.removeManyWithUndo(ids));
+  }
 
   void toggleDoneCollapsed() => _ui.toggleDoneCollapsed();
 
@@ -179,12 +216,36 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   void clearSelection() => _ui.clearSelection();
 
-  /// Deletes the selected items. Only leaves select mode if it worked, so
-  /// on an error the user keeps their selection.
-  Future<Failure?> deleteSelected() async {
-    final failure = await _items.removeSelected(state.selection);
-    if (failure == null) clearSelection();
-    return failure;
+  /// Deletes the selected items, with Undo: they go now, the server delete
+  /// waits out the toast. Leaves select mode. Returns how many, and the undo.
+  ({int count, void Function() undo}) deleteSelectedWithUndo() {
+    final ids = state.selection;
+    final undo = _items.removeManyWithUndo(ids);
+    clearSelection();
+    return (count: ids.length, undo: undo);
+  }
+
+  /// Moves one item to [shopId] (null = no shop), from the hold menu.
+  Future<Failure?> moveItem(ShoppingItem item, ShopId? shopId) =>
+      _items.moveSelected({item.id}, shopId);
+
+  /// Where each selected item is now, so a Move can be undone.
+  Map<ItemId, ShopId?> shopsOfSelection() => {
+    for (final item in state.allItems)
+      if (state.selection.contains(item.id)) item.id: item.shopId,
+  };
+
+  /// Undo for a Move: puts each item back in the shop it came from.
+  Future<Failure?> moveBack(Map<ItemId, ShopId?> previous) async {
+    final byShop = <ShopId?, Set<ItemId>>{};
+    for (final MapEntry(key: id, value: shop) in previous.entries) {
+      (byShop[shop] ??= {}).add(id);
+    }
+    Failure? first;
+    for (final MapEntry(key: shop, value: ids) in byShop.entries) {
+      first ??= await _items.moveSelected(ids, shop);
+    }
+    return first;
   }
 
   /// Moves the selected items to [shopId] (null = no shop). Like
