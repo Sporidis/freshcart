@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
@@ -85,6 +86,7 @@ void main() {
     'shop tab pill · shop': shopTabPillShopPreview,
     'colour swatch picker': colorSwatchPickerPreview,
     'setting row': settingRowPreview,
+    'settings section': settingsSectionPreview,
     'shop picker': shopPickerPreview,
     'shop picker pill': shopPickerPillPreview,
     'sheet scaffold': appSheetScaffoldPreview,

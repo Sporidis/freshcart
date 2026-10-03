@@ -2658,3 +2658,14 @@ interaction.
 - **Small theme changes now:** sheet drag handle 36×5, drawer 300px, toast radius 14. The 98px
   "above the FAB" offset belongs to the list's undo toast, not to every SnackBar, so it lives in
   `showUndoToast`, not in the theme.
+- **Edit profile is a sheet, the controller keeps its name.** `EditProfileScreenController`
+  still backs it: renaming it would touch generated code and every test for a word, and the
+  conventions have no "sheet controller" name to rename it to. The `/settings/profile` route is
+  gone; the drawer header and Settings both call `showEditProfileSheet`.
+- **Grouped cards come from `SettingsSection` itself**, not a List-settings-only copy. Every
+  settings screen (Settings, Notifications, List settings) gets the v3 card in one change, and
+  `SettingRow` carries the card's 14px padding so its tap highlight still fills the card edge
+  to edge. Rows now line up with the card, not the label above it.
+- **List settings shows members and the invite code inline.** Members are rows that open
+  Household (still a door, not a copy, #69/#104); the code is one tap to copy. Sharing and
+  member management stay on Household.

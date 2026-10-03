@@ -7,11 +7,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'edit_profile_screen_controller.g.dart';
 
-/// The controller for `EditProfileScreen`: the profile to show, and all
-/// the changes the screen can make.
+/// The controller for `EditProfileSheet`: the profile to show, and all
+/// the changes the sheet can make.
 ///
 /// It exists mainly for [choosePhoto], which has two steps (pick, then
-/// upload). Saving flags and errors stay in the screen itself, see
+/// upload). Saving flags and errors stay in the sheet itself, see
 /// [EditProfileScreenState] for why.
 @riverpod
 class EditProfileScreenController extends _$EditProfileScreenController {

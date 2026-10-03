@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/features/items/application/items/items_control
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/new_list_sheet.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
@@ -527,8 +528,10 @@ void main() {
         await pump(tester, currentUserId: 'user-1');
         await tester.tap(find.byType(MemberAvatarStack));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Household').first);
+        // List settings shows each member; a member row opens Household.
+        await tester.tap(find.text('Nikolaos'));
         await tester.pumpAndSettle();
+        expect(find.byType(HouseholdScreen), findsOneWidget);
         expect(find.text('Mom'), findsNothing);
 
         // Someone else joins the list on another device — no user action here,

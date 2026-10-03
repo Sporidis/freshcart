@@ -152,7 +152,7 @@ void main() {
     expect(find.text('New list'), findsOneWidget);
   });
 
-  testWidgets('rows share their left edge with the section label above', (
+  testWidgets('the row card shares its left edge with the section label', (
     tester,
   ) async {
     await pump(tester);
@@ -163,8 +163,13 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // v3 grouped cards: the label and the card line up; the row's text
+    // sits inside the card's padding.
+    final card = find
+        .ancestor(of: find.text('Appearance'), matching: find.byType(Material))
+        .first;
     expect(
-      tester.getTopLeft(find.text('Appearance')).dx,
+      tester.getTopLeft(card).dx,
       tester.getTopLeft(find.text('PREFERENCES')).dx,
     );
   });
