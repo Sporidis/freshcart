@@ -58,6 +58,15 @@ class PendingOperationsQueue {
     )..where((row) => row.id.equals(id))).go();
   }
 
+  /// Every queued change, oldest first, again whenever the queue changes.
+  /// Lets the screen show what's still waiting (see
+  /// `applyQueuedItemChanges`).
+  Stream<List<PendingOperation>> watchAll() {
+    return (_db.select(
+      _db.pendingOperations,
+    )..orderBy([(row) => OrderingTerm.asc(row.queuedAt)])).watch();
+  }
+
   /// How many changes are in the queue, updated whenever it changes.
   Stream<int> watchCount() {
     return _db.select(_db.pendingOperations).watch().map((rows) => rows.length);
