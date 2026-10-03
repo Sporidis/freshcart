@@ -5,6 +5,8 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/check_circle.dart';
 import 'package:freshcart_flutter/core/ui/checked_state.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -61,8 +63,8 @@ class ItemRowContent extends StatelessWidget {
   /// The drag handle, before the checkbox. Null outside rearrange mode.
   final Widget? dragHandle;
 
-  /// Who checked this item off. If there's a note, the note is shown
-  /// instead.
+  /// Who checked this item off. A checked row always shows them first,
+  /// with their avatar, ahead of the shop and note.
   final ListMember? checkedByMember;
 
   /// The search text. Matching letters in the name are shown bold. Null
@@ -160,8 +162,13 @@ class ItemRowContent extends StatelessWidget {
   }
 
   /// The line under the name: the shop (All tab only) and the note, joined
-  /// with " · ". Without either, a checked row says who checked it. The
-  /// note wins over that because it's an instruction for the shopper.
+  /// with " · ".
+  ///
+  /// A checked row leads with who checked it: their avatar (photo if they
+  /// have one) and "Checked off by Sam", then the shop and note after a
+  /// " · ". It used to be shown only when there was no shop or note, so
+  /// on the All tab, where nearly every row names its shop, it never
+  /// appeared. Who got it matters most once it's in the basket.
   Widget? _buildSubtitle(Color muted) {
     final style = AppTextStyles.caption.copyWith(
       fontSize: 13,
@@ -169,24 +176,49 @@ class ItemRowContent extends StatelessWidget {
       color: muted,
     );
     final parts = [?shopName, if (item.hasNote) item.note!.text];
-    if (parts.isNotEmpty) {
-      return Text(
-        parts.join(' · '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: style,
+    final member = checkedByMember;
+
+    if (isChecked && member != null) {
+      final text = [
+        t.items.checkedBy(name: member.displayName),
+        ...parts,
+      ].join(' · ');
+      return Padding(
+        padding: const EdgeInsets.only(top: 2),
+        child: Row(
+          spacing: 6,
+          children: [
+            UserAvatar(
+              seed: member.userId.value,
+              initial: initialFor(member.displayName),
+              photoUrl: member.avatarPhotoUrl,
+              color: member.avatarColor,
+              radius: _checkerAvatar / 2,
+            ),
+            Flexible(
+              child: Text(
+                text,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: style,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
-    final member = checkedByMember;
-    if (!isChecked || member == null) return null;
+    if (parts.isEmpty) return null;
     return Text(
-      t.items.checkedBy(name: member.displayName),
+      parts.join(' · '),
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
       style: style,
     );
   }
+
+  /// The checker's avatar on a checked row: about the height of the line.
+  static const double _checkerAvatar = 16;
 }
 
 /// "×2" in secondary ink, nothing for 1: one of something is the default and
