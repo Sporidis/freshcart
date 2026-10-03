@@ -509,9 +509,14 @@ class _DuplicateCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: AppSpacing.gapSmall),
-                  OutlinedButton(
-                    onPressed: onAddAnyway,
-                    child: Text(t.items.addAnyway),
+                  // Expanded like its neighbour: the theme's buttons are
+                  // full-width (Size.fromHeight), which in a Row means
+                  // infinitely wide.
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onAddAnyway,
+                      child: Text(t.items.addAnyway),
+                    ),
                   ),
                 ],
               ),
