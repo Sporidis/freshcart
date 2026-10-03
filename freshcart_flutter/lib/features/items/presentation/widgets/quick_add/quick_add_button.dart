@@ -34,7 +34,7 @@ class QuickAddButton extends StatelessWidget {
       padding: const EdgeInsets.all(6),
       child: AnimatedContainer(
         key: const ValueKey('quick-add-icon-bg'),
-        duration: AppMotion.quick,
+        duration: AppMotion.durationFor(context, AppMotion.quick),
         width: diameter,
         height: diameter,
         decoration: BoxDecoration(
@@ -49,7 +49,7 @@ class QuickAddButton extends StatelessWidget {
           tooltip: tooltip,
           icon: AnimatedRotation(
             turns: showsPlus ? 0 : 0.125,
-            duration: AppMotion.quick,
+            duration: AppMotion.durationFor(context, AppMotion.quick),
             // Rotation with a small bounce at the end.
             curve: AppMotion.curveFor(context, AppMotion.pop),
             child: Icon(

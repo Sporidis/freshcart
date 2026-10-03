@@ -178,8 +178,17 @@ class _QuickAddBarState extends State<QuickAddBar>
   /// - open and empty ("×"): close.
   bool get _showsPlus => _phase == _Phase.collapsed || _hasText;
 
+  /// Under reduced motion the pill doesn't roll out: it fades over 120ms.
+  void _syncRevealSpeed() {
+    final reduced = AppMotion.reduced(context);
+    _reveal
+      ..duration = reduced ? AppMotion.micro : AppMotion.fabRollOpen
+      ..reverseDuration = reduced ? AppMotion.micro : AppMotion.fabRollClose;
+  }
+
   void _open() {
     setState(() => _phase = _Phase.expanded);
+    _syncRevealSpeed();
     _reveal.forward();
     // Focus after this frame, because the text field doesn't exist yet.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -189,6 +198,7 @@ class _QuickAddBarState extends State<QuickAddBar>
 
   void _collapse() {
     setState(() => _phase = _Phase.collapsed);
+    _syncRevealSpeed();
     _reveal.reverse();
     _focus.unfocus();
   }

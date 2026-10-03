@@ -665,7 +665,8 @@ class _ScaleOut extends StatelessWidget {
         opacity: visible ? 1 : 0,
         duration: duration,
         child: AnimatedScale(
-          scale: visible ? 1 : .6,
+          // Reduced motion: a fade only.
+          scale: visible || AppMotion.reduced(context) ? 1 : .6,
           alignment: Alignment.bottomRight,
           duration: duration,
           curve: AppMotion.enter,
