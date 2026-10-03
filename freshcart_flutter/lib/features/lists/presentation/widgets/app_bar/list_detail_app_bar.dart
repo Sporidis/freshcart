@@ -460,7 +460,7 @@ class _ProgressBar extends StatelessWidget implements PreferredSizeWidget {
                 child: SizedBox(
                   height: 4,
                   child: ColoredBox(
-                    color: theme.colorScheme.surfaceContainer,
+                    color: theme.colorScheme.fill,
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(end: fraction),
                       duration: AppMotion.durationFor(

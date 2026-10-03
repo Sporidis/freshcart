@@ -9,10 +9,12 @@ import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/name_prompt_dialog.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/new_list_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -184,13 +186,10 @@ Future<void> showCreateListDialog(
   Translations t,
 ) async {
   ShoppingList? created;
-  await showDialog<bool>(
+  // A sheet in design v3 (was a dialog).
+  await showAppSheet<bool>(
     context: context,
-    builder: (context) => NamePromptDialog(
-      title: t.lists.create,
-      label: t.lists.title,
-      submitLabel: t.common.save,
-      cancelLabel: t.common.cancel,
+    builder: (context) => NewListSheet(
       onSubmit: (value) async => container
           .read(listsControllerProvider.notifier)
           .create(value)

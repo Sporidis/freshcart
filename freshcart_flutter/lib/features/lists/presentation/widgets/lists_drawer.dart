@@ -4,9 +4,11 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
+import 'package:freshcart_flutter/core/ui/cascade_in.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
-import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
@@ -21,8 +23,8 @@ import 'package:go_router/go_router.dart';
 // No @Preview here: the drawer gets its data from the real ListRepository,
 // and previews can't override providers (see preview_harness.dart).
 
-/// The side drawer to switch between lists. It's the only place that shows
-/// all your lists (decisions.md #68).
+/// The side drawer to switch between lists (design v3). It's the only place
+/// that shows all your lists (decisions.md #68).
 ///
 /// "New list" and "Join a list" are rows in the list (decisions.md #65).
 /// At the bottom there's "Settings".
@@ -49,8 +51,8 @@ class ListsDrawer extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _DrawerHeader(rows: rows, t: t),
-            const Divider(height: 1),
+            _DrawerHeader(t: t),
+            const Divider(height: 1, indent: 20, endIndent: 20),
             Expanded(
               child: rows == null
                   ? const SizedBox.shrink()
@@ -63,7 +65,7 @@ class ListsDrawer extends ConsumerWidget {
             ),
             const Divider(height: 1),
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
               child: _DrawerAction(
                 icon: Icons.settings_outlined,
                 label: t.settings.title,
@@ -80,13 +82,11 @@ class ListsDrawer extends ConsumerWidget {
   }
 }
 
-/// The top of the drawer: your avatar, name, and "N lists · N people".
-/// Tap to open Settings.
+/// The top of the drawer (design v3): your avatar and name, with "Edit
+/// profile" under it. Tap to edit your profile.
 class _DrawerHeader extends ConsumerWidget {
-  const _DrawerHeader({required this.rows, required this.t});
+  const _DrawerHeader({required this.t});
 
-  /// Null while loading. Then the "N lists · N people" line is hidden.
-  final List<ListsDrawerRow>? rows;
   final Translations t;
 
   @override
@@ -94,32 +94,17 @@ class _DrawerHeader extends ConsumerWidget {
     final theme = Theme.of(context);
     final me = ref.watch(profileControllerProvider).value?.valueOrNull;
 
-    final rows = this.rows;
-    String? summary;
-    if (rows != null) {
-      // Count each person once across all lists, including yourself.
-      final people = <UserId>{};
-      for (final row in rows) {
-        for (final member in row.list.members) {
-          people.add(member.userId);
-        }
-      }
-      summary =
-          '${t.lists.countLabel(n: rows.length)} · '
-          '${t.lists.memberCount(n: people.length)}';
-    }
-
     return InkWell(
       onTap: () async {
         Navigator.of(context).pop();
-        await context.push(Routes.settings);
+        await context.push(Routes.editProfile);
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(
           AppSpacing.screen,
-          AppSpacing.lg,
+          AppSpacing.sm,
           AppSpacing.screen,
-          AppSpacing.lg,
+          18,
         ),
         child: Row(
           children: [
@@ -130,7 +115,7 @@ class _DrawerHeader extends ConsumerWidget {
               color: me?.avatarColor,
               radius: 21,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,22 +123,20 @@ class _DrawerHeader extends ConsumerWidget {
                 children: [
                   Text(
                     me?.displayName ?? '',
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  if (summary != null)
-                    Text(
-                      summary,
-                      style: AppTextStyles.caption.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+                    style: AppTextStyles.bodyStrong.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.onSurface,
                     ),
+                  ),
+                  Text(
+                    t.profile.title,
+                    style: AppTextStyles.caption.copyWith(
+                      fontSize: 13,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
-            ),
-            Icon(
-              Icons.chevron_right,
-              size: 18,
-              color: theme.colorScheme.onSurfaceVariant,
             ),
           ],
         ),
@@ -162,7 +145,8 @@ class _DrawerHeader extends ConsumerWidget {
   }
 }
 
-/// The scrollable part: one row per list, then "New list" and "Join a list".
+/// The scrollable part: "YOUR LISTS", one tile per list, then "New list" and
+/// "Join a list". The tiles cascade in, 40ms apart.
 class _ListRows extends StatelessWidget {
   const _ListRows({
     required this.rows,
@@ -175,14 +159,6 @@ class _ListRows extends StatelessWidget {
   final ListId currentListId;
   final Translations t;
   final void Function(ListId id) onOpen;
-
-  String _subtitle(ListsDrawerRow row) {
-    final summary = row.summary;
-    if (summary == null) return t.lists.memberCount(n: row.list.members.length);
-    return summary.allDone
-        ? t.lists.allDone
-        : t.lists.itemsLeft(n: summary.remaining);
-  }
 
   /// Closes the drawer, then opens [dialog].
   ///
@@ -200,38 +176,43 @@ class _ListRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    const step = Duration(milliseconds: 40);
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.fromLTRB(12, 16, 12, 0),
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+          padding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
           child: Text(
             t.lists.title.toUpperCase(),
+            textAlign: TextAlign.start,
             style: AppTextStyles.eyebrow.copyWith(
-              color: theme.colorScheme.onSurfaceVariant,
+              color: theme.colorScheme.onSurface.withValues(alpha: .36),
             ),
           ),
         ),
-        for (final row in rows)
-          _ListRow(
+        for (final (i, row) in rows.indexed)
+          CascadeIn(
             key: ValueKey(row.list.id.value),
-            list: row.list,
-            isCurrent: row.list.id == currentListId,
-            subtitleLabel: _subtitle(row),
-            othersInList: row.othersInList,
-            onTap: () => onOpen(row.list.id),
-            t: t,
+            index: i,
+            step: step,
+            child: _ListTile(
+              row: row,
+              isCurrent: row.list.id == currentListId,
+              onTap: () => onOpen(row.list.id),
+              t: t,
+            ),
           ),
-        // Part of the scrolling list (not the footer), because they add to
-        // these lists.
-        _InlineAction(
+        const SizedBox(height: 6),
+        _DrawerAction(
           icon: Icons.add,
           label: t.lists.create,
+          strong: true,
           onTap: () => _popThen(context, showCreateListDialog),
         ),
-        _InlineAction(
-          icon: Icons.group_add_outlined,
+        _DrawerAction(
+          icon: Icons.login_rounded,
           label: t.lists.join,
+          strong: true,
           onTap: () => _popThen(context, showJoinListDialog),
         ),
       ],
@@ -239,169 +220,215 @@ class _ListRows extends StatelessWidget {
   }
 }
 
-/// One list in the drawer, with a letter avatar (like member rows in
-/// Household).
+/// One list (design v3): its name and shop dots, and a 3px ink progress bar
+/// with "4/10". The open list sits on the fill colour.
 ///
 /// Stateful because it keeps a [GlobalKey] to [EditableListTitleState] (for
 /// long-press rename). A key made inside `build()` would be new every
 /// rebuild.
-class _ListRow extends ConsumerStatefulWidget {
-  const _ListRow({
-    required this.list,
+class _ListTile extends ConsumerStatefulWidget {
+  const _ListTile({
+    required this.row,
     required this.isCurrent,
-    required this.subtitleLabel,
-    required this.othersInList,
     required this.onTap,
     required this.t,
-    super.key,
   });
 
-  final ShoppingList list;
+  final ListsDrawerRow row;
   final bool isCurrent;
-
-  /// The second line: "6 left" / "All done", or the member count until the
-  /// item counts load.
-  final String subtitleLabel;
-
-  /// Everyone on [list] except you. Shown as avatars.
-  final List<ListMember> othersInList;
   final VoidCallback onTap;
   final Translations t;
 
   @override
-  ConsumerState<_ListRow> createState() => _ListRowState();
+  ConsumerState<_ListTile> createState() => _ListTileState();
 }
 
-class _ListRowState extends ConsumerState<_ListRow> {
-  /// Lets a long-press start renaming. (A normal tap opens the list, so
+class _ListTileState extends ConsumerState<_ListTile> {
+  /// Lets a long-press start renaming. (A tap opens the list, so
   /// `tapToEdit` is false.)
   final _titleKey = GlobalKey<EditableListTitleState>();
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final initial = initialFor(widget.list.name);
+    final scheme = theme.colorScheme;
+    final row = widget.row;
+    final list = row.list;
+    final summary = row.summary;
     // Only the owner can rename. If not allowed, `startEditing` does
     // nothing.
-    final isOwner = ref.watch(isListOwnerProvider(widget.list));
+    final isOwner = ref.watch(isListOwnerProvider(list));
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: ListTile(
-        shape: RoundedRectangleBorder(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Material(
+        color: widget.isCurrent ? scheme.fill : Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadii.card),
+        child: InkWell(
           borderRadius: BorderRadius.circular(AppRadii.card),
+          onTap: widget.onTap,
+          onLongPress: () => _titleKey.currentState?.startEditing(),
+          child: Semantics(
+            selected: widget.isCurrent,
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: EditableListTitle(
+                          key: _titleKey,
+                          name: list.name,
+                          enabled: isOwner,
+                          tapToEdit: false,
+                          style: AppTextStyles.bodyStrong.copyWith(
+                            color: scheme.onSurface,
+                          ),
+                          onRename: (name) async {
+                            final result = await ref
+                                .read(listsControllerProvider.notifier)
+                                .rename(list.id, name);
+                            return switch (result) {
+                              Ok() => null,
+                              Err(:final failure) => failure.toMessage(
+                                widget.t,
+                              ),
+                            };
+                          },
+                        ),
+                      ),
+                      for (final color in row.shopColors)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 3),
+                          child: Container(
+                            width: 7,
+                            height: 7,
+                            decoration: BoxDecoration(
+                              color: color.toColor(),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  // Until the counts load, the member count stands in.
+                  if (summary == null)
+                    Text(
+                      widget.t.lists.memberCount(n: list.members.length),
+                      style: AppTextStyles.caption.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    )
+                  else
+                    _Progress(summary: summary),
+                ],
+              ),
+            ),
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
-        ),
-        selected: widget.isCurrent,
-        leading: CircleAvatar(
-          radius: 18,
-          backgroundColor: widget.isCurrent
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outlineVariant,
-          foregroundColor: widget.isCurrent
-              ? theme.colorScheme.onPrimary
-              : theme.colorScheme.onSurface,
-          child: Text(initial, style: AppTextStyles.bodyStrong),
-        ),
-        title: EditableListTitle(
-          key: _titleKey,
-          name: widget.list.name,
-          enabled: isOwner,
-          tapToEdit: false,
-          style: widget.isCurrent
-              ? AppTextStyles.bodyStrong
-              : AppTextStyles.body,
-          onRename: (name) async {
-            final result = await ref
-                .read(listsControllerProvider.notifier)
-                .rename(widget.list.id, name);
-            return switch (result) {
-              Ok() => null,
-              Err(:final failure) => failure.toMessage(widget.t),
-            };
-          },
-        ),
-        subtitle: Text(widget.subtitleLabel),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.othersInList.isNotEmpty) ...[
-              MemberAvatarStack(members: widget.othersInList),
-              const SizedBox(width: 8),
-            ],
-            if (widget.isCurrent)
-              Icon(Icons.check, size: 18, color: theme.colorScheme.primary),
-          ],
-        ),
-        onTap: widget.onTap,
-        onLongPress: () => _titleKey.currentState?.startEditing(),
       ),
     );
   }
 }
 
-/// The "New list" / "Join a list" rows, shown with the lists. Styled like a
-/// link, not like a normal row.
-class _InlineAction extends StatelessWidget {
-  const _InlineAction({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
+/// A 3px ink bar and "4/10".
+class _Progress extends StatelessWidget {
+  const _Progress({required this.summary});
 
-  final IconData icon;
-  final String label;
-  final Future<void> Function() onTap;
+  final ListSummary summary;
 
   @override
   Widget build(BuildContext context) {
-    final color = Theme.of(context).colorScheme.primary;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: ListTile(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadii.card),
+    final scheme = Theme.of(context).colorScheme;
+    final fraction = summary.total == 0
+        ? 0.0
+        : summary.checkedCount / summary.total;
+    return Row(
+      children: [
+        Expanded(
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(2),
+            child: SizedBox(
+              height: 3,
+              child: ColoredBox(
+                color: scheme.fill,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(end: fraction),
+                  duration: AppMotion.durationFor(
+                    context,
+                    const Duration(milliseconds: 420),
+                  ),
+                  curve: AppMotion.enter,
+                  builder: (context, value, _) => FractionallySizedBox(
+                    alignment: Alignment.centerLeft,
+                    widthFactor: value,
+                    child: ColoredBox(color: scheme.onSurface),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 12,
-          vertical: 4,
+        const SizedBox(width: 10),
+        Text(
+          '${summary.checkedCount}/${summary.total}',
+          style: AppTextStyles.caption.copyWith(
+            fontSize: 12,
+            color: scheme.onSurfaceVariant,
+            fontFeatures: const [FontFeature.tabularFigures()],
+          ),
         ),
-        leading: Icon(icon, color: color),
-        title: Text(
-          label,
-          style: AppTextStyles.bodyStrong.copyWith(color: color),
-        ),
-        onTap: onTap,
-      ),
+      ],
     );
   }
 }
 
+/// A 48px action row: New list and Join a list ([strong], ink), and
+/// Settings in the footer (secondary ink).
 class _DrawerAction extends StatelessWidget {
   const _DrawerAction({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.strong = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
+  final bool strong;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-    child: ListTile(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppRadii.card),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      leading: Icon(icon),
-      title: Text(label),
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final color = strong ? scheme.onSurface : scheme.onSurfaceVariant;
+    return InkWell(
+      borderRadius: BorderRadius.circular(AppRadii.card),
       onTap: onTap,
-    ),
-  );
+      child: SizedBox(
+        height: 48,
+        child: Row(
+          children: [
+            const SizedBox(width: 12),
+            Icon(icon, size: 17, color: color),
+            const SizedBox(width: 10),
+            // Expanded: long labels ("Join a list with a code", or longer
+            // translations) would otherwise run off the 300px drawer.
+            Expanded(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: (strong ? AppTextStyles.bodyStrong : AppTextStyles.body)
+                    .copyWith(fontSize: 15, color: color),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

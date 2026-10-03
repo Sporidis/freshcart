@@ -4,6 +4,9 @@
     "title": "Mga listahan ko",
     "empty": "Wala pang listahan. Gumawa ng isa para makapagsimula.",
     "create": "Bagong listahan",
+    "nameExample": "hal. Camping trip",
+    "createButton": "Gumawa ng listahan",
+    "nameSuggestions": ["Camping", "Weekend", "Party", "Opisina"],
     "join": "Sumali sa listahan gamit ang code",
     "joinCodeLabel": "Code ng pagsali",
     "memberCount": {

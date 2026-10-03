@@ -4,6 +4,7 @@ import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
+import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'lists_drawer_controller.g.dart';
@@ -33,6 +34,14 @@ class ListsDrawerController extends _$ListsDrawerController {
         ListsDrawerRow(
           list: list,
           summary: summaries[list.id],
+          // Each list's shops, for the tile's dots (design v3). Watched per
+          // list while the drawer is open; until loaded, just no dots.
+          shopColors: [
+            for (final shop
+                in ref.watch(shopsControllerProvider(list.id)).dataOrNull ??
+                    const <Shop>[])
+              if (shop.isActive) shop.color,
+          ],
           othersInList: [
             for (final member in list.members)
               if (member.userId != me) member,
@@ -52,6 +61,7 @@ class ListsDrawerRow {
     required this.list,
     required this.summary,
     required this.othersInList,
+    this.shopColors = const [],
   });
 
   final ShoppingList list;
@@ -61,4 +71,7 @@ class ListsDrawerRow {
 
   /// Everyone on [list] except you. Shown as avatars.
   final List<ListMember> othersInList;
+
+  /// The colours of the list's shops, in tab order.
+  final List<HexColor> shopColors;
 }

@@ -103,7 +103,7 @@ class _GhostCard extends StatelessWidget {
               width: width,
               height: 8,
               decoration: BoxDecoration(
-                color: scheme.surfaceContainer,
+                color: scheme.fill,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),

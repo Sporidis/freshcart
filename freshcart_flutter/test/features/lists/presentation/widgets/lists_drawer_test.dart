@@ -94,7 +94,7 @@ void main() {
     },
   );
 
-  testWidgets('shows the remaining count once its summary has loaded', (
+  testWidgets('shows progress once its summary has loaded', (
     tester,
   ) async {
     final listId = ListId('00000000-0000-4000-8000-000000000001');
@@ -109,11 +109,12 @@ void main() {
     ]);
     await pump(tester, currentId: listId);
 
-    expect(find.text('6 left'), findsOneWidget);
+    // v3: progress, checked out of total.
+    expect(find.text('2/8'), findsOneWidget);
     expect(find.text('1 member'), findsNothing);
   });
 
-  testWidgets('shows All done for a list whose summary has nothing left', (
+  testWidgets('shows a full bar for a list with everything checked', (
     tester,
   ) async {
     final listId = ListId('00000000-0000-4000-8000-000000000001');
@@ -128,57 +129,10 @@ void main() {
     ]);
     await pump(tester, currentId: listId);
 
-    expect(find.text('All done'), findsOneWidget);
+    expect(find.text('4/4'), findsOneWidget);
   });
 
-  testWidgets(
-    "the avatar stack shows who else is on a list, not the viewer's own row",
-    (tester) async {
-      repository.myListsResult = Ok([
-        buildList(
-          members: [
-            buildMember(userId: me, displayName: 'Me'),
-            buildMember(
-              userId: 'user-sam',
-              displayName: 'Sam',
-              role: MemberRole.member,
-            ),
-          ],
-        ),
-      ]);
-      await pump(tester);
-
-      // Sam's initial shows; the viewer's own "M" does not, since the
-      // stack is "who else", not "everyone".
-      expect(find.text('S'), findsOneWidget);
-      expect(find.text('M'), findsNothing);
-    },
-  );
-
-  testWidgets('more than three others collapses to a +N indicator', (
-    tester,
-  ) async {
-    repository.myListsResult = Ok([
-      buildList(
-        members: [
-          buildMember(userId: me, displayName: 'Me'),
-          buildMember(userId: 'u1', displayName: 'Alex'),
-          buildMember(userId: 'u2', displayName: 'Bo'),
-          buildMember(userId: 'u3', displayName: 'Cam'),
-          buildMember(userId: 'u4', displayName: 'Dee'),
-        ],
-      ),
-    ]);
-    await pump(tester);
-
-    expect(find.text('A'), findsOneWidget);
-    expect(find.text('B'), findsOneWidget);
-    expect(find.text('C'), findsOneWidget);
-    expect(find.text('D'), findsNothing);
-    expect(find.text('+1'), findsOneWidget);
-  });
-
-  testWidgets('New list opens the create dialog, which actually creates', (
+  testWidgets('New list opens the create sheet, which actually creates', (
     tester,
   ) async {
     repository.myListsResult = Ok([
@@ -190,7 +144,9 @@ void main() {
     await tester.tap(find.text('New list'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Camping');
-    await tester.tap(find.text('Save'));
+    // Create list enables on the frame after typing.
+    await tester.pump();
+    await tester.tap(find.text('Create list'));
     await tester.pumpAndSettle();
 
     expect(repository.createCalls, ['Camping']);
@@ -215,7 +171,7 @@ void main() {
   });
 
   group('header (Flow 10)', () {
-    testWidgets('shows the signed-in profile and a lists/people summary', (
+    testWidgets('shows the signed-in profile and opens Edit profile', (
       tester,
     ) async {
       repository.myListsResult = Ok([
@@ -236,9 +192,8 @@ void main() {
 
       // FakeAuthRepository's own default identity.
       expect(find.text('Nikolaos'), findsOneWidget);
-      // 2 lists; 2 distinct people across them (me + Sam), not 3 -- the
-      // viewer is only counted once even though they're on both lists.
-      expect(find.text('2 lists · 2 members'), findsOneWidget);
+      // v3: the header is the door to your profile.
+      expect(find.text('Edit profile'), findsOneWidget);
     });
   });
 

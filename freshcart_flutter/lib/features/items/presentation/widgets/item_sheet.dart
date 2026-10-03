@@ -360,7 +360,7 @@ class _CompactStepper extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
+        color: scheme.fill,
         borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
       child: Row(
@@ -418,7 +418,7 @@ class _NoteField extends StatelessWidget {
       height: 50,
       padding: const EdgeInsets.symmetric(horizontal: 14),
       decoration: BoxDecoration(
-        color: scheme.surfaceContainer,
+        color: scheme.fill,
         borderRadius: BorderRadius.circular(AppRadii.card),
       ),
       child: Row(
