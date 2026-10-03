@@ -192,6 +192,7 @@ class _ItemFlows {
       context: context,
       builder: (_) => ItemSheet.add(
         initialName: initialName,
+        listName: s.list.name,
         shops: s.shops,
         t: t,
         initialShopId: s.shopFilter,

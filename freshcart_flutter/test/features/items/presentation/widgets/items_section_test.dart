@@ -237,6 +237,36 @@ void main() {
   );
 
   testWidgets(
+    'opening the add bar focuses its field, so typing goes straight in',
+    (tester) async {
+      items.byListResult = Ok([buildItem(id: 'a', name: 'Milk')]);
+
+      await pump(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Through the keyboard connection, not tester.enterText (which would
+      // focus the field itself): this only lands if the field has focus.
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+      tester.testTextInput.enterText('Bread');
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.text('Bread'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'the completion celebration shows once every item is checked, and '
     'Clear checked resolves it',
     (tester) async {

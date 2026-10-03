@@ -40,15 +40,15 @@ class SuggestionRow extends StatelessWidget {
                 child: InkWell(
                   customBorder: const StadiumBorder(),
                   onTap: () => onTap(suggestion),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 13,
-                      vertical: 7,
-                    ),
+                  // v3 suggestion chip: 36px, 14px text.
+                  child: Container(
+                    height: 36,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Center(
                       child: Text(
                         suggestion,
                         style: AppTextStyles.label.copyWith(
+                          fontSize: 14,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),

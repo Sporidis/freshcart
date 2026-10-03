@@ -21,8 +21,13 @@ class ShopPicker extends StatelessWidget {
     required this.onSelected,
     required this.t,
     this.isSelected,
+    this.showNoShop = true,
     super.key,
   });
+
+  /// Whether "No shop" is offered. The product sheet hides it when adding
+  /// from a shop's tab: you're adding to that shop.
+  final bool showNoShop;
 
   final List<Shop> shops;
   final ValueChanged<ShopId?> onSelected;
@@ -37,12 +42,13 @@ class ShopPicker extends StatelessWidget {
       spacing: AppSpacing.gapSmall,
       runSpacing: AppSpacing.xs,
       children: [
-        ShopPickerPill(
-          label: t.shops.none,
-          color: null,
-          selected: isSelected?.call(null) ?? false,
-          onTap: () => onSelected(null),
-        ),
+        if (showNoShop)
+          ShopPickerPill(
+            label: t.shops.none,
+            color: null,
+            selected: isSelected?.call(null) ?? false,
+            onTap: () => onSelected(null),
+          ),
         for (final shop in shops)
           ShopPickerPill(
             label: shop.name,

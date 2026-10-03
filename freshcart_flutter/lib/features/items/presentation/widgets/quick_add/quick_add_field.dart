@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// The text field in the open pill, with the shop's dot before it.
 ///
@@ -21,7 +20,7 @@ class QuickAddField extends StatelessWidget {
   final bool enabled;
   final String placeholder;
 
-  /// Whether to show the dot. Only on a shop tab, not on "All".
+  /// Whether to show the accent dot before the field.
   final bool showShopDot;
   final VoidCallback onSubmitted;
 
@@ -38,14 +37,14 @@ class QuickAddField extends StatelessWidget {
           if (showShopDot) ...[
             Container(
               key: const ValueKey('quick-add-dot'),
-              width: AppSizes.shopDot,
-              height: AppSizes.shopDot,
+              width: 9,
+              height: 9,
               decoration: BoxDecoration(
                 color: shopColor,
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 11),
+            const SizedBox(width: 10),
           ],
           Expanded(
             child: TextField(
