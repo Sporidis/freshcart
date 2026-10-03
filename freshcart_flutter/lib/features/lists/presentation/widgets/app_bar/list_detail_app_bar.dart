@@ -537,9 +537,13 @@ class _ListTitleState extends ConsumerState<_ListTitle> {
     _flying = true;
     // Where the title will be is only known after layout.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
+      // Checked before touching `context`: if the title is gone by now,
+      // reading its render object would throw, and in an async callback
+      // that's an unhandled error (the debugger stops on it).
+      if (!mounted) return;
       final box = context.findRenderObject();
-      if (!mounted || box is! RenderBox || !box.hasSize) {
-        if (mounted) setState(() => _flying = false);
+      if (box is! RenderBox || !box.hasSize) {
+        setState(() => _flying = false);
         return;
       }
       await flyListTitle(
