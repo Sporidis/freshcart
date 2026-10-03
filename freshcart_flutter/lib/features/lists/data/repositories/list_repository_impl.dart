@@ -16,11 +16,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_repository_impl.g.dart';
 
-/// The Serverpod-backed [ListRepository].
+/// The real [ListRepository], talking to the Serverpod server.
 ///
-/// This class is the boundary: DTOs come in from `freshcart_client`, domain
-/// entities go out, and nothing above it ever sees a `dto.` type. Expected
-/// failures become `Err(Failure)` rather than exceptions.
+/// Serverpod types (`dto.`) come in, domain types go out. Nothing above
+/// this class ever sees a `dto.` type. Errors are returned as
+/// `Err(Failure)`, not thrown.
 class ListRepositoryImpl implements ListRepository {
   /// Creates the repository against a generated Serverpod [dto.Client].
   const ListRepositoryImpl(
@@ -46,19 +46,14 @@ class ListRepositoryImpl implements ListRepository {
     );
     switch (result) {
       case Ok(:final value):
-        // Best-effort, same reasoning as ItemRealtimeSource/ListRealtimeSource's
-        // own cacheWrite: nothing here awaits this, so a failed write (e.g.
-        // the app closing the database mid-write) must not surface as an
-        // uncaught error -- myLists() already has its answer either way.
+        // Save to the offline cache, without waiting. If saving fails,
+        // ignore it: we already have the lists to return.
         unawaited(_cache.replaceAll(value).catchError((_) {}));
         return result;
       case Err(:final failure):
-        // A cold start with no signal: nothing in _guard's retry loop ever
-        // reached the server, so fall back to whatever was last synced
-        // (`docs/offline-sync-plan.md` §4's "cached reads") rather than
-        // showing ListsScreen an error for a connectivity problem it can't
-        // do anything about. Any other failure (unauthorized, ...) is real
-        // and surfaces as-is.
+        // Couldn't reach the server: show the saved lists from the offline
+        // cache instead of an error. Other errors (like unauthorized) are
+        // returned as normal.
         if (failure is NetworkFailure) {
           final cached = await _cache.readAll();
           if (cached != null) return Ok(cached);
@@ -264,10 +259,10 @@ class ListRepositoryImpl implements ListRepository {
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);
 
-  /// Runs [body], turning any thrown transport error into an `Err`.
+  /// Runs [body], and turns any thrown error into an `Err`.
   ///
-  /// If the error is due to the server being unreachable and [onUnreachable]
-  /// is provided, it will be called to handle the situation.
+  /// If the server couldn't be reached and [onUnreachable] is given, that
+  /// runs instead (for example, to queue the change for later).
   static Future<Result<T>> _guard<T>(
     Future<T> Function() body, {
     Future<T> Function()? onUnreachable,
@@ -285,11 +280,10 @@ class ListRepositoryImpl implements ListRepository {
   String _mintTempId() => 'temp-${DateTime.now().microsecondsSinceEpoch}';
 }
 
-/// Supplies the [ListRepository] port.
+/// Supplies the [ListRepository].
 ///
-/// The provider's type is the *domain port*, not the implementation, so
-/// everything above it depends on the interface and a test can override this
-/// with a fake without the app noticing.
+/// Its type is the interface ([ListRepository]), not this class. So the
+/// rest of the app only knows the interface, and tests can swap in a fake.
 @Riverpod(keepAlive: true)
 ListRepository listRepository(Ref ref) => ListRepositoryImpl(
   ref.watch(serverpodClientProvider),

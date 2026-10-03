@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
@@ -76,7 +80,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // The real journey: drawer -> Settings -> the list's own row.
-    await tester.tap(find.byIcon(Icons.menu));
+    await tester.tap(find.byTooltip('Open navigation menu'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Settings'));
     await tester.pumpAndSettle();
@@ -85,10 +89,8 @@ void main() {
     return container;
   }
 
-  // _ListDropdown (Material's DropdownMenu) is itself implemented with its
-  // own internal TextField showing the selected list's name — a bare
-  // find.byType(TextField) matches that one too, not just the real name
-  // field below it. The key disambiguates.
+  // Keyed rather than find.byType(TextField), so a future second field on
+  // this screen cannot make the finder ambiguous.
   Finder nameField() => find.byKey(const Key('listNameField'));
 
   testWidgets('opens pre-filled with the list\'s own name', (tester) async {
@@ -97,7 +99,8 @@ void main() {
       list: buildList(name: 'Groceries', members: [buildMember()]),
     );
 
-    expect(find.widgetWithText(AppBar, 'List settings'), findsOneWidget);
+    // v3: a large title in the page, not in the bar.
+    expect(find.text('List settings'), findsOneWidget);
     expect(
       tester.widget<TextField>(nameField()).controller?.text,
       'Groceries',
@@ -143,10 +146,12 @@ void main() {
       await pump(tester, list: list);
 
       final tile = find.widgetWithText(
-        SwitchListTile,
+        SettingToggleOption,
         'Clear checked items automatically',
       );
-      expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
+      expect(tester.widget<SettingToggleOption>(tile).value, isFalse);
 
       await tester.tap(tile);
       await tester.pumpAndSettle();
@@ -167,12 +172,13 @@ void main() {
       );
       await pump(tester, list: list);
 
-      await tester.tap(
-        find.widgetWithText(
-          SwitchListTile,
-          'Clear checked items automatically',
-        ),
+      final tile = find.widgetWithText(
+        SettingToggleOption,
+        'Clear checked items automatically',
       );
+      await tester.ensureVisible(tile);
+      await tester.pumpAndSettle();
+      await tester.tap(tile);
       await tester.pumpAndSettle();
 
       expect(
@@ -222,7 +228,7 @@ void main() {
     shopRepository.byListResult = Ok([colruyt]);
     await pump(tester, list: list);
 
-    final addShop = find.widgetWithText(TextButton, 'Add shop');
+    final addShop = find.text('Add shop');
     await tester.ensureVisible(addShop);
     await tester.tap(addShop);
     await tester.pumpAndSettle();
@@ -232,18 +238,30 @@ void main() {
     expect(sheet.siblings, [colruyt], reason: 'for the clash warning');
   });
 
-  testWidgets('an owner sees Delete list, not Leave list', (tester) async {
+  /// The danger zone sits at the very bottom; ListView only builds what
+  /// is on screen, so scroll it in before looking for it.
+  Future<void> scrollToEnd(WidgetTester tester) async {
+    await tester.drag(find.byType(ListView).first, const Offset(0, -2000));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('an owner sees Delete for everyone, not Leave list', (
+    tester,
+  ) async {
     await pump(
       tester,
       list: buildList(name: 'Groceries', members: [buildMember()]),
       currentUserId: 'user-1',
     );
+    await scrollToEnd(tester);
 
-    expect(find.text('Delete list'), findsOneWidget);
+    expect(find.text('Delete for everyone'), findsOneWidget);
     expect(find.text('Leave list'), findsNothing);
   });
 
-  testWidgets('a member sees Leave list, not Delete list', (tester) async {
+  testWidgets('a member sees Leave list, not Delete for everyone', (
+    tester,
+  ) async {
     await pump(
       tester,
       list: buildList(
@@ -255,8 +273,114 @@ void main() {
       ),
       currentUserId: 'user-2',
     );
+    await scrollToEnd(tester);
 
     expect(find.text('Leave list'), findsOneWidget);
-    expect(find.text('Delete list'), findsNothing);
+    expect(find.text('Delete for everyone'), findsNothing);
+  });
+
+  testWidgets('leaving asks first, in the destructive red', (tester) async {
+    await pump(
+      tester,
+      list: buildList(
+        name: 'Groceries',
+        members: [
+          buildMember(),
+          buildMember(userId: 'user-2'),
+        ],
+      ),
+      currentUserId: 'user-2',
+    );
+    await scrollToEnd(tester);
+
+    await tester.tap(find.text('Leave list'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Leave this list?'), findsOneWidget);
+    final confirm = find.widgetWithText(FilledButton, 'Leave list');
+    final style = tester.widget<FilledButton>(confirm).style!;
+    expect(style.backgroundColor?.resolve({}), AppColors.destructive);
+  });
+
+  testWidgets('a list with no shops still offers Add shop', (tester) async {
+    shopRepository.byListResult = const Ok([]);
+    await pump(
+      tester,
+      list: buildList(name: 'Groceries', members: [buildMember()]),
+    );
+
+    expect(find.text('Add shop'), findsOneWidget);
+  });
+
+  testWidgets('a name typed then left by Back is saved, not dropped', (
+    tester,
+  ) async {
+    final list = buildList(name: 'Groceries', members: [buildMember()]);
+    repository.renameResult = Ok(list.copyWith(name: 'Weekly'));
+    await pump(tester, list: list);
+
+    await tester.enterText(nameField(), 'Weekly');
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+
+    expect(repository.renameCalls.single.name, 'Weekly');
+  });
+
+  testWidgets('a member row opens the household screen', (tester) async {
+    await pump(
+      tester,
+      list: buildList(
+        name: 'Groceries',
+        members: [buildMember(displayName: 'Sam De Vos')],
+      ),
+    );
+
+    final row = find.text('Sam De Vos');
+    await tester.ensureVisible(row);
+    await tester.pumpAndSettle();
+    await tester.tap(row);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(HouseholdScreen), findsOneWidget);
+  });
+
+  testWidgets('the invite code is shown inline, and a tap copies it', (
+    tester,
+  ) async {
+    String? copied;
+    tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+      SystemChannels.platform,
+      (call) async {
+        if (call.method == 'Clipboard.setData') {
+          copied = (call.arguments as Map)['text'] as String?;
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () => tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        SystemChannels.platform,
+        null,
+      ),
+    );
+    await pump(
+      tester,
+      list: buildList(name: 'Groceries', members: [buildMember()]),
+    );
+
+    final code = find.text('ABC23');
+    await tester.ensureVisible(code);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invite code'));
+    await tester.pump();
+
+    expect(copied, 'ABC23');
+    expect(find.text('Copied'), findsOneWidget);
+
+    // Back to the code once the confirmation has had its moment.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+    expect(find.text('ABC23'), findsOneWidget);
   });
 }

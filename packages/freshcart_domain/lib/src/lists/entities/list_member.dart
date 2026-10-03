@@ -5,13 +5,12 @@ import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
 part 'list_member.freezed.dart';
 
-/// One person's membership of a shopping list.
+/// One person on a shopping list.
 ///
-/// [displayName], [avatarColor] and [avatarPhotoUrl] carry the member's
-/// profile *as it is now*: the server fills them in live on every read and
-/// re-broadcasts the list when any of them change (`docs/decisions.md` #98),
-/// so a list shows "Mom added milk" with Mom's current name and photo,
-/// without the client looking her up separately.
+/// [displayName], [avatarColor] and [avatarPhotoUrl] are always the
+/// member's current profile. The server fills them in on every read, and
+/// sends the list again when they change (decisions.md #98). So the app
+/// never has to look people up separately.
 @freezed
 abstract class ListMember with _$ListMember {
   /// Creates a membership record.

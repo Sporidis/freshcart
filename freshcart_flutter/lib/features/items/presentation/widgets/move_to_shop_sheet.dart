@@ -1,32 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// What [showMoveToShopSheet] resolved to -- distinct from `null`, which
-/// means "dismissed without choosing", so "moved to no shop" (untagged, a
-/// real choice) is never confused with "cancelled" (do nothing at all).
+/// What the user picked in [showMoveToShopSheet].
+///
+/// A wrapper is needed because "no shop" is also null. Without it, null
+/// could mean "move to no shop" or "cancelled".
 class MoveToShopOutcome {
   const MoveToShopOutcome(this.shopId);
 
   final ShopId? shopId;
 }
 
-/// Asks which shop a multi-selection should move to.
+/// Asks which shop the selected items should move to. Returns null if
+/// cancelled.
 Future<MoveToShopOutcome?> showMoveToShopSheet(
   BuildContext context, {
   required List<Shop> shops,
   required Translations t,
-}) => showModalBottomSheet<MoveToShopOutcome>(
+}) => showAppSheet<MoveToShopOutcome>(
   context: context,
-  isScrollControlled: true,
-  showDragHandle: true,
   builder: (_) => _MoveToShopSheet(shops: shops, t: t),
 );
 
-/// The multi-select "Move" sheet: the same [ShopPicker] `ItemSheet` uses
-/// for one item at a time, offered here for a whole selection instead.
+/// The "Move to shop" sheet in select mode. Uses the same [ShopPicker] as
+/// `ItemSheet`.
 class _MoveToShopSheet extends StatelessWidget {
   const _MoveToShopSheet({required this.shops, required this.t});
 
@@ -35,24 +35,15 @@ class _MoveToShopSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.sheetH),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(t.items.moveTo, style: Theme.of(context).textTheme.titleLarge),
-            const SizedBox(height: 14),
-            ShopPicker(
-              shops: shops,
-              t: t,
-              onSelected: (id) =>
-                  Navigator.of(context).pop(MoveToShopOutcome(id)),
-            ),
-          ],
+    return AppSheetScaffold(
+      title: t.items.moveTo,
+      children: [
+        ShopPicker(
+          shops: shops,
+          t: t,
+          onSelected: (id) => Navigator.of(context).pop(MoveToShopOutcome(id)),
         ),
-      ),
+      ],
     );
   }
 }

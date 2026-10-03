@@ -5,33 +5,30 @@ import 'package:freshcart_domain/src/shops/entities/shop_item_disposition.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
 
-/// How the domain reads and writes the shops belonging to a list.
+/// The interface for reading and saving a list's shops.
 abstract interface class ShopRepository {
-  /// Every shop on [listId].
+  /// All shops on [listId].
   Future<Result<List<Shop>>> byList(ListId listId);
 
-  /// Creates a shop called [name] on [listId], themed with [color].
+  /// Creates a shop called [name] with colour [color] on [listId].
   Future<Result<Shop>> create({
     required ListId listId,
     required String name,
     required HexColor color,
   });
 
-  /// Writes [shop] back in full.
+  /// Saves the whole [shop].
   Future<Result<Shop>> save(Shop shop);
 
-  /// How many items are tagged to shop [id].
-  ///
-  /// Asked before offering to delete it, because "delete Colruyt" reads very
-  /// differently when it is holding six things than when it is empty.
+  /// How many items shop [id] has. Asked before deleting, because deleting
+  /// a shop with 6 items is a different decision than an empty one.
   Future<Result<int>> itemCount(ShopId id);
 
-  /// Deletes shop [id], disposing of its items as [disposition] says.
+  /// Deletes shop [id]. [disposition] says what happens to its items.
   ///
-  /// The caller must choose. Items are never destroyed silently — and never
-  /// silently kept, either, when someone meant to clear them out.
-  /// [ShopItemDisposition.untag] leaves them on the list without a shop, which
-  /// is the safe default but is still stated rather than assumed.
+  /// The caller must always choose, so items are never deleted (or kept)
+  /// without the user deciding. [ShopItemDisposition.untag] (keep them
+  /// without a shop) is the safe choice.
   Future<Result<void>> remove(
     ShopId id, {
     ShopItemDisposition disposition,

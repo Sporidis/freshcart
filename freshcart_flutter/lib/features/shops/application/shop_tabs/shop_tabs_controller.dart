@@ -7,12 +7,11 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'shop_tabs_controller.g.dart';
 
-/// The view model behind `ShopFilterBar`: which tabs exist, which is
-/// selected, how much is left under each, and moving between them.
+/// The controller for `ShopFilterBar`: which tabs exist, which one is
+/// selected, how many items are left in each, and switching tabs.
 ///
-/// Tapping and swiping drive the same [ShopFilterController] through
-/// [select], so there is never a second, swipe-only copy of "which tab is
-/// active".
+/// Tapping and swiping both go through [select], which updates
+/// [ShopFilterController]. So there's only one "selected tab" value.
 @riverpod
 class ShopTabsController extends _$ShopTabsController {
   @override
@@ -25,8 +24,8 @@ class ShopTabsController extends _$ShopTabsController {
 
     return ShopTabsState(
       allShops: shops,
-      // Turned off in List settings: still a real shop (still taggable from
-      // the item sheet), just not a tab. See Shop.isActive's own doc.
+      // Shops turned off in list settings get no tab. They still exist, and
+      // items can still be tagged with them.
       tabs: [
         for (final shop in shops)
           if (shop.isActive) shop,
@@ -44,7 +43,7 @@ class ShopTabsController extends _$ShopTabsController {
       ref.read(shopFilterControllerProvider(listId).notifier).select(shopId);
 }
 
-/// See [ShopTabsController].
+/// The data for the shop tabs. Built by [ShopTabsController].
 class ShopTabsState {
   const ShopTabsState({
     required this.allShops,
@@ -53,11 +52,12 @@ class ShopTabsState {
     required this.openItems,
   });
 
-  /// Every shop on the list, tab or not -- a new shop's colour is checked
-  /// against all of them.
+  /// All shops on the list, including hidden ones. A new shop's colour is
+  /// compared against all of them.
   final List<Shop> allShops;
 
-  /// The shops that get a tab, in list order ("All" is implicit, first).
+  /// The shops that get a tab, in order. "All" isn't in here, it's always
+  /// first.
   final List<Shop> tabs;
 
   /// The selected shop, or null for "All".
@@ -65,14 +65,16 @@ class ShopTabsState {
 
   final List<ShoppingItem> openItems;
 
-  /// Remaining, not total: the count answers "how much is left to find in
-  /// here?", so checking something off makes it tick down.
+  /// Unchecked items per shop (not the total). Goes down as items are
+  /// checked off.
   int remainingIn(ShopId? shop) =>
       openItems.where((item) => item.matchesShopFilter(shop)).length;
 
-  /// The tab [delta] steps away from the selected one ("All" first, then
-  /// each shop), or null when that would run off either end. Wrapped in a
-  /// record because "All" is itself a null [ShopId].
+  /// The tab [delta] steps from the selected one (for swiping), or null if
+  /// there's no tab there.
+  ///
+  /// Returned as a record `(shopId: ...)` because "All" is a null
+  /// [ShopId]. Without the record, null would mean both "All" and "no tab".
   ({ShopId? shopId})? neighbour(int delta) {
     final order = <ShopId?>[null, for (final shop in tabs) shop.id];
     final from = order.indexOf(selected);

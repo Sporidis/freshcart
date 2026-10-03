@@ -11,6 +11,7 @@ import 'package:freshcart_flutter/features/shops/application/shop/shop_providers
 import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filter_bar.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../../fakes/fake_item_repository.dart';
@@ -23,6 +24,13 @@ import '../../../../fakes/fake_shop_repository.dart';
 final Finder _addPillIcon = find.descendant(
   of: find.byType(ShopFilterBar),
   matching: find.byIcon(Icons.add),
+);
+
+/// A tab pill by its label, scoped to the bar: on All, rows also show their
+/// shop's name in the subtitle.
+Finder pill(String label) => find.descendant(
+  of: find.byType(ShopFilterBar),
+  matching: find.textContaining(label),
 );
 
 void main() {
@@ -206,7 +214,7 @@ void main() {
 
       // Chip labels carry a remaining count ("Colruyt · 1"), so match the
       // shop name as a substring rather than the bare name.
-      await tester.tap(find.textContaining('Colruyt'));
+      await tester.tap(pill('Colruyt'));
       await tester.pumpAndSettle();
 
       expect(find.text('Milk'), findsOneWidget);
@@ -215,20 +223,59 @@ void main() {
       // ShopTabPill is a tab, not a toggle chip: tapping the already-active
       // tab again is a no-op, not a deselect -- "All" is the one way back,
       // matching how a real TabBar behaves.
-      await tester.tap(find.textContaining('Colruyt'));
+      await tester.tap(pill('Colruyt'));
       await tester.pumpAndSettle();
       expect(find.text('Cake'), findsNothing);
 
       // "All shops" is the way back, from any shop's tab.
-      await tester.tap(find.textContaining('Bakery'));
+      await tester.tap(pill('Bakery'));
       await tester.pumpAndSettle();
       expect(find.text('Milk'), findsNothing);
 
-      await tester.tap(find.textContaining('All shops'));
+      await tester.tap(pill('All shops'));
       await tester.pumpAndSettle();
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Cake'), findsOneWidget);
     });
+
+    testWidgets(
+      'one highlight slides under whichever tab is selected',
+      (tester) async {
+        shops.byListResult = Ok([colruyt, bakery]);
+        items.byListResult = Ok([buildItem(name: 'Milk')]);
+
+        await pump(tester);
+
+        final highlight = find.descendant(
+          of: find.byType(ShopFilterBar),
+          matching: find.byType(AnimatedPositioned),
+        );
+        double centreOf(Finder f) => tester.getCenter(f).dx;
+        final tab = find.ancestor(
+          of: pill('Bakery'),
+          matching: find.byType(ShopTabPill),
+        );
+
+        expect(highlight, findsOneWidget);
+        expect(
+          centreOf(highlight),
+          closeTo(
+            centreOf(
+              find.ancestor(
+                of: pill('All shops'),
+                matching: find.byType(ShopTabPill),
+              ),
+            ),
+            1,
+          ),
+        );
+
+        await tester.tap(pill('Bakery'));
+        await tester.pumpAndSettle();
+
+        expect(centreOf(highlight), closeTo(centreOf(tab), 1));
+      },
+    );
 
     testWidgets('clearing the filter shows everything again', (tester) async {
       shops.byListResult = Ok([colruyt, bakery]);

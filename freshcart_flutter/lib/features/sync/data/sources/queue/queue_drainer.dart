@@ -6,20 +6,20 @@ import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_opera
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
 
-/// What happened when a single queued write was replayed.
+/// What happened when we tried to send one queued change.
 enum _ReplayOutcome {
-  /// The server accepted it — safe to remove from the queue.
+  /// The server accepted it. Remove it from the queue.
   succeeded,
 
-  /// The server rejected it as a conflict. Per offline-sync-plan.md Phase D's
-  /// "server wins" decision: dropped, not retried or force-applied — but
-  /// reported back so the caller can tell the user what didn't make it.
+  /// Someone else changed the same thing first. The server's version wins,
+  /// so we drop our change (and report it).
   conflicted,
 
-  /// Any other failure (still unreachable, validation, unexpected...) —
-  /// left queued to try again on the next reconnect, rather than lost.
+  /// Failed for another reason. Keep it and try again next time.
   retryLater,
 }
+
+/// Turns a repository [Result] into a [_ReplayOutcome].
 
 _ReplayOutcome _outcomeOf(Result<Object?> result) => switch (result) {
   Ok() => _ReplayOutcome.succeeded,
@@ -27,8 +27,7 @@ _ReplayOutcome _outcomeOf(Result<Object?> result) => switch (result) {
   Err() => _ReplayOutcome.retryLater,
 };
 
-/// Replays writes that were queued while offline, once the server is
-/// reachable again (offline-sync-plan.md Phase D).
+/// Sends the changes made offline to the server, once we're back online.
 class QueueDrainer {
   const QueueDrainer(this._queue, this._itemRepository, this._listRepository);
 
@@ -36,15 +35,15 @@ class QueueDrainer {
   final ItemRepository _itemRepository;
   final ListRepository _listRepository;
 
-  /// Drains every queued write, oldest first, replaying each against the
-  /// real repositories.
+  /// Sends every queued change, oldest first.
   ///
-  /// Returns every op the server rejected as a conflict — dropped here, but
-  /// it's Phase E's job to actually show the user something about them; this
-  /// layer only decides and reports. Anything that fails for another reason
-  /// stays in the queue rather than being lost.
+  /// Returns the changes that were dropped because of a conflict, so the
+  /// app can tell the user. Changes that failed for other reasons stay in
+  /// the queue.
   Future<List<PendingOperation>> drain() async {
     final ops = await _queue.getAll();
+    // Temporary id -> real id from the server, filled in as "create"
+    // operations succeed. Later changes to the same item use it.
     final tempIdToReal = <String, String>{};
     final conflicted = <PendingOperation>[];
 
@@ -79,7 +78,8 @@ class QueueDrainer {
     return conflicted;
   }
 
-  /// Records `op.tempId`'s real id once a `create` succeeds, if it had one.
+  /// After a successful create, remembers which real id belongs to the
+  /// temporary id.
   void _rememberRealId(
     PendingOperation op,
     Result<({String id})> result,
@@ -94,6 +94,7 @@ class QueueDrainer {
     }
   }
 
+  /// Sends one item change by calling the matching [ItemRepository] method.
   Future<_ReplayOutcome> _replayItem(
     PendingOperation op,
     Map<String, dynamic> payload,
@@ -164,6 +165,7 @@ class QueueDrainer {
     }
   }
 
+  /// Sends one list change by calling the matching [ListRepository] method.
   Future<_ReplayOutcome> _replayList(
     PendingOperation op,
     Map<String, dynamic> payload,
@@ -229,15 +231,17 @@ class QueueDrainer {
   }
 }
 
+/// Replaces temporary ids in [payload] with the real ids from the server.
+///
+/// Example: offline you add "Milk" (temp id) and then check it. When we
+/// send the "check", it must use Milk's real id.
 void _rewriteTempIds(
   Map<String, dynamic> payload,
   Map<String, String> tempIdToReal,
 ) {
-  // 'itemId' — an item op referencing itself (edit/remove/etc.).
-  // 'listId' — an item op referencing the list it belongs to, when that
-  //            list was itself created offline (add an item to a
-  //            not-yet-real list, still offline).
-  // 'id'     — a list op referencing itself (rename/leave/delete/...).
+  // 'itemId': the item being changed.
+  // 'listId': the list an item is in (that list may also be new).
+  // 'id':     the list being changed.
   for (final key in ['itemId', 'listId', 'id']) {
     final value = payload[key];
     if (value != null && tempIdToReal.containsKey(value)) {

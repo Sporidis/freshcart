@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_status_option.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
@@ -55,22 +57,22 @@ void main() {
     expect(find.text('Link email'), findsOneWidget);
   });
 
-  testWidgets('a linked account shows the address it is secured by', (
-    tester,
-  ) async {
-    auth.user = Ok(
-      AuthUser(
-        id: UserId('user-1'),
-        displayName: 'Nikolaos',
-        isAnonymous: false,
-        email: 'n@example.com',
-      ),
-    );
+  AuthUser linkedUser() => AuthUser(
+    id: UserId('user-1'),
+    displayName: 'Nikolaos',
+    isAnonymous: false,
+    email: 'n@example.com',
+  );
+
+  testWidgets('a linked account shows its address once, in the header, '
+      'with no account card', (tester) async {
+    auth.user = Ok(linkedUser());
 
     await pump(tester);
 
-    expect(find.text('Your account is secured.'), findsOneWidget);
-    expect(find.text('n@example.com'), findsNWidgets(2));
+    expect(find.text('n@example.com'), findsOneWidget);
+    expect(find.byIcon(Icons.verified), findsOneWidget);
+    expect(find.text('Secure your lists'), findsNothing);
     expect(find.text('Link email'), findsNothing);
   });
 
@@ -87,18 +89,89 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(auth.linkCalls.single.email, 'me@example.com');
-    expect(find.text('Your account is secured.'), findsOneWidget);
+    // Linked: the card goes, and the header carries the address instead.
+    expect(find.text('Secure your lists'), findsNothing);
+    expect(find.text('me@example.com'), findsOneWidget);
   });
 
-  testWidgets('sign out button calls the auth repository', (tester) async {
-    await pump(tester);
-
-    await tester.drag(find.byType(ListView), const Offset(0, -600));
+  Future<void> tapSignOutRow(WidgetTester tester) async {
+    await tester.dragUntilVisible(
+      find.text('Sign out'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
+  }
 
-    expect(auth.signOutCalls, 1);
+  group('Sign out', () {
+    testWidgets('an anonymous account confirms first, then signs out', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      expect(find.text('Sign out?'), findsOneWidget);
+      expect(auth.signOutCalls, 0);
+
+      // The dialog's own destructive "Sign out", not the row behind it.
+      await tester.tap(find.text('Sign out').last);
+      await tester.pumpAndSettle();
+
+      expect(auth.signOutCalls, 1);
+    });
+
+    testWidgets('cancelling the confirmation keeps the account', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(auth.signOutCalls, 0);
+    });
+
+    testWidgets('a linked account loses nothing, so it signs straight out', (
+      tester,
+    ) async {
+      auth.user = Ok(linkedUser());
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      expect(find.text('Sign out?'), findsNothing);
+      expect(auth.signOutCalls, 1);
+    });
+  });
+
+  testWidgets('New list is offered even with no lists yet', (tester) async {
+    await pump(tester);
+
+    expect(find.text('New list'), findsOneWidget);
+  });
+
+  testWidgets('the row card shares its left edge with the section label', (
+    tester,
+  ) async {
+    await pump(tester);
+    await tester.dragUntilVisible(
+      find.text('Appearance'),
+      find.byType(ListView),
+      const Offset(0, -100),
+    );
+    await tester.pumpAndSettle();
+
+    // v3 grouped cards: the label and the card line up; the row's text
+    // sits inside the card's padding.
+    final card = find
+        .ancestor(of: find.text('Appearance'), matching: find.byType(Material))
+        .first;
+    expect(
+      tester.getTopLeft(card).dx,
+      tester.getTopLeft(find.text('PREFERENCES')).dx,
+    );
   });
 
   group('Preferences', () {
@@ -137,15 +210,18 @@ void main() {
       'larger list text is off by default and persists once toggled',
       (tester) async {
         await pump(tester);
-        final tile = find.widgetWithText(SwitchListTile, 'Larger list text');
+        final tile = find.widgetWithText(
+          SettingToggleOption,
+          'Larger list text',
+        );
         await scrollToPreferences(tester, tile);
 
-        expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+        expect(tester.widget<SettingToggleOption>(tile).value, isFalse);
 
         await tester.tap(tile);
         await tester.pumpAndSettle();
 
-        expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+        expect(tester.widget<SettingToggleOption>(tile).value, isTrue);
         final prefs = await SharedPreferences.getInstance();
         expect(prefs.getBool('large_list_text'), isTrue);
       },
@@ -156,15 +232,15 @@ void main() {
       'unconditional behavior -- and persists once turned off',
       (tester) async {
         await pump(tester);
-        final tile = find.widgetWithText(SwitchListTile, 'Haptics');
+        final tile = find.widgetWithText(SettingToggleOption, 'Haptics');
         await scrollToPreferences(tester, tile);
 
-        expect(tester.widget<SwitchListTile>(tile).value, isTrue);
+        expect(tester.widget<SettingToggleOption>(tile).value, isTrue);
 
         await tester.tap(tile);
         await tester.pumpAndSettle();
 
-        expect(tester.widget<SwitchListTile>(tile).value, isFalse);
+        expect(tester.widget<SettingToggleOption>(tile).value, isFalse);
         final prefs = await SharedPreferences.getInstance();
         expect(prefs.getBool('haptics_enabled'), isFalse);
       },
@@ -174,11 +250,10 @@ void main() {
       'reduce motion reports the OS status as read-only text, not a switch',
       (tester) async {
         await pump(tester);
-        final row = find.widgetWithText(ListTile, 'Reduce motion');
+        final row = find.widgetWithText(SettingStatusOption, 'Reduce motion');
         await scrollToPreferences(tester, row);
 
         expect(row, findsOneWidget);
-        expect(tester.widget(row), isNot(isA<SwitchListTile>()));
         expect(
           find.descendant(of: row, matching: find.byType(Switch)),
           findsNothing,
@@ -226,7 +301,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byIcon(Icons.menu));
+        await tester.tap(find.byTooltip('Open navigation menu'));
         await tester.pumpAndSettle();
         await tester.tap(find.text('Settings'));
         await tester.pumpAndSettle();

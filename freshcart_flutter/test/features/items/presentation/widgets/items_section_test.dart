@@ -3,12 +3,17 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
+import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
@@ -20,6 +25,14 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 import '../../../../fakes/fake_item_repository.dart';
 import '../../../../fakes/fake_list_repository.dart';
 import '../../../../fakes/fake_shop_repository.dart';
+
+/// Taps a row to (un)check it, then waits out the v3 batch settle, which a
+/// plain pumpAndSettle doesn't: a waiting Timer schedules no frames.
+Future<void> tick(WidgetTester tester, String name) async {
+  await tester.tap(find.text(name));
+  await tester.pump(AppMotion.checkSettle);
+  await tester.pumpAndSettle();
+}
 
 void main() {
   setUpAll(configurePluralResolvers);
@@ -80,16 +93,16 @@ void main() {
   });
 
   testWidgets(
-    "the header shows the app name kicker, the list's own name, and the "
-    "signed-in member's avatar",
+    "the header shows the Basket eyebrow, the list's own name, and the "
+    "household's avatars",
     (tester) async {
       items.byListResult = const Ok(<ShoppingItem>[]);
 
       await pump(tester);
 
-      expect(find.text('FreshCart'), findsOneWidget);
+      expect(find.text('Basket'), findsOneWidget);
       expect(find.text('Groceries'), findsOneWidget);
-      expect(find.byType(UserAvatar), findsOneWidget);
+      expect(find.byType(MemberAvatarStack), findsOneWidget);
     },
   );
 
@@ -100,8 +113,10 @@ void main() {
 
     await pump(tester);
 
-    expect(find.byType(EmptyState), findsOneWidget);
-    expect(find.text('Nothing on the list yet'), findsOneWidget);
+    expect(find.byType(ItemsEmptyState), findsOneWidget);
+    expect(find.text('Your list is empty'), findsOneWidget);
+    // Design v3: the empty list starts adding too, not only a shop tab.
+    expect(find.text('Add a product'), findsOneWidget);
   });
 
   testWidgets(
@@ -126,13 +141,59 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Bread'), findsNothing);
-      expect(find.text('Nothing for Colruyt'), findsOneWidget);
+      expect(find.text('Nothing for Colruyt yet'), findsOneWidget);
+      // The button names where the product will go.
+      expect(find.text('Add to Colruyt'), findsOneWidget);
     },
   );
 
   testWidgets(
-    'a checked item collects under Done, collapsible, with a Clear checked '
-    'action',
+    'switching between two empty tabs plays the empty state in again',
+    (tester) async {
+      final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+      final bakery = buildShop(
+        id: '00000000-0000-4000-8000-0000000000c2',
+        name: 'Bakery',
+        color: '#4CAF50',
+      );
+      shops.byListResult = Ok([colruyt, bakery]);
+      items.byListResult = const Ok(<ShoppingItem>[]);
+
+      final container = await pump(tester);
+      final filter = container.read(
+        shopFilterControllerProvider(listId).notifier,
+      );
+      filter.select(colruyt.id);
+      await tester.pumpAndSettle();
+
+      // The opacity of the part holding [text]: its own entrance fade.
+      double opacityOf(String text) => tester
+          .widget<FadeTransition>(
+            find
+                .ancestor(
+                  of: find.text(text),
+                  matching: find.byType(FadeTransition),
+                )
+                .first,
+          )
+          .opacity
+          .value;
+
+      filter.select(bakery.id);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 16));
+
+      // A fresh empty state, still arriving -- not the old one reused with
+      // its entrance already over.
+      expect(opacityOf('Nothing for Bakery yet'), lessThan(1));
+
+      await tester.pumpAndSettle();
+      expect(opacityOf('Nothing for Bakery yet'), 1);
+    },
+  );
+
+  testWidgets(
+    'a checked item collects under Done, collapsible, with a Clear action',
     (tester) async {
       items.byListResult = Ok([
         buildItem(id: 'a', name: 'Milk'),
@@ -144,7 +205,7 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Bread'), findsOneWidget);
       expect(find.text('DONE · 1'), findsOneWidget);
-      expect(find.text('Clear checked'), findsOneWidget);
+      expect(find.text('Clear'), findsOneWidget);
 
       // Folding the Done section away hides the checked row without
       // removing it -- toggle, don't clear.
@@ -156,10 +217,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Bread'), findsOneWidget);
 
-      await tester.tap(find.text('Clear checked'));
+      await tester.tap(find.text('Clear'));
       await tester.pumpAndSettle();
 
-      expect(items.clearCheckedCallCount, 1);
+      // Gone at once, but the server only hears once Undo has had its
+      // chance -- and by id, so a later tick can't be swept up with it.
+      expect(find.text('Bread'), findsNothing);
+      expect(items.removeManyCalls, isEmpty);
+      await tester.pump(ItemsController.swipeUndoWindow);
+      expect(items.removeManyCalls.single, [ItemId('b')]);
+      expect(items.clearCheckedCallCount, 0);
     },
   );
 
@@ -191,6 +258,61 @@ void main() {
   );
 
   testWidgets(
+    'typing in the open add bar, with suggestions coming in, lays out '
+    'cleanly',
+    (tester) async {
+      items.byListResult = Ok([buildItem(id: 'a', name: 'Milk')]);
+      items.suggestNamesResult = const Ok(['Mint', 'Milk powder']);
+
+      await pump(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pumpAndSettle();
+      for (final text in ['M', 'Mi', 'Min', 'Milk']) {
+        await tester.enterText(find.byType(TextField), text);
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'opening the add bar focuses its field, so typing goes straight in',
+    (tester) async {
+      items.byListResult = Ok([buildItem(id: 'a', name: 'Milk')]);
+
+      await pump(tester);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.byIcon(Icons.add),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Through the keyboard connection, not tester.enterText (which would
+      // focus the field itself): this only lands if the field has focus.
+      expect(tester.testTextInput.hasAnyClients, isTrue);
+      tester.testTextInput.enterText('Bread');
+      await tester.pump();
+
+      expect(
+        find.descendant(
+          of: find.byType(QuickAddBar),
+          matching: find.text('Bread'),
+        ),
+        findsOneWidget,
+      );
+    },
+  );
+
+  testWidgets(
     'the completion celebration shows once every item is checked, and '
     'Clear checked resolves it',
     (tester) async {
@@ -207,6 +329,67 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(items.clearCheckedCallCount, 1);
+    },
+  );
+
+  testWidgets(
+    'checking off the last item brings up the celebration -- the moment '
+    'itself, not only a list that opens already done',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+
+      await pump(tester);
+      expect(find.byType(CompletionCelebrationCard), findsNothing);
+
+      await tick(tester, 'Milk');
+
+      expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'after Keep list, unchecking and re-completing the list celebrates again',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+
+      await pump(tester);
+      expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+
+      await tester.tap(find.text('Keep list'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CompletionCelebrationCard), findsNothing);
+
+      // Uncheck, then check again: a fresh completion.
+      await tick(tester, 'Milk');
+      await tick(tester, 'Milk');
+
+      expect(find.byType(CompletionCelebrationCard), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'with Clear checked after shopping on, finishing the list clears it '
+    'instead of celebrating',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk')]);
+      items.clearCheckedResult = const Ok(1);
+
+      await pump(tester, list: buildList(clearCheckedAfterShopping: true));
+      await tick(tester, 'Milk');
+
+      expect(items.clearCheckedCallCount, 1);
+      expect(find.byType(CompletionCelebrationCard), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a list that opens already finished does not clear itself on arrival',
+    (tester) async {
+      items.byListResult = Ok([buildItem(name: 'Milk', isChecked: true)]);
+
+      await pump(tester, list: buildList(clearCheckedAfterShopping: true));
+
+      expect(items.clearCheckedCallCount, 0);
     },
   );
 
@@ -247,15 +430,133 @@ void main() {
 
       expect(find.text('2 selected'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(TextButton, 'Delete'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ModeBar),
+          matching: find.text('Delete'),
+        ),
+      );
       await tester.pumpAndSettle();
 
+      expect(items.removeManyCalls, isEmpty, reason: 'Undo still can');
+      await tester.pump(ItemsController.swipeUndoWindow);
       expect(items.removeManyCalls.single.toSet(), {
         ItemId('a'),
         ItemId('b'),
       });
       // Cleared back out of selection mode on success.
-      expect(find.text('FreshCart'), findsOneWidget);
+      expect(find.byType(ModeBar), findsNothing);
+      expect(find.text('Basket'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    "the hold menu's stepper shows each tap at once and saves the total "
+    'once -- not one racing save per tap',
+    (tester) async {
+      items.byListResult = Ok([buildItem(id: 'a', name: 'Milk')]);
+
+      await pump(tester);
+
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.text('Milk')),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+
+      final plus = find
+          .descendant(
+            of: find.byType(QuantityStepper),
+            matching: find.byWidgetPredicate(
+              (w) => w.runtimeType.toString() == '_StepperButton',
+            ),
+          )
+          .last;
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(plus);
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+
+      // The menu kept up with every tap, before anything was saved.
+      expect(
+        find.descendant(
+          of: find.byType(QuantityStepper),
+          matching: find.text('4'),
+        ),
+        findsOneWidget,
+      );
+      expect(items.savedItems, isEmpty);
+
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pumpAndSettle();
+
+      expect(items.savedItems, hasLength(1));
+      expect(items.savedItems.single.quantity, 4);
+    },
+  );
+
+  testWidgets(
+    'ticks close together stay put, then land in Done as one batch with one '
+    'toast, and Undo unchecks the whole batch',
+    (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+        buildItem(id: 'c', name: 'Eggs'),
+      ]);
+
+      await pump(tester);
+
+      await tester.tap(find.text('Milk'));
+      await tester.pump(const Duration(milliseconds: 300));
+      await tester.tap(find.text('Bread'));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // 600ms in, but only 300ms since the last tick: still held in place.
+      expect(find.textContaining('DONE'), findsNothing);
+
+      await tester.pump(AppMotion.checkSettle);
+      await tester.pumpAndSettle();
+
+      expect(find.text('DONE · 2'), findsOneWidget);
+      expect(find.text('2 items checked off'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('DONE'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'a settled row glides from where it was ticked down into Done, instead '
+    'of jumping there',
+    (tester) async {
+      items.byListResult = Ok([
+        buildItem(id: 'a', name: 'Milk'),
+        buildItem(id: 'b', name: 'Bread'),
+        buildItem(id: 'c', name: 'Eggs'),
+      ]);
+
+      await pump(tester);
+      final before = tester.getTopLeft(find.text('Milk')).dy;
+
+      await tester.tap(find.text('Milk'));
+      await tester.pump(AppMotion.checkSettle);
+      // The settle lands; the glide starts on the next frame.
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 120));
+      final during = tester.getTopLeft(find.text('Milk')).dy;
+
+      await tester.pumpAndSettle();
+      final after = tester.getTopLeft(find.text('Milk')).dy;
+
+      expect(after, greaterThan(before), reason: 'it went down to Done');
+      expect(during, greaterThan(before));
+      expect(during, lessThan(after), reason: 'mid-glide, not teleported');
     },
   );
 
@@ -358,7 +659,7 @@ void main() {
   );
 
   testWidgets(
-    'a checked item shows who checked it off, once there is no note',
+    'a checked item shows who checked it off, with their avatar',
     (tester) async {
       items.byListResult = Ok([
         buildItem(name: 'Milk', isChecked: true, checkedBy: 'user-2'),
@@ -375,6 +676,44 @@ void main() {
       );
 
       expect(find.text('Checked off by Sam'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'who checked it off shows on the All tab too, ahead of the shop',
+    (tester) async {
+      // The bug: the shop name took the subtitle, so on All (where nearly
+      // every row names its shop) "Checked off by" never appeared.
+      final colruyt = buildShop(name: 'Colruyt', color: '#E8791A');
+      shops.byListResult = Ok([colruyt]);
+      items.byListResult = Ok([
+        buildItem(
+          name: 'Milk',
+          isChecked: true,
+          checkedBy: 'user-2',
+          shopId: colruyt.id,
+        ),
+      ]);
+
+      await pump(
+        tester,
+        list: buildList(
+          members: [
+            buildMember(displayName: 'Nikolaos'),
+            buildMember(userId: 'user-2', displayName: 'Sam'),
+          ],
+        ),
+      );
+
+      expect(find.text('Checked off by Sam · Colruyt'), findsOneWidget);
+      // Sam's avatar, with the initial, sits in front of it.
+      expect(
+        find.descendant(
+          of: find.byType(ItemTile),
+          matching: find.byType(UserAvatar),
+        ),
+        findsOneWidget,
+      );
     },
   );
 

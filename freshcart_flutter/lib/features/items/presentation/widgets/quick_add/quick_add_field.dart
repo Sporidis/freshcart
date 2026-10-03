@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// The open pill's text field, led by the active shop's dot.
+/// The text field in the open pill, with the shop's dot before it.
 ///
-/// Stateless on purpose: the controller and focus node belong to
-/// `QuickAddBar`'s state, which outlives every rebuild of this.
+/// Stateless: the text controller and focus node are kept by
+/// `QuickAddBar`.
 class QuickAddField extends StatelessWidget {
   const QuickAddField({
     required this.controller,
@@ -21,14 +20,14 @@ class QuickAddField extends StatelessWidget {
   final bool enabled;
   final String placeholder;
 
-  /// Only on a shop tab -- on "All" there is no shop colour to show.
+  /// Whether to show the accent dot before the field.
   final bool showShopDot;
   final VoidCallback onSubmitted;
 
   @override
   Widget build(BuildContext context) {
-    // Read from *this* context, which sits inside WaveThemed's gated Theme
-    // (decisions #90), so the dot and cursor ride the shop-colour wave.
+    // Theme from inside WaveThemed, so the dot and cursor colours follow
+    // the wave (decisions.md #90).
     final theme = Theme.of(context);
     final shopColor = theme.colorScheme.primary;
     return Padding(
@@ -38,14 +37,14 @@ class QuickAddField extends StatelessWidget {
           if (showShopDot) ...[
             Container(
               key: const ValueKey('quick-add-dot'),
-              width: AppSizes.shopDot,
-              height: AppSizes.shopDot,
+              width: 9,
+              height: 9,
               decoration: BoxDecoration(
                 color: shopColor,
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 11),
+            const SizedBox(width: 10),
           ],
           Expanded(
             child: TextField(
@@ -59,6 +58,7 @@ class QuickAddField extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: placeholder,
                 hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                filled: false,
                 border: InputBorder.none,
                 enabledBorder: InputBorder.none,
                 focusedBorder: InputBorder.none,

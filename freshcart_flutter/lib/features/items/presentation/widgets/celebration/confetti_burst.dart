@@ -5,67 +5,56 @@ import 'package:flutter/scheduler.dart';
 
 /// One falling piece of confetti.
 ///
-/// Deliberately split from [_ConfettiPainter]: this class only knows "where
-/// am I and how am I moving," never how it gets drawn. That split is what
-/// makes [tick] a pure physics update — testable on paper, no [Canvas]
-/// involved — while the painter stays a dumb renderer of whatever state
-/// [tick] produced.
+/// Only knows where it is and how it moves. Drawing is done by
+/// [_ConfettiPainter]. That keeps [tick] simple maths, easy to test without
+/// a [Canvas].
 class ConfettiParticle {
-  /// Spawns one particle at a random position along the top of [bounds],
-  /// with a random sideways drift and fall speed — [random] is threaded
-  /// through rather than each particle making its own [Random.new], so a
-  /// whole burst can (in principle) be seeded and reproduced.
+  /// Creates one piece at a random spot near the top of [bounds], with a
+  /// random sideways and falling speed.
+  ///
+  /// [random] is passed in (not created per piece), so a whole burst could
+  /// be made repeatable with a fixed seed.
   ConfettiParticle({
     required this.color,
     required Size bounds,
     required Random random,
   }) : x = random.nextDouble() * bounds.width,
-       // Spread across the top ~22% of the screen, not clustered just above
-       // it — a burst that's already partway into view the instant it fires
-       // reads as an explosion; confetti that all has to scroll in from
-       // off-screen first reads as rain starting up.
+       // Start somewhere in the top 22% of the screen (not above it), so
+       // it looks like a burst, not like rain starting.
        y = -bounds.height * 0.1 + random.nextDouble() * bounds.height * 0.22,
        vx = (random.nextDouble() - 0.5) * 260,
        vy = -40 + random.nextDouble() * 140,
        rotation = random.nextDouble() * pi * 2,
        rotationSpeed = (random.nextDouble() - 0.5) * 8,
-       // The in-plane spin (rotation) orients the shape; flip is a second,
-       // independent, faster rotation used only to squash its drawn width
-       // (see _ConfettiPainter) — that's what makes a piece read as a
-       // tumbling card catching the light edge-on, not a flat sticker
-       // spinning in place like a coin on a table.
+       // Two rotations: `rotation` turns the piece flat, `flip` makes it
+       // look like it tumbles (by squashing its width, see
+       // _ConfettiPainter). Without flip it would look like a flat sticker.
        flip = random.nextDouble() * pi * 2,
        flipSpeed = 10 + random.nextDouble() * 10,
        size = 7 + random.nextDouble() * 6;
 
-  /// This particle's colour — one of the list's shop colours, chosen by
-  /// [ConfettiBurst.fire].
+  /// This piece's colour (one of the list's shop colours).
   final Color color;
 
-  /// Position, in the same coordinate space as the [Size] passed to the
-  /// constructor (the overlay's own size — see [ConfettiBurst.fire]).
+  /// Position on the overlay.
   double x, y;
 
   /// Velocity, in logical pixels per second.
   double vx, vy;
 
-  /// Current rotation, in radians, and how fast it's currently spinning.
+  /// Current rotation (in radians), and how fast it spins.
   double rotation, rotationSpeed;
 
-  /// The tumble phase and speed — see the constructor's doc comment for why
-  /// this is separate from [rotation] rather than reusing it.
+  /// The tumble (see the comment in the constructor).
   double flip, flipSpeed;
 
-  /// Roughly this particle's width/height, in logical pixels. Fixed for its
-  /// whole lifetime — only position, rotation, and flip animate.
+  /// Size in pixels. Doesn't change.
   final double size;
 
-  /// How fast falling speed increases, in px/s². Applied every [tick] so a
-  /// particle reads as accelerating under gravity rather than drifting at a
-  /// constant speed.
+  /// Gravity (px/s²). Makes pieces fall faster and faster, like real ones.
   static const double _gravity = 500;
 
-  /// Advances this particle by [dt] seconds under gravity.
+  /// Moves this piece forward by [dt] seconds.
   void tick(double dt) {
     x += vx * dt;
     y += vy * dt;
@@ -75,31 +64,20 @@ class ConfettiParticle {
   }
 }
 
-/// Fires a one-shot, non-repeating confetti burst over the current screen.
+/// Shows one confetti burst over the screen.
 ///
-/// Named `fire`, not `show` or `play`: this is an event, not a persistent
-/// widget you mount — it inserts its own [OverlayEntry], drives its own
-/// [Ticker], and removes itself when done. Nothing about it lives in the
-/// widget tree you'd need to clean up by hand.
+/// Not a widget you put in the tree. [fire] adds its own [OverlayEntry],
+/// runs its own [Ticker], and removes itself when it's done.
 abstract final class ConfettiBurst {
-  /// The one place this app is allowed to be theatrical (Motion &
-  /// Interaction Spec §09) — restrained on purpose: a burst of a few dozen
-  /// particles (the spec's own "14-20" nudged up after this read flat in
-  /// hands-on testing — see decisions.md #67), only in the list's own shop
-  /// colours, one 1.4s gravity fall, never repeating.
+  /// Starts the burst: a few dozen pieces in the list's shop [colors],
+  /// falling for 1.4 s, once (decisions.md #67).
   ///
-  /// Call sites are responsible for the spec's other rule, "skip entirely if
-  /// reduced-motion is on" — checking `AppMotion.reduced(context)` here
-  /// would make this a stateful decision hiding in a static method; better
-  /// that the caller (which already reads `MediaQuery` for its own entrance
-  /// animation) just doesn't call this at all when reduced motion is on.
+  /// Doesn't check reduced motion itself. The caller must not call this
+  /// when reduced motion is on.
   ///
-  /// Returns a [ConfettiBurstHandle] the caller should cancel from its own
-  /// `dispose()` — this burst's [Ticker] otherwise has no idea if the widget
-  /// that started it goes away before the 1.4s is up (dismissed, the list
-  /// un-completed, navigated away from entirely), and a live [Ticker]
-  /// outliving the widget tree that created it is exactly the kind of leak
-  /// the framework refuses to let a test run past.
+  /// Returns a [ConfettiBurstHandle]. Call `cancel()` on it in your
+  /// `dispose()`. Otherwise the animation keeps running after your widget
+  /// is gone (a leak, and tests will fail).
   static ConfettiBurstHandle fire(
     BuildContext context, {
     required List<Color> colors,
@@ -122,9 +100,8 @@ abstract final class ConfettiBurst {
     Duration? lastElapsed;
     var finished = false;
 
-    // Shared by natural completion and an early ConfettiBurstHandle.cancel()
-    // -- `finished` guards against either path tearing down an
-    // already-disposed Ticker/OverlayEntry if both somehow fire.
+    // Cleans up. Called when the animation ends, or by cancel(). `finished`
+    // makes sure it only runs once.
     void finish() {
       if (finished) return;
       finished = true;
@@ -148,9 +125,7 @@ abstract final class ConfettiBurst {
     ticker = Ticker(onTick)..start();
     entry = OverlayEntry(
       builder: (context) {
-        // Fades the whole burst out over its last 300ms rather than letting
-        // it end abruptly — a hard cutoff at exactly 1.4s reads as a glitch,
-        // not as confetti settling.
+        // Fade out during the last 300 ms, so it doesn't stop suddenly.
         final elapsed = lastElapsed ?? Duration.zero;
         final remaining = totalDuration - elapsed;
         final fade = (remaining.inMilliseconds / 300).clamp(0.0, 1.0);
@@ -170,15 +145,13 @@ abstract final class ConfettiBurst {
   }
 }
 
-/// Lets whoever called [ConfettiBurst.fire] stop it early.
+/// Returned by [ConfettiBurst.fire], to stop the burst early.
 class ConfettiBurstHandle {
   ConfettiBurstHandle._(this._finish);
 
   final VoidCallback _finish;
 
-  /// Stops the burst immediately — its [Ticker] disposed, its [OverlayEntry]
-  /// removed. Safe to call after the burst already finished on its own;
-  /// does nothing the second time.
+  /// Stops the burst now. Safe to call more than once, or after it ended.
   void cancel() => _finish();
 }
 
@@ -193,10 +166,8 @@ class _ConfettiPainter extends CustomPainter {
       canvas.save();
       canvas.translate(particle.x, particle.y);
       canvas.rotate(particle.rotation);
-      // The tumble: scaling width by cos(flip) sweeps it from full width
-      // down through zero (edge-on) and back out the other side every half
-      // cycle — a 2D silhouette's version of a card tumbling end-over-end
-      // through the air, not just spinning flat like a coin on a table.
+      // The tumble: width × cos(flip) goes from full width to 0 and back,
+      // which looks like a piece of paper flipping over in the air.
       canvas.scale(cos(particle.flip), 1);
       canvas.drawRRect(
         RRect.fromRectAndRadius(
@@ -213,9 +184,8 @@ class _ConfettiPainter extends CustomPainter {
     }
   }
 
-  // Repaints on every tick regardless of particle identity — the particles
-  // list is mutated in place by ConfettiBurst.fire's ticker, so there is no
-  // cheaper "did anything change" check available without duplicating state.
+  // Always repaint. The pieces are changed in place every frame, so there's
+  // no cheap way to check if something changed.
   @override
   bool shouldRepaint(_ConfettiPainter oldDelegate) => true;
 }

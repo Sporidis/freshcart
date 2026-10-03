@@ -1,27 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// A pill-shaped minus/count/plus control.
+/// A pill with "−  2  +" to change the quantity.
 ///
-/// The glyphs are hand-painted rather than pulled from [Icons.add]/
-/// [Icons.remove] -- Flutter's classic Material Icons font is a single
-/// fixed weight with no way to make it visibly bolder, and the design calls
-/// for a thicker line than that font draws.
+/// The − and + are drawn by hand, not with [Icons.add]/[Icons.remove],
+/// because the icon font's lines are too thin for the design.
 class QuantityStepper extends StatelessWidget {
   const QuantityStepper({
     required this.quantity,
     this.onDecrement,
     this.onIncrement,
+    this.decreaseLabel,
+    this.increaseLabel,
     super.key,
   });
+
+  /// What a screen reader calls the − and + ("Fewer", "More"). The glyphs
+  /// are drawn, so without these they'd be unnamed buttons.
+  final String? decreaseLabel;
+  final String? increaseLabel;
 
   final int quantity;
   final VoidCallback? onDecrement;
   final VoidCallback? onIncrement;
 
-  // A 26px tap target, not IconButton's default 48px -- the pill reads much
-  // more slender at this size, matching the design.
-  static const _circleSize = 26.0;
+  // 30 px buttons (IconButton's default 48 px is too big here).
+  static const _circleSize = 30.0;
 
   @override
   Widget build(BuildContext context) {
@@ -29,9 +33,7 @@ class QuantityStepper extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
-        // `outlineVariant`, not a fixed low-alpha black -- that hairline
-        // read fine on the light card this was designed against, but all
-        // but vanished against a dark one.
+        // Theme border colour, so it's visible in dark mode too.
         border: Border.all(color: scheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadii.pill),
       ),
@@ -42,6 +44,7 @@ class QuantityStepper extends StatelessWidget {
             isAdd: false,
             color: scheme.onSurface,
             onTap: onDecrement,
+            label: decreaseLabel,
           ),
           SizedBox(
             width: 24,
@@ -50,22 +53,22 @@ class QuantityStepper extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: scheme.onSurface,
-                fontWeight: FontWeight.bold,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
           DecoratedBox(
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              // Same ink-on-paper pairing as `_CheckCircle` -- a fixed
-              // `AppColors.bgDark` circle used to stay near-black in dark
-              // mode, disappearing against an already-dark row.
+              // Theme colours (like CheckCircle), so it's visible in dark
+              // mode too.
               color: scheme.onSurface,
             ),
             child: _StepperButton(
               isAdd: true,
               color: scheme.surface,
               onTap: onIncrement,
+              label: increaseLabel,
             ),
           ),
         ],
@@ -79,27 +82,35 @@ class _StepperButton extends StatelessWidget {
     required this.isAdd,
     required this.color,
     required this.onTap,
+    this.label,
   });
 
   final bool isAdd;
   final Color color;
   final VoidCallback? onTap;
+  final String? label;
 
   static const _tapSize = QuantityStepper._circleSize;
   static const _glyphSize = 10.0;
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: SizedBox(
-        width: _tapSize,
-        height: _tapSize,
-        child: Center(
-          child: CustomPaint(
-            size: const Size.square(_glyphSize),
-            painter: _StepperGlyphPainter(isAdd: isAdd, color: color),
+    return Semantics(
+      button: true,
+      enabled: onTap != null,
+      label: label,
+      excludeSemantics: true,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: SizedBox(
+          width: _tapSize,
+          height: _tapSize,
+          child: Center(
+            child: CustomPaint(
+              size: const Size.square(_glyphSize),
+              painter: _StepperGlyphPainter(isAdd: isAdd, color: color),
+            ),
           ),
         ),
       ),

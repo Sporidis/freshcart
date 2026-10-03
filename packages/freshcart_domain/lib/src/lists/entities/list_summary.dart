@@ -3,11 +3,11 @@ import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
 
 part 'list_summary.freezed.dart';
 
-/// A list's item counts -- the drawer's "6 left" / "All done" row (Flow 10,
-/// §4). Deliberately separate from [ShoppingList] itself: items are fetched
-/// separately from lists because the two change at very different rates
-/// (`ShoppingList`'s own doc comment), and a summary is still a derived
-/// aggregate over items, not a field a list ever "has."
+/// How many items a list has, and how many are checked. For the drawer's
+/// "6 left" / "All done".
+///
+/// Separate from [ShoppingList], because it's calculated from the items,
+/// which are loaded separately from lists.
 @freezed
 abstract class ListSummary with _$ListSummary {
   /// Creates a summary.
@@ -15,12 +15,11 @@ abstract class ListSummary with _$ListSummary {
     required ListId listId,
     required int total,
 
-    /// How many of [total] are checked off. Named `checkedCount`, not
-    /// `checked`: `package:meta` (re-exported transitively through
-    /// `freezed_annotation`) declares a top-level `checked` constant -- the
-    /// old, deprecated `@checked` annotation -- and a field of that exact
-    /// name fails to compile against this class's generated mixin. Avoided
-    /// rather than fought.
+    /// How many of [total] are checked.
+    ///
+    /// Called `checkedCount`, not `checked`, because `package:meta` already
+    /// has a `checked` (an old annotation), and freezed's generated code
+    /// wouldn't compile with a field of that name.
     required int checkedCount,
   }) = _ListSummary;
 
@@ -29,8 +28,7 @@ abstract class ListSummary with _$ListSummary {
   /// How many items are still open.
   int get remaining => total - checkedCount;
 
-  /// Whether the list has items and every one of them is checked. A list
-  /// with nothing on it yet is not "done" -- there is simply nothing to be
-  /// done with.
+  /// Whether the list has items and all are checked. An empty list is not
+  /// "done".
   bool get allDone => total > 0 && remaining == 0;
 }

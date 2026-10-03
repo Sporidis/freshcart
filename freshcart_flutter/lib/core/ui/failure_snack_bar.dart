@@ -3,14 +3,13 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// Shows [failure] as the snackbar tier of the design's error rule.
+/// Shows [failure] in a snackbar at the bottom of the screen.
 ///
-/// The one place a "something failed but the app is fine" message is built, so
-/// every such failure gets the same shape, duration and retry affordance.
+/// For errors where the screen itself is still fine (for example, saving
+/// failed). Every such error uses this, so they all look the same.
 ///
-/// Four seconds, five with an action: long enough to read, short enough not to
-/// sit over the quick-add bar while someone is trying to type. Shape and
-/// colour come from `AppTheme`'s snackBarTheme rather than being set here.
+/// Stays 4 seconds, or 5 if there's a button. Long enough to read, short
+/// enough not to block the add-item bar. The look comes from the theme.
 void showFailureSnackBar(
   BuildContext context, {
   required Failure failure,
@@ -19,7 +18,7 @@ void showFailureSnackBar(
   VoidCallback? onRetry,
 }) {
   final messenger = ScaffoldMessenger.of(context)
-    // One at a time: a queue of stale failures is worse than the newest one.
+    // Remove the old snackbar first, so only the newest error is shown.
     ..hideCurrentSnackBar();
   messenger.showSnackBar(
     SnackBar(

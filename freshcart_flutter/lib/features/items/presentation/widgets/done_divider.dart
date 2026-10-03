@@ -3,11 +3,14 @@ import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// The divider checked items collect under.
+/// The "DONE · 3" line above the checked items (design v3: a mono eyebrow
+/// with a quiet "Clear" on the right).
 ///
-/// Tappable: folding the trolley away is the whole reason it is a divider and
-/// not a plain label. The chevron rotates 180° to say which way the tap goes.
+/// Tap it to fold or unfold the checked items. The arrow turns around to
+/// show which way. The fold is ours, not the design's: kept because a long
+/// Done section otherwise pushes the open items' end out of reach.
 class DoneDivider extends StatelessWidget {
   /// Creates the divider.
   const DoneDivider({
@@ -28,66 +31,78 @@ class DoneDivider extends StatelessWidget {
   /// Called when the divider is tapped.
   final VoidCallback onToggle;
 
-  /// "Clear checked", pre-translated. Null hides the action entirely — a
-  /// divider with nothing checked to clear has no button to be pressed by
-  /// accident.
+  /// The "Clear" text, already translated. Null hides the button.
   final String? clearLabel;
 
-  /// Deletes every checked item. A separate tap target from [onToggle]'s, so
-  /// clearing the trolley and folding it away stay two different gestures on
-  /// one row rather than one gesture doing two things.
+  /// Deletes all checked items. A separate button from folding ([onToggle]).
   final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.42);
+    final muted = theme.textTheme.labelSmall?.color;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(4, 14, 4, 9),
+      // Only a top gap: the tap areas below set the height, so the whole
+      // row can be tapped.
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.sm,
+        0,
+      ),
       child: Row(
         children: [
           Expanded(
             child: Semantics(
               button: true,
               expanded: !collapsed,
-              child: InkWell(
+              child: TapTarget(
                 onTap: onToggle,
-                child: Row(
-                  children: [
-                    AnimatedRotation(
-                      turns: collapsed ? -0.25 : 0,
-                      duration: AppMotion.durationFor(
-                        context,
-                        AppMotion.standard,
+                child: InkWell(
+                  onTap: onToggle,
+                  child: Row(
+                    children: [
+                      AnimatedRotation(
+                        turns: collapsed ? -0.25 : 0,
+                        duration: AppMotion.durationFor(
+                          context,
+                          AppMotion.standard,
+                        ),
+                        curve: AppMotion.enter,
+                        child: Icon(Icons.expand_more, size: 16, color: muted),
                       ),
-                      curve: AppMotion.enter,
-                      child: Icon(Icons.expand_more, size: 16, color: muted),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        label.toUpperCase(),
-                        style: AppTextStyles.eyebrow.copyWith(color: muted),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          label.toUpperCase(),
+                          style: AppTextStyles.eyebrow.copyWith(color: muted),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
           if (clearLabel != null && onClear != null)
-            InkWell(
+            TapTarget(
               onTap: onClear,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 4,
-                ),
-                child: Text(
-                  clearLabel!,
-                  style: AppTextStyles.captionStrong.copyWith(
-                    color: theme.colorScheme.primary,
+              child: InkWell(
+                onTap: onClear,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppSpacing.md,
+                    vertical: 4,
+                  ),
+                  // Neutral, not the accent: clearing is housekeeping, not
+                  // the next thing to do.
+                  child: Text(
+                    clearLabel!,
+                    style: AppTextStyles.secondaryStrong.copyWith(
+                      fontSize: 14,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
               ),
@@ -111,7 +126,7 @@ Widget doneDividerPreview() => previewPiece(
         label: 'Done · 3',
         collapsed: false,
         onToggle: () {},
-        clearLabel: 'Clear checked',
+        clearLabel: 'Clear',
         onClear: () {},
       ),
       const SizedBox(height: 24),

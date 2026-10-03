@@ -1,32 +1,25 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 
-/// Turns a one-shot [fetch] plus a live [watch] stream into a single
-/// `Stream<Result<T>>` that survives a dropped connection instead of ending
-/// the moment it happens.
+/// A live data stream that survives losing the internet connection.
 ///
-/// A [NetworkFailure] on [watch] is treated as recoverable: nothing is
-/// yielded for it, [current] stays exactly as it was, and this waits for
-/// [online] to report `true` again before re-running [fetch] (a full
-/// snapshot, not a resume — deltas missed while disconnected never arrive
-/// any other way) and re-subscribing to [watch]. Any other failure means the
-/// data itself is no longer valid (not found, unauthorized, a real
-/// conflict), so it ends the stream with `Err` immediately, same as before
-/// this existed.
+/// How it works:
+/// 1. [fetch] loads the full data once.
+/// 2. [watch] then sends small changes, and [reduce] applies each change to
+///    the current data.
+/// 3. If the connection drops, the user keeps seeing the last data. When
+///    [online] says we're back, it calls [fetch] again (to catch up on what
+///    was missed) and starts watching again.
 ///
-/// [reconnectBackoff] guards the case where the device reports online but
-/// the server itself is still unreachable (mid-restart, VPN, ...) — without
-/// it, a re-fetch that keeps failing with another [NetworkFailure] would
-/// spin as fast as [online] can re-emit `true`.
+/// Only network errors are retried. Other errors (list deleted, no access)
+/// end the stream with an [Err], because retrying won't fix them.
 ///
-/// [cacheWrite] and [cacheRead] add a persisted read cache on top of the
-/// in-memory resilience above (`docs/offline-sync-plan.md` §4's "cached
-/// reads"): every value this stream would otherwise yield is handed to
-/// [cacheWrite], and if the very first [fetch] — a cold app launch, nothing
-/// in memory yet — fails with a [NetworkFailure], [cacheRead] gets one
-/// chance to supply a last-known value before this falls back to [Err].
-/// Both are optional and default to doing nothing, so every existing caller
-/// behaves exactly as before.
+/// [reconnectBackoff] is the wait between retries when the phone is online
+/// but the server still can't be reached. Without it we'd retry nonstop.
+///
+/// [cacheWrite] and [cacheRead] are optional. If given, every new value is
+/// saved to disk. Then if the app starts without internet, it can show the
+/// saved data instead of an error.
 Stream<Result<T>> resilientWatch<T, E>({
   required Future<T> Function() fetch,
   required Stream<E> Function() watch,
@@ -36,23 +29,22 @@ Stream<Result<T>> resilientWatch<T, E>({
   void Function(T snapshot)? cacheWrite,
   Future<T?> Function()? cacheRead,
 }) async* {
+  // Step 1: the first full load.
   T current;
   try {
     current = await fetch();
     cacheWrite?.call(current);
   } on Object catch (error) {
     final failure = mapExceptionToFailure(error);
+    // Only fall back to the saved copy if the problem is the network.
     final cached = failure is NetworkFailure ? await cacheRead?.call() : null;
     if (cached == null) {
       yield Err(failure);
       return;
     }
 
-    // A cold start with nothing live yet is, from here on, exactly the same
-    // situation as a live stream whose connection just dropped: show the
-    // last known value, then wait for a real connection before doing
-    // anything else. Route it through the same reconnect helper the watch
-    // loop below uses, rather than a second copy of that logic.
+    // Offline at startup, but we have saved data: show it, then wait until
+    // we're online and load the real data.
     current = cached;
     yield Ok(current);
     switch (await _reconnect(
@@ -70,6 +62,7 @@ Stream<Result<T>> resilientWatch<T, E>({
   }
   yield Ok(current);
 
+  // Step 2: listen for live changes, forever.
   while (true) {
     try {
       await for (final event in watch()) {
@@ -77,6 +70,7 @@ Stream<Result<T>> resilientWatch<T, E>({
         cacheWrite?.call(current);
         yield Ok(current);
       }
+      // The server closed the stream normally, so we're done.
       return;
     } on Object catch (error) {
       final failure = mapExceptionToFailure(error);
@@ -85,6 +79,7 @@ Stream<Result<T>> resilientWatch<T, E>({
         return;
       }
 
+      // Step 3: connection lost. Wait to be online, reload, keep going.
       switch (await _reconnect(
         fetch: fetch,
         online: online,
@@ -98,16 +93,15 @@ Stream<Result<T>> resilientWatch<T, E>({
           return;
       }
       yield Ok(current);
-      // Falls through to the top of the outer loop, re-subscribing watch()
-      // on the freshly re-fetched snapshot.
+      // Loop back to the top and start watching again.
     }
   }
 }
 
-/// Waits for [online] to report `true`, then retries [fetch] with [backoff]
-/// between attempts, until it either succeeds or fails with something other
-/// than a [NetworkFailure] (the server itself rejecting it, not just being
-/// unreachable) — the one case worth giving up on rather than retrying.
+/// Waits until we're online, then tries [fetch].
+///
+/// If it fails because of the network, waits [backoff] and tries again.
+/// If it fails for any other reason, gives up and returns the [Err].
 Future<Result<T>> _reconnect<T>({
   required Future<T> Function() fetch,
   required Stream<bool> Function() online,

@@ -1,12 +1,12 @@
-/// A source of the current time.
+/// Gives the current time.
 ///
-/// Use cases take one of these instead of calling [DateTime.now] directly, so a
-/// test can pin "now" and assert on exact timestamps rather than tolerating a
-/// range. Production wiring passes [systemClock].
+/// Use cases take a Clock instead of calling [DateTime.now] directly. Then
+/// tests can use a fixed time and check exact timestamps. The app uses
+/// [systemClock].
 typedef Clock = DateTime Function();
 
 /// The real clock, in UTC.
 ///
-/// UTC on purpose: timestamps cross devices in different timezones, and the
-/// server stores UTC. Converting for display is the presentation layer's job.
+/// UTC because phones can be in different time zones, and the server uses
+/// UTC. Showing local time is done in the UI.
 DateTime systemClock() => DateTime.now().toUtc();

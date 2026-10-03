@@ -1,18 +1,18 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Everything `EditProfileScreen` renders, already derived.
+/// The data `EditProfileSheet` shows.
 ///
-/// Only what `build()` can recompute from the profile. The name/avatar
-/// saving flags and their errors are *not* here, for the same reason as
-/// `ListSettingsScreenState`: this state is rebuilt every time the profile
-/// changes -- including the publish that a save itself triggers -- which
-/// would reset a flag mid-save.
+/// "Saving..." flags and save errors are NOT stored here. This state is
+/// rebuilt every time the profile changes, and saving changes the profile.
+/// So a flag stored here would be reset in the middle of saving. The
+/// sheet keeps those flags itself instead (same as `ListSettingsScreenState`).
 class EditProfileScreenState {
   const EditProfileScreenState({this.user, this.loadFailure});
 
   /// The signed-in user; null until the profile has loaded.
   final AuthUser? user;
 
-  /// The profile failed to load at all: the screen tier, replacing the form.
+  /// Set when the profile couldn't load. Then a full error screen is shown
+  /// instead of the form.
   final Failure? loadFailure;
 }

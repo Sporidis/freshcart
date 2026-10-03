@@ -3,17 +3,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 
-/// Opens the create-mode [EditShopSheet] and commits through
+/// Opens [EditShopSheet] to create a new shop, and saves it with
 /// [ShopsController.create].
 ///
-/// A top-level function rather than a method on one screen, because two
-/// entry points open it now -- [ManageShopsScreen]'s FAB and the shop tab
-/// strip's own dashed "+" pill -- and this codebase's own rule (decisions
-/// #63, #65) is one flow, more than one place to reach it, not a second
-/// copy to keep in sync.
+/// A top-level function, because more than one place opens it: Manage shops
+/// and the "+" in the shop tabs. One function means they can't drift apart.
+/// See decisions.md #63 and #65.
 Future<void> addShop(
   BuildContext context,
   WidgetRef ref,
@@ -23,10 +22,8 @@ Future<void> addShop(
   final controller = ref.read(shopsControllerProvider(listId).notifier);
   final t = ref.read(translationsProvider);
 
-  await showModalBottomSheet<void>(
+  await showAppSheet<void>(
     context: context,
-    isScrollControlled: true,
-    showDragHandle: true,
     builder: (_) => EditShopSheet(
       shop: null,
       siblings: siblings,

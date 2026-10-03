@@ -1,22 +1,22 @@
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 
-/// The short code a person types to join someone else's shopping list.
+/// The short code to join someone else's list.
 ///
-/// Five characters from an unambiguous alphabet — no `I`, `O`, `0` or `1` — so
-/// a code read aloud in a kitchen or copied off a screen does not turn into a
-/// support problem.
+/// Five characters, without `I`, `O`, `0` and `1` (they look too alike), so
+/// codes are easy to read and type.
 extension type const JoinCode._(String value) implements Object {
-  /// The characters a generated code may contain.
+  /// The characters a code can have.
   static const String alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
   /// How many characters a code has.
   static const int length = 5;
 
-  /// Parses user input, normalising case and surrounding whitespace.
+  /// Turns what the user typed into a code (uppercase, no spaces at the
+  /// ends).
   ///
-  /// Returns a [Result] because this is fed straight from a text field, so an
-  /// invalid code is an expected outcome rather than a bug.
+  /// Returns a [Result] (doesn't throw), because a wrong code from a text
+  /// field is normal, not a bug.
   static Result<JoinCode> parse(String input) {
     final cleaned = input.trim().toUpperCase().replaceAll('-', '');
     if (cleaned.length != length) {

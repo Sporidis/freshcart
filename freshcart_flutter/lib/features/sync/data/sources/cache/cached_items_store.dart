@@ -7,23 +7,21 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'cached_items_store.g.dart';
 
-/// Persists the last-known items of one list, so
-/// `ItemRealtimeSource.watchByList` has something to show when the very
-/// first fetch fails offline (`docs/offline-sync-plan.md` §4's "cached
-/// reads"). Reuses [ShoppingItemQueuePayload]'s JSON codec -- already a
-/// lossless full-entity round-trip, built for the offline queue's `edit`
-/// payload, and just as good a fit here.
+/// Saves each list's items on the phone, so they can still be shown when
+/// the app opens without internet.
 ///
-/// See [CachedListsStore]'s doc comment for the accepted cache-miss vs.
-/// confirmed-empty tradeoff -- the same one applies per list here.
+/// Items are stored as JSON, using the same conversion as the offline
+/// queue ([ShoppingItemQueuePayload]).
+///
+/// Same limitation as [CachedListsStore]: "never saved" and "saved, but
+/// empty" both read back as `null`.
 class CachedItemsStore {
   const CachedItemsStore(this._db);
 
   final AppDatabase _db;
 
-  /// Replaces every cached item for [listId] with [items] -- always the
-  /// complete, authoritative set for that list, same reasoning as
-  /// [CachedListsStore.replaceAll].
+  /// Deletes the saved items of [listId] and saves [items] instead.
+  /// [items] must be the full list from the server, not just some of them.
   Future<void> replaceForList(ListId listId, List<ShoppingItem> items) =>
       _db.transaction(() async {
         await (_db.delete(
@@ -44,7 +42,7 @@ class CachedItemsStore {
         }
       });
 
-  /// The cached items of [listId], or `null` if that list was never cached.
+  /// The saved items of [listId], or `null` if there are none.
   Future<List<ShoppingItem>?> readForList(ListId listId) async {
     final rows = await (_db.select(
       _db.cachedItems,

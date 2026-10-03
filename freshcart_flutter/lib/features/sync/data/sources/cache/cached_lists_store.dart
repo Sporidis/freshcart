@@ -7,27 +7,20 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'cached_lists_store.g.dart';
 
-/// Persists the last-known state of the lists a user belongs to, so
-/// `ListRepositoryImpl.myLists` and `ListRealtimeSource.watch` have
-/// something to show when the very first fetch fails offline
-/// (`docs/offline-sync-plan.md` §4's "cached reads").
+/// Saves the user's lists on the phone, so they can still be shown when the
+/// app opens without internet.
 ///
-/// A cache miss (`null`) and a confirmed-empty cache are not distinguished
-/// here -- both read back as "nothing to show". The one place that matters
-/// in practice is a brand-new account that has never once been online long
-/// enough to sync: it sees the same "can't load, you're offline" state a
-/// genuine cache miss would show, rather than an honestly-empty list.
-/// Accepted rather than solved with a second "has synced" marker -- the
-/// case requires being offline before ever completing a single successful
-/// sync, which for a signed-in user is vanishingly rare next to the
-/// ongoing cost of tracking it separately.
+/// Known limitation: "never saved" and "saved, but the user has no lists"
+/// both read back as `null`. So a brand-new user who is offline from the
+/// start sees "you're offline" instead of an empty list. That's rare
+/// enough that we accept it.
 class CachedListsStore {
   const CachedListsStore(this._db);
 
   final AppDatabase _db;
 
-  /// Upserts one list's snapshot -- used by `ListRealtimeSource.watch`'s
-  /// write-through, which only ever knows about the one list it's watching.
+  /// Saves one list, or updates it if it's already saved. Used when
+  /// watching a single list.
   Future<void> upsert(ShoppingList list) => _db
       .into(_db.cachedLists)
       .insertOnConflictUpdate(
@@ -38,8 +31,8 @@ class CachedListsStore {
         ),
       );
 
-  /// Replaces the whole cached set with [lists] -- used by `myLists()`,
-  /// which always returns the complete, authoritative set for this user.
+  /// Deletes all saved lists and saves [lists] instead. Used by `myLists()`,
+  /// which always gets all of the user's lists from the server.
   Future<void> replaceAll(List<ShoppingList> lists) =>
       _db.transaction(() async {
         await _db.delete(_db.cachedLists).go();
@@ -48,7 +41,7 @@ class CachedListsStore {
         }
       });
 
-  /// The cached snapshot of one list, or `null` if it was never cached.
+  /// The saved version of one list, or `null` if it was never saved.
   Future<ShoppingList?> read(ListId id) async {
     final row = await (_db.select(
       _db.cachedLists,
@@ -60,7 +53,7 @@ class CachedListsStore {
           );
   }
 
-  /// Every cached list, or `null` if nothing has ever been cached.
+  /// All saved lists, or `null` if there are none.
   Future<List<ShoppingList>?> readAll() async {
     final rows = await _db.select(_db.cachedLists).get();
     if (rows.isEmpty) return null;

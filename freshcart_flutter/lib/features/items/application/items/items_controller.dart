@@ -8,35 +8,30 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'items_controller.g.dart';
 
-/// The items on one list: live, and optimistic.
+/// The items on one list. Live, and optimistic.
 ///
-/// Two mechanisms meet here and have to agree.
+/// * **Live**: the server sends updates whenever anyone changes the list,
+///   so everyone's phone stays in sync without refreshing.
+/// * **Optimistic**: changes show on screen straight away, before the
+///   server answers. If the server says no, the change is undone.
 ///
-/// * **Live**: a server stream re-emits the whole list whenever anyone changes
-///   it, so two open clients stay in step without a refresh.
-/// * **Optimistic**: ticking something off in a shop must feel instant, so a
-///   mutation applies locally first and rolls back if the server refuses.
-///
-/// The collision between them is the interesting part. While a write is in
-/// flight, an unrelated change by someone *else* would arrive carrying the
-/// server's older copy of the row being edited — and would visibly undo the
-/// user's tick until their own write landed. [_pending] holds the optimistic
-/// value for every in-flight id and is overlaid on each incoming snapshot, so
-/// a third party's edit never stamps on a local one.
+/// The tricky part: while your change is still being saved, an update from
+/// someone else can arrive. That update still has the OLD version of your
+/// item, so your check would flicker off again. [_pending] fixes this: it
+/// keeps your unsaved changes and puts them back on top of every update.
 @riverpod
 class ItemsController extends _$ItemsController {
-  /// Optimistic values for writes that have not been answered yet.
+  /// Changes shown on screen that the server hasn't confirmed yet, by id.
   final Map<ItemId, ShoppingItem> _pending = {};
 
-  /// Rows hidden by [swipeDelete] but not yet committed to the server.
-  ///
-  /// Keyed by the original item so [swipeDelete]'s undo can put back the exact
-  /// row that was swiped, not a reconstruction of it.
+  /// Rows hidden by [swipeDelete], not deleted on the server yet (the user
+  /// can still undo). Stores the whole item, so undo puts back exactly the
+  /// same row.
   final Map<ItemId, ShoppingItem> _pendingRemoval = {};
 
-  /// How long a swiped-away row can still be undone. Matches the Motion spec's
-  /// swipe-to-delete undo snackbar (§10).
-  static const swipeUndoWindow = Duration(seconds: 4);
+  /// How long the user can undo a delete. Matches the v3 toast's hold
+  /// (`AppMotion.toastHold`), so Undo works exactly while it's on screen.
+  static const swipeUndoWindow = Duration(milliseconds: 3400);
 
   @override
   Future<Result<List<ShoppingItem>>> build(ListId listId) {
@@ -55,9 +50,8 @@ class ItemsController extends _$ItemsController {
             }
           },
           onError: (Object error, StackTrace stackTrace) {
-            // A transport error before the first snapshot has nothing to show,
-            // so it surfaces as AsyncError. Later ones arrive as Err values on
-            // the stream itself and keep the list on screen.
+            // An error before the first data: nothing to show, so AsyncError.
+            // Later errors come as Err in the stream and the list stays.
             if (!first.isCompleted) first.completeError(error, stackTrace);
           },
         );
@@ -66,13 +60,13 @@ class ItemsController extends _$ItemsController {
     return first.future;
   }
 
-  /// Re-applies in-flight optimistic values over an incoming snapshot, drops
-  /// anything still hidden behind a pending [swipeDelete], and re-sorts.
+  /// Takes new items from the server and:
+  /// 1. puts our unsaved changes back on top ([_pending]);
+  /// 2. removes rows that were swipe-deleted (waiting for undo);
+  /// 3. sorts.
   ///
-  /// Sorting here, unconditionally, matters: a delta from the live stream
-  /// (see [ItemRealtimeSource.applyChange]) upserts a changed row *in its old
-  /// array slot* rather than moving it, so array order alone cannot be
-  /// trusted to reflect [ShoppingItem.sortOrder] past the first snapshot.
+  /// Always sort here: a live update replaces a changed row in its old
+  /// position, so the order can be wrong after an update.
   Result<List<ShoppingItem>> _overlay(Result<List<ShoppingItem>> event) {
     return event.map(
       (items) => _sorted([
@@ -85,9 +79,8 @@ class ItemsController extends _$ItemsController {
   /// The items currently on screen, or null if none have loaded yet.
   List<ShoppingItem>? get _current => state.dataOrNull;
 
-  /// Sorts by [ShoppingItem.sortOrder] -- the one place this is enforced, so
-  /// every write path ([_show]) and every incoming snapshot ([_overlay])
-  /// agrees on display order without each one having to remember to.
+  /// Sorts by [ShoppingItem.sortOrder]. The only place sorting happens, so
+  /// the order is always the same.
   List<ShoppingItem> _sorted(List<ShoppingItem> items) =>
       [...items]..sort((a, b) => a.sortOrder.compareTo(b.sortOrder));
 
@@ -100,7 +93,8 @@ class ItemsController extends _$ItemsController {
           if (existing.id == item.id) item else existing,
       ];
 
-  /// Applies [optimistic] locally and keeps it pinned until [write] answers.
+  /// Shows [optimistic] on screen right away, and keeps it there until
+  /// [write] (the server call) answers. If it fails, undoes it.
   Future<Failure?> _optimistically(
     ShoppingItem optimistic,
     Future<Result<ShoppingItem>> Function() write,
@@ -116,8 +110,8 @@ class ItemsController extends _$ItemsController {
 
     switch (result) {
       case Ok<ShoppingItem>(:final value):
-        // Reconcile rather than keep the guess: the server owns checkedAt and
-        // updatedAt, and updatedAt is the token the *next* write depends on.
+        // Use the server's version, not our guess. The server sets checkedAt
+        // and updatedAt, and the next save needs the right updatedAt.
         _show(_replacing(_current ?? before, value));
         return null;
       case Err<ShoppingItem>(:final failure):
@@ -126,15 +120,14 @@ class ItemsController extends _$ItemsController {
     }
   }
 
-  /// Checks or unchecks [item], applying the change immediately.
+  /// Checks or unchecks [item], shown right away.
   ///
-  /// Returns the failure if the server refused, so the screen can tell the user
-  /// why the row it just saw tick untucked itself. A silent rollback would look
-  /// like a bug.
+  /// Returns the error if the server said no, so the screen can explain why
+  /// the check disappeared again. Undoing it silently would look like a bug.
   Future<Failure?> toggle(ShoppingItem item) async {
-    // Read the cached identity synchronously when it is warm. Awaiting here
-    // unconditionally would delay the *first* tick of a session behind an
-    // identity lookup — precisely the lag optimistic updates exist to avoid.
+    // Use the already-loaded user id if we have it. Always waiting for it
+    // would make the first check feel slow, which is what optimistic
+    // updates are meant to avoid.
     final cached = ref.read(currentUserIdProvider);
     final identity = cached.hasValue
         ? cached.requireValue
@@ -149,20 +142,18 @@ class ItemsController extends _$ItemsController {
     }
 
     return _optimistically(
-      // The same entity method the server's answer will agree with, so the
-      // local guess and the eventual truth are computed one way.
+      // Same domain method the server uses, so our guess matches the result.
       item.toggleChecked(by: userId, at: DateTime.now().toUtc()),
       () =>
           ToggleItemChecked(ref.read(itemRepositoryProvider))(item, by: userId),
     );
   }
 
-  /// Applies a user's edit to [item], showing it immediately.
+  /// Saves an edit to [item], shown right away.
   ///
-  /// Takes the raw field values rather than a finished [ShoppingItem] on
-  /// purpose: building the edited entity is a domain transformation
-  /// ([ShoppingItem.withEdit]) guarded by domain rules, and a caller that
-  /// handed us a pre-built entity could — and did — skip both.
+  /// Takes the separate fields (not a finished [ShoppingItem]), so the
+  /// domain's [ShoppingItem.withEdit] builds the new item and checks the
+  /// rules. Callers can't skip that.
   Future<Failure?> edit(
     ShoppingItem item, {
     required String name,
@@ -170,9 +161,9 @@ class ItemsController extends _$ItemsController {
     ShopId? shopId,
     String? noteText,
   }) {
-    // The same entity method the use case will apply, so the local guess and
-    // the eventual truth are computed one way. An invalid edit is rejected by
-    // the use case before any network call and rolls straight back.
+    // Same domain method the use case uses, so our guess matches the
+    // result. An invalid edit is rejected before calling the server, and
+    // undone right away.
     final optimistic = item.withEdit(
       name: name.trim(),
       quantity: quantity,
@@ -193,18 +184,17 @@ class ItemsController extends _$ItemsController {
     );
   }
 
-  /// Moves [item] to sit between [before] and [after] (§10: drag to
-  /// reorder), applying the new position immediately.
+  /// Moves [item] between [before] and [after] (drag to reorder), shown
+  /// right away.
   ///
-  /// [before] and [after] are the *new* neighbors -- wherever the row was
-  /// dropped -- not whoever it sat next to before the drag started.
+  /// [before] and [after] are the rows around where it was dropped (its
+  /// new neighbours, not the old ones).
   Future<Failure?> reorder(
     ShoppingItem item, {
     required ShoppingItem? before,
     required ShoppingItem? after,
   }) {
-    // The same pure arithmetic the use case will apply, so the local guess
-    // and the eventual truth land on one value.
+    // Same calculation the use case uses, so our guess matches the result.
     final optimistic = item.copyWith(
       sortOrder: ShoppingItem.sortOrderBetween(before, after),
     );
@@ -219,15 +209,14 @@ class ItemsController extends _$ItemsController {
     );
   }
 
-  /// Adds an item, showing it only once the server has accepted it.
+  /// Adds an item. It only shows once the server has saved it.
   ///
-  /// Deliberately *not* optimistic: the server mints the id, `createdAt` and
-  /// `updatedAt`, and a placeholder row with a fabricated id could not be
-  /// edited or checked until it was replaced. This also means an add that
-  /// merges into an existing open row of the same product (same name, shop
-  /// and note text -- server-side, see `ItemService.add`) is indistinguishable
-  /// from a fresh insert here: either way, the server hands back one
-  /// [ShoppingItem] and this just needs to make sure it's the one shown.
+  /// Not optimistic, because the server creates the id and dates. A fake
+  /// row with a made-up id couldn't be checked or edited until replaced.
+  ///
+  /// If the same item already exists (same name, shop and note), the server
+  /// adds to its quantity instead of making a new row. Either way, it
+  /// returns one item, and we show that one.
   Future<Failure?> add({
     required String name,
     int quantity = 1,
@@ -243,10 +232,9 @@ class ItemsController extends _$ItemsController {
     );
     switch (result) {
       case Ok<ShoppingItem>(:final value):
-        // The live stream will carry this too; showing it here keeps the
-        // field responsive. If the id is already in the list this was a
-        // merge -- replace it in place (the bumped quantity), not append,
-        // or the row would sit stale until the next stream echo.
+        // Show it now (the live update would come a bit later). If the id is
+        // already in the list, it was merged: replace that row (new
+        // quantity) instead of adding a second one.
         final current = _current;
         if (current != null) {
           _show(
@@ -261,20 +249,21 @@ class ItemsController extends _$ItemsController {
     }
   }
 
-  /// Removes [item], taking it off screen immediately and putting it back if
-  /// the server refuses.
+  /// Deletes [item]. It disappears right away, and comes back if the server
+  /// says no.
   Future<Failure?> remove(ShoppingItem item) async {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
 
-    _pending[item.id] = item;
+    // Hidden through [_pendingRemoval], like [clearChecked].
+    _pendingRemoval[item.id] = item;
     _show([
       for (final existing in before)
         if (existing.id != item.id) existing,
     ]);
 
     final result = await ref.read(itemRepositoryProvider).remove(item.id);
-    _pending.remove(item.id);
+    _pendingRemoval.remove(item.id);
 
     switch (result) {
       case Ok<void>():
@@ -285,22 +274,17 @@ class ItemsController extends _$ItemsController {
     }
   }
 
-  /// Hides [item] immediately and, unless undone, deletes it once
-  /// [swipeUndoWindow] has passed. Returns the undo action.
+  /// Hides [item] right away, and deletes it after [swipeUndoWindow] unless
+  /// the user taps Undo. Returns the undo function (for the snackbar).
   ///
-  /// Deliberately not `Future<Failure?>` like [remove]: the delete itself is
-  /// deferred, so there is nothing to await yet and nothing to report — a
-  /// failure surfacing four seconds after the swipe, once the user has moved
-  /// on to the next row, would only read as a confusing, out-of-context bug.
-  /// What the caller needs back synchronously is the undo action, to wire
-  /// into the snackbar the swipe gesture shows.
+  /// Doesn't return an error like [remove] does: the delete happens 4
+  /// seconds later, when the user is already doing something else. An
+  /// error then would be confusing.
   ///
-  /// The repository is read into [repo] now, not inside the timer. If the
-  /// user navigates away before the timer fires, this controller is disposed
-  /// and `ref` stops working — but a plain captured Dart reference keeps
-  /// going, so the delete still lands. That is deliberate: swiping a row away
-  /// is a real decision, and having it silently survive just because the
-  /// screen was left too soon would be its own kind of surprising.
+  /// The repository is read now (into `repo`), not inside the timer. If the
+  /// user leaves the screen, this controller is disposed and `ref` stops
+  /// working, but `repo` still works, so the delete still happens. That's
+  /// what we want: the user did swipe it away.
   void Function() swipeDelete(ShoppingItem item) {
     final before = _current;
     if (before != null) {
@@ -331,13 +315,65 @@ class ItemsController extends _$ItemsController {
     };
   }
 
-  /// Removes every checked item, taking them off screen immediately and
-  /// putting them all back if the server refuses.
+  /// [swipeDelete] for several items at once (Clear, or Delete in select
+  /// mode): all hidden now, deleted together in one call after
+  /// [swipeUndoWindow], unless the returned undo puts them all back first.
   ///
-  /// One optimistic guess for the whole batch rather than [remove] looped
-  /// per item: the server does it as one transaction (all or nothing), so
-  /// the local view should promise the same thing rather than showing rows
-  /// disappearing one at a time toward a result that might still roll back.
+  /// Uses `removeMany` with these ids, not `clearChecked`: an item checked
+  /// during the undo window wasn't part of what the user cleared.
+  void Function() removeManyWithUndo(Iterable<ItemId> ids) {
+    final before = _current;
+    final wanted = ids.toSet();
+    if (before == null || wanted.isEmpty) return () {};
+
+    final removed = [
+      for (final item in before)
+        if (wanted.contains(item.id)) item,
+    ];
+    for (final item in removed) {
+      _pendingRemoval[item.id] = item;
+    }
+    _show([
+      for (final item in before)
+        if (!wanted.contains(item.id)) item,
+    ]);
+
+    // Read now, not in the timer: see [swipeDelete].
+    final repo = ref.read(itemRepositoryProvider);
+    final list = listId;
+    final timer = Timer(swipeUndoWindow, () {
+      for (final item in removed) {
+        _pendingRemoval.remove(item.id);
+      }
+      unawaited(repo.removeMany(list, [for (final item in removed) item.id]));
+    });
+
+    var settled = false;
+    return () {
+      if (settled) return;
+      settled = true;
+      timer.cancel();
+      final back = [
+        for (final item in removed)
+          if (_pendingRemoval.remove(item.id) != null) item,
+      ];
+      if (back.isEmpty || !ref.mounted) return;
+      final current = _current;
+      if (current == null) return;
+      final shown = {for (final item in current) item.id};
+      _show([
+        ...current,
+        for (final item in back)
+          if (!shown.contains(item.id)) item,
+      ]);
+    };
+  }
+
+  /// Deletes all checked items. They disappear right away, and all come
+  /// back if the server says no.
+  ///
+  /// One change for all items (not [remove] in a loop): the server does it
+  /// all at once (all or nothing), so the screen does too.
   Future<Failure?> clearChecked() async {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
@@ -348,8 +384,10 @@ class ItemsController extends _$ItemsController {
     ];
     if (checked.isEmpty) return null;
 
+    // Hidden through [_pendingRemoval], so a live update during the save
+    // can't bring them back (see [moveSelected]).
     for (final item in checked) {
-      _pending[item.id] = item;
+      _pendingRemoval[item.id] = item;
     }
     _show([
       for (final item in before)
@@ -358,7 +396,7 @@ class ItemsController extends _$ItemsController {
 
     final result = await ref.read(itemRepositoryProvider).clearChecked(listId);
     for (final item in checked) {
-      _pending.remove(item.id);
+      _pendingRemoval.remove(item.id);
     }
 
     switch (result) {
@@ -370,13 +408,8 @@ class ItemsController extends _$ItemsController {
     }
   }
 
-  /// Deletes a multi-selected set of rows, taking them off screen immediately
-  /// and putting them all back if the server refuses.
-  ///
-  /// Same shape as [clearChecked] and for the same reason: "Delete" on a
-  /// selection is one promise covering every row in it, so it is one
-  /// transaction server-side and one optimistic guess here, not [remove]
-  /// looped per id.
+  /// Deletes the selected items. They disappear right away, and all come
+  /// back if the server says no. All at once, like [clearChecked].
   Future<Failure?> removeSelected(Set<ItemId> ids) async {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
@@ -386,8 +419,9 @@ class ItemsController extends _$ItemsController {
       for (final item in before)
         if (ids.contains(item.id)) item,
     ];
+    // Hidden through [_pendingRemoval], like [clearChecked].
     for (final item in selected) {
-      _pending[item.id] = item;
+      _pendingRemoval[item.id] = item;
     }
     _show([
       for (final item in before)
@@ -398,7 +432,7 @@ class ItemsController extends _$ItemsController {
       for (final item in selected) item.id,
     ]);
     for (final item in selected) {
-      _pending.remove(item.id);
+      _pendingRemoval.remove(item.id);
     }
 
     switch (result) {
@@ -410,13 +444,8 @@ class ItemsController extends _$ItemsController {
     }
   }
 
-  /// Reassigns every item in [ids] to [shopId] (null untags them) -- a
-  /// multi-select "Move".
-  ///
-  /// Same shape as [removeSelected]: one optimistic guess (retag every
-  /// selected row locally), one transaction server-side, not [save] looped
-  /// per id -- for the same reason, "Move" on a selection is one promise
-  /// covering every row in it.
+  /// Moves the items in [ids] to shop [shopId] (null = no shop). For
+  /// "Move" in select mode. All at once, like [removeSelected].
   Future<Failure?> moveSelected(Set<ItemId> ids, ShopId? shopId) async {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
@@ -426,12 +455,15 @@ class ItemsController extends _$ItemsController {
       for (final item in before)
         if (ids.contains(item.id)) item,
     ];
+    // The MOVED version goes in [_pending]: it's what [_overlay] lays over
+    // any live update that arrives before the server answers. Storing the
+    // old item here put the old shop back on screen, and nothing redrew it
+    // once the save finished.
     for (final item in selected) {
-      _pending[item.id] = item;
+      _pending[item.id] = item.copyWith(shopId: shopId);
     }
     _show([
-      for (final item in before)
-        if (ids.contains(item.id)) item.copyWith(shopId: shopId) else item,
+      for (final item in before) _pending[item.id] ?? item,
     ]);
 
     final result = await ref.read(itemRepositoryProvider).moveMany(listId, [
@@ -450,6 +482,6 @@ class ItemsController extends _$ItemsController {
     }
   }
 
-  /// Re-reads the items from the server.
+  /// Loads the items from the server again.
   Future<void> refresh() async => ref.invalidateSelf();
 }

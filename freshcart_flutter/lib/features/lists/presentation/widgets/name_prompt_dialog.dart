@@ -6,12 +6,11 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
 
-/// A single-field dialog that submits through a fallible action.
+/// A dialog with one text field and one button, whose action can fail.
 ///
-/// Shared by "new list" and "join by code" because both are the same shape: one
-/// text field, one action that can fail with a [ValidationFailure] belonging to
-/// *that field*. Showing the message inline is the whole point — a snackbar
-/// would leave the user staring at a field they cannot see is wrong.
+/// Used for "New list" and "Join a list". If the action fails, the error
+/// shows under the text field (not in a snackbar), so the user sees what to
+/// fix.
 class NamePromptDialog extends ConsumerStatefulWidget {
   /// Creates the dialog.
   const NamePromptDialog({
@@ -36,11 +35,11 @@ class NamePromptDialog extends ConsumerStatefulWidget {
   /// Label for the dismissing button.
   final String cancelLabel;
 
-  /// Runs the action. Returning an [Err] keeps the dialog open and shows the
-  /// message; an [Ok] closes it.
+  /// Runs the action. [Err] keeps the dialog open with the error. [Ok]
+  /// closes it.
   final Future<Result<void>> Function(String value) onSubmit;
 
-  /// How the field capitalizes input. Join codes are upper-case.
+  /// How the keyboard capitalizes. Join codes use all caps.
   final TextCapitalization capitalization;
 
   @override
@@ -52,8 +51,8 @@ class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
   String? _errorText;
   bool _busy = false;
 
-  /// Whether the current error deserves a shake. An expired invite or an
-  /// unreachable server is not the user's typo, so it says its piece quietly.
+  /// Whether the field should shake for the current error. Not for errors
+  /// that aren't the user's fault (expired invite, no internet).
   bool _shake = true;
 
   @override
@@ -75,8 +74,7 @@ class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
       case Err<void>(:final failure):
         setState(() {
           _busy = false;
-          // FailureMessage already shows a ValidationFailure's own message and
-          // localizes everything else, so there is no special case here.
+          // toMessage handles every kind of failure, no special cases needed.
           _errorText = failure.toMessage(ref.read(translationsProvider));
           _shake = shakesOn(failure);
         });
@@ -99,9 +97,8 @@ class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
             labelText: widget.label,
             errorText: _errorText,
           ),
-          // The text is kept, never cleared: a mistyped code should be
-          // correctable rather than retyped from scratch. The error clears on
-          // the next keystroke so it stops nagging once they are fixing it.
+          // Keep the text after an error, so the user can fix it. The error
+          // disappears as soon as they type again.
           onChanged: (_) {
             if (_errorText == null) return;
             setState(() => _errorText = null);

@@ -6,14 +6,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'join_flow_controller.g.dart';
 
-/// Drives the join-by-code flow: a name, then a code, then whichever list
-/// that code identifies.
+/// Runs the "join with a code" flow: ask the name, then the code, then
+/// join that list.
 ///
-/// A separate controller from [OnboardingController] rather than a second
-/// mode bolted onto it — the two flows share exactly one step in the design
-/// (asking for a name) and diverge completely after it; forcing them into
-/// one state machine would mean every field on `OnboardingState` (list name,
-/// shop drafts) growing a "not applicable on this path" case.
+/// Separate from [OnboardingController]. The two flows only share the
+/// "your name" step. Combining them would fill `OnboardingState` with
+/// fields that don't apply when joining (list name, shops).
 @riverpod
 class JoinFlowController extends _$JoinFlowController {
   @override
@@ -27,28 +25,41 @@ class JoinFlowController extends _$JoinFlowController {
     state = state.copyWith(code: value, clearError: true);
   }
 
-  /// Advances from the name step to the code step. Plain and synchronous —
-  /// unlike [submit], nothing is written anywhere yet.
-  void continueFromName() {
-    if (state.step != JoinFlowStep.name) return;
+  /// Goes from the name step to the code step if the name is valid. If not,
+  /// saves the error in [JoinFlowState.error] and stays. Works like
+  /// `OnboardingController.continueIfValid`.
+  ///
+  /// Nothing is saved yet. Returns true if it moved on.
+  bool continueFromName() {
+    if (state.step != JoinFlowStep.name) return false;
+    if (AuthUser.validateDisplayName(state.displayName) case Err(
+      :final failure,
+    )) {
+      state = state.copyWith(error: failure);
+      return false;
+    }
     state = state.copyWith(step: JoinFlowStep.code, clearError: true);
+    return true;
   }
 
-  /// Returns to the previous step, if any.
+  /// Goes back one step (does nothing on the first step).
   void back() {
     if (state.step == JoinFlowStep.code) {
       state = state.copyWith(step: JoinFlowStep.name, clearError: true);
     }
   }
 
-  /// Sets the display name, then joins the list [state.code] identifies.
+  /// Saves the user's name, then joins the list with code [state.code].
   ///
-  /// Stops at the first failure, same reasoning as
-  /// [OnboardingController.submit]: a failure here always names something
-  /// the user just typed (an empty name, or a code with no match), not a
-  /// generic "something went wrong". On success, advances to
-  /// [JoinFlowStep.confirmation] itself.
+  /// Stops at the first error. If it works, moves to
+  /// [JoinFlowStep.confirmation] by itself.
   Future<Result<void>> submit() async {
+    // Check the code first, before saving anything. Otherwise a half-typed
+    // code would still save the name, and then fail on joining.
+    if (JoinCode.parse(state.code) case Err(:final failure)) {
+      state = state.copyWith(error: failure);
+      return Err(failure);
+    }
     state = state.copyWith(isSubmitting: true, clearError: true);
 
     final nameResult = await SetDisplayName(ref.read(authRepositoryProvider))(

@@ -8,13 +8,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'settings_screen_controller.g.dart';
 
-/// The view model behind `SettingsScreen`: the profile, plus one ready-made
-/// row per list.
+/// The controller for `SettingsScreen`: the profile, and one row per list.
 ///
-/// Earns its place by combining sources -- the profile, the lists, each
-/// list's shops, and which list the app opens to. "Open now" comes from
-/// [listsLandingTargetProvider], the same rule that decides where `/lists`
-/// lands, so the two can never disagree about which list that is.
+/// It combines several providers: profile, lists, each list's shops, and
+/// which list the app opens to ("Open now"). That last one uses
+/// [listsLandingTargetProvider], the same one that decides where `/lists`
+/// goes, so they always agree.
 @riverpod
 class SettingsScreenController extends _$SettingsScreenController {
   @override

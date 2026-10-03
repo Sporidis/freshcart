@@ -4,8 +4,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_mute_controller.g.dart';
 
-/// Whether the signed-in user has muted [listId] -- the Notifications
-/// screen's "Per list" row (decisions #80).
+/// Whether the user muted notifications for list [listId]. For the "Per
+/// list" rows on the Notifications screen (decisions.md #80).
 @riverpod
 class ListMuteController extends _$ListMuteController {
   @override
@@ -17,15 +17,14 @@ class ListMuteController extends _$ListMuteController {
         );
     return switch (result) {
       Ok<bool>(:final value) => value,
-      // Fails open: a read that couldn't confirm the mute state should not
-      // silently claim a list is muted when it might not be -- unmuted is
-      // the safe default (the server would still deliver either way; this
-      // only affects what the row shows).
+      // If loading fails, show "not muted". Better than wrongly showing
+      // "muted". (This only changes what the row shows, not what the
+      // server sends.)
       Err<bool>() => false,
     };
   }
 
-  /// Sets the mute state and persists it.
+  /// Mutes or unmutes the list, and saves it on the server.
   Future<Failure?> setMuted(bool value) async {
     final result = await ref
         .read(pushRepositoryProvider)

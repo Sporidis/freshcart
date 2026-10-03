@@ -10,8 +10,11 @@ import 'package:freshcart_flutter/features/settings/presentation/widgets/section
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/preferences_section.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/profile_header.dart';
 
-/// Account-level settings, reached from the drawer. Reads
-/// [SettingsScreenController]; each section below owns its own writes.
+/// The app's main settings screen, opened from the drawer.
+///
+/// Only app-wide things: your profile, links to each list's own settings,
+/// preferences, and sign out. Data comes from [SettingsScreenController].
+/// Each section handles its own changes.
 class SettingsScreen extends ConsumerWidget {
   /// Creates the settings screen.
   const SettingsScreen({super.key});
@@ -21,6 +24,9 @@ class SettingsScreen extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
     final s = ref.watch(settingsScreenControllerProvider);
     final account = s.profile.dataOrNull;
+    // If we don't know yet, assume anonymous. Worst case, sign-out asks
+    // "are you sure?" once when it didn't need to.
+    final isAnonymous = account?.isAnonymous ?? true;
 
     return Scaffold(
       appBar: AppBar(
@@ -31,15 +37,16 @@ class SettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AppSpacing.screen),
         children: [
           ProfileHeader(user: s.profile, t: t),
-          account == null
-              ? const SizedBox.shrink()
-              : AccountCard(user: account, t: t),
-          const SizedBox(height: 12),
+          if (account != null && account.isAnonymous) ...[
+            const SizedBox(height: AppSpacing.screen),
+            AccountCard(t: t),
+          ],
+          const SizedBox(height: AppSpacing.screen),
           ListsAndShopsSection(t: t, rows: s.lists),
-          const SizedBox(height: 12),
+          const SizedBox(height: AppSpacing.screen),
           PreferencesSection(t: t),
-          const SizedBox(height: 12),
-          AboutSection(t: t),
+          const SizedBox(height: AppSpacing.screen),
+          AboutSection(t: t, isAnonymous: isAnonymous),
         ],
       ),
     );

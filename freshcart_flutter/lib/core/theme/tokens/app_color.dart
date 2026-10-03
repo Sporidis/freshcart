@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-/// Basket colour palette.
+/// All colours used in the app.
 ///
-/// Two rules that shape this file:
-///  1. Shop colours are NOT hardcoded to retailers. Every shop's colour is
-///     chosen by the user at shop-creation time; [presetShopColors] is just
-///     the curated set the picker offers.
-///  2. The app's own chrome is neutral ink-on-paper. Colour enters only as
-///     the active shop's accent, injected through AppTheme.forShop().
+/// Two rules:
+///  1. Shop colours are not tied to real shops (no "Delhaize red"). The user
+///     picks a colour when creating a shop. [presetShopColors] is the list
+///     they pick from.
+///  2. The app itself is neutral (dark text on light background). Colour
+///     only appears as a shop's accent, through AppTheme.forShop().
 class AppColors {
   AppColors._();
 
@@ -44,7 +44,6 @@ class AppColors {
   static const Color destructive = Color(0xFFC0392B);
   static const Color success = Color(0xFF2E9E5B);
   static const Color info = Color(0xFF2456A6);
-  static const Color undoAccent = Color(0xFFF0A868); // on dark snackbars
 
   // ── Shop swatches (retailer-agnostic) ────────────────────────────────
   static const Color swatchBlue = Color(0xFF2456A6);
@@ -56,8 +55,8 @@ class AppColors {
   static const Color swatchTeal = Color(0xFF1F9AA0);
   static const Color swatchPink = Color(0xFFCB5B9E);
 
-  /// The colour picker offered when a user creates or edits a shop.
-  /// First entry is the default suggestion.
+  /// The colours shown in the picker when creating or editing a shop.
+  /// The first one is selected by default.
   static const List<Color> presetShopColors = [
     swatchBlue,
     swatchOrange,
@@ -72,22 +71,20 @@ class AppColors {
   /// Used when a shop somehow has no colour assigned.
   static const Color shopColorFallback = Color(0xFF8A8A86);
 
-  /// Deterministic avatar colour for a household member, so the same person
-  /// is always the same colour on every device.
+  /// The avatar colour for a household member.
+  ///
+  /// Based on their user id, so the same person always gets the same colour,
+  /// on every phone.
   static Color avatarColorFor(String userId) =>
       presetShopColors[userId.hashCode.abs() % presetShopColors.length];
 
-  /// Interpolates [a] to [b] by hue/saturation/lightness, taking the short
-  /// way around the hue wheel.
+  /// Blends colour [a] into colour [b]. [t] goes from 0 (all [a]) to 1
+  /// (all [b]).
   ///
-  /// A plain RGB blend (what [Color.lerp] and [ThemeData.lerp] do) between
-  /// two saturated, differently-hued colours passes through a desaturated
-  /// grey-brown at the midpoint -- e.g. green to orange dips through mud,
-  /// because R/G/B are interpolated independently with no notion of "hue".
-  /// [HSLColor.lerp] fixes the desaturation problem but still walks hue the
-  /// long way when the two hues are more than 180° apart; this takes the
-  /// shorter arc instead. Used for the reduced-motion theme crossfade --
-  /// see decisions #85.
+  /// Why not [Color.lerp]? It blends red, green and blue separately, so
+  /// green to orange turns muddy brown halfway. Blending by hue stays
+  /// colourful. It also takes the shortest way around the colour wheel.
+  /// Used for the theme fade when reduced motion is on (decisions.md #85).
   static Color lerpHsl(Color a, Color b, double t) {
     final ha = HSLColor.fromColor(a);
     final hb = HSLColor.fromColor(b);

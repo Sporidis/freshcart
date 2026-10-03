@@ -2,12 +2,12 @@ import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/note_mapper.dart';
 
-/// Maps a [dto.ShoppingItem] wire object to the domain entity.
+/// Converts a Serverpod [dto.ShoppingItem] into our domain [ShoppingItem].
 extension ShoppingItemDtoX on dto.ShoppingItem {
   /// Converts to the domain [ShoppingItem].
   ///
-  /// Throws [StateError] on a missing id: a persisted item always has one, so
-  /// its absence is a broken server contract rather than an expected failure.
+  /// Throws [StateError] if the id is missing. Items from the server always
+  /// have one, so a missing id means a server bug, not a normal failure.
   ShoppingItem toDomain() {
     final rawId = id;
     if (rawId == null) {
@@ -31,13 +31,13 @@ extension ShoppingItemDtoX on dto.ShoppingItem {
   }
 }
 
-/// Maps a domain [ShoppingItem] back to the wire object.
+/// Converts a domain [ShoppingItem] back into a Serverpod [dto.ShoppingItem].
 extension ShoppingItemX on ShoppingItem {
-  /// Converts to a [dto.ShoppingItem] for a write.
+  /// Converts to a [dto.ShoppingItem], to send to the server.
   ///
-  /// `updatedAt` is carried across deliberately: it is the optimistic-
-  /// concurrency token the server compares against the stored row, so dropping
-  /// or refreshing it here would silently disable conflict detection.
+  /// Keep `updatedAt` exactly as it is! The server compares it with its own
+  /// copy to see if someone else changed the item in the meantime (a
+  /// conflict). Changing it here would break that check.
   dto.ShoppingItem toDto() => dto.ShoppingItem(
     id: dto.UuidValue.withValidation(id.value),
     listId: dto.UuidValue.withValidation(listId.value),

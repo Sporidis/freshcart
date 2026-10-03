@@ -5,9 +5,8 @@ part 'shop_filter_controller.g.dart';
 
 /// Which shop the list is currently filtered to, or null for "all shops".
 ///
-/// Drives two things at once: which items are visible, and what colour the app
-/// is themed from. Keeping it as one piece of state is what makes those two
-/// stay in step.
+/// Controls two things: which items are shown, and the colour of the list
+/// screen. Because both read this one value, they always match.
 @riverpod
 class ShopFilterController extends _$ShopFilterController {
   @override

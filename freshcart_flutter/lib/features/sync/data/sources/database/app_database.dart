@@ -5,15 +5,18 @@ import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_opera
 
 part 'app_database.g.dart';
 
-/// The app's local SQLite database — the offline write queue
-/// ([PendingOperations]) and the read cache ([CachedLists]/[CachedItems])
-/// that lets a list still open with no signal (`docs/offline-sync-plan.md`
-/// §4's "cached reads", deferred out of the original write-queue phases and
-/// built as its own phase).
+/// The app's database on the phone (SQLite, using drift).
+///
+/// Three tables:
+/// - [PendingOperations]: changes made offline, waiting to be sent.
+/// - [CachedLists] and [CachedItems]: saved copies of lists and items, so
+///   they can be shown without internet.
 @DriftDatabase(tables: [PendingOperations, CachedLists, CachedItems])
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
+  // Increase this every time the tables change, and add an upgrade step
+  // below.
   @override
   int get schemaVersion => 2;
 
@@ -21,6 +24,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) => m.createAll(),
     onUpgrade: (m, from, to) async {
+      // Version 2 added the offline cache tables.
       if (from < 2) {
         await m.createTable(cachedLists);
         await m.createTable(cachedItems);

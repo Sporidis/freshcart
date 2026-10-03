@@ -1,7 +1,8 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Maps a [dto.NotificationPreferences] wire object to the domain entity.
+/// Converts a Serverpod [dto.NotificationPreferences] into our domain
+/// [NotificationPreferences].
 extension NotificationPreferencesDtoX on dto.NotificationPreferences {
   /// Converts to the domain [NotificationPreferences].
   NotificationPreferences toDomain() => NotificationPreferences(

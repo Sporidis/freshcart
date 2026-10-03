@@ -9,14 +9,15 @@ import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
 
 part 'shopping_item.freezed.dart';
 
-/// A single line on a shopping list.
+/// One item on a shopping list.
 ///
-/// [shopId] is nullable because tagging an item to a shop is optional — an
-/// untagged item shows under every shop filter.
+/// [shopId] can be null, because a shop is optional. An item without a
+/// shop shows on every shop tab.
 ///
-/// [updatedAt] carries the optimistic-concurrency token. A write sends the
-/// value the client last saw; if the stored row has moved on, the server
-/// answers `Failure.conflict()` and the client rolls its local edit back.
+/// [updatedAt] is used to detect conflicts. When saving, the app sends the
+/// [updatedAt] it last saw. If the server's copy is newer (someone else
+/// changed it), the server answers `Failure.conflict()` and the app undoes
+/// its change.
 @freezed
 abstract class ShoppingItem with _$ShoppingItem {
   /// Creates a shopping item.
@@ -29,42 +30,33 @@ abstract class ShoppingItem with _$ShoppingItem {
     required DateTime updatedAt,
     @Default(1) int quantity,
     @Default(false) bool isChecked,
-    // A plain default rather than required: almost every call site that
-    // builds a ShoppingItem (every test fixture, every mapper round-trip)
-    // has no opinion about ordering, and forcing one everywhere sortOrder's
-    // real value comes from exactly two places -- ItemService.add, which
-    // appends past the current end, and a drag, which computes a midpoint
-    // (sortOrderBetween) -- would just be noise at every other call site.
+    // Has a default (not required), because most code that makes an item
+    // doesn't care about order. The real value only comes from the server
+    // (when adding) and from dragging (sortOrderBetween).
     @Default(0) double sortOrder,
     ShopId? shopId,
     Note? note,
     UserId? checkedBy,
     DateTime? checkedAt,
 
-    /// True while this item reflects a write that couldn't reach the server
-    /// and is sitting in the offline queue rather than confirmed there (Flow
-    /// 07). `id` may be a locally-minted temp id in that state — see
+    /// True while this item has a change waiting in the offline queue (not
+    /// saved on the server yet). Then `id` may be a temporary id. See
     /// `docs/offline-sync-plan.md` §2.
     @Default(false) bool pending,
   }) = _ShoppingItem;
 
   const ShoppingItem._();
 
-  /// The longest an item name may be.
-  ///
-  /// A list is read at arm's length in a shop; a name past this is a note.
+  /// Maximum name length. Anything longer should be a note.
   static const int maxNameLength = 80;
 
-  /// Validates a proposed item name, returning it trimmed.
+  /// Checks a name and returns it without spaces at the ends.
   ///
-  /// Lives on the entity, not on a use case, for the same reason
-  /// [toggleChecked] does: it is an invariant of an item rather than of one
-  /// operation on it. `AddItem` and `EditItem` are two doors into the same
-  /// field, and a name that is illegal to create must stay illegal to rename
-  /// to — one rule, enforced identically at both.
+  /// On the entity (not in a use case), because both `AddItem` and
+  /// `EditItem` need the same rule. A name you can't create, you also can't
+  /// rename to.
   ///
-  /// Static because the check has to hold *before* an item exists: on the add
-  /// path the server has not minted the entity yet.
+  /// Static, because it's needed before the item exists (when adding).
   static Result<String> validateName(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -78,10 +70,8 @@ abstract class ShoppingItem with _$ShoppingItem {
     return Ok(trimmed);
   }
 
-  /// Validates a proposed quantity.
-  ///
-  /// Only a lower bound: there is no sensible ceiling on how many of something
-  /// a household might buy, and inventing one would reject a legitimate list.
+  /// Checks a quantity: at least 1. No maximum, because there's no sensible
+  /// limit on how many of something people buy.
   static Result<int> validateQuantity(int quantity) {
     if (quantity < 1) {
       return const Err(Failure.validation('quantity', 'Add at least one'));
@@ -89,17 +79,16 @@ abstract class ShoppingItem with _$ShoppingItem {
     return Ok(quantity);
   }
 
-  /// Whether an add naming [nameB]/[noteTextB] describes the same product as
-  /// an existing row named [nameA] with note [noteTextA] -- the merge-on-add
-  /// rule: names compare trimmed, notes compare by their trimmed *text* with
-  /// a blank or absent note treated as "no note" on either side (the same
-  /// rule [withEdit] already uses to decide a note is cleared). Deliberately
-  /// not a straight `Note ==` comparison -- a `Note` also carries who wrote
-  /// it and when, and two notes that read identically to a shopper almost
-  /// never share an author/timestamp, so comparing the whole object would
-  /// make merging with any noted row fail in practice. Shop and checked-state
-  /// equality are plain field compares at the call site -- nothing about
-  /// "same shop" needs normalizing.
+  /// Whether a new item ([nameB], [noteTextB]) is the same product as an
+  /// existing one ([nameA], [noteTextA]). If so, adding it increases the
+  /// existing item's quantity instead of making a new row.
+  ///
+  /// - Names are compared without spaces at the ends.
+  /// - Notes are compared by text only (empty = no note). Not by the whole
+  ///   `Note`, because that also has the author and time, which almost never
+  ///   match.
+  ///
+  /// Same shop and checked state are checked by the caller.
   static bool sameProduct({
     required String nameA,
     required String? noteTextA,
@@ -112,25 +101,23 @@ abstract class ShoppingItem with _$ShoppingItem {
         normalize(noteTextA) == normalize(noteTextB);
   }
 
-  /// How far apart freshly-appended items are spaced in [sortOrder].
+  /// The space between new items' [sortOrder] values (0, 1024, 2048...).
   ///
-  /// A gap, not consecutive integers, is what makes [sortOrderBetween] work:
-  /// slotting an item between two neighbours only ever needs their average,
-  /// never a rewrite of every other row's position. 1024 leaves ten
-  /// halvings' worth of room (roughly a thousand manual reorders into the
-  /// same gap) before two neighbours' values are close enough that double
-  /// precision stops telling them apart -- rebalancing the rest of the list
-  /// at that point is a real scenario this does not handle, but a large gap
-  /// is what buys the room to not need to.
+  /// Why a gap and not 1, 2, 3? To move an item between two others,
+  /// [sortOrderBetween] just takes the average of their values. No other
+  /// rows need to change.
+  ///
+  /// Each move into the same spot halves the gap. Eventually the numbers get
+  /// too close for a `double` to tell apart. That's not handled, but with
+  /// 1024 it takes a very large number of moves to the same spot.
   static const double sortOrderGap = 1024;
 
-  /// A [sortOrder] placing an item strictly between [before] and [after] --
-  /// either may be null for an end of the list -- for a manual drag-reorder.
+  /// A [sortOrder] between [before] and [after] (null = start or end of the
+  /// list). Used when dragging an item.
   ///
-  /// Static, and pure arithmetic, for the same reason [toggleChecked] is a
-  /// method rather than free-floating logic: the optimistic local move and
-  /// the write that follows it must compute the identical value, or the
-  /// screen would visibly jump once the server's answer landed.
+  /// In the domain, so the screen (showing it right away) and the save use
+  /// exactly the same number. Otherwise the item would jump when the server
+  /// answers.
   static double sortOrderBetween(ShoppingItem? before, ShoppingItem? after) {
     final b = before?.sortOrder;
     final a = after?.sortOrder;
@@ -146,37 +133,33 @@ abstract class ShoppingItem with _$ShoppingItem {
   /// Whether this item carries a non-empty note.
   bool get hasNote => note != null && !note!.isEmpty;
 
-  /// Whether this item should appear under the given shop filter.
+  /// Whether this item shows on shop tab [filter].
   ///
-  /// A `null` [filter] means "no filter" and matches everything; an untagged
-  /// item matches every filter, so a forgotten tag never hides an item.
+  /// `null` (the "All" tab) shows everything. An item without a shop shows
+  /// on every tab, so forgetting to pick a shop never hides it.
   bool matchesShopFilter(ShopId? filter) =>
       filter == null || shopId == null || shopId == filter;
 
-  /// Returns this item with its checked state flipped.
+  /// Returns this item checked (if it wasn't) or unchecked (if it was).
   ///
-  /// Lives on the entity rather than in the use case because it is a pure
-  /// invariant of an item — checking records *who* and *when*, unchecking
-  /// clears both — and both the optimistic local update and the reconciliation
-  /// path need exactly the same rule.
+  /// Checking saves who and when; unchecking clears both. On the entity, so
+  /// the screen (showing it right away) and the save use the same rule.
   ShoppingItem toggleChecked({required UserId by, required DateTime at}) =>
       isChecked
       ? copyWith(isChecked: false, checkedBy: null, checkedAt: null)
       : copyWith(isChecked: true, checkedBy: by, checkedAt: at);
 
-  /// Returns this item with a user's edit applied.
+  /// Returns this item with the user's edit applied.
   ///
-  /// Public, and on the entity, for the same reason [toggleChecked] is: the
-  /// controller applies it optimistically the moment the user hits Save while
-  /// `EditItem` applies it on the way to the server, and the two must not be
-  /// allowed to drift. One transformation, computed one way.
+  /// On the entity, like [toggleChecked], so the screen and `EditItem` use
+  /// exactly the same change.
   ///
-  /// Expects [name] and [quantity] to have passed [validateName] and
-  /// [validateQuantity] already — this is the shape change, not the guard.
+  /// [name] and [quantity] must already be checked with [validateName] and
+  /// [validateQuantity]. This method doesn't check them.
   ///
-  /// A blank or absent [noteText] clears the note. The note's author is
-  /// whoever last wrote it, falling back to whoever added the item; [at]
-  /// stamps it, and stays local until the server echoes the stored row back.
+  /// An empty or null [noteText] removes the note. The note's author stays
+  /// whoever wrote it last (or who added the item). [at] is the note's new
+  /// time, until the server sends back the saved item.
   ShoppingItem withEdit({
     required String name,
     required int quantity,

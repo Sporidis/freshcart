@@ -4,16 +4,16 @@ import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:freshcart_server/src/notifications/business/notification_preferences_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Device registration and per-list notification settings.
+/// Endpoint for registering phones for push, and notification settings.
 class NotificationEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
-  /// Registers this device to receive pushes for the caller.
+  /// Registers this phone to get push notifications for the caller.
   ///
-  /// Idempotent: re-registering an existing token re-points it at the caller
-  /// rather than inserting a duplicate, so a shared device that changes hands
-  /// does not keep notifying the previous user.
+  /// Safe to call again: an existing token is moved to the caller (no
+  /// duplicate). So if someone else logs in on the phone, the previous
+  /// user stops getting notifications there.
   Future<DeviceToken> registerDevice(
     Session session,
     String token,
@@ -36,7 +36,7 @@ class NotificationEndpoint extends Endpoint {
     );
   }
 
-  /// Stops pushes to this device. Called on sign-out.
+  /// Stops push notifications to this phone. Called on sign-out.
   Future<void> unregisterDevice(Session session, String token) async {
     await DeviceToken.db.deleteWhere(
       session,
@@ -82,7 +82,7 @@ class NotificationEndpoint extends Endpoint {
     return existing != null;
   }
 
-  /// The caller's own notification preferences (decisions #80, phase 2).
+  /// The caller's notification preferences (decisions.md #80).
   Future<NotificationPreferences> preferences(Session session) =>
       NotificationPreferencesService.forUser(session, session.requireUserId);
 

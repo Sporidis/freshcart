@@ -5,8 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/initial_for.dart';
@@ -17,10 +17,9 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/invite_car
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// Who is on a list, and how to add someone.
+/// Who's on a list, and how to invite someone.
 ///
-/// Deliberately shallow, per the design: two roles and no admin console. A
-/// shopping list does not need an org chart.
+/// Kept simple on purpose: only two roles (owner and member).
 class HouseholdScreen extends ConsumerWidget {
   /// Creates the screen for [listId].
   const HouseholdScreen({required this.listId, super.key});
@@ -39,10 +38,8 @@ class HouseholdScreen extends ConsumerWidget {
       return ErrorScreen(
         failure: failure,
         t: t,
-        // See list_detail_screen.dart's identical onExit for why this
-        // refreshes first: /lists now redirects straight into whichever
-        // list comes first in the cached collection, so a stale cache
-        // still holding this now-gone list would just bounce back here.
+        // Reload the lists first. Otherwise /lists could send the user
+        // straight back to this list that's gone.
         onExit: () {
           unawaited(vm.refreshLists());
           context.go(Routes.lists);
@@ -89,7 +86,7 @@ class _Household extends StatelessWidget {
             canManage: s.canManage(member),
             vm: vm,
           ),
-        const SizedBox(height: 24),
+        const SizedBox(height: AppSpacing.xxl),
         Text(
           t.household.invite.toUpperCase(),
           style: AppTextStyles.eyebrow.copyWith(
@@ -134,8 +131,7 @@ class _MemberRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: AppSpacing.rowVertical),
       child: Row(
         children: [
-          // The shared avatar, so a member's photo or chosen colour shows here
-          // exactly as in the drawer (decisions #65).
+          // Same avatar widget as everywhere else (decisions.md #65).
           UserAvatar(
             seed: member.userId.value,
             initial: initial,
@@ -192,9 +188,8 @@ class _MemberRow extends StatelessWidget {
   }
 
   Future<void> _confirmTransfer(BuildContext context) async {
-    // Spelled out rather than confirmed with a bare "OK": handing over
-    // ownership also takes it away from you, which the title alone does not
-    // say.
+    // The dialog says clearly that you stop being the owner. The title
+    // alone doesn't make that clear.
     final ok = await _confirm(
       context,
       title: t.household.transferTitle(name: member.displayName),
@@ -225,16 +220,16 @@ class _MemberRow extends StatelessWidget {
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(t.common.cancel),
             ),
-            FilledButton(
-              style: destructive
-                  ? FilledButton.styleFrom(
-                      backgroundColor: AppColors.destructive,
-                      foregroundColor: Colors.white,
-                    )
-                  : null,
-              onPressed: () => Navigator.of(context).pop(true),
-              child: Text(confirmLabel),
-            ),
+            if (destructive)
+              DestructiveButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(confirmLabel),
+              )
+            else
+              FilledButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(confirmLabel),
+              ),
           ],
         ),
       ) ??

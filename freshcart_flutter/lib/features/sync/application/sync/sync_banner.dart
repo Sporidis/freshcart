@@ -1,22 +1,23 @@
-/// What the offline/syncing banner should say, already decided.
+/// What the offline banner should show.
 ///
-/// Sealed so the widget's `switch` is exhaustive: it draws a case, it never
-/// works out which case applies.
+/// The provider decides which case it is, the widget just draws it.
+/// `sealed` means the widget's `switch` must handle every case, or it won't
+/// compile.
 sealed class SyncBanner {
   const SyncBanner();
 }
 
-/// Online with nothing queued: no banner at all.
+/// Online and nothing waiting to sync: no banner.
 final class SyncBannerHidden extends SyncBanner {
   const SyncBannerHidden();
 }
 
-/// No network: writes are queued locally until it comes back.
+/// No internet. Changes are saved on the phone until it's back.
 final class SyncBannerOffline extends SyncBanner {
   const SyncBannerOffline();
 }
 
-/// Back online, still draining [pending] queued writes.
+/// Back online, still sending [pending] saved changes to the server.
 final class SyncBannerSyncing extends SyncBanner {
   const SyncBannerSyncing(this.pending);
 

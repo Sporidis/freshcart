@@ -7,9 +7,9 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'shop_providers.g.dart';
 
-/// The colour of the active shop, or null when no shop is selected.
+/// The colour of the selected shop tab, or null for "All".
 ///
-/// Derived rather than stored, so it cannot drift out of step with the filter.
+/// Calculated from the filter (not saved separately), so they always match.
 @riverpod
 HexColor? activeShopColor(Ref ref, ListId listId) {
   final filter = ref.watch(shopFilterControllerProvider(listId));
@@ -18,17 +18,17 @@ HexColor? activeShopColor(Ref ref, ListId listId) {
   final shops = ref.watch(shopsControllerProvider(listId));
   final loaded = shops.dataOrNull ?? const <Shop>[];
   for (final shop in loaded) {
-    // An inactive shop has no tab to have been selected from, so its
-    // colour should not be able to leak into the theme either.
+    // A hidden shop has no tab, so it can't colour the app either.
     if (shop.id == filter && shop.isActive) return shop.color;
   }
   return null;
 }
 
-/// The colour [shop] should be drawn in right now, preview included.
+/// The colour to draw [shop] in right now. If the user is trying out a new
+/// colour in the edit sheet, that preview colour is returned.
 ///
-/// Every place that paints a shop's colour goes through this, so a preview
-/// cannot reach some dots and miss others.
+/// Everything that draws a shop colour uses this, so the preview shows up
+/// everywhere at once.
 @riverpod
 HexColor effectiveShopColor(Ref ref, Shop shop) {
   final preview = ref.watch(shopColorPreviewControllerProvider);

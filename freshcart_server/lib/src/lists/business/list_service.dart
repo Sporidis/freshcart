@@ -5,27 +5,25 @@ import 'package:freshcart_server/src/notifications/business/notification_service
 import 'package:freshcart_server/src/users/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Business operations on shopping lists.
+/// The logic for shopping lists.
 ///
-/// Endpoints stay thin and delegate here, so the rules live in one place that
-/// is testable without going through the transport layer.
+/// Endpoints are kept small and call this. So the rules are in one place,
+/// and can be tested without going through HTTP.
 abstract final class ListService {
-  /// How many times to retry on a join-code collision before giving up.
+  /// How many times to try a new join code if one is already taken.
   static const int _joinCodeAttempts = 5;
 
-  /// The message channel carrying changes to one list.
+  /// The channel name for updates to one list.
   ///
-  /// Per list, not global: a client watching one list should not be woken by
-  /// traffic on every other list on the server.
+  /// One channel per list, so someone watching one list doesn't get
+  /// messages about all other lists.
   static String channelFor(UuidValue listId) => 'list-$listId';
 
-  /// Broadcasts the list's current state — with members — to everyone
-  /// watching it.
+  /// Sends the list (with members) to everyone watching it.
   ///
-  /// Unlike items, this sends the whole entity rather than a delta: a list is
-  /// a single row, not a collection that could run to hundreds, so there is no
-  /// merge to save bandwidth on. Fire-and-forget by design: a dropped
-  /// notification must never fail the write that caused it.
+  /// Sends the whole list (not just what changed, like for items), because
+  /// a list is one small row. Not awaited: if sending fails, the save that
+  /// caused it must still succeed.
   static Future<void> _announce(Session session, UuidValue listId) async {
     final list = await ShoppingList.db.findById(session, listId);
     if (list == null) return;
@@ -33,7 +31,7 @@ abstract final class ListService {
     await session.messages.postMessage(channelFor(listId), withMembers);
   }
 
-  /// Every list [userId] is a member of, newest first.
+  /// All lists [userId] is on, newest first.
   static Future<List<ShoppingList>> listsFor(
     Session session,
     UuidValue userId,
@@ -56,8 +54,9 @@ abstract final class ListService {
 
   /// One list by id, if [userId] belongs to it.
   ///
-  /// Throws [ListNotFoundException] when the list is missing *or* the caller is
-  /// not a member — the two are deliberately indistinguishable from outside.
+  /// Throws [ListNotFoundException] if the list doesn't exist OR the user
+  /// isn't a member. Same error on purpose, so outsiders can't find out
+  /// which lists exist.
   static Future<ShoppingList> byId(
     Session session,
     UuidValue listId,
@@ -105,9 +104,9 @@ abstract final class ListService {
         .then((list) => _withMembers(session, list));
   }
 
-  /// Adds [userId] to the list matching [rawCode].
+  /// Adds [userId] to the list with code [rawCode].
   ///
-  /// Validating the code with the domain's parser first means a typo never
+  /// The code is checked first (with the domain's parser), so a typo never
   /// reaches the database.
   static Future<ShoppingList> join(
     Session session,
@@ -130,8 +129,8 @@ abstract final class ListService {
       session,
       where: (t) => t.listId.equals(list.id!) & t.userId.equals(userId),
     );
-    // Joining twice is a no-op, not an error: a re-tapped invite link should
-    // land you in the list, not show a failure.
+    // Already a member: do nothing (no error). Tapping an invite twice
+    // should just open the list.
     if (existing == null) {
       await ListMember.db.insertRow(
         session,
@@ -142,9 +141,8 @@ abstract final class ListService {
           joinedAt: DateTime.now().toUtc(),
         ),
       );
-      // Only announce a genuine join: a re-tap must not wake every other
-      // open client with a no-op notification. Same reasoning for the push
-      // (decisions #80, phase 2) -- a re-tap is not "someone joined."
+      // Only notify others for a real new member, not when someone already
+      // on the list taps the invite again (decisions.md #80).
       await _announce(session, list.id!);
       await NotificationService.notifyMemberJoined(
         session,
@@ -176,14 +174,11 @@ abstract final class ListService {
     return _withMembers(session, updated);
   }
 
-  /// Sets whether [listId] clears its checked items automatically once
-  /// everything on it is checked (decisions #79).
+  /// Sets whether [listId] removes checked items automatically when
+  /// everything is checked (decisions.md #79).
   ///
-  /// Any member may set this, checked with [requireMembership] rather than
-  /// an owner check: unlike [rename]/[delete], it is a shared
-  /// shopping-behaviour preference, not an identity or destructive action --
-  /// the same authorisation shape `ShopService.save` already uses for
-  /// toggling a shop's `isActive`.
+  /// Any member can change this (not only the owner), like turning a shop
+  /// tab on or off. It's a shared preference, not a dangerous action.
   static Future<ShoppingList> setClearCheckedAfterShopping(
     Session session,
     UuidValue listId,
@@ -212,22 +207,18 @@ abstract final class ListService {
       session,
       where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
     );
-    // The remaining members' member count should drop live, without them
-    // having to reload the list.
+    // Tell the other members, so their member count updates right away.
     await _announce(session, listId);
   }
 
-  /// Deletes [listId], for everyone.
+  /// Deletes [listId] for everyone. Only the owner can.
   ///
-  /// Owner only. Leaving is the member's verb — it takes you out of a list
-  /// that carries on without you — while this ends it for the household, so
-  /// the two are deliberately different operations rather than one with a
-  /// flag.
+  /// Separate from [leave] on purpose (leaving only removes you).
   ///
-  /// Members, items, shops, mutes and pending notifications all go with it,
-  /// through the ON DELETE CASCADE already on their foreign keys. Doing it in
-  /// the database rather than in five deletes here means a crash halfway
-  /// cannot leave a list that is half gone.
+  /// Members, items, shops, mutes and waiting notifications are deleted too,
+  /// by the database itself (ON DELETE CASCADE on their foreign keys). That's
+  /// safer than five separate deletes here: a crash can't leave a list half
+  /// deleted.
   static Future<void> delete(
     Session session,
     UuidValue listId,
@@ -237,18 +228,17 @@ abstract final class ListService {
     if (list == null) throw ListNotFoundException();
     if (list.ownerId != userId) throw NotAMemberException();
 
-    // Announced before the row goes: afterwards there is no list to describe,
-    // and open clients need to be told rather than left on a dead screen.
+    // Tell watchers BEFORE deleting (after, there's no list left to send).
+    // Otherwise their screen would just stop updating.
     await _announce(session, listId);
     await ShoppingList.db.deleteRow(session, list);
   }
 
-  /// Removes [targetUserId] from [listId], on the owner's authority.
+  /// Removes member [targetUserId] from [listId]. Only the owner can.
   ///
-  /// Separate from [leave] because they are different acts: leaving is
-  /// something you do to yourself, removal is something done to you. The
-  /// owner cannot remove themselves this way — that would leave the list
-  /// ownerless — and transferring first is the honest path out.
+  /// Different from [leave] (you leave yourself; the owner removes someone
+  /// else). The owner can't remove themselves, or the list would have no
+  /// owner. They should transfer ownership first.
   static Future<void> removeMember(
     Session session,
     UuidValue listId,
@@ -258,7 +248,7 @@ abstract final class ListService {
     final list = await ShoppingList.db.findById(session, listId);
     if (list == null) throw ListNotFoundException();
     if (list.ownerId != actorId) throw NotAMemberException();
-    // Removing yourself is `leave`; removing the owner is not a thing.
+    // To remove yourself, use `leave`. The owner can't be removed.
     if (targetUserId == list.ownerId) throw NotAMemberException();
 
     await requireMembership(session, listId, targetUserId);
@@ -269,11 +259,10 @@ abstract final class ListService {
     await _announce(session, listId);
   }
 
-  /// Hands ownership of [listId] to [newOwnerId].
+  /// Makes [newOwnerId] the owner of [listId].
   ///
-  /// The two role changes and the list's own `ownerId` move together in a
-  /// transaction: a list with two owners, or none, is worse than one that
-  /// never changed hands.
+  /// Both role changes and the list's `ownerId` change in one transaction,
+  /// so a list can never end up with two owners or none.
   static Future<ShoppingList> transferOwnership(
     Session session,
     UuidValue listId,
@@ -310,15 +299,12 @@ abstract final class ListService {
     return _withMembers(session, updated);
   }
 
-  /// Item counts for exactly the lists in [listIds] that [userId] actually
-  /// belongs to -- the drawer's remaining-count row, fetched once per list
-  /// rather than N full item-collection loads.
+  /// Item counts for the lists in [listIds] that [userId] is on. For the
+  /// drawer's "6 left". Counts only, instead of loading all items.
   ///
-  /// A foreign id in [listIds] is silently skipped, not an error: a
-  /// legitimate caller only ever asks about its own lists (the drawer's own
-  /// [listsFor] result) anyway, so this exists as a defence against a
-  /// malicious id rather than a normal code path a thrown exception would
-  /// need to surface.
+  /// Lists the user isn't on are skipped (no error). The app only asks for
+  /// its own lists anyway; this just protects against someone asking for
+  /// other people's.
   static Future<List<ListSummary>> summaries(
     Session session,
     List<UuidValue> listIds,
@@ -331,11 +317,9 @@ abstract final class ListService {
     );
     final allowed = memberships.map((m) => m.listId);
 
-    // Two `count` queries per list rather than a row-scanning read: the ORM
-    // has no GROUP BY aggregate escape hatch short of raw SQL (the same
-    // reasoning ShopService.itemCount's own single-list count already
-    // follows). Future.wait keeps every list's pair of counts running in
-    // parallel rather than one list waiting on the last.
+    // Two `count` queries per list. (Serverpod's query builder has no GROUP
+    // BY without writing raw SQL.) Future.wait runs them all at the same
+    // time instead of one after another.
     Future<ListSummary> summaryFor(UuidValue listId) async {
       final total = await ShoppingItem.db.count(
         session,
@@ -355,10 +339,10 @@ abstract final class ListService {
     return Future.wait(allowed.map(summaryFor));
   }
 
-  /// Throws [NotAMemberException] unless [userId] belongs to [listId].
+  /// Throws [NotAMemberException] if [userId] isn't on [listId].
   ///
-  /// Every read and write path funnels through this, so authorisation is one
-  /// function rather than a check duplicated per endpoint method.
+  /// Every read and write uses this, so the permission check is in one
+  /// place instead of copied into every endpoint.
   static Future<ListMember> requireMembership(
     Session session,
     UuidValue listId,
@@ -372,11 +356,12 @@ abstract final class ListService {
     return membership;
   }
 
-  /// [list] with its members attached, each one's name, colour and photo
-  /// filled in live from their `MemberProfile` -- every list read and every
-  /// broadcast goes through here, so nobody is ever shown as they were when
-  /// they joined (docs/decisions.md #98). Two queries per list, not one per
-  /// member.
+  /// [list] with its members, each with their current name, colour and
+  /// photo (from `MemberProfile`).
+  ///
+  /// Every list read and broadcast goes through here, so people always show
+  /// with their current profile (decisions.md #98). Two queries per list,
+  /// not one per member.
   static Future<ShoppingList> _withMembers(
     Session session,
     ShoppingList list,
@@ -406,13 +391,11 @@ abstract final class ListService {
     );
   }
 
-  /// Re-broadcasts every list [userId] is on, after they changed how they
-  /// look to others (name, colour, photo) -- so everyone watching one of
-  /// those lists sees the change now, not on their next reload.
+  /// Sends every list [userId] is on again, after they changed their name,
+  /// colour or photo. So others see the change right away.
   ///
-  /// Fire-and-forget like [_announce]: the profile write has already
-  /// succeeded, and a dropped broadcast only delays the update until the
-  /// next read.
+  /// Not awaited, like [_announce]: the profile is already saved. If sending
+  /// fails, others just see it on their next reload.
   static Future<void> announceMemberChanged(
     Session session,
     UuidValue userId,
@@ -439,8 +422,9 @@ abstract final class ListService {
       );
       if (clash == null) return candidate;
     }
-    // 32^6 codes make this effectively unreachable; failing loudly beats
-    // handing out a duplicate that would send someone into a stranger's list.
+    // With 32^5 (about 33 million) possible codes, this should never happen.
+    // Throwing is better than giving out a duplicate code, which would let
+    // someone join a stranger's list.
     throw StateError('Could not allocate a unique join code');
   }
 }

@@ -3,10 +3,10 @@ import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Shopping lists: create, read, join, rename, leave, delete.
+/// Endpoint for shopping lists: create, read, join, rename, leave, delete.
 ///
-/// Thin by design — every method resolves the caller and hands straight off to
-/// [ListService], which is where the rules and the transactions live.
+/// Kept small: each method gets the user and calls [ListService], where the
+/// rules are.
 class ListEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
@@ -19,8 +19,7 @@ class ListEndpoint extends Endpoint {
   Future<ShoppingList> byId(Session session, UuidValue listId) =>
       ListService.byId(session, listId, session.requireUserId);
 
-  /// Item counts for each of [listIds] the caller belongs to -- the
-  /// drawer's remaining-count row.
+  /// Item counts for the caller's lists in [listIds] (for the drawer).
   Future<List<ListSummary>> summaries(
     Session session,
     List<UuidValue> listIds,
@@ -41,8 +40,8 @@ class ListEndpoint extends Endpoint {
     String name,
   ) => ListService.rename(session, listId, session.requireUserId, name);
 
-  /// Sets whether a list the caller belongs to clears its checked items
-  /// automatically once everything on it is checked.
+  /// Sets whether a list removes checked items automatically when
+  /// everything is checked.
   Future<ShoppingList> setClearCheckedAfterShopping(
     Session session,
     UuidValue listId,
@@ -86,12 +85,10 @@ class ListEndpoint extends Endpoint {
     userId,
   );
 
-  /// Live changes to a list itself — its name and its membership.
+  /// Live updates to a list (its name and members).
   ///
-  /// Sends the whole [ShoppingList], not a delta: unlike items, a list is a
-  /// single row, so there is nothing to merge. This is the in-app half of the
-  /// two-layer story, same as [ItemEndpoint.watchList] — it keeps open clients
-  /// live and is unrelated to FCM background push.
+  /// Sends the whole [ShoppingList] each time (it's one small row). This is
+  /// for live updates while the app is open, not push notifications.
   Stream<ShoppingList> watchList(Session session, UuidValue listId) async* {
     await ListService.requireMembership(session, listId, session.requireUserId);
     yield* session.messages.createStream<ShoppingList>(

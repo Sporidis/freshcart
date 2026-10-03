@@ -1,28 +1,35 @@
+import 'dart:async';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'items_ui_controller.g.dart';
 
-/// The items section's own UI state for one list: which mode it is in, and
-/// the little facts about *this list right now* that must survive a rebuild.
+/// UI state for the items area of one list: the mode (select, search,
+/// rearrange) and small things like "is Done folded".
 ///
-/// Its own provider rather than fields on `ItemsSectionController`: that view
-/// model's `build()` re-runs whenever anything it watches changes (a live
-/// item update, a shop edit), which would silently reset a flag stored on it
-/// -- mid-drag, mid-selection, mid-typing. Provider state, not widget state,
-/// for the same reason (decisions #47): a rotation or a route pop-and-push
-/// must not forget a selection or pop a dismissed celebration back up.
+/// Why its own provider, and not fields in `ItemsSectionController`? That
+/// controller's `build()` runs again on every item update, which would
+/// reset these values in the middle of selecting or typing.
+///
+/// Why a provider and not widget state? So rotating the phone or going back
+/// and forth doesn't lose the selection (decisions.md #47).
 @riverpod
 class ItemsUiController extends _$ItemsUiController {
+  /// Fires [settleNow] once the ticks have stopped for a moment.
+  Timer? _settleTimer;
+
   @override
-  ItemsUiState build(ListId listId) => const ItemsUiState();
+  ItemsUiState build(ListId listId) {
+    ref.onDispose(() => _settleTimer?.cancel());
+    return const ItemsUiState();
+  }
 
   // ── Selection ──────────────────────────────────────────────────────────
-  // There is no "selection mode is active" flag: the mode *is* a non-empty
-  // selection. One source of truth, so the header, the checkbox slide and
-  // the contextual bar can never disagree about whether it is on.
+  // There's no "select mode on" flag. Select mode is on when something is
+  // selected. One value, so nothing can disagree about it.
 
-  /// Adds or removes [id] from the selection.
+  /// Selects [id], or unselects it if it was selected.
   void toggleSelection(ItemId id) {
     final selection = state.selection;
     state = state.copyWith(
@@ -32,22 +39,21 @@ class ItemsUiController extends _$ItemsUiController {
     );
   }
 
-  /// Leaves selection mode without acting on it.
+  /// Leaves select mode without doing anything.
   void clearSelection() => state = state.copyWith(selection: const {});
 
   // ── Search ─────────────────────────────────────────────────────────────
-  // Open and query are separate on purpose: tapping the search icon opens an
-  // empty field that has to stay open, not collapse the instant it renders
-  // with nothing in it.
+  // "Search open" and "search text" are separate. Otherwise an empty search
+  // field would close itself right after opening.
 
   void openSearch() => state = state.copyWith(searchActive: true);
 
-  /// Filtering is local and per-keystroke (§16: "no spinner"), so there is
-  /// nothing to await here.
+  /// Updates the search text. Searching happens on the phone (no server),
+  /// so it's instant.
   void updateQuery(String query) =>
       state = state.copyWith(searchActive: true, searchQuery: query);
 
-  /// Closes search and forgets the query.
+  /// Closes search and clears the text.
   void closeSearch() =>
       state = state.copyWith(searchActive: false, searchQuery: '');
 
@@ -57,19 +63,53 @@ class ItemsUiController extends _$ItemsUiController {
 
   void stopRearrange() => state = state.copyWith(rearranging: false);
 
+  // ── Batch check-off ─────────────────────────────────────────────────────
+  // Design v3: a tick fills the circle (and saves) at once, but the row stays
+  // where it is until the ticks stop for a moment. Then everything ticked in
+  // that burst moves to Done together, with one toast. Ticking down a list
+  // in the shop no longer makes the rows jump under your thumb.
+
+  /// [id] was just checked: hold it in place, and restart the wait.
+  void startSettling(ItemId id, Duration wait) {
+    // A Set literal keeps insertion order, so this is also the tap order.
+    state = state.copyWith(settling: {...state.settling, id});
+    _settleTimer?.cancel();
+    _settleTimer = Timer(wait, settleNow);
+  }
+
+  /// [id] was unchecked again before it settled: it just stays open.
+  void stopSettling(ItemId id) {
+    if (!state.settling.contains(id)) return;
+    final rest = {...state.settling}..remove(id);
+    state = state.copyWith(settling: rest);
+    if (rest.isEmpty) _settleTimer?.cancel();
+  }
+
+  /// Releases the held rows to Done now. [ItemsUiState.settleCount] goes up,
+  /// which is what the screen listens to for the toast.
+  void settleNow() {
+    _settleTimer?.cancel();
+    _settleTimer = null;
+    if (state.settling.isEmpty) return;
+    state = state.copyWith(
+      settling: const {},
+      lastSettled: state.settling.toList(),
+      settleCount: state.settleCount + 1,
+    );
+  }
+
   // ── Done section & celebration ─────────────────────────────────────────
 
-  /// Folds the Done section away, or opens it again. Per list: the big
-  /// weekly list wants the trolley visible, a short one reads better folded.
+  /// Folds or unfolds the "Done" section. Remembered per list.
   void toggleDoneCollapsed() =>
       state = state.copyWith(doneCollapsed: !state.doneCollapsed);
 
-  /// "Keep list": hide the celebration without touching any items.
+  /// "Keep list": hides the "all done" card. Items stay as they are.
   void dismissCelebration() =>
       state = state.copyWith(celebrationDismissed: true);
 
-  /// Called once the list is no longer fully checked, so a "Keep list" does
-  /// not carry over to the next time it is.
+  /// Called when the list isn't complete anymore. Forgets "Keep list", so
+  /// the card shows again next time everything is checked.
   void resetCelebration() {
     if (state.celebrationDismissed) {
       state = state.copyWith(celebrationDismissed: false);
@@ -77,8 +117,8 @@ class ItemsUiController extends _$ItemsUiController {
   }
 }
 
-/// See [ItemsUiController]. Raw facts only -- ranking them into one
-/// `ItemsMode` is `ItemsSectionController`'s job.
+/// The state of [ItemsUiController]. Just the raw values.
+/// `ItemsSectionController` turns them into one `ItemsMode`.
 class ItemsUiState {
   const ItemsUiState({
     this.selection = const {},
@@ -87,6 +127,9 @@ class ItemsUiState {
     this.rearranging = false,
     this.doneCollapsed = false,
     this.celebrationDismissed = false,
+    this.settling = const {},
+    this.lastSettled = const [],
+    this.settleCount = 0,
   });
 
   final Set<ItemId> selection;
@@ -96,6 +139,16 @@ class ItemsUiState {
   final bool doneCollapsed;
   final bool celebrationDismissed;
 
+  /// Checked, but still held in the open section until the burst settles.
+  final Set<ItemId> settling;
+
+  /// The last batch that moved to Done, in tap order.
+  final List<ItemId> lastSettled;
+
+  /// How many batches have settled. Goes up by one per batch, so a listener
+  /// can tell "a new batch just landed" from any other rebuild.
+  final int settleCount;
+
   ItemsUiState copyWith({
     Set<ItemId>? selection,
     bool? searchActive,
@@ -103,6 +156,9 @@ class ItemsUiState {
     bool? rearranging,
     bool? doneCollapsed,
     bool? celebrationDismissed,
+    Set<ItemId>? settling,
+    List<ItemId>? lastSettled,
+    int? settleCount,
   }) => ItemsUiState(
     selection: selection ?? this.selection,
     searchActive: searchActive ?? this.searchActive,
@@ -110,5 +166,8 @@ class ItemsUiState {
     rearranging: rearranging ?? this.rearranging,
     doneCollapsed: doneCollapsed ?? this.doneCollapsed,
     celebrationDismissed: celebrationDismissed ?? this.celebrationDismissed,
+    settling: settling ?? this.settling,
+    lastSettled: lastSettled ?? this.lastSettled,
+    settleCount: settleCount ?? this.settleCount,
   );
 }

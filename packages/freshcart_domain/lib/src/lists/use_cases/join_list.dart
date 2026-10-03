@@ -3,21 +3,20 @@ import 'package:freshcart_domain/src/lists/entities/shopping_list.dart';
 import 'package:freshcart_domain/src/lists/ports/list_repository.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 
-/// Joins a shared list from a code the user typed or pasted.
+/// Joins a list with a code the user typed or pasted.
 ///
-/// The parse step lives here rather than in the UI so an invalid code costs no
-/// round trip, and so every entry point — the join screen, a deep link, a
-/// pasted invite — validates identically.
+/// The code is checked here (not in the UI), so a wrong code doesn't need
+/// a server call, and every screen checks it the same way.
 class JoinList {
   /// Creates the use case against a [ListRepository].
   const JoinList(this._lists);
 
   final ListRepository _lists;
 
-  /// Validates [rawCode] and joins the list it identifies.
+  /// Checks [rawCode] and joins its list.
   ///
-  /// Returns `Failure.validation` if the code is malformed, `Failure.notFound`
-  /// if no list matches it.
+  /// Returns `Failure.validation` if the code isn't valid, or
+  /// `Failure.notFound` if no list has that code.
   Future<Result<ShoppingList>> call(String rawCode) async {
     final parsed = JoinCode.parse(rawCode);
     return switch (parsed) {

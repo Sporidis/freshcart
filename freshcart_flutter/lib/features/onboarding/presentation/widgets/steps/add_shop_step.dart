@@ -5,11 +5,23 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
+import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
+import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_tabs_preview.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
+import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
 
+/// Step 3: pick your shops (design v3).
+///
+/// The shops are tinted `ShopPickerPill`s that wrap, the same pill used to
+/// pick a shop everywhere else in the app. Picked ones go solid with a
+/// tick. A dashed "+" adds a shop that isn't offered; it arrives picked.
+/// Under the pills, how many are picked.
+///
+/// It scrolls, because users can add as many shops as they want.
 class AddShopStep extends ConsumerWidget {
   const AddShopStep({super.key});
 
@@ -17,84 +29,87 @@ class AddShopStep extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ref.watch(onboardingControllerProvider);
     final controller = ref.read(onboardingControllerProvider.notifier);
-    final theme = Theme.of(context);
     final t = ref.watch(translationsProvider);
+    final theme = Theme.of(context);
+    final picked = s.selectedShops.length;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Matches the design's own split: the shop list scrolls in its own
-        // `flex:1` area (there is no cap on how many shops someone adds),
-        // while the tabs preview below stays pinned as a fixed footer —
-        // a plain Column here would either overflow once enough shops (or a
-        // taller keyboard-shrunk viewport) push past the available height,
-        // or push the preview off-screen instead of keeping it in view.
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      padding: onboardingStepPadding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          OnboardingStepHeader(
+            title: t.onboarding.shopsTitle,
+            subtitle: t.onboarding.shopsSubtitle,
+          ),
+          const SizedBox(height: 22),
+          OnboardingEntrance(
+            index: 2,
+            child: Wrap(
+              spacing: AppSpacing.sm,
               children: [
-                Text(
-                  t.onboarding.shopsTitle,
-                  style: theme.textTheme.headlineLarge,
-                ),
-                const SizedBox(height: AppSpacing.gapSmall),
-                Text(
-                  t.onboarding.shopsSubtitle,
-                  style: theme.textTheme.bodyMedium,
-                ),
-                const SizedBox(height: AppSpacing.gap * 2),
-                for (final (index, shop) in s.shopOptions.indexed)
-                  Padding(
+                for (final shop in s.shopOptions)
+                  ShopPickerPill(
                     key: ValueKey(shop.name),
-                    padding: const EdgeInsets.only(bottom: AppSpacing.gap),
-                    child: ShopOptionEntrance(
-                      index: index,
-                      child: ShopOption(
-                        name: shop.name,
-                        color: shop.color.toColor(),
-                        selected: s.isShopSelected(shop.name),
-                        onTap: () =>
-                            controller.toggleShop(shop.name, shop.color),
-                      ),
-                    ),
+                    label: shop.name,
+                    color: shop.color.toColor(),
+                    selected: s.isShopSelected(shop.name),
+                    onTap: () => controller.toggleShop(shop.name, shop.color),
                   ),
-                OutlinedButton(
-                  onPressed: () => showModalBottomSheet<void>(
+                _AddShopPill(
+                  tooltip: t.onboarding.addShop,
+                  onTap: () => showAppSheet<void>(
                     context: context,
-                    isScrollControlled: true,
-                    showDragHandle: true,
                     builder: (_) => AddShopSheet(onAdd: controller.addShop),
                   ),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(64),
-                    alignment: Alignment.centerLeft,
-                    side: BorderSide(color: theme.colorScheme.outlineVariant),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadii.card),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppSpacing.screen,
-                    ),
-                  ),
-                  child: Text(
-                    '+ ${t.onboarding.addShop}',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
-                const SizedBox(height: AppSpacing.gap),
               ],
             ),
           ),
+          const SizedBox(height: AppSpacing.md),
+          OnboardingEntrance(
+            index: 3,
+            child: Text(
+              picked == 0
+                  ? t.onboarding.noShops
+                  : t.onboarding.shopsPicked(n: picked),
+              style: AppTextStyles.secondary.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A dashed 40px circle with "+", the same size as the pills next to it.
+/// Opens the add-shop sheet.
+class _AddShopPill extends StatelessWidget {
+  const _AddShopPill({required this.tooltip, required this.onTap});
+
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return TapTarget(
+      onTap: onTap,
+      child: Tooltip(
+        message: tooltip,
+        child: SizedBox.square(
+          dimension: ShopPickerPill.height,
+          child: CustomPaint(
+            painter: DashedOutlinePainter(
+              color: scheme.onSurface.withValues(alpha: .36),
+              strokeWidth: 1.5,
+            ),
+            child: Icon(Icons.add, size: 16, color: scheme.onSurfaceVariant),
+          ),
         ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: ShopTabsPreview(shops: s.selectedShops, t: t),
-        ),
-      ],
+      ),
     );
   }
 }

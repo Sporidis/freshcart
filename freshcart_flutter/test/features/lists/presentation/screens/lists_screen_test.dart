@@ -4,12 +4,18 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/new_list_sheet.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -137,11 +143,13 @@ void main() {
       await tester.tap(find.text('New list'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Weekend');
-      await tester.tap(find.text('Save'));
+      // Create list enables on the frame after typing.
+      await tester.pump();
+      await tester.tap(find.text('Create list'));
       await tester.pumpAndSettle();
 
       expect(repository.createCalls.single, 'Weekend');
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(NewListSheet), findsNothing);
       expect(
         repository.myListsCallCount,
         greaterThan(callsBefore),
@@ -157,15 +165,49 @@ void main() {
         await tester.tap(find.text('New list'));
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField), '   ');
-        await tester.tap(find.text('Save'));
+        // Create list enables on the frame after typing.
+        await tester.pump();
+        await tester.tap(find.text('Create list'));
         await tester.pumpAndSettle();
 
         // The domain rejected it before any network call.
+        // The sheet won't send a blank name: Create list stays disabled,
+        // and the sheet stays open for a real one.
         expect(repository.createCalls, isEmpty);
-        expect(find.byType(AlertDialog), findsOneWidget);
-        expect(find.text('Give the list a name'), findsOneWidget);
+        expect(find.byType(NewListSheet), findsOneWidget);
       },
     );
+    testWidgets('opens the new list, and remembers it as last opened', (
+      tester,
+    ) async {
+      final weekend = buildList(
+        id: '00000000-0000-4000-8000-0000000000aa',
+        name: 'Weekend',
+      );
+      repository
+        ..createResult = Ok(weekend)
+        ..byIdResult = Ok(weekend);
+      await pump(tester);
+
+      await tester.tap(find.text('New list'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Weekend');
+      // Create list enables on the frame after typing.
+      await tester.pump();
+      await tester.tap(find.text('Create list'));
+      await tester.pumpAndSettle();
+
+      // On the new list's detail screen, not left on the lists screen.
+      expect(
+        find.descendant(
+          of: find.byType(EditableListTitle),
+          matching: find.text('Weekend'),
+        ),
+        findsOneWidget,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('last_opened_list_id'), weekend.id.value);
+    });
   });
 
   group('joining by code', () {
@@ -181,6 +223,35 @@ void main() {
 
       expect(repository.joinCalls.single.value, 'ABC23');
       expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('opens the joined list, and remembers it as last opened', (
+      tester,
+    ) async {
+      final shared = buildList(
+        id: '00000000-0000-4000-8000-0000000000bb',
+        name: 'Shared',
+      );
+      repository
+        ..joinResult = Ok(shared)
+        ..byIdResult = Ok(shared);
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.group_add_outlined));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'abc23');
+      await tester.tap(find.text('Save'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byType(EditableListTitle),
+          matching: find.text('Shared'),
+        ),
+        findsOneWidget,
+      );
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getString('last_opened_list_id'), shared.id.value);
     });
 
     testWidgets('rejects a malformed code without a round trip', (
@@ -226,7 +297,10 @@ void main() {
       repository.myListsResult = Ok([list]);
       repository.byIdResult = Ok(list);
 
-      await pump(tester);
+      // Renaming is owner-only (§15) -- buildMember()'s own default id is
+      // the owner buildList() defaults to, so this is "me, renaming my own
+      // list," not a permissions edge case.
+      await pump(tester, currentUserId: 'user-1');
 
       // The header title itself became the field -- no sheet, no dialog.
       await tester.tap(find.text('Groceries'));
@@ -254,7 +328,8 @@ void main() {
         Failure.validation('name', 'That name is too long'),
       );
 
-      await pump(tester);
+      // Same reason as the test above: rename is owner-only (§15).
+      await pump(tester, currentUserId: 'user-1');
 
       await tester.tap(find.text('Groceries'));
       await tester.pumpAndSettle();
@@ -296,9 +371,16 @@ void main() {
 
       await pump(tester, currentUserId: 'user-1');
 
-      await tester.tap(find.byType(PopupMenuButton<void>));
+      // Design v3: the list's own actions live in List settings, behind
+      // the header's avatars.
+      await tester.tap(find.byType(MemberAvatarStack));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Delete list'));
+      await tester.scrollUntilVisible(
+        find.text('Delete for everyone'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.tap(find.text('Delete for everyone'));
       await tester.pumpAndSettle();
 
       expect(find.text('Delete Groceries?'), findsOneWidget);
@@ -315,7 +397,9 @@ void main() {
       // this list -- update the fake to match, since ListsController.delete
       // refreshes its own state as part of a successful delete.
       repository.myListsResult = const Ok([]);
-      await tester.tap(find.text('Delete for everyone'));
+      // The dialog's confirm button; the settings row behind it has the
+      // same label.
+      await tester.tap(find.text('Delete for everyone').last);
       await tester.pumpAndSettle();
 
       expect(repository.deleteCalls.single, list.id);
@@ -326,7 +410,7 @@ void main() {
   });
 
   group('navigation', () {
-    testWidgets('the household avatar opens the household screen', (
+    testWidgets("the household's avatars open List settings", (
       tester,
     ) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
@@ -337,12 +421,11 @@ void main() {
 
       expect(find.text('Groceries'), findsOneWidget);
 
-      // Household — join code and members — lives one tap away, behind the
-      // app bar's own avatar, not inline on this screen.
-      await tester.tap(find.byType(CircleAvatar));
+      // Design v3: the avatars are the door to List settings, where the
+      // household, shops and the list's own actions live.
+      await tester.tap(find.byType(MemberAvatarStack));
       await tester.pumpAndSettle();
-      expect(find.textContaining('ABC23'), findsOneWidget);
-      expect(find.text('Nikolaos'), findsOneWidget);
+      expect(find.text('List settings'), findsOneWidget);
     });
 
     testWidgets('the hamburger opens a switcher to the other lists', (
@@ -362,7 +445,7 @@ void main() {
 
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byTooltip('Open navigation menu'));
       await tester.pumpAndSettle();
 
       // Both lists, the open one distinguishable from the other.
@@ -379,6 +462,64 @@ void main() {
       expect(find.widgetWithText(AppBar, 'Hardware'), findsOneWidget);
     });
 
+    testWidgets('picking a list in the drawer flies its name into the header', (
+      tester,
+    ) async {
+      final groceries = buildList(name: 'Groceries', members: [buildMember()]);
+      final hardware = buildList(
+        id: '00000000-0000-4000-8000-000000000002',
+        name: 'Hardware',
+        members: [buildMember()],
+      );
+      repository.myListsResult = Ok([groceries, hardware]);
+      repository.byIdResult = Ok(groceries);
+
+      await pump(tester);
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+
+      repository.byIdResult = Ok(hardware);
+      await tester.tap(find.text('Hardware'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+
+      // The header's own title, which waits while the copy flies in.
+      double headerTitleOpacity(String name) => tester
+          .widget<Opacity>(
+            find
+                .ancestor(
+                  of: find.descendant(
+                    of: find.byType(AppBar),
+                    matching: find.text(name),
+                  ),
+                  matching: find.byType(Opacity),
+                )
+                .first,
+          )
+          .opacity;
+
+      expect(headerTitleOpacity('Hardware'), 0);
+
+      await tester.pumpAndSettle();
+      expect(headerTitleOpacity('Hardware'), 1);
+      // Landed: only the header's title is left.
+      expect(find.text('Hardware'), findsOneWidget);
+
+      // And again, back the other way. Every list used to share one page,
+      // so from the second switch on the old screen was reused, its title
+      // had already flown, and nothing moved.
+      await tester.tap(find.byTooltip('Open navigation menu'));
+      await tester.pumpAndSettle();
+      repository.byIdResult = Ok(groceries);
+      await tester.tap(find.text('Groceries'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 60));
+
+      expect(headerTitleOpacity('Groceries'), 0);
+      await tester.pumpAndSettle();
+      expect(headerTitleOpacity('Groceries'), 1);
+    });
+
     testWidgets('the drawer\'s Settings entry navigates to Settings', (
       tester,
     ) async {
@@ -388,7 +529,7 @@ void main() {
 
       await pump(tester);
 
-      await tester.tap(find.byIcon(Icons.menu));
+      await tester.tap(find.byTooltip('Open navigation menu'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Settings'));
       await tester.pumpAndSettle();
@@ -443,8 +584,12 @@ void main() {
         addTearDown(repository.dispose);
 
         await pump(tester, currentUserId: 'user-1');
-        await tester.tap(find.byType(CircleAvatar));
+        await tester.tap(find.byType(MemberAvatarStack));
         await tester.pumpAndSettle();
+        // List settings shows each member; a member row opens Household.
+        await tester.tap(find.text('Nikolaos'));
+        await tester.pumpAndSettle();
+        expect(find.byType(HouseholdScreen), findsOneWidget);
         expect(find.text('Mom'), findsNothing);
 
         // Someone else joins the list on another device — no user action here,
@@ -466,6 +611,67 @@ void main() {
         expect(find.text('Mom'), findsOneWidget);
       },
     );
+  });
+
+  group('swipe to delete', () {
+    Future<void> openGroceries(WidgetTester tester) async {
+      final list = buildList(name: 'Groceries', members: [buildMember()]);
+      repository.myListsResult = Ok([list]);
+      repository.byIdResult = Ok(list);
+      itemRepository.byListResult = Ok([
+        buildItem(name: 'Milk'),
+        buildItem(id: '00000000-0000-4000-8000-0000000000a2', name: 'Bread'),
+      ]);
+      await pump(tester);
+    }
+
+    // Right-to-left, well past the 40% threshold.
+    Future<void> swipeAway(WidgetTester tester, String name) async {
+      await tester.drag(find.text(name), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a swiped row goes at once, with an Undo that brings it back '
+        'and deletes nothing', (tester) async {
+      await openGroceries(tester);
+      await swipeAway(tester, 'Milk');
+
+      expect(find.text('Milk'), findsNothing);
+      expect(find.text('Milk removed'), findsOneWidget);
+
+      await tester.tap(find.text('Undo'));
+      await tester.pumpAndSettle();
+      // Past the whole undo window: the cancelled delete never lands.
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(itemRepository.removedIds, isEmpty);
+    });
+
+    testWidgets('left alone, the delete lands once the undo window ends', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+      await swipeAway(tester, 'Milk');
+      expect(itemRepository.removedIds, isEmpty, reason: 'held, not sent');
+
+      await tester.pump(const Duration(seconds: 5));
+      await tester.pumpAndSettle();
+
+      expect(itemRepository.removedIds, hasLength(1));
+    });
+
+    testWidgets('a short swipe springs back and deletes nothing', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+      await tester.drag(find.text('Milk'), const Offset(-120, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Milk'), findsOneWidget);
+      expect(find.text('Milk removed'), findsNothing);
+    });
   });
 
   group('multi-select', () {
@@ -541,6 +747,19 @@ void main() {
       expect(find.text('Milk'), findsOneWidget);
     });
 
+    testWidgets('rows do not swipe while selecting -- taps own them', (
+      tester,
+    ) async {
+      await openGroceries(tester);
+      await enterSelection(tester, 'Milk');
+
+      await tester.drag(find.text('Bread'), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bread'), findsOneWidget);
+      expect(find.text('Bread removed'), findsNothing);
+    });
+
     testWidgets('Delete removes the selected rows and exits the mode', (
       tester,
     ) async {
@@ -550,6 +769,10 @@ void main() {
       await tester.tap(find.text('Delete'));
       await tester.pumpAndSettle();
 
+      // Gone from the list at once; deleted once Undo has had its chance.
+      expect(find.text('Milk'), findsNothing);
+      expect(itemRepository.removeManyCalls, isEmpty);
+      await tester.pump(ItemsController.swipeUndoWindow);
       expect(
         itemRepository.removeManyCalls.single.single,
         ItemId('00000000-0000-4000-8000-0000000000aa'),
@@ -590,7 +813,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Move to'), findsOneWidget);
-      await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ShopPicker),
+          matching: find.text('Bakery'),
+        ),
+      );
       await tester.pumpAndSettle();
 
       expect(itemRepository.moveManyCalls.single.shopId, bakery.id);
@@ -617,7 +845,12 @@ void main() {
         await enterSelection(tester, 'Milk');
         await tester.tap(find.text('Move'));
         await tester.pumpAndSettle();
-        await tester.tap(find.widgetWithText(ChoiceChip, 'Bakery'));
+        await tester.tap(
+          find.descendant(
+            of: find.byType(ShopPicker),
+            matching: find.text('Bakery'),
+          ),
+        );
         await tester.pumpAndSettle();
 
         expect(find.text('1 selected'), findsOneWidget);
@@ -676,6 +909,8 @@ void main() {
         expect(find.text('Cancel'), findsOneWidget);
         // The quick-add field is the only other TextField this screen has.
         expect(find.byType(TextField), findsOneWidget);
+        // Scaled out, not removed (v3): still built, but can't be tapped.
+        expect(find.byType(QuickAddBar).hitTestable(), findsNothing);
       },
     );
 
