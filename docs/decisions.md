@@ -2735,9 +2735,14 @@ dashed left edge on pending rows that fades out row by row (40ms apart) as they 
 **Trade-offs.**
 - While the server echoes a just-replayed add and the queue drops it, the temporary row and the
   real one can both exist for a moment.
-- The combined stream doesn't wait for the server stream's cancel. That stream is an `async*`
-  generator, and cancelling one parked in `await for` only finishes on the next live event, a
-  pre-existing quirk of `resilientWatch` that also means a list's live connection outlives
-  leaving the list until its next update.
+- **Coming back online lost ticks** (found on a phone, with an on-device trace). Two gaps:
+  `resilientWatch` fetched before listening, so a change in between was missed; and even
+  listening first, the server only starts sending about 200ms after the app subscribes. The
+  first is fixed by listening first and holding changes back. The second can't be closed from
+  the app, so when a queued change leaves the queue (the server has it), the list fetches a
+  fresh snapshot (`resync`), a burst folded into one more fetch.
+- **`resilientWatch` is a `StreamController`, not an `async*` generator.** Cancelling a generator
+  parked in `await for` only finishes on its next event, so a list's live connection outlived
+  leaving the list. Now cancelling lets go at once.
 
 **Not yet:** conflict surfacing (see offline-sync-plan.md Phase E).
