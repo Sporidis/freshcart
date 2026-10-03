@@ -198,11 +198,15 @@ class ItemRepositoryImpl implements ItemRepository {
   /// draining.
   @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
+    // When a queued change leaves the queue it has reached the server, but
+    // its live update can be missed (see resilientWatch's `resync`), so the
+    // list re-fetches then.
+    final resync = StreamController<void>.broadcast();
     final server = ItemRealtimeSource(
       _client,
       _connectivityAdapter,
       _cache,
-    ).watchByList(listId);
+    ).watchByList(listId, resync: resync.stream);
 
     StreamSubscription<Result<List<ShoppingItem>>>? serverSub;
     StreamSubscription<List<PendingOperation>>? queueSub;
@@ -242,8 +246,10 @@ class ItemRepositoryImpl implements ItemRepository {
             // An empty queue that was already empty changes nothing on
             // screen: don't send the same list twice.
             final changed = ops.isNotEmpty || queued.isNotEmpty;
+            final synced = ops.length < queued.length;
             queued = ops;
             if (changed) emit();
+            if (synced) resync.add(null);
           },
           // The queue is only an overlay: if reading it fails, keep
           // showing the server's items as they are.
@@ -253,6 +259,7 @@ class ItemRepositoryImpl implements ItemRepository {
       onCancel: () async {
         await queueSub?.cancel();
         await serverSub?.cancel();
+        await resync.close();
       },
     );
     return out.stream;
