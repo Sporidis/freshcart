@@ -8,15 +8,13 @@ import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/confetti_burst.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// "Everything on this list is checked off" — one raised card, plus the
-/// restrained confetti burst §09 of the motion spec calls for.
+/// The "everything is checked off!" card, with a small confetti burst.
 ///
-/// Named `celebrate` in the motion spec (§13, `AppMotion.celebrate`,
-/// `AppMotion.spring`) as the one moment in the app allowed to feel like an
-/// event — everywhere else, motion stays quick and gets out of the way.
-/// Reduced motion (`AppMotion.reduced`) turns the spring pop into a plain,
-/// static appearance and skips the confetti burst entirely, per the spec's
-/// own fallback note for this exact card.
+/// The only place in the app with a big, fun animation. Everywhere else,
+/// animations are quick and subtle.
+///
+/// With reduced motion on, the card just appears (no bounce) and there's no
+/// confetti.
 class CompletionCelebrationCard extends StatefulWidget {
   /// Creates the card for [list], which currently has [itemCount] items, all
   /// checked.
@@ -34,23 +32,18 @@ class CompletionCelebrationCard extends StatefulWidget {
   /// The list being celebrated.
   final ShoppingList list;
 
-  /// How many items are on it — the celebration counts them, so the caller
-  /// hands over the number it already had rather than this card re-deriving
-  /// it from a second watch of the same provider.
+  /// How many items are on the list (shown on the card).
   final int itemCount;
 
-  /// The palette the confetti burst draws from — "the list's shop colours
-  /// only" per the motion spec, not an app-wide default. Handed in rather
-  /// than re-derived here so this widget never needs its own opinion about
-  /// what a shopless list falls back to; `ItemsSection` already owns that
-  /// call for the rest of the screen.
+  /// The confetti colours: the list's shop colours. Passed in by
+  /// `ItemsSection`, which also decides what to use if there are no shops.
   final List<Color> shopColors;
 
   /// Translations for the active locale.
   final Translations t;
 
-  /// Surfaces a failed "Clear checked" the same way every other write on
-  /// this screen does — see `ItemsSection`'s own `report`.
+  /// Shows an error if "Clear checked" fails (same as other errors on this
+  /// screen).
   final void Function(Failure? failure) report;
 
   /// "Keep list": hide the card, leave the items alone.
@@ -71,24 +64,23 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
     value: 0,
   );
 
-  // Held so dispose() can cancel a still-running burst -- otherwise its
-  // Ticker has no idea this widget (and the confetti it started) is going
-  // away before the 1.4s finishes on its own.
+  // Kept so dispose() can stop the confetti if the card closes before the
+  // 1.4 s animation is done.
   ConfettiBurstHandle? _confetti;
 
   @override
   void initState() {
     super.initState();
-    // Deferred a frame: AppMotion.reduced needs a built context to read
-    // MediaQuery from, which initState does not reliably have yet.
+    // Wait one frame: AppMotion.reduced reads MediaQuery, which isn't
+    // safe to use in initState yet.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       if (AppMotion.reduced(context)) {
         _entrance.value = 1;
       } else {
         _entrance.animateWith(SpringSimulation(AppMotion.spring, 0, 1, 0));
-        // "Skip entirely if reduced-motion is on" (§09) — the branch above
-        // already means this line is only reached when it isn't.
+        // Confetti. We only get here when reduced motion is off (checked
+        // above).
         _confetti = ConfettiBurst.fire(context, colors: widget.shopColors);
       }
     });
@@ -121,7 +113,7 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
             AppSpacing.screen,
             AppSpacing.gap,
           ),
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(AppSpacing.xl),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: BorderRadius.circular(AppRadii.celebration),
@@ -139,9 +131,9 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
               Text(
                 t.items.celebrateCount(n: widget.itemCount),
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyStrong.copyWith(fontSize: 19),
+                style: AppTextStyles.cardTitle,
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 t.items.celebrateBody(list: widget.list.name),
                 textAlign: TextAlign.center,
@@ -149,7 +141,7 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: AppSpacing.lg),
               Row(
                 spacing: 9,
                 children: [
@@ -194,8 +186,7 @@ Widget completionCelebrationCardPreview() => previewPiece(
   padding: EdgeInsets.zero,
 );
 
-/// A minimal [ShoppingList] for the preview above — not exported, previews
-/// only.
+/// A fake [ShoppingList], only for the preview above.
 ShoppingList buildPreviewList() => ShoppingList(
   id: ListId('00000000-0000-4000-8000-000000000001'),
   name: 'Weekly Groceries',

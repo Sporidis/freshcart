@@ -3,12 +3,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'large_text_controller.g.dart';
 
-/// Whether list text renders at the "easier to read at arm's length" size
-/// the design calls for (`docs/design-gap-plan.md` §7) — a deliberately
-/// conservative, opt-in bump, not a full accessibility text-scale system.
+/// Whether the "Larger list text" setting is on.
 ///
-/// Persisted the same way [AppearanceController] is: `shared_preferences`,
-/// a plain UI preference.
+/// Off by default. Saved on the device with `shared_preferences`.
 @riverpod
 class LargeTextController extends _$LargeTextController {
   static const _prefsKey = 'large_list_text';

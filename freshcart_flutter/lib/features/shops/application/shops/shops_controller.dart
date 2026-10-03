@@ -12,7 +12,7 @@ class ShopsController extends _$ShopsController {
   Future<Result<List<Shop>>> build(ListId listId) =>
       ref.watch(shopRepositoryProvider).byList(listId);
 
-  /// Creates a shop and refreshes the collection on success.
+  /// Creates a shop, then reloads the shops if it worked.
   Future<Result<Shop>> create({
     required String name,
     required HexColor color,
@@ -26,10 +26,8 @@ class ShopsController extends _$ShopsController {
     return result;
   }
 
-  /// Renames and/or recolours a shop, refreshing the collection on success.
-  ///
-  /// Recolouring re-seeds the app theme when this shop is the active one, so
-  /// the refresh is what makes the new colour take hold everywhere.
+  /// Changes a shop's name and/or colour, then reloads the shops if it
+  /// worked. The reload is what makes a new colour show everywhere.
   Future<Result<Shop>> edit(Shop shop, {String? name, HexColor? color}) async {
     final result = await EditShop(ref.read(shopRepositoryProvider))(
       shop,
@@ -40,12 +38,10 @@ class ShopsController extends _$ShopsController {
     return result;
   }
 
-  /// Flips whether [shop] shows as a tab in the shop nav, refreshing the
-  /// collection on success.
+  /// Shows or hides [shop]'s tab, then reloads the shops if it worked.
   ///
-  /// Turning off the shop the list is currently filtered to also clears that
-  /// filter back to "All" -- its tab is about to disappear, so staying
-  /// filtered to it would narrow the list to a shop with no visible way back.
+  /// If the hidden shop is the selected tab, the filter goes back to "All".
+  /// Otherwise the user would be stuck on a tab that no longer exists.
   Future<Result<Shop>> toggleActive(Shop shop) async {
     final result = await ToggleShopActive(ref.read(shopRepositoryProvider))(
       shop,
@@ -62,11 +58,11 @@ class ShopsController extends _$ShopsController {
     return result;
   }
 
-  /// How many items are tagged to [id], for the delete sheet to lead with.
+  /// How many items have shop [id]. Shown in the delete sheet.
   Future<Result<int>> itemCount(ShopId id) =>
       ref.read(shopRepositoryProvider).itemCount(id);
 
-  /// Deletes a shop, disposing of its items as [disposition] says.
+  /// Deletes a shop. [disposition] says what happens to its items.
   Future<Result<void>> remove(
     ShopId id, {
     ShopItemDisposition disposition = ShopItemDisposition.untag,
@@ -79,13 +75,10 @@ class ShopsController extends _$ShopsController {
     return result;
   }
 
-  /// Re-reads this controller's own collection, if it is still alive.
+  /// Reloads the shops, but only if this provider still exists.
   ///
-  /// A write can outlive the screen that started it: the household screen
-  /// removes a member and routes away, and nothing there watches this
-  /// provider, so it auto-disposes while the request is still in flight.
-  /// Refreshing a cache that no longer exists is not an error — there is
-  /// simply nothing left to refresh.
+  /// The screen can close while a save is still running. Then this provider
+  /// is already disposed, and there's nothing to reload. That's fine.
   void _refreshIfAlive() {
     if (ref.mounted) ref.invalidateSelf();
   }

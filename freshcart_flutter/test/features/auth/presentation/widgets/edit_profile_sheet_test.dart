@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:freshcart_flutter/features/auth/presentation/screens/edit_profile_screen.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/edit_profile_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -30,9 +30,20 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: EditProfileScreen()),
+        // Opened the way the app opens it: from a button, as a sheet.
+        child: MaterialApp(
+          home: Scaffold(
+            body: Builder(
+              builder: (context) => TextButton(
+                onPressed: () => showEditProfileSheet(context),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+    await tester.tap(find.text('open'));
     await tester.pumpAndSettle();
   }
 
@@ -53,6 +64,7 @@ void main() {
       find.byType(TextField).first,
       '  Nikos Sporidis  ',
     );
+    await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
@@ -65,6 +77,7 @@ void main() {
     await pump(tester);
 
     await tester.enterText(find.byType(TextField).first, 'A');
+    await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
@@ -118,13 +131,36 @@ void main() {
     expect(auth.clearAvatarPhotoCalls, 1);
   });
 
+  testWidgets('saving a name closes the sheet', (tester) async {
+    await pump(tester);
+
+    await tester.enterText(find.byType(TextField).first, 'Nikos');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(EditProfileSheet), findsNothing);
+  });
+
+  testWidgets('Save is disabled while the name is empty', (tester) async {
+    await pump(tester);
+
+    await tester.enterText(find.byType(TextField).first, '   ');
+    await tester.pump();
+
+    final save = tester.widget<ElevatedButton>(
+      find.widgetWithText(ElevatedButton, 'Save'),
+    );
+    expect(save.onPressed, isNull);
+  });
+
   testWidgets(
-    'a failed load shows the error screen, not a permanent spinner',
+    'a failed load shows the error, not a permanent spinner',
     (tester) async {
       auth.user = const Err(Failure.unexpected());
       await pump(tester);
 
-      expect(find.text('Something went wrong'), findsOneWidget);
+      expect(find.text('Something went wrong.'), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);
     },
   );

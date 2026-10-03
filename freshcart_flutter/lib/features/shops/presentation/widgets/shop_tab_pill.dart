@@ -1,23 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
-/// One tab in the shop strip: "All" or a single shop, active or not.
+/// One shop tab: "All" or a single shop (design v3: a plain 36px pill).
 ///
-/// Component Library §02. Replaces a stock `FilterChip` because the active
-/// state is a full colour fill (not `FilterChip`'s selected-outline look),
-/// and only a shop tab carries a leading dot at all -- "All" never does.
+/// Unselected: a hairline outline, ink text, a dot in the shop's colour
+/// ("All" has no dot), and the remaining count at 60%. Selected: the text
+/// and dot turn to the on-colour. The fill comes from one of two places:
+/// - the strip draws a single highlight that slides between tabs, and
+///   passes `showFill: false`;
+/// - standalone (previews, onboarding) the pill fills itself.
 ///
-/// This widget only draws; it does not know about [ShopFilterProvider] or
-/// remaining-item counts. Its caller resolves "am I selected" and "how many
-/// are left in me" and hands both down, same as every other presentation
-/// widget in this codebase (`ItemTile`, `ShopTabPill`'s own `count`).
+/// This widget only draws. The parent tells it if it's selected and how
+/// many items are left.
 class ShopTabPill extends StatefulWidget {
-  /// Creates the pill. Pass `color: null` for the "All" tab -- it is always
-  /// ink (or white-on-dark), and never draws a leading dot.
+  /// Creates the pill. Pass `color: null` for the "All" tab.
   const ShopTabPill({
     required this.label,
     required this.active,
@@ -25,8 +28,13 @@ class ShopTabPill extends StatefulWidget {
     this.count,
     this.onTap,
     this.onTapDown,
+    this.showFill = true,
     super.key,
   });
+
+  /// Whether a selected pill paints its own fill. The strip turns this off
+  /// because its sliding highlight is the fill.
+  final bool showFill;
 
   /// "All", or the shop's name.
   final String label;
@@ -37,25 +45,15 @@ class ShopTabPill extends StatefulWidget {
   /// The shop's colour, or null for the neutral "All" tab.
   final Color? color;
 
-  /// Items still unchecked inside this tab. Hidden (not "· 0") at zero, per
-  /// the component library's own note: a badge that can read "0" reads as
-  /// broken, not "nothing left".
+  /// How many items are still unchecked in this tab. Hidden when 0
+  /// (a "0" badge looks broken).
   final int? count;
 
   final VoidCallback? onTap;
 
-  /// Fires before [onTap], with where the finger landed -- lets a caller
-  /// anchor a theme-reveal animation to the tap instead of the pill's
-  /// centre.
+  /// Called before [onTap], with where the finger touched. Used to start
+  /// the colour wave from that spot.
   final GestureTapDownCallback? onTapDown;
-
-  /// A background's contrasting foreground -- the same formula
-  /// `AppTheme.forShop` uses for the same reason (arbitrary shop colours,
-  /// not a matched M3 pair, so estimate rather than assume).
-  static Color _onColorFor(Color background) =>
-      ThemeData.estimateBrightnessForColor(background) == Brightness.dark
-      ? Colors.white
-      : AppColors.ink;
 
   @override
   State<ShopTabPill> createState() => _ShopTabPillState();
@@ -63,82 +61,114 @@ class ShopTabPill extends StatefulWidget {
 
 class _ShopTabPillState extends State<ShopTabPill>
     with SingleTickerProviderStateMixin {
-  // TODO(human): a small scale "kick" -- 1.0 -> ~1.08 -> 1.0 -- that plays
-  // once each time this pill is tapped, so the tapped chip visibly
-  // "launches" the theme-reveal wave it anchors (decisions #88). Mirror
-  // item_tile.dart's `_iconPop`/`_iconPopOvershoot` pattern:
-  //  - an `AnimationController` (`AppMotion.quick` is a reasonable
-  //    duration)
-  //  - a two-stage `TweenSequence<double>` for the scale itself
-  //    (item_tile.dart's own overshoot tween is a direct template)
-  //  - `.forward(from: 0)` it inside `_handleTap` below, before calling
-  //    `widget.onTap`
-  //  - wrap the `AnimatedContainer` in `build()` with a `ScaleTransition`
-  //    (or an `AnimatedBuilder` + `Transform.scale`) driven by it
-  //  - dispose the controller in `dispose()`
-  //
-  // Worth deciding for yourself: every other animation in this file reads
-  // `AppMotion.durationFor`/`curveFor` for reduced motion -- does the kick
-  // skip entirely under reduced motion, or just lose its overshoot?
+  /// A small "pop" when tapped (size 1.0 -> 1.08 -> 1.0), so it looks like
+  /// the pill starts the colour wave. See decisions.md #88.
+  late final AnimationController _kick = AnimationController(
+    vsync: this,
+    duration: AppMotion.quick,
+  );
+
+  static const double _kickPeak = 1.08;
+
+  late final Animation<double> _kickScale = TweenSequence<double>([
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: 1,
+        end: _kickPeak,
+      ).chain(CurveTween(curve: AppMotion.enter)),
+      weight: 1,
+    ),
+    TweenSequenceItem(
+      tween: Tween<double>(
+        begin: _kickPeak,
+        end: 1,
+      ).chain(CurveTween(curve: AppMotion.press)),
+      weight: 1,
+    ),
+  ]).animate(_kick);
+
+  @override
+  void dispose() {
+    _kick.dispose();
+    super.dispose();
+  }
 
   void _handleTap() {
+    // No pop at all with reduced motion. A pop without the bounce would
+    // just be a pause.
+    if (!AppMotion.reduced(context)) unawaited(_kick.forward(from: 0));
     widget.onTap?.call();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Neutral fill tracks brightness the same way the app's own "ink" text
-    // colour does (`AppTheme`'s local `ink` var) -- not a literal constant,
-    // so the All tab still reads correctly in dark mode.
+    // The "All" fill: dark in light mode, light in dark mode.
     final fill = widget.color ?? theme.colorScheme.onSurface;
-    final onFill = ShopTabPill._onColorFor(fill);
-    final label = (widget.count == null || widget.count == 0)
-        ? widget.label
-        : '${widget.label} · ${widget.count}';
+    final onFill = AppTheme.onColorFor(fill);
+    final active = widget.active;
+    final fg = active ? onFill : theme.colorScheme.onSurface;
+    final count = widget.count;
+    final duration = AppMotion.durationFor(context, AppMotion.standard);
 
-    return Material(
-      type: MaterialType.transparency,
-      child: InkWell(
-        onTap: _handleTap,
-        onTapDown: widget.onTapDown,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
+    return TapTarget(
+      onTap: _handleTap,
+      onTapDown: widget.onTapDown,
+      child: ScaleTransition(
+        scale: _kickScale,
         child: AnimatedContainer(
-          duration: AppMotion.durationFor(context, AppMotion.quick),
+          duration: duration,
           curve: AppMotion.enter,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
-            color: widget.active ? fill : Colors.transparent,
+            color: active && widget.showFill ? fill : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: widget.active
-                ? null
-                : Border.all(color: theme.colorScheme.outlineVariant),
+            border: Border.all(
+              color: active
+                  ? Colors.transparent
+                  : theme.colorScheme.outlineVariant,
+            ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.color != null) ...[
-                Container(
+                AnimatedContainer(
+                  duration: duration,
                   width: AppSizes.tabDot,
                   height: AppSizes.tabDot,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    // Active: white, matching the fill's own contrast --
-                    // inactive: the shop's literal colour (component
-                    // library: "inactive pills keep a small shop-colour
-                    // dot").
-                    color: widget.active ? onFill : widget.color,
+                    color: active ? onFill : widget.color,
                   ),
                 ),
                 const SizedBox(width: 6),
               ],
-              Text(
-                label,
-                style:
-                    (widget.active
-                            ? theme.textTheme.labelLarge
-                            : theme.textTheme.labelMedium)
-                        ?.copyWith(color: widget.active ? onFill : null),
+              AnimatedDefaultTextStyle(
+                duration: duration,
+                style: AppTextStyles.secondaryStrong.copyWith(
+                  fontSize: 14,
+                  color: fg,
+                ),
+                child: Text.rich(
+                  TextSpan(
+                    text: widget.label,
+                    children: [
+                      // A "0" badge looks broken, so an empty tab shows none.
+                      if (count != null && count > 0)
+                        TextSpan(
+                          text: '  $count',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w500,
+                            color: fg.withValues(alpha: .6),
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                    ],
+                  ),
+                  maxLines: 1,
+                ),
               ),
             ],
           ),
@@ -168,14 +198,14 @@ Widget shopTabPillShopPreview() => previewPiece(
       ShopTabPill(
         label: 'Colruyt',
         active: true,
-        color: Color(0xFFE8791A),
+        color: AppColors.swatchOrange,
         count: 4,
       ),
       SizedBox(width: 8),
       ShopTabPill(
         label: 'Colruyt',
         active: false,
-        color: Color(0xFFE8791A),
+        color: AppColors.swatchOrange,
       ),
     ],
   ),

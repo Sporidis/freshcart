@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/dashed_add_row.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/screens/manage_shops_screen.dart';
@@ -66,13 +68,14 @@ void main() {
       expect(find.text('Add shop'), findsWidgets);
     });
 
-    testWidgets('the FAB opens the same sheet once shops exist', (
+    testWidgets('the dashed row at the end opens the same sheet', (
       tester,
     ) async {
       shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
       await pump(tester);
 
-      await tester.tap(find.byType(FloatingActionButton));
+      expect(find.byType(FloatingActionButton), findsNothing);
+      await tester.tap(find.byType(DashedAddRow));
       await tester.pumpAndSettle();
 
       final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
@@ -167,6 +170,57 @@ void main() {
     expect(shops.savedShops, isEmpty);
   });
 
+  testWidgets('the row being edited takes the previewed colour as its border', (
+    tester,
+  ) async {
+    shops.byListResult = Ok([shop('s1', 'Albert Heijn', blue)]);
+    await pump(tester);
+
+    await tester.tap(find.text('Albert Heijn'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('swatch-$orange')));
+    await tester.pumpAndSettle();
+
+    // The row behind the sheet, not the sheet's own name field.
+    final row = tester.widget<AnimatedContainer>(
+      find
+          .ancestor(
+            of: find.descendant(
+              of: find.byType(ManageShopsScreen),
+              matching: find.text('Albert Heijn'),
+            ),
+            matching: find.byType(AnimatedContainer),
+          )
+          .first,
+    );
+    final border = (row.decoration! as BoxDecoration).border! as Border;
+    expect(border.top.color, const Color(orange));
+  });
+
+  testWidgets('a colour another shop already uses is marked, not blocked', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    shops.byListResult = Ok([
+      shop('s1', 'Albert Heijn', blue),
+      shop('s2', 'Colruyt', orange),
+    ]);
+    await pump(tester);
+
+    await tester.tap(find.text('Colruyt'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.bySemanticsLabel(RegExp('Used by Albert Heijn')),
+      findsOneWidget,
+    );
+    // Still pickable.
+    await tester.tap(find.byKey(const ValueKey('swatch-$blue')));
+    await tester.pumpAndSettle();
+    expect(find.text('Close to Albert Heijn'), findsOneWidget);
+    semantics.dispose();
+  });
+
   testWidgets('an abandoned preview does not outlive the sheet', (
     tester,
   ) async {
@@ -213,6 +267,53 @@ void main() {
   });
 
   group('deleting a shop', () {
+    /// Delete is a swipe now, right-to-left past the 40% threshold -- never
+    /// a trash icon one tap away on every row.
+    Future<void> swipeToDelete(WidgetTester tester, String name) async {
+      await tester.drag(find.text(name), const Offset(-600, 0));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('rows carry no trash icon -- delete is a deliberate swipe', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      await pump(tester);
+
+      expect(find.byIcon(Icons.delete_outline), findsNothing);
+    });
+
+    testWidgets('a short swipe springs back without asking anything', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      shops.itemCountResult = 6;
+      await pump(tester);
+
+      // Well under 40% of an 800 px-wide test surface.
+      await tester.drag(find.text('Colruyt'), const Offset(-120, 0));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Delete Colruyt?'), findsNothing);
+      expect(find.text('Colruyt'), findsOneWidget);
+    });
+
+    testWidgets('a full swipe asks first, and the row survives a cancel', (
+      tester,
+    ) async {
+      shops.byListResult = Ok([shop('s1', 'Colruyt', orange)]);
+      shops.itemCountResult = 6;
+      await pump(tester);
+
+      await swipeToDelete(tester, 'Colruyt');
+      expect(find.text('Delete Colruyt?'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(shops.removeCalls, isEmpty);
+      expect(find.text('Colruyt'), findsOneWidget);
+    });
     testWidgets('a shop holding products offers real alternatives', (
       tester,
     ) async {
@@ -223,7 +324,7 @@ void main() {
       shops.itemCountResult = 6;
 
       await pump(tester);
-      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await swipeToDelete(tester, 'Colruyt');
       await tester.pumpAndSettle();
 
       // The count leads, because it is the question.
@@ -247,7 +348,7 @@ void main() {
       shops.itemCountResult = 6;
 
       await pump(tester);
-      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await swipeToDelete(tester, 'Colruyt');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Move them to Albert Heijn'));
       await tester.pumpAndSettle();
@@ -264,7 +365,7 @@ void main() {
       shops.itemCountResult = 6;
 
       await pump(tester);
-      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await swipeToDelete(tester, 'Colruyt');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Delete products too'));
       await tester.pumpAndSettle();
@@ -282,11 +383,21 @@ void main() {
       shops.itemCountResult = 0;
 
       await pump(tester);
-      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await swipeToDelete(tester, 'Colruyt');
       await tester.pumpAndSettle();
 
       expect(find.text('This shop has no products.'), findsOneWidget);
       expect(find.text('Delete products too'), findsNothing);
+
+      // The confirm is the destructive red, named for what it deletes --
+      // not the ink primary every safe action uses.
+      final confirm = find.widgetWithText(ElevatedButton, 'Delete Colruyt');
+      expect(confirm, findsOneWidget);
+      final style = tester.widget<ElevatedButton>(confirm).style!;
+      expect(
+        style.backgroundColor?.resolve({}),
+        AppColors.destructive,
+      );
     });
 
     testWidgets('dismissing the sheet deletes nothing', (tester) async {
@@ -294,7 +405,7 @@ void main() {
       shops.itemCountResult = 6;
 
       await pump(tester);
-      await tester.tap(find.byIcon(Icons.delete_outline).first);
+      await swipeToDelete(tester, 'Colruyt');
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();

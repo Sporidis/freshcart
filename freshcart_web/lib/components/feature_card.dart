@@ -1,11 +1,10 @@
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
-/// One feature on the landing page.
+/// One feature on the home page.
 ///
-/// Rendered as an `<article>` with a real `<h3>`: this is a content site, and
-/// the semantic structure is the thing a crawler reads
-/// (`docs/decisions.md` #11).
+/// An `<article>` with a real `<h3>`, so search engines understand the
+/// structure (decisions.md #11).
 class FeatureCard extends StatelessComponent {
   /// Creates a card.
   const FeatureCard({
@@ -18,10 +17,10 @@ class FeatureCard extends StatelessComponent {
   /// The feature's heading.
   final String title;
 
-  /// The supporting sentence.
+  /// The short description under the heading.
   final String body;
 
-  /// A decorative emoji, hidden from assistive technology.
+  /// A decorative emoji, hidden from screen readers.
   final String icon;
 
   @override

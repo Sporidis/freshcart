@@ -6,36 +6,32 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'avatar_photo_source.g.dart';
 
-/// Supplies the bytes of a photo the user picks for their avatar.
+/// Lets the user pick a photo for their avatar, and returns its bytes.
 ///
-/// Split out the same way as `PushTokenSource`: the only thing the platform
-/// plugin is responsible for is producing bytes. Uploading them is ordinary
-/// server traffic through `ProfileController`, and tests swap this source for
-/// a fake instead of needing a real gallery.
+/// Only picking happens here. Uploading is done by `ProfileController`.
+/// Tests replace this with a fake, so they don't need a real photo gallery.
 abstract interface class AvatarPhotoSource {
-  /// The picked photo's bytes, `Ok(null)` if the user cancelled, or an
-  /// [Err] if the platform could not pick or read it at all.
+  /// The photo's bytes. `Ok(null)` if the user cancelled. [Err] if picking
+  /// failed.
   Future<Result<Uint8List?>> pick();
 }
 
-/// The [AvatarPhotoSource] backed by `image_picker`'s gallery picker.
+/// The real [AvatarPhotoSource], using the `image_picker` package.
 class ImagePickerAvatarPhotoSource implements AvatarPhotoSource {
   /// Creates the source.
   const ImagePickerAvatarPhotoSource();
 
   @override
   Future<Result<Uint8List?>> pick() async {
-    // Picking and reading can throw a platform exception (denied file
-    // access, or no image_picker implementation on this platform) rather
-    // than return normally -- turned into a Failure here so nothing above
-    // this class needs a try/catch.
+    // Picking can throw (no permission, or not supported on this
+    // platform). We turn that into a Failure here, so callers don't need a
+    // try/catch.
     try {
       final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        // Downsized on pick: a raw camera photo can run to several MB, far
-        // more than an avatar needs -- the server's own size cap
-        // (`ProfileService.maxAvatarPhotoBytes`) is a backstop for a client
-        // that skipped this, not the size a normal upload is meant to reach.
+        // Make the photo smaller. Camera photos can be several MB, way too
+        // big for an avatar. The server also has a size limit, but that's
+        // just a safety net.
         maxWidth: 512,
         maxHeight: 512,
         imageQuality: 85,
@@ -48,7 +44,7 @@ class ImagePickerAvatarPhotoSource implements AvatarPhotoSource {
   }
 }
 
-/// The app's [AvatarPhotoSource]; overridden with a fake in tests.
+/// Supplies the [AvatarPhotoSource]. Tests override it with a fake.
 @riverpod
 AvatarPhotoSource avatarPhotoSource(Ref ref) =>
     const ImagePickerAvatarPhotoSource();

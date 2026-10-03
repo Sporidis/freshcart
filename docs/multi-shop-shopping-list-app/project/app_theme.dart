@@ -186,8 +186,9 @@ class AppTheme {
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadii.sheet)),
         ),
+        // v3: sheets are edge-to-edge (no side/bottom inset), radius 24 on top only.
         showDragHandle: true,
-        dragHandleSize: const Size(36, 4),
+        dragHandleSize: const Size(36, 5),
         dragHandleColor: isDark ? Colors.white24 : Colors.black12,
       ),
 
@@ -329,10 +330,10 @@ class AppTheme {
 
       iconTheme: IconThemeData(color: ink, size: 22),
 
-      pageTransitionsTheme: const PageTransitionsTheme(builders: {
-        TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
-        TargetPlatform.android: CupertinoPageTransitionsBuilder(),
-      }),
+      // pageTransitionsTheme: const PageTransitionsTheme(builders: {
+      //   TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+      //   TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+      // }),
     );
   }
 

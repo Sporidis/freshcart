@@ -5,15 +5,16 @@ import 'package:freshcart_domain/src/items/value_objects/item_id.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
 import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
 
-/// How the domain reads and writes the items on a list.
+/// The interface for reading and saving items. The app implements it with
+/// Serverpod.
 abstract interface class ItemRepository {
-  /// Every item on list [listId].
+  /// All items on list [listId].
   Future<Result<List<ShoppingItem>>> byList(ListId listId);
 
-  /// Appends a new item to [listId].
+  /// Adds a new item to [listId].
   ///
-  /// The server assigns the id and timestamps, which is why this takes loose
-  /// arguments rather than a [ShoppingItem] the client would have to fake.
+  /// Takes separate fields (not a [ShoppingItem]), because the server
+  /// creates the id and dates.
   Future<Result<ShoppingItem>> add({
     required ListId listId,
     required String name,
@@ -22,39 +23,35 @@ abstract interface class ItemRepository {
     String? noteText,
   });
 
-  /// Writes [item] back in full.
+  /// Saves the whole [item].
   ///
-  /// A whole-entity save rather than a set of field-level mutations: it keeps
-  /// one write path for every edit (rename, re-tag, note, check) and gives the
-  /// server a single place to compare `updatedAt` and answer
-  /// `Failure.conflict()` when someone else got there first.
+  /// One save method for every change (rename, shop, note, check), instead
+  /// of one per field. So the server has one place to check `updatedAt` and
+  /// answer `Failure.conflict()` if someone else changed it first.
   Future<Result<ShoppingItem>> save(ShoppingItem item);
 
   /// Deletes item [id].
   Future<Result<void>> remove(ItemId id);
 
-  /// Deletes every checked item on [listId], returning how many were removed.
+  /// Deletes all checked items on [listId]. Returns how many were deleted.
   Future<Result<int>> clearChecked(ListId listId);
 
-  /// Deletes exactly [ids] from [listId] (a multi-select "Delete"), returning
-  /// how many were removed.
+  /// Deletes the items [ids] from [listId] ("Delete" in select mode).
+  /// Returns how many were deleted.
   Future<Result<int>> removeMany(ListId listId, List<ItemId> ids);
 
-  /// Reassigns exactly [ids] on [listId] to [shopId] (a multi-select
-  /// "Move"; null untags them), returning how many moved.
+  /// Moves the items [ids] to shop [shopId] ("Move" in select mode; null =
+  /// no shop). Returns how many were moved.
   Future<Result<int>> moveMany(ListId listId, List<ItemId> ids, ShopId? shopId);
 
-  /// Live view of the items on [listId] (Phase 8).
+  /// The items on [listId], updated live when anyone changes them.
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId);
 
-  /// Product names typed on [listId] before, matching [query], most
-  /// recently used first -- the add control's suggestion chips (decisions
-  /// #64). Scoped to this list only, the same scope shops already use.
+  /// Item names used on [listId] before that match [query], newest first.
+  /// For the suggestion chips (decisions.md #64). Only from this list.
   Future<Result<List<String>>> suggestNames(ListId listId, String query);
 
-  /// Every distinct product name typed on [listId] before, most recently
-  /// used first -- the "Recently bought" shortcut (§06). Unlike
-  /// [suggestNames], this is a browse rather than a filtered search: no
-  /// query text, and no two-character floor.
+  /// Every item name ever used on [listId], newest first. For "Recently
+  /// bought". Like [suggestNames], but without a search text.
   Future<Result<List<NameHistoryEntry>>> recentNames(ListId listId);
 }

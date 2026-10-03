@@ -6,30 +6,25 @@ import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
-/// Captures a [JoinCode]: five boxes, matching the design, backed by one
-/// real (invisible) text field.
+/// The input for a [JoinCode]: looks like five boxes, but it's really one
+/// invisible text field.
 ///
-/// The design's own interaction — type a character and the "cursor" hops to
-/// the next box, backspace on an empty box steps back into the previous one
-/// and clears it, pasting a full code fills every box at once — turns out to
-/// already be exactly what a single ordinary text field does to a plain
-/// string: delete the last character, or replace the whole value on paste.
-/// There is no real per-box focus to hand off here, only the *look* of five
-/// boxes. So rather than five `TextField`s each juggling their own
-/// `FocusNode` (and hand-rolling backspace-into-the-previous-box and
-/// paste-splitting to match), this keeps one real `TextField` — fully
-/// transparent, sized over the whole row — doing the actual text editing,
-/// and draws five read-only boxes underneath purely for how it looks. That
-/// keeps the platform keyboard, paste, and SMS autofill suggestions all
-/// working for free, which five separate fields would each have to earn back
-/// on their own.
+/// How it works: one normal `TextField` sits on top of the row, fully
+/// transparent, and does all the typing. Underneath, five boxes just
+/// display the characters.
+///
+/// Why not five real text fields? Then we'd have to write code to jump to
+/// the next box, go back on backspace, and split a pasted code over the
+/// boxes. One text field already does all of that for free, including
+/// paste and autofill.
 class JoinCodeInput extends StatefulWidget {
-  /// Creates the input. [value] is the code so far (already uppercased);
-  /// [onChanged] fires with the new value on every edit.
+  /// Creates the input. [value] is the code so far (in uppercase).
+  /// [onChanged] is called on every change.
   const JoinCodeInput({
     required this.value,
     required this.onChanged,
     this.autofocus = false,
+    this.hasError = false,
     super.key,
   });
 
@@ -39,8 +34,11 @@ class JoinCodeInput extends StatefulWidget {
   /// Called with the new value whenever it changes.
   final ValueChanged<String> onChanged;
 
-  /// Whether to grab focus and the keyboard as soon as this builds.
+  /// Whether to open the keyboard straight away.
   final bool autofocus;
+
+  /// Makes all box borders red, to show an error.
+  final bool hasError;
 
   @override
   State<JoinCodeInput> createState() => _JoinCodeInputState();
@@ -63,14 +61,12 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
   @override
   Widget build(BuildContext context) {
     final text = _controller.text;
-    // The box about to receive the next character — the design's "cursor"
-    // is really just this box's border, since there is nowhere else for a
-    // blinking caret to visibly land once the real field is invisible.
+    // The box where the next character goes. It gets a highlighted border,
+    // which acts as the cursor (the real cursor is invisible).
     final activeIndex = text.length.clamp(0, JoinCode.length - 1);
 
     return GestureDetector(
-      // Tapping anywhere in the row should focus the field, not just its
-      // own (invisible, possibly narrower) hit area.
+      // Tapping anywhere on the row opens the keyboard.
       onTap: () => _focus.requestFocus(),
       behavior: HitTestBehavior.translucent,
       child: SizedBox(
@@ -89,13 +85,14 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
                     child: _CodeBox(
                       character: index < text.length ? text[index] : '',
                       active: _focus.hasFocus && index == activeIndex,
+                      hasError: widget.hasError,
                     ),
                   ),
                 ],
               ],
             ),
-            // The real field: invisible, capturing every keystroke, paste
-            // and autofill suggestion. The boxes above are purely decorative.
+            // The real, invisible text field. It handles typing, paste and
+            // autofill. The boxes only display.
             Opacity(
               opacity: 0,
               child: TextField(
@@ -127,10 +124,15 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
 }
 
 class _CodeBox extends StatelessWidget {
-  const _CodeBox({required this.character, required this.active});
+  const _CodeBox({
+    required this.character,
+    required this.active,
+    required this.hasError,
+  });
 
   final String character;
   final bool active;
+  final bool hasError;
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +142,9 @@ class _CodeBox extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppRadii.input),
         border: Border.all(
-          color: active
+          color: hasError
+              ? Theme.of(context).colorScheme.error
+              : active
               ? theme.colorScheme.primary
               : theme.colorScheme.outlineVariant,
           width: active ? 2 : 1.5,
@@ -149,8 +153,10 @@ class _CodeBox extends StatelessWidget {
       alignment: Alignment.center,
       child: Text(
         character,
+        // No letter spacing: one letter per box, and spacing would push it
+        // off-centre.
         style: AppTextStyles.codeLarge.copyWith(
-          fontSize: 22,
+          letterSpacing: 0,
           color: theme.colorScheme.onSurface,
         ),
       ),
@@ -158,9 +164,8 @@ class _CodeBox extends StatelessWidget {
   }
 }
 
-/// Uppercases as the user types — join codes have no lowercase letters, so
-/// there is nothing for case to distinguish, only something for a stray
-/// caps-lock state to get wrong.
+/// Turns letters into uppercase while typing. Join codes are always
+/// uppercase.
 class UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

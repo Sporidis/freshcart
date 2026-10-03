@@ -7,14 +7,13 @@ import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
 
 part 'shop.freezed.dart';
 
-/// A shop that items can be tagged to — "Colruyt", "Delhaize", "the bakery".
+/// A shop that items can belong to, like "Colruyt" or "the bakery".
 ///
-/// Scoped to a list rather than to a user: everyone collaborating on a list
-/// must see the same shop set, or one member's tag would be meaningless to
-/// another (`docs/decisions.md` #19).
+/// Shops belong to a list (not to a user), so everyone on the list sees the
+/// same shops (decisions.md #19).
 ///
-/// [color] is the seed the app turns into a full Material colour scheme, so
-/// selecting a shop re-themes the whole app.
+/// [color] is the shop's colour. When its tab is selected, the list area
+/// takes on this colour.
 @freezed
 abstract class Shop with _$Shop {
   /// Creates a shop.
@@ -23,33 +22,26 @@ abstract class Shop with _$Shop {
     required ListId listId,
     required String name,
     required HexColor color,
-    // Defaults true so an existing shop stays visible in the tab strip the
-    // moment this field starts existing, rather than every shop needing a
-    // migration-time opt-in to not vanish.
+    // True by default, so shops that existed before this field still show
+    // their tab.
     @Default(true) bool isActive,
   }) = _Shop;
 
   const Shop._();
 
-  /// Flips whether this shop shows as a tab in [ShopFilterBar].
+  /// Shows or hides this shop's tab.
   ///
-  /// Deliberately does not remove or hide the shop anywhere else: the item
-  /// add/edit sheet still offers every shop on the list regardless of
-  /// [isActive], because "not going to Delhaize this week" and "Delhaize no
-  /// longer exists" are different facts. Only the tab strip reads this.
+  /// Only the tab is hidden. The shop can still be picked in the item
+  /// sheet, because "not going there this week" isn't the same as "this
+  /// shop doesn't exist".
   Shop toggleActive() => copyWith(isActive: !isActive);
 
-  /// The longest a shop name may be.
-  ///
-  /// Shorter than a list's: a shop name has to fit inside a tab pill in a
-  /// horizontally scrolling strip, so a long one is unreadable by design
-  /// rather than merely inconvenient.
+  /// Maximum shop name length. Shorter than a list name, because it has to
+  /// fit in a tab.
   static const int maxNameLength = 40;
 
-  /// Validates a proposed shop name, returning it trimmed.
-  ///
-  /// On the entity for the same reason [ShoppingItem.validateName] is:
-  /// creating a shop and renaming one are two doors into the same field.
+  /// Checks a shop name and returns it without spaces at the ends. On the
+  /// entity, so creating and renaming use the same rule.
   static Result<String> validateName(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {

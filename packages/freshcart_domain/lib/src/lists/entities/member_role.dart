@@ -1,8 +1,9 @@
-/// What a member may do to a shopping list.
+/// A member's role on a list, which decides what they can do.
 enum MemberRole {
-  /// Created the list. May rename and delete it, and remove other members.
+  /// Made the list (or got ownership). Can rename and delete it, and
+  /// remove members.
   owner,
 
-  /// Joined via a [JoinCode]. May add, edit, check and remove items.
+  /// Joined with a [JoinCode]. Can add, edit, check and delete items.
   member,
 }

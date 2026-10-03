@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -7,21 +8,19 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:go_router/go_router.dart';
 
-/// The app's first frame: on screen for exactly as long as
-/// [isNewIdentityProvider] takes, no longer — there is no artificial
-/// minimum hold, so a fast, already-authenticated launch barely shows this
-/// at all (`docs/multi-shop-shopping-list-app`, the Splash frame's own
-/// note: "if the check finishes in under 400ms, skip the splash entirely
-/// rather than holding it artificially").
+/// The first screen of the app. Shown only while sign-in
+/// ([isNewIdentityProvider]) is running, never longer. If sign-in is fast,
+/// you barely see it.
 ///
-/// A real route (`Routes.splash`), not a widget `main()` shows before
-/// `runApp` — that is what lets [BasketMark] fly to Welcome's own mark as a
-/// `Hero` instead of the screen just cutting: a route swap animates, a
-/// pre-`runApp` gate does not.
+/// It's a real route (not something shown before `runApp`), so the logo
+/// ([BasketMark]) can fly over to the Welcome screen with a `Hero`
+/// animation.
 class SplashScreen extends ConsumerWidget {
   /// Creates the splash screen.
   const SplashScreen({super.key});
@@ -30,17 +29,16 @@ class SplashScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
 
-    // Fires once, when the bootstrap resolves — not on every rebuild, and
-    // not read eagerly here, since main() already kicked the request off.
+    // Runs once, when sign-in is done, and goes to the next screen.
+    // (main() already started sign-in.)
     ref.listen(isNewIdentityProvider, (previous, next) {
       final isNew = next.value;
       if (isNew == null) return; // still loading, or (rare) errored.
       context.go(isNew ? Routes.welcome : Routes.lists);
     });
 
-    // Same visual system as the app icon, polarity-swapped by mode: dark
-    // mode is ink behind a light tile, light mode inverts every colour —
-    // never a plain-light screen with a plain-dark tile mismatched on top.
+    // Looks like the app icon. Dark mode: dark background, light tile.
+    // Light mode: the opposite.
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final background = isDark ? AppColors.ink : AppColors.bgLight;
     final tile = isDark ? AppColors.bgLight : AppColors.ink;
@@ -59,11 +57,11 @@ class SplashScreen extends ConsumerWidget {
                 height: 86,
                 decoration: BoxDecoration(
                   color: tile,
-                  borderRadius: BorderRadius.circular(21),
+                  borderRadius: BorderRadius.circular(AppRadii.appIcon),
                 ),
                 alignment: Alignment.center,
-                // The mark itself is the Hero; the tile around it is not —
-                // it is this screen's own chrome and fades with the route.
+                // Only the logo flies to Welcome. The tile around it fades
+                // out with this screen.
                 child: Hero(
                   tag: BasketMark.heroTag,
                   child: BasketMark(size: 44, color: mark),
@@ -72,12 +70,7 @@ class SplashScreen extends ConsumerWidget {
               const SizedBox(height: 18),
               Text(
                 t.appName,
-                style: TextStyle(
-                  color: tile,
-                  fontSize: 19,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
+                style: AppTextStyles.cardTitle.copyWith(color: tile),
               ),
               const SizedBox(height: 62),
               const _PulsingDots(),
@@ -89,9 +82,8 @@ class SplashScreen extends ConsumerWidget {
   }
 }
 
-/// The splash's only motion: three shop-coloured dots, each cycling opacity
-/// on its own 1.2s loop, staggered a third of a turn apart so they never all
-/// dim at once.
+/// Three coloured dots that fade in and out (every 1.2 s), one after
+/// another, so they're never all dim at the same time.
 class _PulsingDots extends StatefulWidget {
   const _PulsingDots();
 
@@ -103,8 +95,22 @@ class _PulsingDotsState extends State<_PulsingDots>
     with SingleTickerProviderStateMixin {
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  )..repeat();
+    duration: _cycle,
+  );
+
+  /// How long one fade in and out takes.
+  static const Duration _cycle = Duration(milliseconds: 1200);
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // With reduced motion, no animation: the dots just stay visible.
+    if (AppMotion.reduced(context)) {
+      _controller.stop();
+    } else if (!_controller.isAnimating) {
+      unawaited(_controller.repeat());
+    }
+  }
 
   @override
   void dispose() {
@@ -128,9 +134,11 @@ class _PulsingDotsState extends State<_PulsingDots>
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
-              // A third of a turn apart, each riding the same 1.2s sine.
+              // Each dot starts a third of the cycle after the one before.
               final phase = _controller.value + (index / _colors.length);
-              final opacity = 0.35 + 0.65 * ((1 + _sine(phase)) / 2);
+              final opacity = _controller.isAnimating
+                  ? 0.35 + 0.65 * ((1 + _sine(phase)) / 2)
+                  : 1.0;
               return Opacity(opacity: opacity, child: child);
             },
             child: Container(
@@ -145,7 +153,7 @@ class _PulsingDotsState extends State<_PulsingDots>
   }
 }
 
-/// One full sine wave per unit of [phase].
+/// A smooth up-and-down wave. [phase] 0 to 1 is one full wave.
 double _sine(double phase) => math.sin(phase * 2 * math.pi);
 
 @Preview(group: 'Onboarding', name: 'Splash', size: previewPhone)

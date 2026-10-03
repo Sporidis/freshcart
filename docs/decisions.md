@@ -2433,3 +2433,276 @@ can't load, and `UserAvatar` already falls back to colour and initial.
 
 **Not live:** the drawer's other-member avatars come from `myLists`, a fetch rather than a stream.
 They update on the next fetch (opening the app, returning to `/lists`), not instantly.
+
+## 99. "List just finished" side effects get their own provider
+
+**Problem:** after "Keep list", the completion celebration never came back for that list, even
+after unchecking and finishing it again. "Clear checked after shopping" (#79) never cleared
+anything either. Both rules lived in a `ref.listen(itemsControllerProvider(...))` inside
+`ItemsSectionController.build()`, which also `ref.watch`es the same items. Every item change
+rebuilds the controller through the watch, and Riverpod replaces listeners registered in `build()`
+on each rebuild. So the listener was always swapped out before it could see a change, and it never
+fired once (confirmed by instrumenting it). No test caught this: the existing celebration test
+opened a list that was *already* finished, and auto-clear only had a test for its settings toggle.
+
+**Decision:** move both rules into `listCompletion`, a side-effect-only function provider in the
+same shape as `queueDrainCoordinator`. It `listen`s and watches nothing, so it never rebuilds on
+item changes and its listener keeps the "before" it compares against. `ItemsSectionController`
+watches it only to keep it alive. `allChecked` lives beside it, so the VM's `showCelebration` and
+the side effects can't disagree about what "finished" means.
+
+**The rule this leaves:** never `ref.listen` inside a `build()` that also watches the provider being
+listened to, if the listener needs the *transition*. Put it somewhere that doesn't rebuild on that
+provider. Three new widget tests cover the real flows: re-celebrating after Keep list, auto-clear
+on finishing, and no auto-clear for a list that opens already finished.
+
+## 100. Onboarding: Continue never hides, and Invite is not a numbered step
+
+**Problem:** the wizard's Continue button shrank away whenever the current answer was invalid, so
+a brand-new user's very first question showed a text field and nothing to press. Its step rail
+also counted Invite as "Step 4 of 4", although Invite comes after the list already exists and its
+own copy says "You can do this any time".
+
+**Decision:** Continue is always on screen and always pressable (Motion spec §07: "stays fixed").
+Pressing it with a bad answer calls `continueIfValid()`, which puts the domain validator's
+`Failure` into state and stays on the step. The field shows it inline and shakes
+(`ShakeOnError`), and the next keystroke clears it through the existing `clearError: true`. The
+join flow follows the same rule. The rail counts only the three questions that build the list,
+and collapses away on Invite, as in the design's own Step 4 frame.
+
+**Why not disable the button instead?** A disabled button says "not yet" without saying why.
+The always-on button plus an inline error tells the user what is missing at the moment they try
+to move on, and never while they are still typing.
+
+**Shared pieces this pulled out:** `CheckCircle` and `DashedOutlinePainter` moved to `core/ui`.
+Onboarding's shop picker and "add a shop" row are the same components as the item row's check
+and the shop strip's "+", so they now share one implementation instead of copies. The
+"Your tabs will look like this" preview draws the real `ShopTabPill`, so the promise in its label
+can't drift from the real strip.
+
+## 101. Settings rows share one base; anonymous sign-out confirms
+
+**Problem:** the four settings option widgets each wrapped a different Material tile
+(`ListTile`, `SwitchListTile`, a raw inline `ListTile`). Each overrode its own padding and drew
+its own divider, so rows had different heights and value styles. They also sat 16 px further in
+than the section labels above them. Settings also had two smaller issues:
+- "Terms of Service" did nothing when tapped, and "New list" vanished for someone with no lists.
+- Signing out an anonymous account, whose lists exist only on this device, happened without
+  a confirmation step.
+
+**Decision:**
+- **One row base.** `SettingRow` owns row geometry: no horizontal inset, `rowVertical` padding,
+  and a 44 px minimum height. The option widgets only choose what goes in its trailing slot.
+  `SettingsSection` draws the label and draws dividers *between* rows, so a group's last row
+  has no trailing line. The notifications screen uses the same pieces.
+- **Rows only for real destinations.** About is just Sign out plus the version, and "New list"
+  always shows.
+- **Anonymous sign-out confirms first.** Linked accounts sign out immediately, since they lose
+  nothing. While the profile is still loading, it is treated as anonymous: asking once too
+  often is the safe mistake.
+- **A linked email shows once,** in the profile header with a verified tick. The "secured"
+  card that repeated the address is gone. The card still shows while the account is anonymous,
+  as #56 requires.
+- **One swatch picker.** Shop and avatar colours share `core/ui/ColorSwatchPicker`, which
+  replaced three copies.
+
+## 102. Deleting a shop is a swipe that opens the delete sheet; the shop picker is the tab pill
+
+**Problem:**
+- **Delete was too easy to hit.** Every Manage shops row had a small ink trash icon beside its edit
+  chevron, so deleting a shop was one tap away and looked no more serious than editing it.
+- **The destructive choices didn't look destructive.** Inside the delete sheet, "Delete products
+  too" was one of three identical cards. The empty-shop confirm used the same ink primary button
+  as "Save changes".
+- **The picker hid the colour it was picking.** `ShopPicker`'s `ChoiceChip`s drew a checkmark
+  over the shop's dot on an ink fill, so a picked shop lost its colour.
+
+**Decision:**
+- **Delete is a right-to-left swipe** on the row, using the Motion spec's §10 numbers:
+  - commits at 40% of the row's width;
+  - the trash icon grows from 0.7 to 1.0 over the first 30%;
+  - `mediumImpact` fires and the icon pops to 1.15 as the threshold is crossed.
+
+  Unlike the spec's item swipe, crossing the threshold **opens the delete sheet** instead of
+  deleting. A shop's products need a decision first, so the sheet is the confirmation and the row
+  springs back. A `CustomSemanticsAction` makes the same action reachable for screen readers and
+  keyboards, which can't swipe.
+- **The delete sheet separates safe from destructive.** The safe options come first, each with a
+  chevron. A divider follows, then the destructive option, tinted red with no chevron. The
+  empty-shop confirm is a red button named for what it deletes ("Delete Colruyt").
+- **`ShopPicker` is built from `ShopTabPill`**, so a picked shop is filled with its own colour,
+  exactly like its tab. "No shop" behaves like "All".
+- **Smaller changes:**
+  - Colours another shop already uses are marked on the swatch (a hollow ring, and "Used by…"
+    for screen readers), never blocked.
+  - The row being edited takes the previewed colour as its border.
+  - The FAB gave way to the shared dashed "add another" row.
+
+## 103. Item swipe-to-delete restored, with its undo actually wired
+
+**Problem:** the redesigned item row (`edcba5e`) dropped swipe-to-delete, though the upgrade guide
+lists it as an interaction to keep. Separately, `swipeDelete` hands back an undo action that every
+caller (the hold menu, search results) discarded. A deleted item was hidden, then removed four
+seconds later with no snackbar and no way back.
+
+**Decision:** one `core/ui/SwipeToDelete` widget implements Motion spec §10 for both item rows
+and shop rows (#102). Its `onSwipe` result says whether the row goes (items) or springs back
+(shops, whose sheet decides). Every item delete, whether swiped or from the hold menu, in the list
+or in search, goes through `deleteItemWithUndo`. It shows "Milk removed · Undo" for exactly
+`swipeUndoWindow`, so the snackbar never offers an undo that has already expired. The swipe is off
+in multi-select and rearrange modes, as the spec requires.
+
+## 104. List settings: doors not copies, a name that cannot be lost, and leaving still confirms
+
+**Problem:**
+- **Two missing doors.** The screen's doc promised rows into Household and Manage shops; neither
+  existed.
+- **A disappearing "Add shop".** The shops section, including its "Add shop" button, vanished on
+  a list with no shops.
+- **A typable switcher.** The list switcher was a Material `DropdownMenu`, which is a text field
+  underneath.
+- **A lost name.** The name field only saved on the keyboard's submit key, so typing a name and
+  pressing Back silently dropped it.
+
+**Decision:**
+- **Doors, not copies.** Household and shop management are rows that open the existing screens
+  (#69). "Shops on this list" keeps its switches, now with each shop's dot, an always-present
+  "Add shop" row, and "Rename shops & colours".
+- **The name saves three ways:** on submit, on blur, and on the way out. `PopScope` owns the
+  save when leaving, and the blur listener only acts while the route is current and no save is
+  running. Without both guards a single edit saved twice; tests caught each case.
+- **The "Managing" card expands in place,** as the design draws it.
+- **Leaving still confirms, deliberately overriding the design's "leaving does not confirm".**
+  It can't be undone without a fresh invite code from someone still on the list, so it keeps
+  the pause, now in destructive red like delete.
+- **Shared avatars.** `MemberAvatarStack` moved to `core/ui`, shared by the drawer and the
+  Household row.
+
+## 105. Presentation consistency audit: tokens where they earn it, literals where they don't
+
+**Problem:** an audit of every `features/*/presentation` file found drift at the edges of the
+token system rather than in its middle:
+- **Copies of the theme.** Five hand-styled red buttons, `AppColors.destructive` in a dozen
+  places beside a widget whose own comment said to use `colorScheme.error`, `isDark ? x : y`
+  surface and border picks, a private copy of `AppTheme`'s on-colour formula, and three
+  invented "muted" alphas (0.42, 0.42, 0.45) next to the real one (0.40).
+- **Four ways to fail a load.** `ErrorScreen`, a private `_Message`, a bare `Text`, and a
+  hand-built `EmptyState` with its own icon.
+- **Small targets.** A 26px re-add button, 31px suggestion chips, a 16px-tall collapse row, and
+  40px shop pills, while `AppSpacing.minTapTarget = 44` existed and was barely used.
+- **A spacing "scale" of four numbers** (20/12/8/13), so most spacing was literal by necessity.
+
+**Decision:**
+- **Read colours through the theme, never beside it.** `colorScheme.error`, `surfaceContainer`
+  and `outline` already are those tokens (`AppTheme` pins them), so a widget that reads
+  `AppColors` directly opts out of `forShop` theming for no gain. `DestructiveButton` comes in
+  two sizes, because the app has two primaries: a compact dialog action and the full-width sheet
+  `ElevatedButton`. The Filled/Elevated split was never drift; only the red was copied.
+- **One failure state.** `FailureState` is `ErrorScreen`'s body without the scaffold: the
+  failure's *type* picks icon and wording, and it always has exactly one action.
+- **`TapTarget` wraps the whole control and repeats its handler.** Flutter hit-tests by layout
+  box, so the target can only grow if the box grows. Wrapping *outside* the `InkWell` keeps the
+  ripple: the inner recognizer wins taps on the control, and the outer one only catches the
+  margin. The tests check that it never fires twice.
+- **A 4-pt spacing scale** (`xs`–`xxl`), with the semantic names (`screen`, `gap`, …) kept as
+  aliases. The rule is that *layout* spacing (gutters, gaps between stacked blocks, sheet insets)
+  uses tokens, and a component's *internal* geometry (a pill's 9×3, the stepper's 2px ring, the
+  welcome mockup) stays a private literal. A token per pixel value would be a list, not a scale.
+- **No shadow tokens, deliberately.** All five shadows are different, design-specified values
+  (one is animated and shop-tinted), and none is repeated. Tokens would only rename them.
+- **Sheets share one recipe:** `sheetH` sides, 0 at the top (the drag handle is the gap),
+  keyboard inset + `xl` at the bottom, `headlineSmall` title.
+
+**Left as is:** `CheckCircle` stays 22px because the whole item row is its tap target. The
+quantity stepper's 30px buttons are under 44, but fixing them would visibly change the stepper's
+ring, so that's a design call rather than a refactor.
+
+## 106. Design v3: adopt the new interaction model on top of the existing features
+
+**Problem:** the design bundle was re-exported with a "v3 · current design" layer: the list is
+home, lists live in the drawer, a hold opens everything else, ticks settle in batches, and every
+bulk or destructive action ends in an undo toast. Each spec doc says its v3 section wins where it
+disagrees with older flows. The colours are unchanged; the theme changed in two small places, and
+`app_motion.dart` gained curves (`ios`, `emphasized`, `exitStd`) and one named duration per
+interaction.
+
+**Decision:**
+- **v3 is a presentation change.** The domain already has `sortOrder`, `sortOrderBetween()` and
+  `ReorderItem`, and reordering inside a shop tab only needs the visible neighbours, so v3 needs
+  no domain, server or data change. The work stays in `presentation/`, `core/` and the UI
+  controllers.
+- **The v3 motion tokens sit beside the old ones**, not instead of them. Existing widgets keep
+  their tokens until they're restyled, so each phase changes only what it restyles.
+- **Silence isn't deletion.** v3 doesn't show search, swipe-to-delete, the FAB suggestions or the
+  celebration card. All four are kept and restyled; the prototype shows one path through the app,
+  not a list of removals.
+- **The ⋮ menu goes**; its actions already exist in List settings, which the avatars now open.
+- **New list and Edit profile become sheets; Join stays a screen**, because it is also the
+  deep-link and first-launch entry, with a name step for people who are new.
+- **Pushes stay Cupertino.** v3's single push (350ms, `ios` curve, the outgoing page moving −30%)
+  is close enough to the Cupertino transition that a custom one wouldn't earn its code.
+- **The 22px check circle becomes 26px.** #105 left that to a design call, and v3 makes it.
+- **Swiping between tabs stays on the strip**, with v3's thresholds (86px or 450px/s). v3 also
+  swipes on the list body, but there swipe-left already deletes a row; the row would win
+  wherever there's a row, so tab-swiping would only work on empty space.
+- **The colour wave is 400ms** (was 700ms, #85/#89), and the header carries the tab's tint with
+  its own wave from the same origin. The header needs no screenshot: it's one flat colour.
+- **Batch check-off holds the row, not the save.** A tick saves at once (sync and the offline
+  queue are unchanged); the row waits in the open section until 750ms pass without a tick, then
+  the burst lands in Done with one toast. The hold lives in `ItemsUiController`, whose state
+  survives item updates; the toast is a `ref.listen` in the widget, so the controller still
+  never touches `BuildContext`. The full "glide to Done" is a lighter arrival cascade for now.
+- **Bulk deletes wait out their Undo**, like swipe-to-delete: Clear and select-mode Delete hide
+  the rows now and call `removeMany` with those ids after the toast's window. By id, not
+  `clearChecked`, so an item ticked during the window isn't swept up.
+- **Small theme changes now:** sheet drag handle 36×5, drawer 300px, toast radius 14. The 98px
+  "above the FAB" offset belongs to the list's undo toast, not to every SnackBar, so it lives in
+  `showUndoToast`, not in the theme.
+- **Edit profile is a sheet, the controller keeps its name.** `EditProfileScreenController`
+  still backs it: renaming it would touch generated code and every test for a word, and the
+  conventions have no "sheet controller" name to rename it to. The `/settings/profile` route is
+  gone; the drawer header and Settings both call `showEditProfileSheet`.
+- **Grouped cards come from `SettingsSection` itself**, not a List-settings-only copy. Every
+  settings screen (Settings, Notifications, List settings) gets the v3 card in one change, and
+  `SettingRow` carries the card's 14px padding so its tap highlight still fills the card edge
+  to edge. Rows now line up with the card, not the label above it.
+- **List settings shows members and the invite code inline.** Members are rows that open
+  Household (still a door, not a copy, #69/#104); the code is one tap to copy. Sharing and
+  member management stay on Household.
+- **Onboarding keeps Welcome as its own route.** v3 draws Welcome as step 0 of the wizard; here
+  it stays a screen, because the splash logo's Hero lands on it and Join starts from it too. The
+  welcome scene's cards use the preset shops onboarding offers next, so the picture is a preview
+  of the very next choice.
+- **Steps swap, then cascade in** (36px from the side you're heading to, 340ms, 40ms apart). The
+  old crossfade put two titles on screen at once; v3 drops the old step and lets the pieces of
+  the new one do the moving. The direction reaches each `OnboardingEntrance` through an
+  `InheritedWidget`, so steps don't pass it down by hand.
+- **The invite step gets a dot and a Skip.** It used to be left out of "Step n of 3" to look
+  optional; v3 says "optional" with Skip instead, which is clearer than a missing number.
+  Screen readers hear "Step 4 of 4" from the dots.
+- **"Share invite" copies the code.** v3's button only copies too, and a share sheet would mean a
+  new plugin for one button. The shop count reads "n shops picked", not v3's "n tabs including
+  All": our All tab is called "All shops", so that sentence wouldn't match the screen.
+- **The empty state is keyed per tab.** Two empty tabs build the same widget at the same place,
+  so Flutter reused it and its one-shot entrance never played again. A key per tab makes each
+  one new. It arrives on v3's `emptyIn` timings, starting 40ms after a tab switch (the switch is
+  the cue) or 140ms after the last row left; it tells the two apart by whether the tab-switch
+  animation is running when it mounts.
+- **A checked row always says who checked it.** "Checked off by" used to be a fallback for rows
+  with no shop or note, so on All it almost never showed. Now it leads, with the checker's avatar,
+  and the shop and note follow; after the tick, who got it matters more than where it was.
+- **The hold menu is placed by layout, unrolled by paint.** v3 moves the card from the row to a
+  spot where it fits, so a bottom row no longer runs its menu off screen. Only layout knows the
+  card's height, so a `SingleChildLayoutDelegate` places it. The unroll is a paint clip
+  (`ClipRect` + clipper), not `Align.heightFactor`, which would change the height mid-animation
+  and make a clamped card creep upward as it grew. One `ItemMenuMotion` cuts every part from two
+  controllers (open, close), so the lift, unroll and cascade can't drift.
+- **The title flight rides on navigation.** The drawer isn't a route, so `Hero` can't link its row
+  to the header. The drawer measures the tapped name and passes the rect as go_router `extra`.
+  That route then fades instead of pushing (v3 switches lists in place); any other way in keeps
+  the push. The header hides its title, flies a copy in an overlay (380ms, 16/26 → 1), then shows
+  it. The rect reaches the header through a small `InheritedWidget`, not three constructors.
+- **Reduced motion means fades only.** An audit of every v3 animation: no bounce on the check
+  circle, the add button fades instead of rolling out or scaling, no press-and-hold shrink, no
+  re-add pop. The hold menu, onboarding, the welcome cards, the empty state and the title flight
+  all fall back to a 120ms fade, or skip the movement entirely.

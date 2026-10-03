@@ -3,17 +3,15 @@ import 'dart:math' as math;
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 
-/// A shop's seed colour, stored as a 32-bit ARGB integer.
+/// A colour (for shops and avatars), stored as a 32-bit ARGB number.
 ///
-/// This is the seed the app feeds to `ColorScheme.fromSeed`, so the whole
-/// Material theme shifts to the active shop's colour. The domain stores a plain
-/// `int` rather than a Flutter `Color` — that is the entire point of the
-/// dependency rule.
+/// A plain `int`, not a Flutter `Color`, because the domain can't use
+/// Flutter. The app converts it with `HexColorX.toColor()`.
 extension type const HexColor._(int argb) implements Object {
   /// Wraps a 32-bit ARGB [argb] value.
   ///
-  /// Throws [ArgumentError] if it does not fit in 32 bits, which would mean a
-  /// caller constructed it wrongly rather than a user typing something odd.
+  /// Throws [ArgumentError] if it doesn't fit in 32 bits. That would be a
+  /// bug in the code, not a user mistake.
   factory HexColor.fromArgb(int argb) {
     if (argb < 0 || argb > 0xFFFFFFFF) {
       throw ArgumentError.value(argb, 'argb', 'Must be a 32-bit ARGB value');
@@ -21,11 +19,10 @@ extension type const HexColor._(int argb) implements Object {
     return HexColor._(argb);
   }
 
-  /// Parses user input like `#4CAF50`, `4CAF50`, or `#FF4CAF50`.
+  /// Reads text like `#4CAF50`, `4CAF50` or `#FF4CAF50`.
   ///
-  /// Returns a [Result] rather than throwing: this one *is* reachable from user
-  /// input (a colour picker's hex field), so it is an expected failure.
-  /// A 6-digit value is treated as fully opaque.
+  /// Returns a [Result] (doesn't throw), because this comes from user input,
+  /// so a wrong value is normal. 6 digits means fully opaque.
   static Result<HexColor> parse(String input) {
     final cleaned = input.trim().replaceFirst('#', '').toUpperCase();
     if (!RegExp(r'^[0-9A-F]{6}$|^[0-9A-F]{8}$').hasMatch(cleaned)) {
@@ -49,18 +46,16 @@ extension type const HexColor._(int argb) implements Object {
   /// The blue channel, 0-255.
   int get blue => argb & 0xFF;
 
-  /// How different this colour looks from [other], to a human eye.
+  /// How different this colour looks from [other] to a human.
   ///
-  /// Plain RGB distance is a poor stand-in for perception: it rates a green
-  /// pair as far apart as a blue pair that looks identical. This is the
-  /// "redmean" weighting — a cheap approximation that tracks perceived
-  /// difference closely enough for the one question being asked, without
-  /// dragging a colour-science conversion into a pure-Dart package.
+  /// Simple RGB distance doesn't match what eyes see (two blues can look
+  /// the same but score far apart). This uses the "redmean" formula: a
+  /// simple approximation that's good enough here, without a colour
+  /// science library.
   ///
-  /// Alpha is ignored: shop colours are always opaque, and a difference in
-  /// transparency is not what "these two look alike" means.
+  /// Ignores transparency (shop colours are always opaque).
   ///
-  /// Ranges from 0 (identical) to roughly 765 (black against white).
+  /// From 0 (the same) to about 765 (black vs white).
   double perceptualDistanceTo(HexColor other) {
     final meanRed = (red + other.red) / 2;
     final deltaRed = red - other.red;
@@ -73,19 +68,18 @@ extension type const HexColor._(int argb) implements Object {
     );
   }
 
-  /// The distance below which two shop colours are too easy to confuse.
+  /// Below this distance, two shop colours are too easy to mix up.
   ///
-  /// Tuned for the job they do: telling apart 8px dots glanced at in a shop
-  /// aisle, not swatches compared side by side. Deliberately forgiving — the
-  /// app warns, never blocks, so a false positive costs a caption while a
-  /// false negative costs someone buying the wrong thing.
+  /// Set for small 8 px dots seen quickly in a shop. On the safe side: a
+  /// warning too many is harmless (the app only warns, never blocks), but a
+  /// missed warning could mean buying at the wrong shop.
   static const double confusableDistance = 60;
 
   /// Whether [other] is close enough to be mistaken for this colour.
   bool isCloseTo(HexColor other) =>
       perceptualDistanceTo(other) < confusableDistance;
 
-  /// Renders as `#RRGGBB`, dropping a fully opaque alpha channel.
+  /// As text: `#RRGGBB` (alpha left out when fully opaque).
   String toHex() {
     final rgb = (argb & 0xFFFFFF).toRadixString(16).padLeft(6, '0');
     if (alpha == 0xFF) return '#${rgb.toUpperCase()}';

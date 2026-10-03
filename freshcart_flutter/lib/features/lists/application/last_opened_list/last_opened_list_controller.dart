@@ -4,9 +4,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'last_opened_list_controller.g.dart';
 
-/// The list the user last opened, remembered across restarts so `/lists`
-/// can reopen it (see `listsLandingTarget`, which also checks it still
-/// exists).
+/// The list the user opened last. Saved on the phone, so the app can open
+/// it again next time (see `listsLandingTarget`).
 @riverpod
 class LastOpenedListController extends _$LastOpenedListController {
   static const String _prefsKey = 'last_opened_list_id';

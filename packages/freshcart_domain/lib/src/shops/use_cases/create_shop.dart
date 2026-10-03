@@ -6,15 +6,14 @@ import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
 /// Adds a shop to a list.
 ///
-/// The colour needs no validation of its own: [HexColor] is already a
-/// validated value object, so an unusable colour cannot reach this point.
+/// The colour doesn't need checking here: a [HexColor] is always valid.
 class CreateShop {
   /// Creates the use case against a [ShopRepository].
   const CreateShop(this._shops);
 
   final ShopRepository _shops;
 
-  /// Validates [name] and creates the shop on [listId].
+  /// Checks [name] and creates the shop on [listId].
   Future<Result<Shop>> call({
     required ListId listId,
     required String name,

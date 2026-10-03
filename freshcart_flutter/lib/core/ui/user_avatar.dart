@@ -1,18 +1,20 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 
-/// Renders one person's avatar: an uploaded photo if they have one,
-/// otherwise a colour they chose, otherwise the deterministic colour hashed
-/// from [seed] — in that order (`docs/decisions.md` #65). The same rule
-/// applies everywhere someone's avatar shows, from a single widget, so a
-/// drawer row and an Edit profile preview cannot drift out of sync with each
-/// other about which of the three actually wins.
+/// One person's avatar. Shows, in this order of preference:
+/// 1. their photo, if they uploaded one;
+/// 2. else the colour they picked;
+/// 3. else a colour based on [seed] (always the same for the same person).
+///
+/// See decisions.md #65. Every avatar in the app uses this widget, so they
+/// always look the same.
 class UserAvatar extends StatefulWidget {
-  /// Creates an avatar, resolving [photoUrl] and [color] against the
-  /// [seed]-hashed fallback.
+  /// Creates an avatar.
   const UserAvatar({
     required this.seed,
     required this.initial,
@@ -23,10 +25,10 @@ class UserAvatar extends StatefulWidget {
     super.key,
   });
 
-  /// A stable id (a user's own) the hash fallback is derived from.
+  /// The user's id. Used to pick their default colour.
   final String seed;
 
-  /// Shown when there is no photo to render — a member's initial, uppercase.
+  /// The letter shown when there's no photo.
   final String initial;
 
   /// An uploaded avatar photo's URL, or `null` if the person has not set one.
@@ -38,8 +40,8 @@ class UserAvatar extends StatefulWidget {
   /// The circle's radius.
   final double radius;
 
-  /// An optional border -- the overlap "cutout" look an avatar stack draws
-  /// around each avatar, in the surface colour behind it. `null` elsewhere.
+  /// Optional border. `MemberAvatarStack` uses it so overlapping avatars
+  /// look cut out from each other.
   final BoxBorder? border;
 
   @override
@@ -68,7 +70,7 @@ class _UserAvatarState extends State<UserAvatar> {
           radius: widget.radius,
           backgroundColor: widget.color!.toColor(),
           foregroundColor: Colors.white,
-          child: Text(widget.initial, style: AppTextStyles.captionStrong),
+          child: Text(widget.initial, style: _initialStyle),
         ),
       );
     }
@@ -76,15 +78,24 @@ class _UserAvatarState extends State<UserAvatar> {
     return _hashFallback(context);
   }
 
-  /// Today's existing behavior: a deterministic colour hashed from [seed].
+  /// The default: a colour based on [seed].
   Widget _hashFallback(BuildContext context) => _bordered(
     CircleAvatar(
       radius: widget.radius,
       backgroundColor: AppColors.avatarColorFor(widget.seed),
       foregroundColor: Colors.white,
-      child: Text(widget.initial, style: AppTextStyles.captionStrong),
+      child: Text(widget.initial, style: _initialStyle),
     ),
   );
+
+  /// The letter's style: the caption size, but never taller than the
+  /// circle's radius, so it still fits in a tiny avatar (16px on a checked
+  /// row).
+  TextStyle get _initialStyle {
+    const base = AppTextStyles.captionStrong;
+    final size = math.min(base.fontSize ?? 12, widget.radius);
+    return base.copyWith(fontSize: size, height: 1);
+  }
 
   /// Wraps [child] with [border], if one was given.
   Widget _bordered(Widget child) {

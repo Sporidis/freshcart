@@ -110,4 +110,51 @@ void main() {
 
     // TODO: pin down what an empty or whitespace-only query returns.
   });
+
+  group('duplicateFor', () {
+    test('an exact name match in the target shop is a duplicate', () {
+      final lidl = ShopId('00000000-0000-4000-8000-00000000b001');
+      final state = stateWith(items: [item('Milk', shopId: lidl)]);
+
+      expect(state.duplicateFor('Milk', lidl)?.name, 'Milk');
+    });
+
+    test('matches regardless of case and surrounding whitespace', () {
+      final lidl = ShopId('00000000-0000-4000-8000-00000000b001');
+      final state = stateWith(items: [item('Milk', shopId: lidl)]);
+
+      expect(state.duplicateFor('  mILk ', lidl)?.name, 'Milk');
+    });
+
+    test('a match in a different shop is not a duplicate', () {
+      final lidl = ShopId('00000000-0000-4000-8000-00000000b001');
+      final aldi = ShopId('00000000-0000-4000-8000-00000000b002');
+      final state = stateWith(items: [item('Milk', shopId: lidl)]);
+
+      expect(state.duplicateFor('Milk', aldi), isNull);
+    });
+
+    test('a substring match does not count -- the check is exact', () {
+      final lidl = ShopId('00000000-0000-4000-8000-00000000b001');
+      final state = stateWith(items: [item('Oat milk', shopId: lidl)]);
+
+      expect(state.duplicateFor('Milk', lidl), isNull);
+    });
+
+    test('matches a checked item too, not just open ones', () {
+      final lidl = ShopId('00000000-0000-4000-8000-00000000b001');
+      final state = stateWith(
+        items: [item('Milk', shopId: lidl, isChecked: true)],
+      );
+
+      expect(state.duplicateFor('Milk', lidl)?.name, 'Milk');
+    });
+
+    test('an empty or whitespace-only name is never a duplicate', () {
+      final lidl = ShopId('00000000-0000-4000-8000-00000000b001');
+      final state = stateWith(items: [item('Milk', shopId: lidl)]);
+
+      expect(state.duplicateFor('   ', lidl), isNull);
+    });
+  });
 }

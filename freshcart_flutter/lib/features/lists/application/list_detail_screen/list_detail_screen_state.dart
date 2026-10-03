@@ -2,16 +2,15 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
 import 'package:meta/meta.dart';
 
-/// The list-level half of `ListDetailScreen`: the route shell, its theming
-/// and the header menu. The rows are `ItemsSectionState`'s business.
+/// The data for `ListDetailScreen` itself: the list and its colours. The
+/// item rows use `ItemsSectionState` instead.
 ///
-/// Pure Dart on purpose (domain types only, [HexColor] rather than Flutter's
-/// `Color`), same as the other screen states.
+/// Plain Dart (no Flutter types, so [HexColor] instead of `Color`).
 ///
-/// Value equality is load-bearing: the view model re-runs on every item
-/// change (it reads the items mode), and Riverpod only notifies when the new
-/// state `!=` the old one -- so the whole screen rebuilds when one of *these*
-/// fields changes, not on every tick of a checkbox.
+/// The `==` override matters: this controller re-runs on every item
+/// change. Riverpod only rebuilds widgets when the new state is not `==`
+/// the old one. So checking an item doesn't rebuild the whole screen,
+/// only a change to these fields does.
 @immutable
 class ListDetailScreenState {
   const ListDetailScreenState({
@@ -26,29 +25,30 @@ class ListDetailScreenState {
   /// The list; null until it has loaded.
   final ShoppingList? list;
 
-  /// Decides delete-for-everyone versus leave in the menu. False until the
-  /// signed-in identity resolves -- the safe default (see `isListOwner`).
+  /// Whether the title can be renamed (owner only). False until we know
+  /// who the user is, to be safe (see `isListOwner`).
   final bool isOwner;
 
-  /// The active shop tab's colour, seeding the items area's theme. Null for
-  /// "All" -- the neutral brand seed.
+  /// The selected shop tab's colour, used to colour the items area. Null
+  /// for "All" (neutral colours).
   final HexColor? activeShopColor;
 
-  /// The items area's mode: the drawer and the filter strip hide while
-  /// selecting or rearranging.
+  /// What the items area is doing (normal, selecting, searching,
+  /// rearranging). Decides what the screen hides.
   final ItemsMode mode;
 
   final bool isLoading;
 
-  /// The list failed to load at all: the screen tier, replacing the page.
+  /// Set when the list couldn't load. Then a full error screen is shown.
   final Failure? loadFailure;
 
-  /// Switching lists mid-select or mid-rearrange would abandon that work.
+  /// Whether the drawer can open. Not while selecting or rearranging,
+  /// because switching lists would lose that work.
   bool get canOpenDrawer =>
       list != null && mode != ItemsMode.select && mode != ItemsMode.rearrange;
 
-  /// Search results already span every shop, and rearrange has its own
-  /// header: a filter strip has nothing to do in either.
+  /// Whether to show the shop tabs. Hidden while searching (search covers
+  /// all shops) and rearranging (it has its own header).
   bool get showShopFilter =>
       mode == ItemsMode.browse || mode == ItemsMode.select;
 

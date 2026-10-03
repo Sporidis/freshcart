@@ -4,56 +4,51 @@ import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
-/// How the domain observes and changes who is signed in.
+/// The interface for everything about the signed-in user.
 ///
-/// Deliberately says nothing about Serverpod, Google or email mechanics: adding
-/// a provider later is an implementation swap behind this port, not a rewrite
-/// (`docs/decisions.md` #6).
+/// Doesn't mention Serverpod, Google or email details. Adding a new login
+/// method later only changes the implementation, not this interface
+/// (decisions.md #6).
 abstract interface class AuthPort {
   /// The current user, or `null` before the first sign-in completes.
   AuthUser? get currentUser;
 
-  /// Emits on every identity change — sign-in, display-name edit, provider
-  /// link, sign-out.
+  /// Sends the user again on every change: sign-in, name change, linking an
+  /// email, sign-out.
   Stream<AuthUser?> authStateChanges();
 
-  /// Creates (or restores) an anonymous identity.
+  /// Creates (or restores) an anonymous account.
   ///
-  /// Called on first launch so a user reaches a working list without a signup
-  /// form. The [UserId] it returns is stable for the lifetime of the account,
-  /// including after [linkGoogle] or [linkEmail].
+  /// Called at first launch, so there's no signup form. The [UserId] never
+  /// changes, also not after [linkGoogle] or [linkEmail].
   Future<Result<AuthUser>> signInAnonymously();
 
-  /// Sets the name collaborators see next to this user's changes.
+  /// Sets the name others see next to this user's changes.
   ///
-  /// Prompted early on purpose: an anonymous member showing as "Someone" makes
-  /// a shared list unreadable.
+  /// Asked early (in onboarding), because "Someone" everywhere on a shared
+  /// list isn't helpful.
   Future<Result<AuthUser>> setDisplayName(String displayName);
 
-  /// Sets a colour the user picked for their own avatar.
+  /// Sets the user's avatar colour.
   ///
-  /// Any [HexColor] is accepted — the domain does not restrict this to a
-  /// preset swatch list, the same choice already made for a shop's own
-  /// colour (`EditShop`); a picker offering only presets is a UI choice, not
-  /// a rule this layer enforces.
+  /// Any [HexColor] is allowed here. Only showing preset colours is a UI
+  /// choice, not a domain rule (same as for shops).
   Future<Result<AuthUser>> setAvatarColor(HexColor color);
 
-  /// Uploads and sets a photo for the user's avatar, overriding
-  /// [AuthUser.avatarColor] wherever an avatar is shown.
+  /// Uploads an avatar photo. It's shown instead of [AuthUser.avatarColor].
   Future<Result<AuthUser>> setAvatarPhoto(Uint8List bytes);
 
-  /// Removes the user's avatar photo, reverting to their stored colour, or
-  /// the automatic hash-based one if they never set either.
+  /// Removes the avatar photo. Then their chosen colour is shown (or the
+  /// automatic one).
   Future<Result<AuthUser>> clearAvatarPhoto();
 
-  /// Attaches a Google provider to the *existing* account.
+  /// Links a Google account to the current account.
   ///
-  /// The user id does not change, so every list and item the anonymous session
-  /// created stays attached — that is the whole point of linking rather than
-  /// signing in afresh.
+  /// The user id stays the same, so all their lists and items stay theirs.
+  /// That's why we link instead of making a new account.
   Future<Result<AuthUser>> linkGoogle();
 
-  /// Attaches an email/password provider to the existing account.
+  /// Links an email and password to the current account.
   Future<Result<AuthUser>> linkEmail({
     required String email,
     required String password,
@@ -61,7 +56,7 @@ abstract interface class AuthPort {
 
   /// Signs out.
   ///
-  /// For an anonymous account this is destructive — there is no way back into
-  /// that identity — so callers must confirm before invoking it.
+  /// For an anonymous account this can't be undone (there's no way to sign
+  /// back in), so always ask the user first.
   Future<Result<void>> signOut();
 }

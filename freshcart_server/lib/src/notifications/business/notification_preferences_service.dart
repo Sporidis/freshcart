@@ -1,12 +1,11 @@
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// A user's own choices about which push notifications they receive
-/// (decisions #80, phase 2) -- see [NotificationPreferences]'s own doc
-/// comment for how this differs from [ListMute].
+/// Which kinds of push notifications a user wants (decisions.md #80).
+/// Different from [ListMute], which mutes one whole list.
 abstract final class NotificationPreferencesService {
-  /// [userId]'s preferences, or the defaults if they have never changed
-  /// anything. No row is inserted just to answer a read.
+  /// [userId]'s preferences, or the defaults if they never changed them.
+  /// Reading doesn't create a database row.
   static Future<NotificationPreferences> forUser(
     Session session,
     UuidValue userId,

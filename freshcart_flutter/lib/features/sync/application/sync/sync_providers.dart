@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
@@ -9,30 +12,34 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'sync_providers.g.dart';
 
-/// The device's connectivity state, as observed by `features/sync`.
+/// Whether the phone has a network connection.
+///
+/// Note: "online" only means Wi-Fi or mobile data is on. The server could
+/// still be unreachable.
 enum SyncStatus {
-  /// The device has a network interface up.
+  /// Wi-Fi or mobile data is connected.
   online,
 
-  /// The device has no network interface up.
+  /// No network at all.
   offline,
 }
 
-/// The device's live [SyncStatus], driven by [connectivityAdapterProvider].
+/// The current [SyncStatus], updated every time it changes.
 @Riverpod(keepAlive: true)
 Stream<SyncStatus> sync(Ref ref) => ref
     .watch(connectivityAdapterProvider)
     .watchIsOnline()
     .map((isOnline) => isOnline ? SyncStatus.online : SyncStatus.offline);
 
-/// How many offline writes are still waiting to reach the server.
+/// How many changes made offline are still waiting to be sent.
 @Riverpod(keepAlive: true)
 Stream<int> pendingWriteCount(Ref ref) =>
     ref.watch(pendingOperationsQueueProvider).watchCount();
 
-/// What the banner above the list should show. "Syncing" needs both
-/// sources at once -- online *and* writes still queued -- which is exactly
-/// the combining a widget must not do itself.
+/// Which banner to show above the list.
+///
+/// Combines two providers (online status and waiting changes), so the
+/// widget doesn't have to.
 @riverpod
 SyncBanner syncBanner(Ref ref) {
   final status = ref.watch(syncProvider).value;
@@ -44,6 +51,7 @@ SyncBanner syncBanner(Ref ref) {
   };
 }
 
+/// Supplies the [QueueDrainer], which sends saved changes to the server.
 @Riverpod(keepAlive: true)
 QueueDrainer queueDrainer(Ref ref) => QueueDrainer(
   ref.watch(pendingOperationsQueueProvider),
@@ -51,12 +59,37 @@ QueueDrainer queueDrainer(Ref ref) => QueueDrainer(
   ref.watch(listRepositoryProvider),
 );
 
+/// Sends saved offline changes to the server when we become online.
+///
+/// Returns nothing. It only has to exist, so `app.dart` watches it once to
+/// start it.
 @Riverpod(keepAlive: true)
 void queueDrainCoordinator(Ref ref) {
-  ref.listen(syncProvider, (previous, next) async {
-    if (previous?.value == SyncStatus.offline &&
-        next.value == SyncStatus.online) {
+  // True while a drain is running. Two drains at once would both read the
+  // same queue and send the same changes twice (duplicate items).
+  var draining = false;
+
+  Future<void> drainOnce() async {
+    if (draining) return;
+    draining = true;
+    try {
+      // At app start we can be online before sign-in is done. Draining
+      // then would fail with "unauthorized", so wait for it.
+      final session = await ref.read(authBootstrapProvider.future);
+      if (!session.authenticated) return;
       await ref.read(queueDrainerProvider).drain();
+    } finally {
+      draining = false;
+    }
+  }
+
+  ref.listen(syncProvider, (previous, next) {
+    // Drain when we BECOME online: coming back from offline, but also the
+    // first status at app start (then `previous` is still loading, not
+    // offline). Staying online (online -> online) doesn't drain again.
+    final wasOnline = previous?.value == SyncStatus.online;
+    if (!wasOnline && next.value == SyncStatus.online) {
+      unawaited(drainOnce());
     }
   });
 }

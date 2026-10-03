@@ -3,11 +3,10 @@ import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
 
 part 'note.freezed.dart';
 
-/// A free-text annotation on a shopping item — "the oat one, not soy".
+/// A short note on an item, like "the oat one, not soy".
 ///
-/// A note has no id of its own: it is owned by exactly one [ShoppingItem] and
-/// dies with it. Modelling it as a separate aggregate would buy nothing and
-/// cost a join.
+/// No id of its own: it belongs to one [ShoppingItem] and is deleted with
+/// it. A separate table would only add complexity.
 @freezed
 abstract class Note with _$Note {
   /// Creates a note.
@@ -19,9 +18,7 @@ abstract class Note with _$Note {
 
   const Note._();
 
-  /// Whether the note has any content once trimmed.
-  ///
-  /// An empty note is stored as no note at all, so the UI does not render an
-  /// empty annotation row.
+  /// Whether the note has any text (ignoring spaces). An empty note is
+  /// saved as no note, so no empty row is shown.
   bool get isEmpty => text.trim().isEmpty;
 }

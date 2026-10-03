@@ -4,24 +4,23 @@ import 'package:freshcart_server/src/items/business/item_service.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// The items on a list: read, add, save, remove.
+/// Endpoint for items on a list: read, add, save, delete.
 class ItemEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
-  /// Every item on a list the caller belongs to.
+  /// All items on a list (the caller must be a member).
   Future<List<ShoppingItem>> byList(Session session, UuidValue listId) =>
       ItemService.byList(session, listId, session.requireUserId);
 
-  /// The quantity used when a caller does not specify one.
+  /// The quantity used when none is given.
   static const int defaultQuantity = 1;
 
-  /// Adds an item to a list the caller belongs to.
+  /// Adds an item to a list (the caller must be a member).
   ///
-  /// [quantity] is nullable rather than defaulted because Serverpod's generator
-  /// drops Dart default values and emits any non-nullable named parameter as
-  /// `required`. Nullability is what makes a parameter optional in the
-  /// generated client, so the default lives here instead.
+  /// [quantity] is nullable instead of having a default value, because
+  /// Serverpod's generated client ignores defaults and makes every
+  /// non-null parameter required. So the default is applied here.
   Future<ShoppingItem> add(
     Session session,
     UuidValue listId,
@@ -39,8 +38,7 @@ class ItemEndpoint extends Endpoint {
     noteText: noteText,
   );
 
-  /// Writes an item back, rejecting the write on an optimistic-concurrency
-  /// clash.
+  /// Saves an item. Fails with a conflict if someone else changed it first.
   Future<ShoppingItem> save(Session session, ShoppingItem item) =>
       ItemService.save(session, item, session.requireUserId);
 
@@ -48,20 +46,19 @@ class ItemEndpoint extends Endpoint {
   Future<void> remove(Session session, UuidValue itemId) =>
       ItemService.remove(session, itemId, session.requireUserId);
 
-  /// Deletes every checked item on the list, returning how many were removed.
+  /// Deletes all checked items on the list. Returns how many.
   Future<int> clearChecked(Session session, UuidValue listId) =>
       ItemService.clearChecked(session, listId, session.requireUserId);
 
-  /// Deletes a multi-selected set of items from the list in one operation,
-  /// returning how many were removed.
+  /// Deletes the selected items (all at once). Returns how many.
   Future<int> removeMany(
     Session session,
     UuidValue listId,
     List<UuidValue> itemIds,
   ) => ItemService.removeMany(session, listId, session.requireUserId, itemIds);
 
-  /// Reassigns every one of [itemIds] to [shopId] (null untags them), in one
-  /// transaction, returning how many moved.
+  /// Moves [itemIds] to [shopId] (null = no shop), all at once. Returns how
+  /// many.
   Future<int> moveMany(
     Session session,
     UuidValue listId,
@@ -75,8 +72,7 @@ class ItemEndpoint extends Endpoint {
     shopId,
   );
 
-  /// Product name suggestions for a list, matching [query], most recently
-  /// used first -- the add control's suggestion chips.
+  /// Name suggestions for a list that match [query], newest first.
   Future<List<String>> suggestNames(
     Session session,
     UuidValue listId,
@@ -88,21 +84,20 @@ class ItemEndpoint extends Endpoint {
     query,
   );
 
-  /// Every distinct product name typed on a list before, most recently used
-  /// first -- the "Recently bought" shortcut.
+  /// Every item name ever used on a list, newest first ("Recently bought").
   Future<List<ItemNameHistory>> recentNames(
     Session session,
     UuidValue listId,
   ) => ItemService.recentNames(session, listId, session.requireUserId);
 
-  /// Live changes to a list's items.
+  /// Live updates to a list's items.
   ///
-  /// Emits a delta per change rather than the whole list — subscribers keep the
-  /// merged state themselves. Membership is checked once, when the stream
-  /// opens; the stream closes if the session ends.
+  /// Sends only what changed (not the whole list); the app applies it.
+  /// Membership is checked once, when the stream starts. The stream stops
+  /// if the session ends.
   ///
-  /// This is the in-app half of the two-layer story: it keeps open clients live
-  /// and is unrelated to FCM background push, which covers closed apps.
+  /// This is for live updates while the app is open, not push
+  /// notifications (those are for a closed app).
   Stream<ItemChange> watchList(Session session, UuidValue listId) async* {
     await ListService.requireMembership(session, listId, session.requireUserId);
     yield* session.messages.createStream<ItemChange>(

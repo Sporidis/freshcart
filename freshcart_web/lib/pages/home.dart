@@ -3,11 +3,11 @@ import 'package:freshcart_web/constants/site.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 
-/// The landing page.
+/// The home page.
 ///
-/// A plain `StatelessComponent`, not a `@client` one: this page has no
-/// interactivity, so shipping JavaScript for it would cost the visitor a
-/// download and buy nothing. Everything here is pre-rendered to HTML.
+/// A normal `StatelessComponent`, not `@client`: nothing on it is
+/// interactive, so no JavaScript is needed. It's all built into HTML
+/// ahead of time.
 class Home extends StatelessComponent {
   /// Creates the landing page.
   const Home({super.key});
@@ -15,14 +15,13 @@ class Home extends StatelessComponent {
   @override
   Component build(BuildContext context) {
     return Component.fragment([
-      // Per-page head, so the title and description describe *this* page
-      // rather than the site as a whole — the most load-bearing SEO detail.
+      // Title and description for THIS page (not the whole site). The most
+      // important thing for search engines.
       Document.head(
         title: '${Site.name} — ${Site.tagline}',
-        // Only `name=` metas belong in this map. Open Graph is specified
-        // with `property=`, which Jaspr's meta map cannot express, so those
-        // are emitted as explicit elements below rather than left subtly
-        // wrong.
+        // Only `name=` meta tags go in this map. Open Graph tags use
+        // `property=`, which this map can't do, so they're added separately
+        // below.
         meta: {
           'description': Site.tagline,
           'twitter:card': 'summary_large_image',
@@ -39,8 +38,8 @@ class Home extends StatelessComponent {
             'og:locale': 'en',
           }.entries)
             meta(attributes: {'property': entry.key, 'content': entry.value}),
-          // Structured data, so a search engine can render a rich result
-          // rather than inferring what this page is.
+          // Structured data (JSON-LD), so search engines know exactly what
+          // this page is about and can show a richer result.
           const script(
             attributes: {'type': 'application/ld+json'},
             content: _structuredData,

@@ -11,10 +11,9 @@ AppDatabase appDatabase(Ref ref) => AppDatabase(
   driftDatabase(
     name: 'freshcart',
     native: const DriftNativeOptions(
-      // The queue is internal app state, not user-generated — belongs in
-      // Application Support, not Documents. See path_provider's own doc
-      // comments on the two: Documents is for data the user created and may
-      // want to see or export; this isn't that.
+      // Stored in Application Support, not Documents. Documents is for
+      // files the user made and might want to see. This is internal app
+      // data.
       databaseDirectory: getApplicationSupportDirectory,
     ),
   ),

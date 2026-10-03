@@ -1,41 +1,44 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
+import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
+import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
+import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/lists/application/list_settings_screen/list_settings_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// A list's own settings — name, and doors to its members and shops.
+/// Settings for one list: name, shops, household, behavior, and leave or
+/// delete.
 ///
-/// Reached from Settings' "Manage lists" row (`docs/decisions.md` #69), not
-/// from the list's own header — the design puts a near-identical screen
-/// there too ("reached from the list's own header, not from global
-/// settings"), but that entry point does not exist yet in this app's nav;
-/// this is the one door in today, for whichever list Settings currently
-/// treats as the active one.
+/// Opened from a list's row in Settings. The "Managing" card at the top
+/// lets you switch to another list without leaving this screen.
 ///
-/// Members and shops are rows that open the existing `HouseholdScreen` and
-/// `ManageShopsScreen`, not sections rebuilt inline here — the design draws
-/// them merged into one screen, but those two already work, are already
-/// reachable elsewhere, and duplicating their content here would be a
-/// second copy of both to keep in sync for no reader benefit.
+/// Household and shop management are links to their own screens
+/// (`HouseholdScreen`, `ManageShopsScreen`), not copies of them
+/// (decisions.md #69). Here you can only turn shops on or off.
 ///
-/// "Clear checked after shopping" (decisions #79) means the whole list
-/// becoming fully checked, the same moment `ItemsSection`'s own completion
-/// celebration already detects -- turning this on suppresses that card
-/// entirely for this list and clears checked items the instant the trigger
-/// fires, with no prompt.
+/// "Clear checked after shopping" (decisions.md #79): when every item is
+/// checked, the checked items are removed right away, without asking, and
+/// the "all done" card isn't shown.
 class ListSettingsScreen extends ConsumerStatefulWidget {
   /// Creates the screen for [listId].
   const ListSettingsScreen({required this.listId, super.key});
@@ -52,23 +55,36 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
       ref.read(listSettingsScreenControllerProvider(widget.listId).notifier);
 
   late final TextEditingController _name;
+  late final FocusNode _nameFocus;
   Failure? _nameFailure;
   bool _savingName = false;
 
-  // Same reasoning as EditProfileScreen's own _nameSeeded: listByIdProvider
-  // is async, so the field cannot be seeded synchronously in initState --
-  // seeded instead the first time build actually sees a loaded list.
-  bool _nameSeeded = false;
+  /// The name as last saved. Used to check if the name changed, so we only
+  /// save when it did.
+  String? _savedName;
 
   @override
   void initState() {
     super.initState();
     _name = TextEditingController();
+    // There's no Save button for the name, so tapping somewhere else saves
+    // it too (not only the keyboard's Done key).
+    _nameFocus = FocusNode()
+      ..addListener(() {
+        // Don't save twice:
+        // - not while already saving (saving also removes focus);
+        // - not while leaving the screen (PopScope below saves then).
+        final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+        if (!_nameFocus.hasFocus && _nameIsDirty && !_savingName && isCurrent) {
+          unawaited(_saveName());
+        }
+      });
   }
 
   @override
   void dispose() {
     _name.dispose();
+    _nameFocus.dispose();
     super.dispose();
   }
 
@@ -76,26 +92,35 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   void didUpdateWidget(covariant ListSettingsScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.listId == widget.listId) return;
-    _nameSeeded = false;
+    _savedName = null;
     _name.clear();
   }
 
+  bool get _nameIsDirty {
+    final saved = _savedName;
+    return saved != null && _name.text.trim() != saved;
+  }
+
+  // The list may still be loading in initState, so the name is filled in
+  // the first time build() has the list (same as EditProfileSheet).
   void _seedNameOnce(String name) {
-    if (_nameSeeded) return;
-    _nameSeeded = true;
+    if (_savedName != null) return;
+    _savedName = name;
     _name.text = name;
   }
 
   Future<void> _saveName() async {
+    final name = _name.text;
     setState(() {
       _savingName = true;
       _nameFailure = null;
     });
-    final result = await _vm.rename(_name.text);
+    final result = await _vm.rename(name);
     if (!mounted) return;
     setState(() {
       _savingName = false;
       _nameFailure = result;
+      if (result == null) _savedName = name.trim();
     });
   }
 
@@ -103,14 +128,15 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
     final s = ref.watch(listSettingsScreenControllerProvider(widget.listId));
+    final theme = Theme.of(context);
 
     void report(Failure? failure) {
       if (failure == null || !mounted) return;
       showFailureSnackBar(context, failure: failure, t: t);
     }
 
-    // A failed load is the screen tier: without the list there is no form
-    // to show, so this replaces the Scaffold rather than spinning forever.
+    // If the list couldn't load, show an error screen. Without the list
+    // there's no form to show.
     final loadFailure = s.loadFailure;
     if (loadFailure != null) {
       return ErrorScreen(
@@ -123,257 +149,498 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
       );
     }
 
-    // A local, not s.list, so the null check below promotes it.
+    // Copied into a local variable, so Dart knows it's not null after the
+    // check below.
     final list = s.list;
     if (list != null) _seedNameOnce(list.name);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(t.lists.settingsTitle),
-        leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+    return PopScope(
+      // Leaving with an unsaved name: save it. It goes through the lists
+      // controller, which keeps existing after this screen closes.
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop && _nameIsDirty) unawaited(_vm.rename(_name.text));
+      },
+      child: Scaffold(
+        // v3: the bar only holds Back; the title is large, in the page.
+        appBar: AppBar(
+          leading: BackButton(onPressed: () => Navigator.of(context).pop()),
+        ),
+        body: list == null
+            ? const Center(child: CircularProgressIndicator())
+            : ListView(
+                padding: const EdgeInsets.fromLTRB(
+                  AppSpacing.screen,
+                  0,
+                  AppSpacing.screen,
+                  40,
+                ),
+                children: [
+                  Text(t.lists.settingsTitle, style: AppTextStyles.largeTitle),
+                  const SizedBox(height: AppSpacing.xl),
+                  _ManagingSwitcher(
+                    current: list,
+                    lists: s.allLists,
+                    t: t,
+                    onPick: (id) => context.go(Routes.listSettings(id)),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Text(t.lists.nameLabel, style: theme.textTheme.bodySmall),
+                  const SizedBox(height: AppSpacing.gapSmall),
+                  TextField(
+                    key: const Key('listNameField'),
+                    controller: _name,
+                    focusNode: _nameFocus,
+                    enabled: !_savingName,
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.done,
+                    decoration: InputDecoration(
+                      errorText: _nameFailure?.toMessage(t),
+                    ),
+                    onSubmitted: (_) => _saveName(),
+                  ),
+                  const SizedBox(height: _sectionGap),
+                  _ShopsSection(
+                    shops: s.shops,
+                    onToggle: (shop) async =>
+                        report(await _vm.toggleShopActive(shop)),
+                    // Same "add shop" flow as everywhere else.
+                    onAdd: () => addShop(context, ref, widget.listId, s.shops),
+                    onManage: () =>
+                        context.push(Routes.manageShops(widget.listId)),
+                    t: t,
+                  ),
+                  const SizedBox(height: _sectionGap),
+                  SettingsSection(
+                    label: t.household.title,
+                    children: [
+                      // Each member opens Household, where members are
+                      // managed (decisions.md #69: link, don't copy).
+                      for (final member in list.members)
+                        _MemberRow(
+                          member: member,
+                          t: t,
+                          onTap: () =>
+                              context.push(Routes.household(widget.listId)),
+                        ),
+                      // v3: the code is right here, no need to go to
+                      // Household to find it. Tap to copy.
+                      _InviteCodeRow(code: list.joinCode.value, t: t),
+                    ],
+                  ),
+                  const SizedBox(height: _sectionGap),
+                  SettingsSection(
+                    label: t.lists.behaviour,
+                    children: [
+                      SettingToggleOption(
+                        title: t.lists.clearCheckedAfterShopping,
+                        description: t.lists.clearCheckedAfterShoppingBody,
+                        value: list.clearCheckedAfterShopping,
+                        onChanged: (value) async => report(
+                          await _vm.setClearCheckedAfterShopping(value),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: _sectionGap),
+                  // Leave/delete: their own card at the very bottom, away
+                  // from everything else.
+                  SettingsSection(
+                    children: [
+                      if (s.isOwner)
+                        _DangerRow(
+                          title: t.lists.deleteForEveryone,
+                          onTap: () => confirmDeleteList(
+                            context,
+                            list: list,
+                            itemCount: _vm.itemCountForDialog(),
+                            t: t,
+                            delete: _vm.deleteList,
+                          ),
+                        )
+                      else
+                        _DangerRow(
+                          title: t.lists.leave,
+                          onTap: () => confirmLeaveList(
+                            context,
+                            list: list,
+                            t: t,
+                            leave: _vm.leaveList,
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ),
       ),
-      body: list == null
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(AppSpacing.screen),
-              children: [
-                _ListDropdown(
-                  currentList: list,
-                  allUserLists: s.allLists,
-                  t: t,
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  t.lists.nameLabel,
-                  style: Theme.of(context).textTheme.bodySmall,
-                ),
-                const SizedBox(height: 6),
-                TextField(
-                  key: const Key('listNameField'),
-                  controller: _name,
-                  enabled: !_savingName,
-                  decoration: InputDecoration(
-                    errorText: _nameFailure?.toMessage(t),
-                  ),
-                  onSubmitted: (value) async {
-                    await _saveName();
-                  },
-                ),
-                const SizedBox(height: 24),
-                _ShopsSection(
-                  shops: s.shops,
-                  onToggle: (shop) async =>
-                      report(await _vm.toggleShopActive(shop)),
-                  // The same create flow as ManageShopsScreen's FAB and the
-                  // shop tab strip's "+" pill -- one flow, every entry point.
-                  onAdd: () => addShop(context, ref, widget.listId, s.shops),
-                  t: t,
-                ),
-                const SizedBox(height: 12),
-                _ClearCheckedAfterShoppingOption(
-                  value: list.clearCheckedAfterShopping,
-                  onChanged: (value) async =>
-                      report(await _vm.setClearCheckedAfterShopping(value)),
-                  t: t,
-                ),
-                const SizedBox(height: 24),
-                // "Destructive actions sit alone at the bottom with a rule
-                // above them" -- the design's own words for this screen.
-                const Divider(),
-                const SizedBox(height: 12),
-                if (s.isOwner)
-                  _SettingsRow(
-                    title: t.lists.delete,
-                    destructive: true,
-                    onTap: () => confirmDeleteList(
-                      context,
-                      list: list,
-                      itemCount: _vm.itemCountForDialog(),
-                      t: t,
-                      delete: _vm.deleteList,
-                    ),
-                  )
-                else
-                  _SettingsRow(
-                    title: t.lists.leave,
-                    destructive: true,
-                    onTap: () => confirmLeaveList(
-                      context,
-                      list: list,
-                      t: t,
-                      leave: _vm.leaveList,
-                    ),
-                  ),
-              ],
-            ),
     );
   }
+
+  /// Space above each section title (v3: 22).
+  static const double _sectionGap = 22;
 }
 
+/// "Shops on this list": each shop with its colour dot and an on/off switch
+/// for its tab.
+///
+/// Always shown, even with no shops, because it has the "Add a shop" row.
 class _ShopsSection extends StatelessWidget {
   const _ShopsSection({
     required this.shops,
     required this.onToggle,
     required this.onAdd,
+    required this.onManage,
     required this.t,
   });
 
   final List<Shop> shops;
   final ValueChanged<Shop> onToggle;
   final VoidCallback onAdd;
+  final VoidCallback onManage;
   final Translations t;
 
   @override
   Widget build(BuildContext context) {
-    if (shops.isNotEmpty) {
-      return Column(
-        children: [
-          Text(
-            t.lists.shopsOnList.toUpperCase(),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            t.lists.shopsOnListBody,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-          const SizedBox(height: 6),
-          Column(
-            children: shops.map(
-              (shop) {
-                return _ShopOption(shop: shop, onToggle: onToggle);
-              },
-            ).toList(),
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: onAdd,
-            child: Text(
-              t.shops.add,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.blue,
+    final muted = Theme.of(context).colorScheme.onSurfaceVariant;
+    return SettingsSection(
+      label: t.lists.shopsOnList,
+      subtitle: t.lists.shopsOnListBody,
+      children: [
+        for (final shop in shops)
+          MergeSemantics(
+            child: SettingRow(
+              leading: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: shop.color.toColor(),
+                  shape: BoxShape.circle,
+                ),
+              ),
+              title: shop.name,
+              onTap: () => onToggle(shop),
+              trailing: Switch(
+                value: shop.isActive,
+                onChanged: (_) => onToggle(shop),
               ),
             ),
           ),
-        ],
-      );
-    }
-    return const SizedBox.shrink();
-  }
-}
-
-class _ShopOption extends StatelessWidget {
-  const _ShopOption({required this.shop, required this.onToggle});
-
-  final Shop shop;
-  final ValueChanged<Shop> onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      value: shop.isActive,
-      onChanged: (_) => onToggle(shop),
-      title: Text(shop.name),
+        SettingRow(
+          leading: Icon(Icons.add, size: 18, color: muted),
+          title: t.shops.add,
+          titleStyle: AppTextStyles.body.copyWith(color: muted),
+          onTap: onAdd,
+        ),
+        if (shops.isNotEmpty)
+          SettingOption(title: t.lists.renameShops, onTap: onManage),
+      ],
     );
   }
 }
 
-/// The one preference to survive the "keep checked / clear checked" overlap
-/// (decisions #64/#69/#79) -- per list, not global, and with a real trigger
-/// behind it: the whole list becoming fully checked, the same moment
-/// `ItemsSection`'s completion celebration already detects.
-class _ClearCheckedAfterShoppingOption extends StatelessWidget {
-  const _ClearCheckedAfterShoppingOption({
-    required this.value,
-    required this.onChanged,
+/// The "Managing" card at the top: which list you're editing. With more
+/// than one list, tapping it opens a list to switch to (in place, with each
+/// list's member count).
+///
+/// Not a Material `DropdownMenu`: that one is a text field underneath, so
+/// it looked like you could type in it.
+class _ManagingSwitcher extends StatefulWidget {
+  const _ManagingSwitcher({
+    required this.current,
+    required this.lists,
     required this.t,
+    required this.onPick,
   });
 
-  final bool value;
+  final ShoppingList current;
+  final List<ShoppingList> lists;
   final Translations t;
-  final ValueChanged<bool> onChanged;
+  final ValueChanged<ListId> onPick;
 
   @override
-  Widget build(BuildContext context) {
-    return SwitchListTile(
-      value: value,
-      onChanged: onChanged,
-      title: Text(t.lists.clearCheckedAfterShopping),
-      subtitle: Text(t.lists.clearCheckedAfterShoppingBody),
-    );
-  }
+  State<_ManagingSwitcher> createState() => _ManagingSwitcherState();
 }
 
-class _ListDropdown extends StatelessWidget {
-  const _ListDropdown({
-    required this.currentList,
-    required this.allUserLists,
-    required this.t,
-  });
+class _ManagingSwitcherState extends State<_ManagingSwitcher> {
+  bool _open = false;
 
-  final ShoppingList currentList;
-  final List<ShoppingList> allUserLists;
-  final Translations t;
-
-  @override
-  Widget build(BuildContext context) {
-    final currentListId = currentList.id;
-    return DropdownMenu<ListId>(
-      // Keyed on the name too, so a rename rebuilds the menu's own text
-      // field instead of leaving the old name showing.
-      key: ValueKey('${currentListId.value}:${currentList.name}'),
-      width: MediaQuery.of(context).size.width * 0.9,
-      initialSelection: currentListId,
-      label: Text(
-        t.lists.title,
-      ),
-      textStyle: Theme.of(context).textTheme.bodyLarge?.copyWith(
-        fontWeight: FontWeight.bold,
-      ),
-
-      dropdownMenuEntries: allUserLists
-          .map(
-            (list) => DropdownMenuEntry<ListId>(
-              value: list.id,
-              label: list.name,
-            ),
-          )
-          .toList(),
-      onSelected: (selectedListId) {
-        if (selectedListId == null || selectedListId == currentListId) {
-          return;
-        }
-        context.go(Routes.listSettings(selectedListId));
-      },
-    );
-  }
-}
-
-class _SettingsRow extends StatelessWidget {
-  const _SettingsRow({
-    required this.title,
-    required this.onTap,
-    this.destructive = false,
-  });
-
-  final String title;
-  final VoidCallback onTap;
-  final bool destructive;
+  /// Border width (1.5 px). Thicker than normal rows, so it looks tappable.
+  static const double _border = 1.5;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = destructive ? AppColors.destructive : null;
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      shape: Border(
-        bottom: BorderSide(color: theme.colorScheme.outlineVariant, width: 1),
+    final t = widget.t;
+    final canSwitch = widget.lists.length > 1;
+    final openFill = theme.colorScheme.surfaceContainer;
+    final duration = AppMotion.durationFor(context, AppMotion.standard);
+
+    return AnimatedContainer(
+      duration: duration,
+      curve: AppMotion.enter,
+      decoration: BoxDecoration(
+        color: _open ? openFill : theme.colorScheme.surface,
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant,
+          width: _border,
+        ),
+        borderRadius: BorderRadius.circular(AppRadii.input),
       ),
-      title: Text(title, style: color == null ? null : TextStyle(color: color)),
-      trailing: !destructive ? const Icon(Icons.chevron_right) : null,
+      clipBehavior: Clip.antiAlias,
+      child: Material(
+        type: MaterialType.transparency,
+        child: Column(
+          children: [
+            InkWell(
+              onTap: canSwitch ? () => setState(() => _open = !_open) : null,
+              child: Padding(
+                padding: const EdgeInsets.all(AppSpacing.gap),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            t.lists.managing.toUpperCase(),
+                            style: theme.textTheme.labelSmall,
+                          ),
+                          Text(
+                            widget.current.name,
+                            style: theme.textTheme.titleMedium,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (canSwitch)
+                      AnimatedRotation(
+                        turns: _open ? 0.5 : 0,
+                        duration: duration,
+                        curve: AppMotion.enter,
+                        child: Icon(
+                          Icons.expand_more,
+                          color: theme.colorScheme.outline,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            AnimatedSize(
+              duration: duration,
+              curve: AppMotion.enter,
+              alignment: Alignment.topCenter,
+              child: !_open
+                  ? const SizedBox(width: double.infinity)
+                  : Column(
+                      children: [
+                        for (final list in widget.lists) ...[
+                          const Divider(),
+                          _SwitcherRow(
+                            list: list,
+                            isCurrent: list.id == widget.current.id,
+                            t: t,
+                            onTap: () {
+                              setState(() => _open = false);
+                              if (list.id != widget.current.id) {
+                                widget.onPick(list.id);
+                              }
+                            },
+                          ),
+                        ],
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SwitcherRow extends StatelessWidget {
+  const _SwitcherRow({
+    required this.list,
+    required this.isCurrent,
+    required this.t,
+    required this.onTap,
+  });
+
+  final ShoppingList list;
+  final bool isCurrent;
+  final Translations t;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Semantics(
+      selected: isCurrent,
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSpacing.gap,
+            vertical: AppSpacing.rowVertical,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      list.name,
+                      style: isCurrent
+                          ? theme.textTheme.titleMedium
+                          : theme.textTheme.bodyLarge,
+                    ),
+                    Text(
+                      t.settings.memberCount(n: list.members.length),
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
+              ),
+              if (isCurrent)
+                Icon(Icons.check, color: theme.colorScheme.onSurface),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A red row for leave/delete. No ">" arrow. Always asks "are you sure?"
+/// first.
+class _DangerRow extends StatelessWidget {
+  const _DangerRow({required this.title, required this.onTap});
+
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => SettingRow(
+    title: title,
+    titleStyle: AppTextStyles.body.copyWith(
+      color: Theme.of(context).colorScheme.error,
+    ),
+    onTap: onTap,
+  );
+}
+
+/// One household member: avatar, name, and "Owner" for the owner. Opens
+/// Household.
+class _MemberRow extends StatelessWidget {
+  const _MemberRow({
+    required this.member,
+    required this.t,
+    required this.onTap,
+  });
+
+  final ListMember member;
+  final Translations t;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SettingRow(
+      leading: UserAvatar(
+        seed: member.userId.value,
+        initial: initialFor(member.displayName),
+        photoUrl: member.avatarPhotoUrl,
+        color: member.avatarColor,
+        radius: AppSizes.avatarSmall / 2,
+      ),
+      title: member.displayName,
       onTap: onTap,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (member.isOwner)
+            Text(
+              t.household.owner,
+              style: AppTextStyles.caption.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          const SettingChevron(),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Invite code   K7M2Q" in mono. Tapping copies the code; the code is
+/// swapped for "Copied" for a moment, so the user sees it worked without a
+/// toast covering the screen (same idea as `InviteCard`).
+class _InviteCodeRow extends ConsumerStatefulWidget {
+  const _InviteCodeRow({required this.code, required this.t});
+
+  final String code;
+  final Translations t;
+
+  @override
+  ConsumerState<_InviteCodeRow> createState() => _InviteCodeRowState();
+}
+
+class _InviteCodeRowState extends ConsumerState<_InviteCodeRow> {
+  static const Duration _held = Duration(milliseconds: 1600);
+
+  bool _copied = false;
+  Timer? _reset;
+
+  @override
+  void dispose() {
+    _reset?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _copy() async {
+    await Clipboard.setData(ClipboardData(text: widget.code));
+    ref.haptic(HapticFeedback.lightImpact);
+    if (!mounted) return;
+    setState(() => _copied = true);
+    _reset?.cancel();
+    _reset = Timer(_held, () {
+      if (mounted) setState(() => _copied = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final t = widget.t;
+    return Semantics(
+      hint: t.household.copyCode,
+      child: SettingRow(
+        title: t.household.inviteCode,
+        titleStyle: AppTextStyles.body.copyWith(
+          color: scheme.onSurfaceVariant,
+        ),
+        onTap: _copy,
+        trailing: AnimatedSwitcher(
+          duration: AppMotion.durationFor(context, AppMotion.quick),
+          child: _copied
+              ? Text(
+                  t.household.copied,
+                  key: const ValueKey('copied'),
+                  style: AppTextStyles.labelStrong.copyWith(
+                    color: AppColors.success,
+                  ),
+                )
+              : Text(
+                  widget.code,
+                  key: const ValueKey('code'),
+                  style: AppTextStyles.code.copyWith(
+                    color: scheme.onSurface,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 2,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }

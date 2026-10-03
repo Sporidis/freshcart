@@ -3,18 +3,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 part 'upgrade_nudge_controller.g.dart';
 
-/// Whether the "Secure your lists" nudge has been dismissed.
+/// Whether the user closed the "Secure your lists" banner.
 ///
-/// Persisted locally rather than in-memory state: dismissing it is meant to
-/// be permanent, since the same action -- linking an email -- stays one tap
-/// away from Settings for whenever the user actually wants it (see
-/// UpgradeNudge's own doc comment for why the nudge exists at all). An
-/// in-memory flag would forget the dismissal on every app restart, which is
-/// exactly the "annoying, keeps coming back" behaviour this exists to fix.
+/// Saved on the phone, so once closed it never comes back, even after
+/// restarting the app. The user can still link an email from Settings.
 ///
-/// `shared_preferences`, not `flutter_secure_storage`: this is a plain UI
-/// preference, not a secret, and the latter is already a dependency only for
-/// what the auth packages need internally for session storage.
+/// Uses `shared_preferences` (not secure storage), because this isn't a
+/// secret.
 @riverpod
 class UpgradeNudgeController extends _$UpgradeNudgeController {
   static const _prefsKey = 'upgrade_nudge_dismissed';

@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<style>body{margin:0;background:#E9E8E3;-webkit-font-smoothing:antialiased}a{color:#1A1A18}a:hover{color:#2456A6}</style>
+</helmet>
+<section style="padding:44px 48px 70px;font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',system-ui,sans-serif;color:#1A1A18">
+  <div style="font:700 11px/1 ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:.1em;text-transform:uppercase;color:rgba(26,26,24,.45);margin-bottom:10px">FreshCart · Add product sheet</div>
+  <div style="font-size:34px;font-weight:700;letter-spacing:-.8px;margin-bottom:22px">What it needs, then three ways to show it</div>
+
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,220px));gap:12px;margin-bottom:40px">
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px">
+      <div style="font:700 11px ui-monospace,monospace;letter-spacing:.08em;color:#1F7644;margin-bottom:8px">ALWAYS · ALREADY FILLED</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">Name</div>
+      <div style="font-size:13px;line-height:19px;color:rgba(26,26,24,.6)">Typed in the FAB before the sheet opens. It's a confirmation, not a question, so it can be big but quiet.</div>
+    </div>
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px">
+      <div style="font:700 11px ui-monospace,monospace;letter-spacing:.08em;color:#1F7644;margin-bottom:8px">ALWAYS · DEFAULTED</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">Shop</div>
+      <div style="font-size:13px;line-height:19px;color:rgba(26,26,24,.6)">Defaults to the open tab. It's the one real decision on the sheet, so it gets the most visual weight.</div>
+    </div>
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px">
+      <div style="font:700 11px ui-monospace,monospace;letter-spacing:.08em;color:#2456A6;margin-bottom:8px">SOMETIMES · DEFAULT 1</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">Amount</div>
+      <div style="font-size:13px;line-height:19px;color:rgba(26,26,24,.6)">Usually 1. A compact stepper is enough, with no presets. It should take one line, not a section.</div>
+    </div>
+    <div style="background:#fff;border:1px solid rgba(0,0,0,.1);border-radius:14px;padding:16px">
+      <div style="font:700 11px ui-monospace,monospace;letter-spacing:.08em;color:rgba(26,26,24,.45);margin-bottom:8px">RARELY · EMPTY</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:4px">Note</div>
+      <div style="font-size:13px;line-height:19px;color:rgba(26,26,24,.6)">Most items never get one. Hide it behind "Add note" so it doesn't make every sheet taller.</div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:36px;flex-wrap:wrap;align-items:flex-start">
+
+    <div id="1a" style="width:390px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font:700 12px ui-monospace,monospace;background:#1A1A18;color:#fff;padding:5px 9px;border-radius:7px">1a</div><div style="font-size:16px;font-weight:700">Sentence</div></div>
+      <div style="position:relative;width:390px;height:520px;border-radius:36px;overflow:hidden;background:#FAFAF8;box-shadow:0 20px 50px rgba(0,0,0,.14)">
+        <div style="padding:30px 20px;display:flex;flex-direction:column;gap:18px;opacity:.5"><div style="height:14px;width:60%;border-radius:7px;background:rgba(26,26,24,.12)"></div><div style="height:14px;width:45%;border-radius:7px;background:rgba(26,26,24,.12)"></div><div style="height:14px;width:70%;border-radius:7px;background:rgba(26,26,24,.12)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.32)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 20px 34px;box-sizing:border-box;display:flex;flex-direction:column;gap:20px">
+          <div style="display:flex;justify-content:center"><div style="width:36px;height:5px;border-radius:3px;background:rgba(26,26,24,.22)"></div></div>
+          <div style="font-size:26px;line-height:40px;font-weight:700;letter-spacing:-.4px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px">
+            <span style="color:rgba(26,26,24,.35)">Add</span>
+            <span style="border-bottom:2px solid #1A1A18;line-height:34px">Pasta</span>
+            <span style="display:inline-flex;align-items:center;gap:2px;height:38px;padding:0 4px;border-radius:100px;background:rgba(26,26,24,.06);font-size:17px"><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center">−</span><span style="min-width:20px;text-align:center">2</span><span style="width:30px;height:30px;display:flex;align-items:center;justify-content:center">+</span></span>
+            <span style="color:rgba(26,26,24,.35)">to</span>
+            <span style="display:inline-flex;align-items:center;gap:7px;height:38px;padding:0 14px;border-radius:100px;background:#E8791A;color:#fff;font-size:17px"><span style="width:8px;height:8px;border-radius:50%;background:#fff"></span>Colruyt<svg width="10" height="6" viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="#fff" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:rgba(26,26,24,.55)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>Add note</div>
+          <div style="height:54px;border-radius:14px;background:#1A1A18;color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center">Add</div>
+        </div>
+      </div>
+      <div style="font-size:13.5px;line-height:20px;color:rgba(26,26,24,.65);margin-top:14px;text-wrap:pretty">It reads like what you're doing: "Add Pasta ×2 to Colruyt." Each word is tappable, and the shop opens a small picker. It's the shortest sheet and the most characterful, but less obvious the first time you see it.</div>
+    </div>
+
+    <div id="1b" style="width:390px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font:700 12px ui-monospace,monospace;background:#1A1A18;color:#fff;padding:5px 9px;border-radius:7px">1b</div><div style="font-size:16px;font-weight:700">Grouped rows</div></div>
+      <div style="position:relative;width:390px;height:520px;border-radius:36px;overflow:hidden;background:#FAFAF8;box-shadow:0 20px 50px rgba(0,0,0,.14)">
+        <div style="padding:30px 20px;display:flex;flex-direction:column;gap:18px;opacity:.5"><div style="height:14px;width:60%;border-radius:7px;background:rgba(26,26,24,.12)"></div><div style="height:14px;width:45%;border-radius:7px;background:rgba(26,26,24,.12)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.32)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#F4F3EE;border-radius:24px 24px 0 0;padding:10px 16px 34px;box-sizing:border-box;display:flex;flex-direction:column;gap:14px">
+          <div style="display:flex;justify-content:center"><div style="width:36px;height:5px;border-radius:3px;background:rgba(26,26,24,.22)"></div></div>
+          <div style="display:flex;align-items:center;padding:0 4px"><div style="flex:1;font-size:17px;font-weight:700;text-align:center;padding-left:30px">New product</div><div style="width:30px;height:30px;border-radius:50%;background:rgba(26,26,24,.07);display:flex;align-items:center;justify-content:center;font-size:12px;color:rgba(26,26,24,.55)">✕</div></div>
+          <div style="background:#fff;border-radius:14px;overflow:hidden">
+            <div style="height:56px;display:flex;align-items:center;padding:0 16px;font-size:18px;font-weight:600">Pasta</div>
+            <div style="height:1px;background:rgba(0,0,0,.08);margin-left:16px"></div>
+            <div style="height:52px;display:flex;align-items:center;padding:0 16px;gap:10px;font-size:16px"><div style="flex:1;color:rgba(26,26,24,.6)">Shop</div><span style="width:9px;height:9px;border-radius:50%;background:#E8791A"></span><span style="font-weight:600">Colruyt</span><svg width="7" height="12" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6" stroke="rgba(26,26,24,.3)" stroke-width="1.8" fill="none" stroke-linecap="round"></path></svg></div>
+            <div style="height:1px;background:rgba(0,0,0,.08);margin-left:16px"></div>
+            <div style="height:52px;display:flex;align-items:center;padding:0 10px 0 16px;gap:10px;font-size:16px"><div style="flex:1;color:rgba(26,26,24,.6)">Amount</div><div style="display:flex;align-items:center;background:rgba(26,26,24,.06);border-radius:9px;height:32px"><span style="width:38px;text-align:center">−</span><span style="width:1px;height:16px;background:rgba(0,0,0,.12)"></span><span style="width:30px;text-align:center;font-weight:700">2</span><span style="width:1px;height:16px;background:rgba(0,0,0,.12)"></span><span style="width:38px;text-align:center">+</span></div></div>
+            <div style="height:1px;background:rgba(0,0,0,.08);margin-left:16px"></div>
+            <div style="height:52px;display:flex;align-items:center;padding:0 16px;font-size:16px;color:rgba(26,26,24,.35)">Add a note</div>
+          </div>
+          <div style="height:54px;border-radius:14px;background:#1A1A18;color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center">Add to Colruyt</div>
+        </div>
+      </div>
+      <div style="font-size:13.5px;line-height:20px;color:rgba(26,26,24,.65);margin-top:14px;text-wrap:pretty">An iOS grouped form: one card with four rows of 52px, labels left and values right. Shop pushes to a picker, or expands inline. It's the most familiar and scales if you add fields later, but it looks like Settings.</div>
+    </div>
+
+    <div id="1c" style="width:390px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font:700 12px ui-monospace,monospace;background:#1A1A18;color:#fff;padding:5px 9px;border-radius:7px">1c</div><div style="font-size:16px;font-weight:700">Shop-first</div><div style="font:600 11px ui-monospace,monospace;color:#1F7644">my pick</div></div>
+      <div style="position:relative;width:390px;height:520px;border-radius:36px;overflow:hidden;background:#FAFAF8;box-shadow:0 20px 50px rgba(0,0,0,.14)">
+        <div style="padding:30px 20px;display:flex;flex-direction:column;gap:18px;opacity:.5"><div style="height:14px;width:60%;border-radius:7px;background:rgba(26,26,24,.12)"></div></div>
+        <div style="position:absolute;inset:0;background:rgba(0,0,0,.32)"></div>
+        <div style="position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:24px 24px 0 0;padding:10px 20px 34px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px">
+          <div style="display:flex;justify-content:center"><div style="width:36px;height:5px;border-radius:3px;background:rgba(26,26,24,.22)"></div></div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="flex:1;min-width:0;font-size:24px;font-weight:700;letter-spacing:-.4px">Pasta</div>
+            <div style="display:flex;align-items:center;border:1px solid rgba(0,0,0,.12);border-radius:100px;padding:2px"><span style="width:34px;height:34px;display:flex;align-items:center;justify-content:center">−</span><span style="min-width:18px;text-align:center;font-weight:700">2</span><span style="width:34px;height:34px;border-radius:50%;background:#1A1A18;color:#fff;display:flex;align-items:center;justify-content:center">+</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+            <div style="height:64px;border-radius:14px;background:#E8791A;color:#fff;padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><div style="display:flex;justify-content:space-between"><span style="width:9px;height:9px;border-radius:50%;background:#fff"></span><svg width="12" height="10" viewBox="0 0 12 10"><path d="M1 5l3.5 3.5L11 1" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></div><div style="font-size:14.5px;font-weight:600">Colruyt</div></div>
+            <div style="height:64px;border-radius:14px;border:1px solid rgba(0,0,0,.1);padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><span style="width:9px;height:9px;border-radius:50%;background:#2456A6"></span><div style="font-size:14.5px;font-weight:600">Aldi</div></div>
+            <div style="height:64px;border-radius:14px;border:1px solid rgba(0,0,0,.1);padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between"><span style="width:9px;height:9px;border-radius:50%;background:#C0392B"></span><div style="font-size:14.5px;font-weight:600">Delhaize</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;color:rgba(26,26,24,.55)"><svg width="12" height="12" viewBox="0 0 14 14"><path d="M7 1v12M1 7h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path></svg>Add note</div>
+          <div style="height:54px;border-radius:14px;background:#1A1A18;color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center">Add to Colruyt</div>
+        </div>
+      </div>
+      <div style="font-size:13.5px;line-height:20px;color:rgba(26,26,24,.65);margin-top:14px;text-wrap:pretty">The name and amount share one line, because both are nearly done already. The shops become tiles in their own colour, so the destination is the biggest and easiest thing to hit. The note stays hidden until you ask for it, and the button confirms where the item goes.</div>
+    </div>
+  </div>
+</section>
+</x-dc>
+</body>
+</html>

@@ -1,14 +1,13 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Maps a [dto.ListMember] wire object to the domain entity.
+/// Converts a Serverpod [dto.ListMember] into our domain [ListMember].
 extension ListMemberDtoX on dto.ListMember {
   /// Converts to the domain [ListMember].
   ListMember toDomain() => ListMember(
     userId: UserId(userId.uuid),
-    // Always filled in by the server (live from the member's profile); the
-    // wire type is only nullable because the column is no longer stored.
-    // Empty draws as "?" rather than inventing a name the server never sent.
+    // The server always sends this. It's only nullable in the Serverpod
+    // type for database reasons. If it's missing, use "" (shown as "?").
     displayName: displayName ?? '',
     role: role.toDomain(),
     joinedAt: joinedAt,
@@ -19,22 +18,21 @@ extension ListMemberDtoX on dto.ListMember {
   );
 }
 
-/// Maps the wire enum to the domain enum.
+/// Converts Serverpod's role enum into ours.
 extension MemberRoleDtoX on dto.MemberRole {
   /// Converts to the domain [MemberRole].
   ///
-  /// Written as an exhaustive switch rather than an index lookup so that adding
-  /// a role on the server becomes a compile error here instead of a silent
-  /// mis-mapping.
+  /// A `switch` (not an index lookup), so a new role on the server causes a
+  /// compile error here, instead of a silent wrong result.
   MemberRole toDomain() => switch (this) {
     dto.MemberRole.owner => MemberRole.owner,
     dto.MemberRole.member => MemberRole.member,
   };
 }
 
-/// Maps the domain enum back to the wire enum.
+/// Converts our role enum back into Serverpod's.
 extension MemberRoleX on MemberRole {
-  /// Converts to the wire [dto.MemberRole].
+  /// Converts to Serverpod's [dto.MemberRole].
   dto.MemberRole toDto() => switch (this) {
     MemberRole.owner => dto.MemberRole.owner,
     MemberRole.member => dto.MemberRole.member,

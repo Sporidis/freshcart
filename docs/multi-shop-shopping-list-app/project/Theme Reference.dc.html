@@ -53,6 +53,20 @@ a:hover{color:#1A3E77}
   </div>
 
   <section style="margin-bottom:26px;break-inside:avoid">
+    <div class="th-eyebrow">00 — v3 update</div>
+    <h2 class="th-h2">What changed for the current design</h2>
+    <div class="th-rule"></div>
+    <table class="th-tbl">
+      <tr><td><strong>Sheets</strong></td><td>Edge-to-edge, radius 24 top only, 34&nbsp;px bottom inset for the home bar. Draw your own 36×5 handle; close is a 30&nbsp;px round × on <span class="th-kbd">fill</span>.</td></tr>
+      <tr><td><strong>Shop picker pills</strong></td><td>40&nbsp;px, fully rounded. Unpicked: shop colour at 9% (16% dark). Picked: solid shop colour, <span class="th-kbd">onColor</span> text, dot → tick, shadow 0/6/16 at 32%. "No shop" first, hollow dot on <span class="th-kbd">fill</span>.</td></tr>
+      <tr><td><strong>Mode bar</strong></td><td>Select / Rearrange replace the header with an ink bar (<span class="th-kbd">btnBg</span>). Its pills use white 14% (black 8% in dark); Delete uses #F08A7E (#B03A2E in dark).</td></tr>
+      <tr><td><strong>Toast</strong></td><td>Ink, radius 14, 48&nbsp;px, 98&nbsp;px from the bottom (above the FAB). Always carries Undo after a bulk or destructive action.</td></tr>
+      <tr><td><strong>Motion</strong></td><td>New tokens in <span class="th-kbd">app_motion.dart</span>: <span class="th-kbd">ios</span>, <span class="th-kbd">emphasized</span>, <span class="th-kbd">exitStd</span> curves plus per-interaction durations (sheet 440/300, drawer 360/260, shared title 380, batch move 480, settle 750).</td></tr>
+      <tr><td><strong>Liquid Glass</strong></td><td>Optional, floating chrome only: blur 14 + saturate 190%, fill 30–45%, 1&nbsp;px white rim with a top inner highlight. Not themed by default.</td></tr>
+    </table>
+  </section>
+
+  <section style="margin-bottom:26px;break-inside:avoid">
     <div class="th-eyebrow">01 — Setup</div>
     <h2 class="th-h2">Wiring it up</h2>
     <div class="th-rule"></div>

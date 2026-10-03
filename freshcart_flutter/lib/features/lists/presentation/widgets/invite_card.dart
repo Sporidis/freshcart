@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-/// The list's join code, with a copy button that confirms itself.
+/// The list's join code, with a copy button.
 ///
-/// The button morphs to a checkmark for 1.6 s rather than firing a snackbar:
-/// the feedback belongs on the control that was pressed, and a snackbar for
-/// something this small would cover the very thing they are about to share.
+/// After copying, the button shows a checkmark for 1.6 s. No snackbar,
+/// because it would cover the code.
 class InviteCard extends ConsumerStatefulWidget {
   /// Creates the card for [joinCode].
   const InviteCard({required this.joinCode, required this.t, super.key});
@@ -54,11 +54,17 @@ class _InviteCardState extends ConsumerState<InviteCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.gap,
+        AppSpacing.gapSmall,
+        AppSpacing.gapSmall,
+        AppSpacing.gapSmall,
+      ),
+      // Light grey background (set in AppTheme, so it never gets a colour
+      // tint).
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.4,
-        ),
+        color: theme.colorScheme.surfaceContainer,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
         borderRadius: BorderRadius.circular(AppRadii.input),
       ),
       child: Row(
@@ -77,10 +83,12 @@ class _InviteCardState extends ConsumerState<InviteCard> {
             icon: AnimatedSwitcher(
               duration: AppMotion.durationFor(context, AppMotion.quick),
               child: _copied
-                  ? Icon(
+                  ? const Icon(
                       Icons.check_circle,
-                      key: const ValueKey('copied'),
-                      color: theme.colorScheme.tertiary,
+                      key: ValueKey('copied'),
+                      // Our own success green. Not `tertiary`: in our theme
+                      // that's a random colour, not green.
+                      color: AppColors.success,
                     )
                   : const Icon(Icons.copy_outlined, key: ValueKey('copy')),
             ),

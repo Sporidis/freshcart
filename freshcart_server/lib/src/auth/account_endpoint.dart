@@ -3,18 +3,18 @@ import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Upgrading an anonymous account by attaching credentials to it.
+/// Endpoint to upgrade an anonymous account by adding a login (email).
 class AccountEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
 
-  /// Which providers are attached to the caller's account.
+  /// Which login methods the caller's account has.
   Future<List<LinkedProvider>> linkedProviders(Session session) =>
       AccountLinkService.linkedProviders(session, session.requireUserId);
 
-  /// Attaches an email/password credential to the caller's existing account.
+  /// Adds an email and password to the caller's account.
   ///
-  /// The caller keeps the same `authUserId`, so nothing they created moves.
+  /// The `authUserId` stays the same, so all their lists stay theirs.
   Future<List<LinkedProvider>> linkEmail(
     Session session,
     String email,

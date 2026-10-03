@@ -3,22 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_providers.dart';
 
-/// Prompts an anonymous user to attach an email to their account.
+/// A banner asking an anonymous user to add an email to their account.
 ///
-/// The product half of `docs/decisions.md` #6: anonymous-first removes signup
-/// friction, but an anonymous session lives only in local storage, so losing
-/// the device loses every shared list. The architecture cannot fix that — the
-/// mitigation is to ask at the moment the stakes become real, which is when a
-/// list is shared or joined. Shown here, on the list detail screen, rather than
-/// on first launch where it would just be a signup form with extra steps.
+/// Why: anonymous accounts only exist on the phone. Lose the phone, lose
+/// all your lists. So we ask once it matters, on the list screen, instead
+/// of at first launch. See decisions.md #6.
 ///
-/// Dismissible, and permanently so (see [UpgradeNudgeController]) — the same
-/// action stays one tap away from Settings for whenever it is actually
-/// wanted, so nothing is lost by not repeating it on every list opened.
+/// Once closed, it stays closed (see [UpgradeNudgeController]). The same
+/// option is always in Settings.
 class UpgradeNudge extends ConsumerWidget {
   /// Creates the nudge.
   const UpgradeNudge({super.key});
@@ -29,11 +26,8 @@ class UpgradeNudge extends ConsumerWidget {
     if (!ref.watch(showUpgradeNudgeProvider)) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
-    // The neutral surfaceContainerHighest, not secondaryContainer: the same
-    // "chrome is neutral ink-on-paper" rule AppTheme fixes surfaceContainer*
-    // for applies here too -- a notice banner is chrome, not a coloured
-    // accent, and secondaryContainer carries the identical un-overridden-M3
-    // risk that made the add-item bar a stray olive-green.
+    // A neutral grey background. Not secondaryContainer: our theme doesn't
+    // set that one, so it would come out slightly green.
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       child: ListTile(
@@ -64,18 +58,15 @@ class UpgradeNudge extends ConsumerWidget {
   }
 }
 
-/// Opens [LinkEmailDialog]. The one place this gets shown from, so
-/// [UpgradeNudge] and the settings screen cannot drift into two different
-/// dialogs for the same action.
+/// Opens [LinkEmailDialog]. Both [UpgradeNudge] and Settings use this.
 Future<void> showLinkEmailDialog(BuildContext context) => showDialog<void>(
   context: context,
   builder: (context) => const LinkEmailDialog(),
 );
 
-/// The form that attaches an email/password to an anonymous account.
+/// The form to add an email and password to an anonymous account.
 ///
-/// Public because both [UpgradeNudge] and the settings screen open it —
-/// dismissing the nudge must not also remove the only way to reach this.
+/// Public because Settings opens it too.
 class LinkEmailDialog extends ConsumerStatefulWidget {
   /// Creates the dialog.
   const LinkEmailDialog({super.key});
@@ -132,12 +123,12 @@ class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: t.account.emailLabel,
-              // Translated here, not when stored: a language switch while
-              // the dialog is open re-renders the error in the new locale.
+              // Translated here (not when the error is saved), so it
+              // updates if the language changes.
               errorText: _failure?.toMessage(t),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: AppSpacing.sm),
           TextField(
             controller: _password,
             enabled: !_busy,

@@ -9,10 +9,10 @@ class CreateList {
 
   final ListRepository _lists;
 
-  /// Validates [name] and creates the list.
+  /// Checks [name] and creates the list.
   ///
-  /// The name rules live on [ShoppingList] so every entry point — this dialog,
-  /// a rename, a deep link, a future import — enforces them equally.
+  /// The name rules are on [ShoppingList], so creating and renaming use the
+  /// same ones.
   Future<Result<ShoppingList>> call(String name) async =>
       switch (ShoppingList.validateName(name)) {
         Err(:final failure) => Err(failure),

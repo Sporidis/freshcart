@@ -8,8 +8,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'household_screen_controller.g.dart';
 
-/// The view model behind `HouseholdScreen`: who is on the list, who you are,
-/// and the owner's two member actions.
+/// The controller for `HouseholdScreen`: who's on the list, who you are,
+/// and the two things the owner can do to members (remove, make owner).
 @riverpod
 class HouseholdScreenController extends _$HouseholdScreenController {
   ListsController get _lists => ref.read(listsControllerProvider.notifier);
@@ -27,14 +27,15 @@ class HouseholdScreenController extends _$HouseholdScreenController {
     );
   }
 
-  /// Removes [member] from the list, on the owner's authority.
+  /// Removes [member] from the list. Only the owner can do this.
   Future<Failure?> removeMember(ListMember member) async =>
       (await _lists.removeMember(listId, member.userId)).failureOrNull;
 
-  /// Hands ownership to [member] -- and takes it away from you.
+  /// Makes [member] the owner. You stop being the owner.
   Future<Failure?> transferOwnership(ListMember member) async =>
       (await _lists.transferOwnership(listId, member.userId)).failureOrNull;
 
-  /// See `ListDetailScreenController.refreshLists`.
+  /// Reloads the user's lists. Called before leaving an error screen, so
+  /// `/lists` doesn't send the user back to a list that's gone.
   Future<void> refreshLists() => _lists.refresh();
 }

@@ -7,30 +7,29 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'onboarding_controller.g.dart';
 
-/// A plain default so onboarding doesn't need its own colour picker.
+/// Runs the onboarding wizard: keeps the user's answers, moves between
+/// [OnboardingStep]s, and saves everything with [submit].
 ///
-/// The shop can be recoloured later from the shops screen — this just gets a
-/// first list unblocked (`docs/decisions.md` shop-colour theming).
-/// Drives the onboarding wizard: holds the draft answers, moves between
-/// [OnboardingStep]s, and submits them on [finish].
-///
-/// One controller for the whole wizard rather than one per step — the steps
-/// share a single submission at the end, so splitting the draft state up
-/// would just mean re-joining it right before [finish] anyway.
+/// One controller for all steps (not one per step), because all answers
+/// are saved together in [submit].
 @riverpod
 class OnboardingController extends _$OnboardingController {
+  /// Starts on step 1, with the first two preset shops already selected.
   @override
   OnboardingState build() =>
       OnboardingState(selectedShops: presetShops.take(2).toList());
 
+  /// Updates the name the user is typing. Clears any error.
   void updateDisplayName(String value) {
     state = state.copyWith(displayName: value, clearError: true);
   }
 
+  /// Updates the list name the user is typing. Clears any error.
   void updateListName(String value) {
     state = state.copyWith(listName: value, clearError: true);
   }
 
+  /// Selects the shop [name] if it isn't selected, or unselects it if it is.
   void toggleShop(String name, HexColor color) {
     final shops = [...state.selectedShops];
     final index = shops.indexWhere((shop) => shop.name == name);
@@ -42,6 +41,8 @@ class OnboardingController extends _$OnboardingController {
     state = state.copyWith(selectedShops: shops, clearError: true);
   }
 
+  /// Adds a shop the user typed in themselves, already selected. Ignored if
+  /// the name is empty or already in the list.
   void addShop(String name, HexColor color) {
     final trimmedName = name.trim();
     if (trimmedName.isEmpty || state.isShopSelected(trimmedName)) return;
@@ -54,7 +55,31 @@ class OnboardingController extends _$OnboardingController {
     );
   }
 
-  /// Advances to the next step, if any.
+  /// Goes to the next step if the answer is valid. If not, saves the error
+  /// in [OnboardingState.error] and stays on this step.
+  ///
+  /// This is why Continue can always be pressed: pressing it with a bad
+  /// answer shows the error. Typing again clears it (the `update` methods
+  /// above pass `clearError: true`).
+  ///
+  /// Returns true if it moved on, so the screen only vibrates then.
+  bool continueIfValid() {
+    final check = switch (state.step) {
+      OnboardingStep.displayName => AuthUser.validateDisplayName(
+        state.displayName,
+      ),
+      OnboardingStep.createList => ShoppingList.validateName(state.listName),
+      OnboardingStep.addShop || OnboardingStep.invite => const Ok(''),
+    };
+    if (check case Err(:final failure)) {
+      state = state.copyWith(error: failure);
+      return false;
+    }
+    next();
+    return true;
+  }
+
+  /// Goes to the next step, without checking the answer.
   void next() {
     const steps = OnboardingStep.values;
     final index = steps.indexOf(state.step);
@@ -62,7 +87,7 @@ class OnboardingController extends _$OnboardingController {
     state = state.copyWith(step: steps[index + 1], clearError: true);
   }
 
-  /// Returns to the previous step, if any.
+  /// Goes back one step (does nothing on step 1).
   void back() {
     const steps = OnboardingStep.values;
     final index = steps.indexOf(state.step);
@@ -70,21 +95,19 @@ class OnboardingController extends _$OnboardingController {
     state = state.copyWith(step: steps[index - 1], clearError: true);
   }
 
-  /// Submits the draft: sets the display name, creates the first list, and
-  /// creates every selected shop. Called when leaving [OnboardingStep.addShop]
-  /// rather than at the very end of the wizard — [OnboardingStep.invite],
-  /// the step after it, shows the *real* list's join code, so the list has
-  /// to exist before that step can render.
+  /// Saves everything: the user's name, the first list, and the selected
+  /// shops.
   ///
-  /// Stops at the first failure rather than continuing partially, so the
-  /// wizard's error always names something the user just typed. On success,
-  /// advances to [OnboardingStep.invite] itself; the caller does not need a
-  /// separate [next] call.
+  /// Called after the shops step, not at the very end. The last step
+  /// (invite) shows the list's real join code, so the list must exist by
+  /// then.
+  ///
+  /// Stops at the first error. If everything works, it moves to the invite
+  /// step by itself (no need to call [next]).
   Future<Result<void>> submit() async {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
-    // Trimming and length are the use case's business now, not this
-    // controller's — the wizard just hands over what the user typed.
+    // Pass the name as typed. The use case trims and validates it.
     final result = await SetDisplayName(ref.read(authRepositoryProvider))(
       state.displayName,
     );

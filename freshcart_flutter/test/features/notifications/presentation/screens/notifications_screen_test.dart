@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
@@ -101,9 +102,9 @@ void main() {
 
         expect(
           tester
-              .widget<SwitchListTile>(
+              .widget<SettingToggleOption>(
                 find.widgetWithText(
-                  SwitchListTile,
+                  SettingToggleOption,
                   'Someone adds an item',
                 ),
               )
@@ -112,16 +113,19 @@ void main() {
         );
         expect(
           tester
-              .widget<SwitchListTile>(
-                find.widgetWithText(SwitchListTile, 'Someone joins a list'),
+              .widget<SettingToggleOption>(
+                find.widgetWithText(
+                  SettingToggleOption,
+                  'Someone joins a list',
+                ),
               )
               .value,
           isFalse,
         );
         expect(
           tester
-              .widget<SwitchListTile>(
-                find.widgetWithText(SwitchListTile, 'A list is finished'),
+              .widget<SettingToggleOption>(
+                find.widgetWithText(SettingToggleOption, 'A list is finished'),
               )
               .value,
           isFalse,
@@ -150,5 +154,22 @@ void main() {
         ),
       );
     });
+
+    testWidgets(
+      'a failed load shows no toggles -- never defaults posing as the '
+      "user's choices -- and Retry brings them back",
+      (tester) async {
+        push.preferencesFailure = const Failure.network();
+        await pump(tester);
+
+        expect(find.byType(SettingToggleOption), findsNothing);
+
+        push.preferencesFailure = null;
+        await tester.tap(find.text('Try again'));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(SettingToggleOption), findsNWidgets(3));
+      },
+    );
   });
 }

@@ -16,7 +16,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'item_repository_impl.g.dart';
 
-/// The Serverpod-backed [ItemRepository].
+/// The real [ItemRepository], talking to the Serverpod server.
 class ItemRepositoryImpl implements ItemRepository {
   /// Creates the repository against a generated Serverpod [dto.Client].
   const ItemRepositoryImpl(
@@ -31,9 +31,8 @@ class ItemRepositoryImpl implements ItemRepository {
   final PendingOperationsQueue queue;
   final CachedItemsStore _cache;
 
-  /// The signed-in user's id, read lazily so it reflects whatever
-  /// `currentUserIdProvider` has cached at the moment it's needed — not
-  /// resolved once when this repository is constructed.
+  /// The signed-in user's id. Read each time it's needed (not once when
+  /// the repository is created), so it's always the current one.
   final UserId Function() currentUserId;
 
   final ConnectivityAdapter _connectivityAdapter;
@@ -61,9 +60,9 @@ class ItemRepositoryImpl implements ItemRepository {
       noteText: noteText,
     )).toDomain(),
     onUnreachable: () async {
-      // Minted once, reused for both the queue row and the fabricated item's
-      // id — they must be the same value, or a later queued op (e.g. a
-      // toggle on this same item, still offline) has nothing to reference.
+      // One temporary id, used for both the queue and the item shown on
+      // screen. They must match, so later offline changes to this item
+      // (like checking it) point to the right one.
       final tempId = _mintTempId();
       final userId = currentUserId();
       final now = DateTime.now().toUtc();
@@ -231,7 +230,7 @@ class ItemRepositoryImpl implements ItemRepository {
   String _mintTempId() => 'temp-${DateTime.now().microsecondsSinceEpoch}';
 }
 
-/// Supplies the [ItemRepository] port.
+/// Supplies the [ItemRepository].
 @Riverpod(keepAlive: true)
 ItemRepository itemRepository(Ref ref) => ItemRepositoryImpl(
   ref.watch(serverpodClientProvider),

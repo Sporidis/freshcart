@@ -10,11 +10,16 @@ class AppMotion {
   static const Duration sheetIn = Duration(milliseconds: 380);
   static const Duration sheetOut = Duration(milliseconds: 220);
   static const Duration celebrate = Duration(milliseconds: 900);
-  // The shop-theme reveal (decisions #85, slowed per decisions #89): long
-  // enough to actually watch the wave travel to a far corner of the screen
-  // (the FAB, gated on this via WaveThemed) before it's already settled --
-  // 450ms read as barely-there once a real diagonal crossing was involved.
-  static const Duration reveal = Duration(milliseconds: 700);
+  // The colour wave when switching shops. Was 700ms, slow enough to watch
+  // cross the screen (decisions.md #85, #89); design v3 makes it 400ms and
+  // restartable, so a tab switch feels like a tap, not a show (#106).
+  static const Duration reveal = colorWave;
+
+  // Moving between onboarding steps. The old page leaves quickly, then the
+  // new one comes in a bit later, so they never overlap.
+  static const Duration stepOut = Duration(milliseconds: 200);
+  static const Duration stepIn = Duration(milliseconds: 320);
+  static const Duration stepInDelay = Duration(milliseconds: 60);
 
   static const Curve enter = Curves.easeOutCubic;
   static const Curve exit = Curves.easeInCubic;
@@ -22,36 +27,85 @@ class AppMotion {
   static const Curve sheet = Curves.easeOutQuint;
   static const Curve press = Curves.easeOut;
 
+  // ---- Design v3 interaction tokens (the main prototype) ----
+  // Where these disagree with the older tokens above, the v3 value wins for
+  // anything built or restyled to the v3 design.
+
+  /// iOS sheet and push curve.
+  static const Curve ios = Cubic(0.32, 0.72, 0, 1);
+
+  /// Emphasised decelerate: shared elements, batch moves, toasts.
+  static const Curve emphasized = Cubic(0.2, 0.8, 0.2, 1);
+
+  /// Accelerating exit for sheets and the drawer.
+  static const Curve exitStd = Cubic(0.4, 0, 0.6, 1);
+
+  static const Duration shopHighlight = Duration(milliseconds: 280);
+  static const Duration listSlide = Duration(
+    milliseconds: 220,
+  ); // +24ms stagger, 28px travel
+  static const Duration colorWave = Duration(milliseconds: 400); // restartable
+  static const Duration sharedTitle = Duration(milliseconds: 380);
+
+  /// The new list fading in when you switch lists from the drawer (v3's
+  /// `listIn` runs 280ms; the switch itself has no push).
+  static const Duration listSwitch = Duration(milliseconds: 280);
+  static const Duration sheetOpen = Duration(milliseconds: 440);
+  static const Duration sheetClose = Duration(milliseconds: 300);
+  static const Duration drawerOpen = Duration(milliseconds: 360);
+  static const Duration drawerClose = Duration(milliseconds: 260);
+  static const Duration push = Duration(milliseconds: 350);
+  static const Duration fabRollOpen = Duration(milliseconds: 380);
+  static const Duration fabRollClose = Duration(milliseconds: 280);
+  static const Duration holdDelay = Duration(milliseconds: 450);
+  static const Duration holdMenuIn = Duration(milliseconds: 340);
+
+  /// The ink mode bar replacing the header (Select, Rearrange).
+  static const Duration modeBar = Duration(milliseconds: 340);
+
+  /// Quiet period after the last tick before checked rows move to Done.
+  static const Duration checkSettle = Duration(milliseconds: 750);
+
+  /// [checkSettle] under reduced motion.
+  static const Duration checkSettleReduced = Duration(milliseconds: 300);
+  static const Duration batchMove = Duration(milliseconds: 480);
+  static const Duration batchStagger = Duration(milliseconds: 45);
+  static const Duration reflow = Duration(milliseconds: 380);
+  static const Duration toastIn = Duration(milliseconds: 380);
+  static const Duration toastHold = Duration(milliseconds: 3400);
+  static const Duration onboardingStep = Duration(
+    milliseconds: 340,
+  ); // 36px, 40ms stagger
+  static const double pressScale = 0.97;
+
   static const SpringDescription spring = SpringDescription(
     mass: 1,
     stiffness: 180,
     damping: 14,
   );
 
-  /// Whether the viewer has asked the platform for reduced motion.
+  /// Whether the user turned on "reduce motion" in the phone's settings.
   ///
-  /// The motion spec's rule: every non-essential animation checks this, and
-  /// when it is on, durations collapse to [micro] and [pop]'s overshoot falls
-  /// back to a plain ease. Overshoot and long travel are exactly what motion
-  /// sensitivity reacts to, so honouring it is not a nicety.
+  /// If so, animations become very short ([micro]) and don't bounce. Some
+  /// people get dizzy from motion, so every animation should respect this.
   static bool reduced(BuildContext context) =>
       MediaQuery.maybeDisableAnimationsOf(context) ?? false;
 
-  /// [duration], collapsed to [micro] when the viewer wants reduced motion.
+  /// Returns [duration], or [micro] if reduced motion is on.
   static Duration durationFor(BuildContext context, Duration duration) =>
       reduced(context) ? micro : duration;
 
-  /// [curve], with [pop]'s overshoot dropped when motion is reduced.
+  /// Returns [curve], but without the bounce of [pop] if reduced motion is on.
   static Curve curveFor(BuildContext context, Curve curve) =>
       reduced(context) && curve == pop ? press : curve;
 
-  /// Stagger delay for list children entering together (cap at 6 items).
+  /// Delay for the item at [index], so list items appear one after another
+  /// instead of all at once. Stops growing after 6 items.
   static Duration stagger(int index) =>
       Duration(milliseconds: (index.clamp(0, 5)) * 35);
 
-  /// Stagger delay for rows revealing their multi-select circle down the
-  /// list (§10) — its own, faster cadence than [stagger], which is for
-  /// content entering rather than a mode-switch reveal.
+  /// Like [stagger], but faster. Used when entering select mode, so the
+  /// select circles appear row by row.
   static Duration selectionStagger(int index) =>
       Duration(milliseconds: (index.clamp(0, 10)) * 25);
 }

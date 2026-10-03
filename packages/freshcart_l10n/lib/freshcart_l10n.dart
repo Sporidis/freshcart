@@ -1,12 +1,12 @@
-/// Shared slang translations for FreshCart (nl default, en, fr).
+/// FreshCart's translations (slang), used by both the app and the website.
+/// Languages: nl (default), en, fr, ru, tl.
 ///
-/// Generated with `flutter_integration: false`, so this library is pure Dart
-/// and both the Flutter app and the Jaspr marketing site can depend on it.
-/// The consequence is that there is no `TranslationProvider` or `context.t`:
-/// choosing a locale is the consumer's job. In the app that is a Riverpod
-/// provider; see `docs/decisions.md` #24.
+/// Generated with `flutter_integration: false`, so it's plain Dart (no
+/// Flutter) and the website can use it too. Because of that, there's no
+/// `TranslationProvider` or `context.t`: the app keeps the language in a
+/// Riverpod provider instead (decisions.md #24).
 ///
-/// Regenerate with `dart run slang` from this package.
+/// To regenerate: run `dart run slang` in this package.
 library;
 
 export 'i18n/translations.g.dart';

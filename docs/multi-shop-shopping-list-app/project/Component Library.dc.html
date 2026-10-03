@@ -52,6 +52,22 @@ a:hover{color:#1A3E77}
     </div>
   </div>
 
+  <div class="cl-sec" style="background:#F3F2EE">
+    <div class="cl-tag" style="color:#1F7644">v3</div>
+    <h2 class="cl-h">New &amp; changed widgets</h2>
+    <p class="cl-d">Added for the current design (main prototype). ProductRow gains a selected state (ink circle) and a rearrange state (handle). AddControl (the FAB) is unchanged except that it scales out in modes.</p>
+    <table class="cl-tbl">
+      <tr><th>Widget</th><th>Used for</th><th>States</th><th>Notes</th></tr>
+      <tr><td><strong>ShopPickerPill</strong></td><td>Picking a destination (add product, move).</td><td>idle (tinted 9%) · selected (solid, tick) · No shop (hollow dot)</td><td>40 px, rounded. Never a tile or a dropdown.</td></tr>
+      <tr><td><strong>HoldMenu</strong></td><td>Long-press on a ProductRow.</td><td>closed · main (stepper + 5 actions) · move (pill picker)</td><td>OverlayEntry anchored to the row; the row hides while it shows.</td></tr>
+      <tr><td><strong>ModeBar</strong></td><td>Select and Rearrange.</td><td>select (count, Move, Delete) · rearrange (scope, Done)</td><td>Replaces the header; FAB scales out.</td></tr>
+      <tr><td><strong>UndoToast</strong></td><td>After a bulk or destructive action.</td><td>hidden · shown · with Undo · with tick</td><td>One at a time; a new one replaces the old.</td></tr>
+      <tr><td><strong>DrawerListTile</strong></td><td>The lists inside the drawer.</td><td>idle · current (fill) · flying (title hidden)</td><td>Name, shop dots, 3 px ink progress.</td></tr>
+      <tr><td><strong>AddProductSheet</strong></td><td>FAB + with text, or Edit from the hold menu.</td><td>add · edit (Save changes) · note closed/open</td><td>Name + amount on one line, "Where" pills, button names the shop.</td></tr>
+      <tr><td><strong>OnboardingStep</strong></td><td>Each step of first launch.</td><td>welcome · username · list · shops · invite · join · error (shake)</td><td>Dots widen for the current step; back hidden on welcome.</td></tr>
+    </table>
+  </div>
+
   <div class="cl-sec">
     <div class="cl-tag">01</div>
     <h2 class="cl-h">ProductRow</h2>

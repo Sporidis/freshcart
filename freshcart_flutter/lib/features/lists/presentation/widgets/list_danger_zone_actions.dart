@@ -1,28 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-// Deleting and leaving a list — shared so `_ListMenu`'s overflow item and
-// `ListSettingsScreen`'s own row are two doors into the same flow, not two
-// copies of the same confirm dialog to keep in sync (the same reasoning as
-// `showCreateListDialog`/`showJoinListDialog`, decisions #63).
+// Delete and leave a list. Used by both the list's "..." menu and list
+// settings, so the dialogs are the same in both (decisions.md #63).
 //
-// Both own only the presentation half -- the dialog, the navigation, the
-// snackbar. The write itself comes in as a callback from the caller's view
-// model, so this file never needs to know which controller performs it.
+// These functions only handle the UI (dialog, navigation, snackbar). The
+// actual delete/leave is passed in as a callback by the caller.
 
-/// Deleting names the list, its member count and its item count, and is not
-/// undoable.
+/// Asks "are you sure?" before deleting a list, showing the list name, how
+/// many members and how many items.
 ///
-/// [itemCount] is a snapshot: the dialog is built once, when it opens, and
-/// does not need to react to a count that changes while it is up.
+/// [itemCount] is read once, when the dialog opens.
 ///
-/// A dialog rather than a snackbar with an undo, because there is nothing to
-/// undo: this one is genuinely permanent, so it is worth interrupting for.
+/// A dialog (not a snackbar with Undo), because deleting can't be undone.
 Future<void> confirmDeleteList(
   BuildContext context, {
   required ShoppingList list,
@@ -42,11 +37,7 @@ Future<void> confirmDeleteList(
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(t.common.cancel),
         ),
-        FilledButton(
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.destructive,
-            foregroundColor: Colors.white,
-          ),
+        DestructiveButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(t.lists.deleteForEveryone),
         ),
@@ -64,8 +55,8 @@ Future<void> confirmDeleteList(
   }
 }
 
-/// Leaving a list — a non-owner's equivalent of [confirmDeleteList]. The
-/// list carries on for everyone else; only membership ends.
+/// Asks "are you sure?" before leaving a list. Like [confirmDeleteList],
+/// but for members. The list still exists for the others.
 Future<void> confirmLeaveList(
   BuildContext context, {
   required ShoppingList list,
@@ -82,7 +73,9 @@ Future<void> confirmLeaveList(
           onPressed: () => Navigator.of(context).pop(false),
           child: Text(t.common.cancel),
         ),
-        FilledButton(
+        // Red, like delete: to come back you'd need a new invite code.
+        // (The design has no confirm here; we added one, decisions.md #104.)
+        DestructiveButton(
           onPressed: () => Navigator.of(context).pop(true),
           child: Text(t.lists.leave),
         ),

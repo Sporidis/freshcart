@@ -4,19 +4,18 @@ import 'package:freshcart_domain/src/items/ports/item_repository.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
 import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
 
-/// Adds an item to a list, enforcing the rules an item must satisfy.
+/// Adds an item to a list, after checking the rules.
 class AddItem {
   /// Creates the use case against an [ItemRepository].
   const AddItem(this._items);
 
   final ItemRepository _items;
 
-  /// Validates the input and appends the item to [listId].
+  /// Checks the input, then adds the item to [listId].
   ///
-  /// The rules themselves live on [ShoppingItem] so that editing an item
-  /// enforces exactly the same ones — see [ShoppingItem.validateName]. They
-  /// run *before* touching the network: the check belongs to the domain, not
-  /// to a form widget, so it holds no matter which screen calls it.
+  /// The rules are on [ShoppingItem] (like [ShoppingItem.validateName]), so
+  /// editing uses the same ones. They run before calling the server, and in
+  /// the domain (not in a widget), so every screen gets them.
   Future<Result<ShoppingItem>> call({
     required ListId listId,
     required String name,

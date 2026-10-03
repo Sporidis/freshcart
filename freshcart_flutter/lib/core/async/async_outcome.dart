@@ -1,51 +1,39 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// The shape every controller in this app exposes.
+/// The state type every controller in this app uses.
 ///
-/// Two wrappers, because they mean different things and collapsing them would
-/// lose information:
+/// It's two wrappers inside each other, and each one answers a different
+/// question:
 ///
-/// * [AsyncValue] carries *loading* — a fact about the request, not the domain.
-/// * [Result] carries *expected failure* — offline, not found, conflict — which
-///   `CLAUDE.md` requires to travel as a value rather than a thrown exception.
+/// * [AsyncValue] (outside): is the request still loading, done, or did
+///   something crash?
+/// * [Result] (inside): did it work ([Ok]), or did it fail in a way we
+///   expected, like being offline or the list not existing ([Err])?
 ///
-/// An `AsyncError` therefore means something genuinely unexpected happened (a
-/// bug), while `AsyncData(Err(...))` means the operation completed and failed
-/// in a way the UI is expected to handle. Throwing a [Failure] into
-/// [AsyncValue]'s error channel would have blurred the two — and would have
-/// needed a fake exception wrapper, since `Failure` is deliberately not an
-/// `Exception`.
-/// Named `AsyncOutcome`, not `AsyncResult`: Riverpod 3 already exports an
-/// `AsyncResult` of its own, and shadowing a framework type would be a trap for
-/// the next reader.
+/// So `AsyncError` means a bug. `AsyncData(Err(...))` means a normal failure
+/// the UI should show to the user.
+///
+/// Called `AsyncOutcome` because Riverpod already has its own `AsyncResult`.
 typedef AsyncOutcome<T> = AsyncValue<Result<T>>;
 
-/// Convenience readers for [AsyncOutcome], so a screen does not have to
-/// hand-roll the same two-level `switch` every time it needs to ask "is
-/// there a value to show?" or "is there a failure to show instead?"
+/// Shortcuts for reading an [AsyncOutcome], so screens don't have to unwrap
+/// both layers by hand every time.
 ///
-/// Both are pure data extraction: neither builds a widget or decides how a
-/// failure is presented, because that differs by screen — some replace
-/// themselves entirely with an error screen, others show it inline.
+/// They only pull data out. Each screen decides for itself how to show it.
 extension AsyncOutcomeX<T> on AsyncOutcome<T> {
-  /// The value once this has settled as [AsyncData] wrapping an [Ok] — `null`
-  /// for every other state: still loading, an unexpected [AsyncError], or a
-  /// settled [Err].
+  /// The value if everything worked, otherwise `null` (still loading, crashed,
+  /// or failed).
   T? get dataOrNull => value?.valueOrNull;
 
-  /// The failure behind a failed *load*, or `null` if there isn't one.
+  /// Why loading failed, or `null` if it didn't fail.
   ///
-  /// Collapses the two ways a load can fail into one: an [AsyncError] (a
-  /// genuinely unexpected error — a bug) reports as [Failure.unexpected],
-  /// and a settled [Err] (an expected failure a repository returned) reports
-  /// as itself.
+  /// A crash ([AsyncError]) becomes [Failure.unexpected]. A normal failure
+  /// ([Err]) is returned as is.
   ///
-  /// `isLoading` is checked first and wins outright, even when a previous
-  /// [Err] is still sitting in [value] (Riverpod carries the last value
-  /// through a reload). A retry in flight means "we don't know yet," not
-  /// "still failing" — so this deliberately goes quiet rather than keep
-  /// reporting a failure a fresh attempt might be about to resolve.
+  /// While a retry is loading this returns `null`, even if the last attempt
+  /// failed. We don't know yet if the retry will work, so we stop showing the
+  /// old error.
   Failure? get loadFailure {
     if (isLoading) return null;
     if (hasError) return const Failure.unexpected();

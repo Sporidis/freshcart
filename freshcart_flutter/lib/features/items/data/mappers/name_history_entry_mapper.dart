@@ -1,11 +1,10 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// Maps a [dto.ItemNameHistory] wire object to the domain entity.
+/// Converts a Serverpod [dto.ItemNameHistory] into our [NameHistoryEntry].
 ///
-/// One-way only: nothing in the app writes a [NameHistoryEntry] back --
-/// history rows are written server-side, as a side effect of `ItemService.add`
-/// (decisions #64), not through this repository.
+/// Only one direction: the server writes the history itself when an item
+/// is added (decisions.md #64).
 extension ItemNameHistoryDtoX on dto.ItemNameHistory {
   /// Converts to the domain [NameHistoryEntry].
   NameHistoryEntry toDomain() =>
