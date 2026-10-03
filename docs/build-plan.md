@@ -36,7 +36,7 @@ Status as of 2026-09-10. ✅ accepted · 🟡 partial, reason given · ⛔ block
 | 11 Jaspr marketing site | 🟡 | Pages and components exist; SEO meta and Lighthouse pass not yet verified. No tests, and CI has no job for this package. |
 | 12 Test coverage + CI | 🟡 | CI runs analyze, format and all four suites, and asserts the golden rules by grep (decisions #41). Coverage gaps remain in `freshcart_web` — no `test-web` job exists yet. |
 
-**Suites:** 247 app · 96 domain · 88 server · 8 l10n.
+**Suites:** 468 app · 96 domain · 88 server · 8 l10n.
 
 ## Design flows
 
@@ -44,6 +44,15 @@ The Claude Design handoff bundle in `docs/multi-shop-shopping-list-app/` defines
 (00–10, as of the 2026-09-11 re-export, which added 09 and 10). These are built *on top of* the
 phases above, not instead of them. See `docs/design-gap-plan.md` for the detailed breakdown of
 everything flows 09–10 add that phases 0–12 did not build yet.
+
+> **Design v3 supersedes the older frames (2026-10).** The 2026-10-02 re-export rewrote the main
+> prototype (`Shopping List App.dc.html`) and added a "v3 · current design" section to Flow Screens
+> v2, the Motion Spec, the Theme Reference and the Component Library. Where an older frame
+> disagrees with v3, v3 wins, and the app now follows v3: tokens, sheets, header, shop strip, rows,
+> batch check-off, undo toasts, the hold menu and its entrance, the product sheet, the drawer and
+> its title flight, List settings, the Edit profile sheet and onboarding. The plan was phases D0–D8;
+> what was kept from older flows that v3 doesn't show (search, swipe-to-delete, add suggestions, the
+> celebration card), and every deliberate difference, is in decisions #106.
 
 | Flow | State | Note |
 | ---- | ----- | ---- |
@@ -56,8 +65,8 @@ everything flows 09–10 add that phases 0–12 did not build yet.
 | 06 Search & suggestions | 🟡 | Search is built, local-only, its own header mode — decisions #55. The purchase-history capability "Recently bought" needs is now built (decisions #64, for the add control's own chips) — this row is now just a small UI piece away, not a backend gap. |
 | 07 Offline & sync | 🟡 | `docs/offline-sync-plan.md` Phases A-D (write queue), F (in-memory reconnect resilience) and G (cached reads for a cold offline start, decisions #91) are built. **Not yet built:** Phase E, the pending-write visual cue — `pending` is set correctly on both domain entities but nothing in `presentation/` reads it yet. |
 | 08 Errors | ✅ | Three tiers, decisions #42 |
-| 09 The add control | 🟡 | The core interaction (roll-out FAB, +/× glyph rotation, fast Enter path vs. the detail sheet) is built — decisions #58, #59. **Not yet built:** the shop-tinted placeholder ("Add to Colruyt"), the leading shop-colour dot inside the field, the empty-vs-has-text glyph background state, item-name suggestion chips, and the new-row entrance flash. See `docs/design-gap-plan.md`. |
-| 10 Drawer, settings & preferences | 🟡 | The drawer (decisions #57, #65) and a 4-group Settings screen (decisions #56) exist; member avatars/inline create-join landed in the drawer (#65); Edit profile with a user-chosen avatar colour and photo landed (#66); `ListSettingsScreen` (name, Members/Shops doors, Leave/Delete) landed (#69), reached from Settings' "Manage lists" row. **Not yet built:** Appearance/Notifications as their own screens (Settings' own rows for these are still inert), the drawer's remaining-item counts (deferred in #65), and "Clear checked after shopping" (needs a real domain decision first, see #69). See `docs/design-gap-plan.md`. |
+| 09 The add control | 🟡 | Roll-out button, +/× rotation, fast Enter path vs. the detail sheet (decisions #58, #59), and the v3 polish: "Add to {shop}…" placeholder, the 9px shop dot, the muted empty glyph, suggestion chips, v3 timings (#106). **Not yet built:** the new-row entrance flash. |
+| 10 Drawer, settings & preferences | ✅ | v3 drawer: profile header (opens the Edit profile sheet), list rows with shop dots and a progress bar, New list as a sheet, and the name flying into the header on a switch (#106). Settings (#56) with Appearance as a dropdown, its own Notifications screen, and v3 grouped cards. List settings (#69, #104) with members and the invite code inline. "Clear checked after shopping" (#79). |
 
 
 ## ✅ Phase 0 — Workspace scaffold · `BUILD`

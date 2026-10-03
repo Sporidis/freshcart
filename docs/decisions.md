@@ -2683,3 +2683,26 @@ interaction.
 - **"Share invite" copies the code.** v3's button only copies too, and a share sheet would mean a
   new plugin for one button. The shop count reads "n shops picked", not v3's "n tabs including
   All": our All tab is called "All shops", so that sentence wouldn't match the screen.
+- **The empty state is keyed per tab.** Two empty tabs build the same widget at the same place,
+  so Flutter reused it and its one-shot entrance never played again. A key per tab makes each
+  one new. It arrives on v3's `emptyIn` timings, starting 40ms after a tab switch (the switch is
+  the cue) or 140ms after the last row left; it tells the two apart by whether the tab-switch
+  animation is running when it mounts.
+- **A checked row always says who checked it.** "Checked off by" used to be a fallback for rows
+  with no shop or note, so on All it almost never showed. Now it leads, with the checker's avatar,
+  and the shop and note follow; after the tick, who got it matters more than where it was.
+- **The hold menu is placed by layout, unrolled by paint.** v3 moves the card from the row to a
+  spot where it fits, so a bottom row no longer runs its menu off screen. Only layout knows the
+  card's height, so a `SingleChildLayoutDelegate` places it. The unroll is a paint clip
+  (`ClipRect` + clipper), not `Align.heightFactor`, which would change the height mid-animation
+  and make a clamped card creep upward as it grew. One `ItemMenuMotion` cuts every part from two
+  controllers (open, close), so the lift, unroll and cascade can't drift.
+- **The title flight rides on navigation.** The drawer isn't a route, so `Hero` can't link its row
+  to the header. The drawer measures the tapped name and passes the rect as go_router `extra`.
+  That route then fades instead of pushing (v3 switches lists in place); any other way in keeps
+  the push. The header hides its title, flies a copy in an overlay (380ms, 16/26 → 1), then shows
+  it. The rect reaches the header through a small `InheritedWidget`, not three constructors.
+- **Reduced motion means fades only.** An audit of every v3 animation: no bounce on the check
+  circle, the add button fades instead of rolling out or scaling, no press-and-hold shrink, no
+  re-add pop. The hold menu, onboarding, the welcome cards, the empty state and the title flight
+  all fall back to a 120ms fade, or skip the movement entirely.
