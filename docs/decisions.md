@@ -2669,3 +2669,17 @@ interaction.
 - **List settings shows members and the invite code inline.** Members are rows that open
   Household (still a door, not a copy, #69/#104); the code is one tap to copy. Sharing and
   member management stay on Household.
+- **Onboarding keeps Welcome as its own route.** v3 draws Welcome as step 0 of the wizard; here
+  it stays a screen, because the splash logo's Hero lands on it and Join starts from it too. The
+  welcome scene's cards use the preset shops onboarding offers next, so the picture is a preview
+  of the very next choice.
+- **Steps swap, then cascade in** (36px from the side you're heading to, 340ms, 40ms apart). The
+  old crossfade put two titles on screen at once; v3 drops the old step and lets the pieces of
+  the new one do the moving. The direction reaches each `OnboardingEntrance` through an
+  `InheritedWidget`, so steps don't pass it down by hand.
+- **The invite step gets a dot and a Skip.** It used to be left out of "Step n of 3" to look
+  optional; v3 says "optional" with Skip instead, which is clearer than a missing number.
+  Screen readers hear "Step 4 of 4" from the dots.
+- **"Share invite" copies the code.** v3's button only copies too, and a share sheet would mean a
+  new plugin for one button. The shop count reads "n shops picked", not v3's "n tabs including
+  All": our All tab is called "All shops", so that sentence wouldn't match the screen.

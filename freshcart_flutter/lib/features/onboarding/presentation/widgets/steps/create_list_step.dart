@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
@@ -70,14 +71,12 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
       t.onboarding.suggestionBbq,
     ];
     final errorText = error?.toMessage(t);
+    final listName = ref.watch(
+      onboardingControllerProvider.select((s) => s.listName.trim()),
+    );
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screen,
-        AppSpacing.sheetH,
-        AppSpacing.screen,
-        0,
-      ),
+      padding: onboardingStepPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -85,7 +84,7 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
             title: t.onboarding.listTitle,
             subtitle: t.onboarding.listSubtitle,
           ),
-          const SizedBox(height: AppSpacing.screen),
+          const SizedBox(height: 28),
           OnboardingEntrance(
             index: 2,
             child: ShakeOnError(
@@ -112,6 +111,7 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
                 for (final suggestion in suggestions)
                   _SuggestionPill(
                     label: suggestion,
+                    selected: listName == suggestion,
                     onTap: () => _useSuggestion(suggestion),
                   ),
               ],
@@ -125,28 +125,41 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
 
 /// A suggested name, as a pill with only a border. Not [ActionChip],
 /// because its filled look competed with the Continue button.
+///
+/// v3: the one matching the name fills with ink, so you can see which
+/// suggestion you're on.
 class _SuggestionPill extends StatelessWidget {
-  const _SuggestionPill({required this.label, required this.onTap});
+  const _SuggestionPill({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
 
   final String label;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final ink = theme.colorScheme.onSurface;
     return Material(
       type: MaterialType.transparency,
       child: InkWell(
         onTap: onTap,
         customBorder: const StadiumBorder(),
-        child: Container(
+        child: AnimatedContainer(
+          duration: AppMotion.durationFor(context, AppMotion.quick),
           constraints: const BoxConstraints(
             minHeight: AppSpacing.minTapTarget,
           ),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.gap),
           decoration: BoxDecoration(
+            color: selected ? ink : ink.withValues(alpha: 0),
             borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: Border.all(color: theme.colorScheme.outlineVariant),
+            border: Border.all(
+              color: selected ? ink : theme.colorScheme.outlineVariant,
+            ),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -155,7 +168,7 @@ class _SuggestionPill extends StatelessWidget {
               Text(
                 label,
                 style: AppTextStyles.label.copyWith(
-                  color: theme.colorScheme.onSurface,
+                  color: selected ? theme.colorScheme.surface : ink,
                 ),
               ),
             ],

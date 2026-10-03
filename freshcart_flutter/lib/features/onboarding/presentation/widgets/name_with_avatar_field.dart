@@ -90,12 +90,15 @@ class _NameAvatar extends StatelessWidget {
 
   final String name;
 
+  /// v3: 56px, the same height as the field next to it.
+  static const double _size = 56;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final empty = name.trim().isEmpty;
     return SizedBox.square(
-      dimension: AppSizes.avatarLarge,
+      dimension: _size,
       child: AnimatedSwitcher(
         duration: AppMotion.quick,
         child: empty

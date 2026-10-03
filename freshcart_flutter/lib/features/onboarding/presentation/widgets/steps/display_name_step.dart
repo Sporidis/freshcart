@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/name_with_avatar_field.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
@@ -23,12 +22,7 @@ class DisplayNameStep extends ConsumerWidget {
     final t = ref.watch(translationsProvider);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.screen,
-        AppSpacing.sheetH,
-        AppSpacing.screen,
-        0,
-      ),
+      padding: onboardingStepPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -36,7 +30,7 @@ class DisplayNameStep extends ConsumerWidget {
             title: t.onboarding.nameTitle,
             subtitle: t.onboarding.nameSubtitle,
           ),
-          const SizedBox(height: AppSpacing.screen),
+          const SizedBox(height: 28),
           OnboardingEntrance(
             index: 2,
             child: NameWithAvatarField(

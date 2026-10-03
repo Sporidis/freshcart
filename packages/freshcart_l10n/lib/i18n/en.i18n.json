@@ -233,20 +233,19 @@
     "loading": "Loading FreshCart"
   },
   "welcome": {
-    "headline": "One list.\nEveryone's trolley.",
-    "subhead": "Sorted by the shops you actually visit, updating live for the whole household.",
+    "headline": "Shopping lists, sorted by shop.",
+    "subhead": "One list for the household. Every item knows where to buy it.",
     "getStarted": "Get started",
-    "haveInviteCode": "I have an invite code",
-    "sampleListName": "Weekly Groceries",
-    "sampleItem1": "Milk",
-    "sampleItem2": "Pasta",
-    "sampleItem3": "Tomatoes",
-    "sampleItem4": "Coffee beans",
-    "sampleActivity": "{{name}} added {{item}}",
-    "sampleMemberName": "Sam"
+    "haveInviteCode": "I have an invite code"
   },
   "onboarding": {
     "stepOf": "Step {{step}} of {{total}}",
+    "skip": "Skip",
+    "shopsPicked": {
+      "one": "{{n}} shop picked",
+      "other": "{{n}} shops picked"
+    },
+    "noShops": "No shops yet. You can add them from the list.",
     "nameTitle": "What should we call you?",
     "nameSubtitle": "This is how your household sees you on shared lists.",
     "namePlaceholder": "e.g. Alex Janssens",
@@ -262,14 +261,10 @@
     "shopsTitle": "Where do you shop?",
     "shopsSubtitle": "Each shop gets its own tab and colour. Pick a colour you'll recognize in the aisle.",
     "addShop": "Add a shop not listed",
-    "tabsPreviewLabel": "Your tabs will look like this",
-    "allTab": "All",
     "inviteTitle": "Shopping with someone?",
     "inviteSubtitle": "Invite them and the list updates live for both of you. You can do this any time.",
-    "shareCode": "Or share the code",
     "copyCode": "Copy code",
     "startMyList": "Start my list",
-    "doLater": "I'll do this later",
     "continueCta": "Continue",
     "finishCta": "Finish"
   },

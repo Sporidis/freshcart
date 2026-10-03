@@ -76,14 +76,6 @@ class JoinFlowScreen extends ConsumerWidget {
   }
 }
 
-/// Padding for every join step, same as onboarding.
-const _stepPadding = EdgeInsets.fromLTRB(
-  AppSpacing.screen,
-  AppSpacing.sheetH,
-  AppSpacing.screen,
-  AppSpacing.screen,
-);
-
 class _NameStep extends ConsumerWidget {
   const _NameStep();
 
@@ -94,7 +86,7 @@ class _NameStep extends ConsumerWidget {
     final error = ref.watch(joinFlowControllerProvider.select((s) => s.error));
 
     return FillOrScroll(
-      padding: _stepPadding,
+      padding: onboardingStepPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -139,7 +131,7 @@ class _CodeStep extends ConsumerWidget {
     final errorText = error?.toMessage(t);
 
     return FillOrScroll(
-      padding: _stepPadding,
+      padding: onboardingStepPadding,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -233,7 +225,7 @@ class _ConfirmationStepState extends ConsumerState<_ConfirmationStep> {
 
     return Center(
       child: Padding(
-        padding: _stepPadding,
+        padding: onboardingStepPadding,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [

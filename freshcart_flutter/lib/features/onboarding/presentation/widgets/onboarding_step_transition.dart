@@ -1,15 +1,13 @@
-import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:flutter/widgets.dart';
 
-/// The animation between onboarding steps:
+/// Switches between onboarding (and join) steps, design v3.
 ///
-/// - the old step slides 24 px away and fades out (200 ms);
-/// - after a short pause (60 ms), the new step slides in from 32 px on the
-///   other side and fades in (320 ms);
-/// - going back does the same in the other direction.
+/// The old step goes at once; the new step's pieces then slide in 36px from
+/// the side you're heading to, one after another (see
+/// `OnboardingEntrance`). Forward comes from the right, back from the left.
 ///
-/// Only the content moves, not the whole page. The back arrow, step
-/// indicator and Continue stay put.
+/// No crossfade between the two steps: with both on screen, two titles
+/// overlap for a moment. v3 swaps and lets the cascade do the moving.
 ///
 /// [index] is the step number. A higher number than before means forward.
 class OnboardingStepTransition extends StatefulWidget {
@@ -23,16 +21,20 @@ class OnboardingStepTransition extends StatefulWidget {
   final int index;
   final Widget child;
 
+  /// +1 moving forward, -1 moving back, for the [OnboardingEntrance]s
+  /// below [context]. +1 when there's no transition above (previews).
+  static int directionOf(BuildContext context) =>
+      context
+          .dependOnInheritedWidgetOfExactType<_StepDirection>()
+          ?.direction ??
+      1;
+
   @override
   State<OnboardingStepTransition> createState() =>
       _OnboardingStepTransitionState();
 }
 
 class _OnboardingStepTransitionState extends State<OnboardingStepTransition> {
-  static const double _outTravel = 24;
-  static const double _inTravel = 32;
-
-  /// +1 moving forward, -1 moving back.
   int _direction = 1;
 
   @override
@@ -44,55 +46,20 @@ class _OnboardingStepTransitionState extends State<OnboardingStepTransition> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final reduced = AppMotion.reduced(context);
-    final inTotal = AppMotion.stepInDelay + AppMotion.stepIn;
-    final delayFraction =
-        AppMotion.stepInDelay.inMicroseconds / inTotal.inMicroseconds;
-    final currentKey = ValueKey(widget.index);
-    final direction = _direction;
+  Widget build(BuildContext context) => _StepDirection(
+    direction: _direction,
+    // A new key per step, so the step is built fresh and its entrances
+    // play again, going forward or back.
+    child: KeyedSubtree(key: ValueKey(widget.index), child: widget.child),
+  );
+}
 
-    return AnimatedSwitcher(
-      duration: reduced ? AppMotion.micro : inTotal,
-      reverseDuration: reduced ? AppMotion.micro : AppMotion.stepOut,
-      // Full size and aligned to the top. Otherwise a short step would float
-      // to the middle during the animation.
-      layoutBuilder: (current, previous) => Stack(
-        fit: StackFit.expand,
-        children: [...previous, ?current],
-      ),
-      transitionBuilder: (child, animation) {
-        final incoming = child.key == currentKey;
-        // The old step's animation runs backwards (1 -> 0), so it uses the
-        // reverse curve. The new step waits for the pause first.
-        final curved = incoming
-            ? CurvedAnimation(
-                parent: animation,
-                curve: Interval(delayFraction, 1, curve: AppMotion.enter),
-              )
-            : CurvedAnimation(
-                parent: animation,
-                curve: AppMotion.enter,
-                reverseCurve: AppMotion.exit,
-              );
-        return AnimatedBuilder(
-          animation: curved,
-          child: child,
-          builder: (context, child) {
-            final remaining = 1 - curved.value;
-            final dx = reduced
-                ? 0.0
-                : incoming
-                ? _inTravel * direction * remaining
-                : -_outTravel * direction * remaining;
-            return Opacity(
-              opacity: curved.value,
-              child: Transform.translate(offset: Offset(dx, 0), child: child),
-            );
-          },
-        );
-      },
-      child: KeyedSubtree(key: currentKey, child: widget.child),
-    );
-  }
+class _StepDirection extends InheritedWidget {
+  const _StepDirection({required this.direction, required super.child});
+
+  final int direction;
+
+  @override
+  bool updateShouldNotify(_StepDirection oldWidget) =>
+      direction != oldWidget.direction;
 }

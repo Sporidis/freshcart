@@ -6,28 +6,30 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_tabs_preview.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
+import 'package:go_router/go_router.dart';
 
-/// The bottom of the wizard: the Continue button, and on the shops step the
-/// "Your tabs will look like this" preview above it.
+/// The bottom of the wizard: one big button (design v3).
 ///
-/// Continue is always visible and always enabled. Pressing it with a bad
+/// "Continue" on steps 1-3, "Start my list" on the invite step, which opens
+/// the new list. Always visible and always enabled: pressing it with a bad
 /// answer shows what's wrong, under the field.
-///
-/// On the shops step, the preview and the button sit together on a light
-/// grey panel with a thin line on top.
 class OnboardingFooter extends ConsumerWidget {
   const OnboardingFooter({super.key});
 
   Future<void> _onContinue(BuildContext context, WidgetRef ref) async {
     final controller = ref.read(onboardingControllerProvider.notifier);
     final state = ref.read(onboardingControllerProvider);
+
+    if (state.step == OnboardingStep.invite) {
+      context.go(Routes.lists);
+      return;
+    }
 
     // Going from Shops to Invite saves everything (creates the list and
     // shops). Other steps just move on.
@@ -60,56 +62,20 @@ class OnboardingFooter extends ConsumerWidget {
     final isSubmitting = ref.watch(
       onboardingControllerProvider.select((s) => s.isSubmitting),
     );
-    final selectedShops = ref.watch(
-      onboardingControllerProvider.select((s) => s.selectedShops),
-    );
-    final theme = Theme.of(context);
-    final isShopStep = step == OnboardingStep.addShop;
-    final duration = AppMotion.durationFor(context, AppMotion.standard);
 
-    return AnimatedContainer(
-      duration: duration,
-      curve: AppMotion.enter,
-      decoration: BoxDecoration(
-        color: isShopStep
-            ? theme.colorScheme.surfaceContainer
-            : theme.colorScheme.surface.withValues(alpha: 0),
-        border: Border(
-          top: BorderSide(
-            color: isShopStep
-                ? theme.dividerColor
-                : theme.dividerColor.withValues(alpha: 0),
-          ),
-        ),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.screen,
+        AppSpacing.md,
+        AppSpacing.screen,
+        AppSpacing.screen,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          AnimatedSize(
-            duration: duration,
-            curve: AppMotion.enter,
-            alignment: Alignment.bottomCenter,
-            child: isShopStep
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(
-                      AppSpacing.screen,
-                      AppSpacing.gap,
-                      AppSpacing.screen,
-                      0,
-                    ),
-                    child: ShopTabsPreview(shops: selectedShops, t: t),
-                  )
-                : const SizedBox(width: double.infinity),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.screen),
-            child: OnboardingPrimaryButton(
-              label: t.onboarding.continueCta,
-              isLoading: isSubmitting,
-              onPressed: () => _onContinue(context, ref),
-            ),
-          ),
-        ],
+      child: OnboardingPrimaryButton(
+        label: step == OnboardingStep.invite
+            ? t.onboarding.startMyList
+            : t.onboarding.continueCta,
+        isLoading: isSubmitting,
+        onPressed: () => _onContinue(context, ref),
       ),
     );
   }
