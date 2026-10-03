@@ -12,9 +12,19 @@ void main() {
   setUpAll(configurePluralResolvers);
 
   /// One row, pinned to [alignment] of the screen.
-  Future<void> pumpRow(WidgetTester tester, Alignment alignment) async {
+  Future<void> pumpRow(
+    WidgetTester tester,
+    Alignment alignment, {
+    bool reduceMotion = false,
+  }) async {
     await tester.pumpWidget(
       MaterialApp(
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
         home: Scaffold(
           body: Align(
             alignment: alignment,
@@ -100,5 +110,18 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.text('Edit details'), findsNothing);
+  });
+
+  testWidgets('with reduced motion, every option is there at once', (
+    tester,
+  ) async {
+    await pumpRow(tester, Alignment.topCenter, reduceMotion: true);
+    await hold(tester);
+
+    // A 120ms fade of the whole card, no cascade: past it, all options
+    // are fully shown, the last one included.
+    await tester.pump(const Duration(milliseconds: 130));
+    expect(opacityOf(tester, 'Edit details'), 1);
+    expect(opacityOf(tester, 'Select more…'), 1);
   });
 }

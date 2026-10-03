@@ -155,7 +155,7 @@ class _ReAddButtonState extends ConsumerState<_ReAddButton>
   Future<void> _handleTap() async {
     if (_busy) return;
     setState(() => _busy = true);
-    unawaited(_pop.forward(from: 0));
+    if (!AppMotion.reduced(context)) unawaited(_pop.forward(from: 0));
     ref.haptic(HapticFeedback.lightImpact);
     await widget.onPressed();
     if (mounted) setState(() => _busy = false);

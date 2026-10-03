@@ -286,9 +286,12 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     });
     // After 300 ms of holding, the row shrinks a little as a hint to keep
     // holding.
+    // Not under reduced motion: the hint is a scale, and the menu opening
+    // is hint enough.
     _pressTellTimer?.cancel();
+    if (AppMotion.reduced(context)) return;
     _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
-      _pressScaleController.animateTo(0.97);
+      _pressScaleController.animateTo(AppMotion.pressScale);
     });
   }
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// The round checkbox from the design (v3): a neutral 2px ring, filled with
@@ -44,9 +45,11 @@ class CheckCircle extends StatelessWidget {
     final circle = AnimatedBuilder(
       animation: fillProgress,
       builder: (context, child) {
-        // Checking has a small bounce. Unchecking doesn't. Same as in
-        // item_tile.dart.
-        final eased = fillProgress.status == AnimationStatus.reverse
+        // Checking has a small bounce. Unchecking doesn't, and neither does
+        // anything under reduced motion.
+        final eased =
+            fillProgress.status == AnimationStatus.reverse ||
+                AppMotion.reduced(context)
             ? fillProgress.value
             : Curves.easeOutBack.transform(fillProgress.value);
         final clamped = eased.clamp(0.0, 1.0);
