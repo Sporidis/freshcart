@@ -14,6 +14,7 @@ import 'package:freshcart_flutter/core/ui/error_screen.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/list_detail_app_bar.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filter_bar.dart';
 import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
@@ -27,10 +28,18 @@ import 'package:go_router/go_router.dart';
 /// colour wave's key.
 class ListDetailScreen extends ConsumerStatefulWidget {
   /// Creates the detail screen for [listId].
-  const ListDetailScreen({required this.listId, super.key});
+  const ListDetailScreen({
+    required this.listId,
+    this.titleFlight,
+    super.key,
+  });
 
   /// Which list to show.
   final ListId listId;
+
+  /// Set when this list was picked in the drawer: its name flies into the
+  /// header (design v3).
+  final ListTitleFlight? titleFlight;
 
   @override
   ConsumerState<ListDetailScreen> createState() => _ListDetailScreenState();
@@ -82,31 +91,34 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
 
     final list = s.list;
 
-    return Scaffold(
-      // v3: the drawer dims the list to 42%.
-      drawerScrimColor: const Color(0x6B141412),
-      drawer: s.canOpenDrawer
-          ? ListsDrawer(currentListId: widget.listId)
-          : null,
-      appBar: ListDetailAppBar(
-        list: list,
-        searchField: _searchField,
-        // The header's tint grows from wherever the items' wave did.
-        waveOrigin: () => _revealKey.currentState?.lastGlobalOrigin,
+    return ListTitleFlight.scope(
+      flight: widget.titleFlight,
+      child: Scaffold(
+        // v3: the drawer dims the list to 42%.
+        drawerScrimColor: const Color(0x6B141412),
+        drawer: s.canOpenDrawer
+            ? ListsDrawer(currentListId: widget.listId)
+            : null,
+        appBar: ListDetailAppBar(
+          list: list,
+          searchField: _searchField,
+          // The header's tint grows from wherever the items' wave did.
+          waveOrigin: () => _revealKey.currentState?.lastGlobalOrigin,
+        ),
+        // Everything in the body uses the selected shop's colour. The drawer
+        // and app bar are outside it, so they stay neutral.
+        body: list == null
+            ? const Center(child: CircularProgressIndicator())
+            : _Body(
+                list: list,
+                showFilter: s.showShopFilter,
+                // Only this part changes colour with the shop. Null means
+                // "All" (neutral colours).
+                seed: s.activeShopColor?.toColor() ?? AppTheme.brandSeed,
+                hapticsOn: ref.watch(hapticsControllerProvider).value ?? true,
+                revealKey: _revealKey,
+              ),
       ),
-      // Everything in the body uses the selected shop's colour. The drawer
-      // and app bar are outside it, so they stay neutral.
-      body: list == null
-          ? const Center(child: CircularProgressIndicator())
-          : _Body(
-              list: list,
-              showFilter: s.showShopFilter,
-              // Only this part changes colour with the shop. Null means
-              // "All" (neutral colours).
-              seed: s.activeShopColor?.toColor() ?? AppTheme.brandSeed,
-              hapticsOn: ref.watch(hapticsControllerProvider).value ?? true,
-              revealKey: _revealKey,
-            ),
     );
   }
 }

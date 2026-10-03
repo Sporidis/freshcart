@@ -19,6 +19,7 @@ import 'package:freshcart_flutter/features/items/application/items_section/items
 import 'package:freshcart_flutter/features/items/presentation/widgets/move_to_shop_sheet.dart';
 import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -508,7 +509,7 @@ class _ProgressBar extends StatelessWidget implements PreferredSizeWidget {
 /// The list name; tap to rename. A separate widget because it uses
 /// [ListDetailScreenController], while the app bar uses the items
 /// controller (rule: one controller per widget).
-class _ListTitle extends ConsumerWidget {
+class _ListTitle extends ConsumerStatefulWidget {
   const _ListTitle({required this.list, required this.t, required this.style});
 
   final ShoppingList list;
@@ -516,21 +517,62 @@ class _ListTitle extends ConsumerWidget {
   final TextStyle style;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_ListTitle> createState() => _ListTitleState();
+}
+
+/// Plays the drawer's title flight, if this screen was opened by one: the
+/// title stays hidden while a copy of the name flies into its place, then
+/// shows. Once per screen.
+class _ListTitleState extends ConsumerState<_ListTitle> {
+  bool _flying = false;
+  bool _checked = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_checked) return;
+    _checked = true;
+    final flight = ListTitleFlight.of(context);
+    if (flight == null || AppMotion.reduced(context)) return;
+    _flying = true;
+    // Where the title will be is only known after layout.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final box = context.findRenderObject();
+      if (!mounted || box is! RenderBox || !box.hasSize) {
+        if (mounted) setState(() => _flying = false);
+        return;
+      }
+      await flyListTitle(
+        context,
+        text: widget.list.name,
+        style: widget.style,
+        from: flight.from,
+        to: box.localToGlobal(Offset.zero) & box.size,
+      );
+      if (mounted) setState(() => _flying = false);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final list = widget.list;
     // Only the owner can rename.
     final isOwner = ref.watch(
       listDetailScreenControllerProvider(list.id).select((s) => s.isOwner),
     );
-    return EditableListTitle(
-      name: list.name,
-      enabled: isOwner,
-      style: style,
-      onRename: (name) async {
-        final failure = await ref
-            .read(listDetailScreenControllerProvider(list.id).notifier)
-            .rename(name);
-        return failure?.toMessage(t);
-      },
+    return Opacity(
+      opacity: _flying ? 0 : 1,
+      child: EditableListTitle(
+        name: list.name,
+        enabled: isOwner,
+        style: widget.style,
+        onRename: (name) async {
+          final failure = await ref
+              .read(listDetailScreenControllerProvider(list.id).notifier)
+              .rename(name);
+          return failure?.toMessage(widget.t);
+        },
+      ),
     );
   }
 }
