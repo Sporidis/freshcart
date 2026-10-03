@@ -17,7 +17,6 @@ import 'package:freshcart_flutter/features/onboarding/presentation/screens/onboa
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/splash_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/welcome_screen.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/shop_option.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/join_code_input.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/name_with_avatar_field.dart';
@@ -65,7 +64,6 @@ void main() {
     'name with avatar': nameWithAvatarFieldPreview,
     'join flow': joinFlowScreenPreview,
     'join code input': joinCodeInputPreview,
-    'shop option': shopOptionPreview,
     'add-a-shop sheet': addShopSheetPreview,
     'item row': itemTilePreview,
     'completion celebration': completionCelebrationCardPreview,

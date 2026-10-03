@@ -233,20 +233,19 @@
     "loading": "FreshCart laden"
   },
   "welcome": {
-    "headline": "Eén lijst.\nIeders winkelkar.",
-    "subhead": "Gesorteerd per winkel die je echt bezoekt, live bijgewerkt voor het hele huishouden.",
+    "headline": "Boodschappenlijstjes, per winkel gesorteerd.",
+    "subhead": "Eén lijst voor het hele huishouden. Elk product weet waar je het koopt.",
     "getStarted": "Aan de slag",
-    "haveInviteCode": "Ik heb een uitnodigingscode",
-    "sampleListName": "Wekelijkse boodschappen",
-    "sampleItem1": "Melk",
-    "sampleItem2": "Pasta",
-    "sampleItem3": "Tomaten",
-    "sampleItem4": "Koffiebonen",
-    "sampleActivity": "{{name}} voegde {{item}} toe",
-    "sampleMemberName": "Sam"
+    "haveInviteCode": "Ik heb een uitnodigingscode"
   },
   "onboarding": {
     "stepOf": "Stap {{step}} van {{total}}",
+    "skip": "Overslaan",
+    "shopsPicked": {
+      "one": "{{n}} winkel gekozen",
+      "other": "{{n}} winkels gekozen"
+    },
+    "noShops": "Nog geen winkels. Je kunt ze later in de lijst toevoegen.",
     "nameTitle": "Hoe mogen we je noemen?",
     "nameSubtitle": "Zo ziet je huishouden jou op gedeelde lijsten.",
     "namePlaceholder": "bv. Alex Janssens",
@@ -262,14 +261,10 @@
     "shopsTitle": "Waar doe je boodschappen?",
     "shopsSubtitle": "Elke winkel krijgt een eigen tab en kleur. Kies een kleur die je herkent in het gangpad.",
     "addShop": "Voeg een winkel toe die niet in de lijst staat",
-    "tabsPreviewLabel": "Zo zien je tabbladen eruit",
-    "allTab": "Alle",
     "inviteTitle": "Ga je met iemand samen winkelen?",
     "inviteSubtitle": "Nodig ze uit en de lijst werkt live bij voor jullie allebei. Dit kan ook later nog.",
-    "shareCode": "Of deel de code",
     "copyCode": "Code kopiëren",
     "startMyList": "Start mijn lijst",
-    "doLater": "Dat doe ik later wel",
     "continueCta": "Doorgaan",
     "finishCta": "Klaar"
   },

@@ -100,12 +100,15 @@ void main() {
 
       expect(find.text('What should we call you?'), findsOneWidget);
       // The join flow's own name step, not onboarding's — distinguished by
-      // there being no step indicator above it.
-      expect(find.text('Step 1 of 3'), findsNothing);
+      // there being no step dots above it.
+      expect(find.bySemanticsLabel(RegExp('^Step 1 of')), findsNothing);
     });
   });
 
   group('Onboarding wizard', () {
+    // The step dots are read out as "Step n of 4".
+    Finder onStep(int n) => find.bySemanticsLabel('Step $n of 4');
+
     testWidgets(
       'walking all four steps creates the list and its shops, '
       'and Start my list opens the lists screen',
@@ -118,14 +121,14 @@ void main() {
         await tester.pumpAndSettle();
 
         // Step 1: name.
-        expect(find.text('Step 1 of 3'), findsOneWidget);
+        expect(onStep(1), findsOneWidget);
         await tester.enterText(find.byType(TextField).first, 'Alex');
         await tester.pumpAndSettle();
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
 
         // Step 2: list name.
-        expect(find.text('Step 2 of 3'), findsOneWidget);
+        expect(onStep(2), findsOneWidget);
         await tester.enterText(
           find.byType(TextField).first,
           'Weekly Groceries',
@@ -136,7 +139,7 @@ void main() {
 
         // Step 3: shops — the two presets start selected, so Continue
         // submits straight away.
-        expect(find.text('Step 3 of 3'), findsOneWidget);
+        expect(onStep(3), findsOneWidget);
         await tester.tap(find.text('Continue'));
         await tester.pumpAndSettle();
 
@@ -144,11 +147,11 @@ void main() {
         expect(lists.createCalls, ['Weekly Groceries']);
         expect(shops.createCalls, hasLength(2));
 
-        // Invite — shows the real list's join code. Unnumbered: it comes
-        // after the list exists and is optional, so the rail is gone.
-        expect(find.textContaining('Step '), findsNothing);
+        // Invite — the fourth dot, showing the real list's join code (one
+        // box per character, read out as the whole code).
+        expect(onStep(4), findsOneWidget);
         expect(find.text('Shopping with someone?'), findsOneWidget);
-        expect(find.text('ABC23'), findsOneWidget);
+        expect(find.bySemanticsLabel('ABC23'), findsOneWidget);
 
         await tester.tap(find.text('Start my list'));
         await tester.pumpAndSettle();
@@ -180,7 +183,7 @@ void main() {
 
       await tester.tap(find.byType(BackButton));
       await tester.pumpAndSettle();
-      expect(find.text('Step 3 of 3'), findsOneWidget);
+      expect(onStep(3), findsOneWidget);
 
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
@@ -199,7 +202,7 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Step 1 of 3'), findsOneWidget);
+      expect(onStep(1), findsOneWidget);
       expect(find.text('Please enter your name to continue'), findsOneWidget);
 
       // The next keystroke clears it.
@@ -237,11 +240,12 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Step 3 of 3'), findsOneWidget);
+      expect(onStep(3), findsOneWidget);
     });
 
-    testWidgets('picking a shop adds its pill to the tabs preview, and '
-        'unpicking removes it', (tester) async {
+    testWidgets('picking and unpicking a shop updates the picked count', (
+      tester,
+    ) async {
       await pump(tester, isNewIdentity: true);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
@@ -252,16 +256,43 @@ void main() {
       await tester.tap(find.text('Continue'));
       await tester.pumpAndSettle();
 
-      // Delhaize is offered but not preselected: only its option row.
-      expect(find.text('Delhaize'), findsOneWidget);
+      // The two presets start picked; Delhaize is offered but not picked.
+      expect(find.text('2 shops picked'), findsOneWidget);
 
       await tester.tap(find.text('Delhaize'));
       await tester.pumpAndSettle();
-      expect(find.text('Delhaize'), findsNWidgets(2));
+      expect(find.text('3 shops picked'), findsOneWidget);
 
-      await tester.tap(find.text('Delhaize').first);
+      await tester.tap(find.text('Delhaize'));
       await tester.pumpAndSettle();
-      expect(find.text('Delhaize'), findsOneWidget);
+      expect(find.text('2 shops picked'), findsOneWidget);
+    });
+
+    testWidgets('Skip shows only on the invite step, and opens the list', (
+      tester,
+    ) async {
+      lists.createResult = Ok(buildList());
+      shops.createResult = Ok(buildShop());
+
+      await pump(tester, isNewIdentity: true);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+
+      // Faded out and not tappable before the invite step.
+      expect(find.bySemanticsLabel('Skip'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).first, 'Alex');
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await tester.tap(find.text('Continue'));
+        await tester.pumpAndSettle();
+      }
+
+      expect(onStep(4), findsOneWidget);
+      await tester.tap(find.text('Skip'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('My lists'), findsOneWidget);
     });
   });
 

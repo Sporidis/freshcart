@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_footer.dart';
@@ -20,6 +23,10 @@ Widget onboardingScreenPreview() => previewApp(const OnboardingScreen());
 /// The onboarding wizard: your name, list name, shops, then an optional
 /// invite.
 ///
+/// Design v3 top bar: Back on the left, the step dots in the middle, and
+/// Skip on the right on the invite step (the only skippable one: the list
+/// already exists by then).
+///
 /// Back always works. On step 1 it goes to Welcome. (Welcome opens this
 /// screen with `context.go`, so there's no screen underneath to pop back
 /// to. Without this, a user who tapped "Get started" by mistake would be
@@ -30,8 +37,10 @@ class OnboardingScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = ref.watch(translationsProvider);
     final controller = ref.read(onboardingControllerProvider.notifier);
     final step = ref.watch(onboardingControllerProvider.select((s) => s.step));
+    final isInvite = step == OnboardingStep.invite;
 
     void goBack() => step == OnboardingStep.values.first
         ? context.go(Routes.welcome)
@@ -43,12 +52,40 @@ class OnboardingScreen extends ConsumerWidget {
         if (!didPop) goBack();
       },
       child: Scaffold(
-        appBar: AppBar(leading: BackButton(onPressed: goBack)),
+        appBar: AppBar(
+          leading: BackButton(onPressed: goBack),
+          centerTitle: true,
+          title: OnboardingStepIndicator(step: step),
+          actions: [
+            // Kept in the tree and faded, so the dots stay centred and
+            // don't jump when it appears.
+            AnimatedOpacity(
+              opacity: isInvite ? 1 : 0,
+              duration: AppMotion.durationFor(context, AppMotion.quick),
+              child: IgnorePointer(
+                ignoring: !isInvite,
+                child: ExcludeSemantics(
+                  excluding: !isInvite,
+                  child: TextButton(
+                    onPressed: () => context.go(Routes.lists),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(
+                        context,
+                      ).colorScheme.onSurfaceVariant,
+                      textStyle: AppTextStyles.labelStrong,
+                    ),
+                    child: Text(t.onboarding.skip),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.xs),
+          ],
+        ),
         body: SafeArea(
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              OnboardingStepIndicator(step: step),
               Expanded(
                 child: OnboardingStepTransition(
                   index: step.index,
@@ -60,10 +97,7 @@ class OnboardingScreen extends ConsumerWidget {
                   },
                 ),
               ),
-              // No footer on step 4: it has its own two buttons ("Start my
-              // list" / "I'll do this later"). The footer is for steps 1-3,
-              // which have one Continue button.
-              if (step != OnboardingStep.invite) const OnboardingFooter(),
+              const OnboardingFooter(),
             ],
           ),
         ),

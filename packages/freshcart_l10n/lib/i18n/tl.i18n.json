@@ -233,20 +233,19 @@
     "loading": "Naglo-load ang FreshCart"
   },
   "welcome": {
-    "headline": "Isang listahan.\nSama-samang pamimili.",
-    "subhead": "Nakaayos ayon sa mga tindahang talagang pinupuntahan mo, live na nag-a-update para sa buong sambahayan.",
+    "headline": "Mga shopping list, nakaayos ayon sa tindahan.",
+    "subhead": "Isang listahan para sa buong bahay. Alam ng bawat item kung saan ito bibilhin.",
     "getStarted": "Magsimula",
-    "haveInviteCode": "May invite code ako",
-    "sampleListName": "Lingguhang Grocery",
-    "sampleItem1": "Gatas",
-    "sampleItem2": "Pasta",
-    "sampleItem3": "Kamatis",
-    "sampleItem4": "Coffee beans",
-    "sampleActivity": "Idinagdag ni {{name}} ang {{item}}",
-    "sampleMemberName": "Sam"
+    "haveInviteCode": "May invite code ako"
   },
   "onboarding": {
     "stepOf": "Hakbang {{step}} ng {{total}}",
+    "skip": "Laktawan",
+    "shopsPicked": {
+      "one": "{{n}} tindahan ang napili",
+      "other": "{{n}} na tindahan ang napili"
+    },
+    "noShops": "Wala pang tindahan. Puwede mo silang idagdag mula sa listahan.",
     "nameTitle": "Ano ang itatawag namin sa iyo?",
     "nameSubtitle": "Ganito ka makikita ng sambahayan mo sa mga shared na listahan.",
     "namePlaceholder": "hal. Alex Janssens",
@@ -262,14 +261,10 @@
     "shopsTitle": "Saan ka nagba-grocery?",
     "shopsSubtitle": "Bawat tindahan may sariling tab at kulay. Pumili ng kulay na makikilala mo sa aisle.",
     "addShop": "Magdagdag ng tindahang wala sa listahan",
-    "tabsPreviewLabel": "Ganito magiging hitsura ng mga tab mo",
-    "allTab": "Lahat",
     "inviteTitle": "Sama-sama kayong namimili?",
     "inviteSubtitle": "Anyayahan sila at mag-a-update ang listahan nang live para sa inyong dalawa. Puwede rin itong gawin anumang oras.",
-    "shareCode": "O ibahagi ang code",
     "copyCode": "Kopyahin ang code",
     "startMyList": "Simulan ang listahan ko",
-    "doLater": "Gagawin ko na lang mamaya",
     "continueCta": "Magpatuloy",
     "finishCta": "Tapos na"
   },
