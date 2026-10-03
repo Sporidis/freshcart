@@ -252,11 +252,7 @@ class ItemRepositoryImpl implements ItemRepository {
       },
       onCancel: () async {
         await queueSub?.cancel();
-        // Not awaited: the server stream is an `async*` generator, and
-        // cancelling one parked in `await for` only completes once the
-        // next live event arrives. Waiting here would pass that wait on
-        // to whoever cancels this stream.
-        unawaited(serverSub?.cancel());
+        await serverSub?.cancel();
       },
     );
     return out.stream;
