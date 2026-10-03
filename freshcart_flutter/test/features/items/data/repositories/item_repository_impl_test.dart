@@ -283,4 +283,54 @@ void main() {
       },
     );
   });
+
+  group('ItemRepositoryImpl.watchByList — queued changes (Phase E)', () {
+    test(
+      'a change waiting in the queue shows as pending, and clears once it '
+      'leaves the queue',
+      () async {
+        client.handler = (_, _, _) => [buildItemDto()];
+        // Kept open, like a live connection: a stream that ends counts as
+        // a dropped connection.
+        final changes = StreamController<dto.ItemChange>();
+        client.streamHandler = (_, _, _) => changes.stream;
+        final queue = PendingOperationsQueue(db);
+
+        final events = <List<ShoppingItem>>[];
+        final subscription = repository
+            .watchByList(ListId(listUuid.uuid))
+            .listen((event) => events.add(event.valueOrNull!));
+        // Registered in this order so the live stream closes first (tear
+        // downs run last-in, first-out), as in the reconnect tests above.
+        addTearDown(subscription.cancel);
+        addTearDown(changes.close);
+        await pumpEventQueue();
+        expect(events.last.single.pending, isFalse);
+
+        // Offline: an item is added, so it's only in the queue.
+        await queue.enqueue(
+          entityType: PendingEntityType.item,
+          opType: PendingOpType.create,
+          tempId: 'temp-1',
+          payload: {
+            'listId': listUuid.uuid,
+            'name': 'Eggs',
+            'quantity': 1,
+            'shopId': null,
+            'noteText': null,
+          },
+        );
+        await pumpEventQueue();
+        final eggs = events.last.singleWhere((i) => i.name == 'Eggs');
+        expect(eggs.pending, isTrue);
+
+        // Back online: the drainer sent it and took it off the queue.
+        for (final op in await queue.getAll()) {
+          await queue.remove(op.id);
+        }
+        await pumpEventQueue();
+        expect(events.last.any((i) => i.pending), isFalse);
+      },
+    );
+  });
 }
