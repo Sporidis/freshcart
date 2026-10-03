@@ -26,6 +26,39 @@ void main() {
     );
 
     test(
+      'a change made while the snapshot is loading is not lost: live '
+      'updates are listened to before the snapshot is fetched',
+      () async {
+        // A live feed: like the server's stream, it doesn't replay what
+        // happened before you subscribed.
+        final live = StreamController<int>.broadcast();
+        final snapshot = Completer<int>();
+        final events = <Result<int>>[];
+        final sub = resilientWatch<int, int>(
+          fetch: () => snapshot.future,
+          watch: () => live.stream,
+          // Like the real list: a change carries the new value outright,
+          // so applying one the snapshot already had is harmless.
+          reduce: (current, event) => event,
+          online: () => const Stream<bool>.empty(),
+        ).listen(events.add);
+        await Future<void>.delayed(Duration.zero);
+
+        // While the snapshot is in flight, someone changes the value. The
+        // snapshot was taken just before, so it doesn't include it.
+        live.add(5);
+        snapshot.complete(1);
+        await Future<void>.delayed(Duration.zero);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(events.last.valueOrNull, 5);
+
+        await live.close();
+        await sub.cancel();
+      },
+    );
+
+    test(
       'the normal path seeds once, then re-emits on every watch event',
       () async {
         final controller = StreamController<int>();
@@ -272,8 +305,8 @@ void main() {
     );
 
     test(
-      'a fetch failure on cold start falls back to a cached value, then '
-      'waits for reconnect before ever subscribing to watch',
+      'a fetch failure on cold start falls back to a cached value, and '
+      'nothing listens live until it has reconnected',
       () async {
         final onlineController = StreamController<bool>.broadcast();
         var fetchCallCount = 0;
@@ -304,7 +337,10 @@ void main() {
           events.single.valueOrNull,
           42,
         ); // the cached value, shown at once
-        expect(watchControllers, isEmpty); // still offline, nothing live yet
+        // Live updates are listened to before every fetch, so the first
+        // attempt subscribed too; it stopped when the fetch failed. Still
+        // offline: nothing is listening.
+        expect(watchControllers.where((c) => c.hasListener), isEmpty);
 
         // Reconnect.
         onlineController.add(true);
@@ -312,13 +348,16 @@ void main() {
 
         expect(fetchCallCount, 2); // a fresh full snapshot, not the cache
         expect(events.last.valueOrNull, 100);
-        expect(watchControllers, hasLength(1)); // now subscribed for real
+        // Now subscribed for real, on a fresh stream.
+        expect(watchControllers.where((c) => c.hasListener), hasLength(1));
 
-        watchControllers.single.add(5);
+        watchControllers.last.add(5);
         await Future<void>.delayed(Duration.zero);
         expect(events.last.valueOrNull, 105);
 
-        await watchControllers.single.close();
+        for (final c in watchControllers) {
+          await c.close();
+        }
         await onlineController.close();
         await sub.cancel();
       },
@@ -391,4 +430,27 @@ void main() {
       },
     );
   });
+
+  test(
+    'cancelling lets go of the live connection straight away, without '
+    'waiting for another change',
+    () async {
+      final live = StreamController<int>();
+      final sub = resilientWatch<int, int>(
+        fetch: () async => 1,
+        watch: () => live.stream,
+        reduce: (current, event) => event,
+        online: () => const Stream<bool>.empty(),
+      ).listen((_) {});
+      await Future<void>.delayed(Duration.zero);
+      expect(live.hasListener, isTrue);
+
+      // No change ever arrives; cancelling must still finish, and the live
+      // stream must no longer be listened to (no leaked connection).
+      await sub.cancel().timeout(const Duration(seconds: 1));
+      expect(live.hasListener, isFalse);
+
+      await live.close();
+    },
+  );
 }
