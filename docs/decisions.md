@@ -2749,3 +2749,35 @@ dashed left edge on pending rows that fades out row by row (40ms apart) as they 
 server turned down in `SyncConflictsController`, a running total, and the offline bar shows the
 increase as a toast. A total rather than a list, because the screen only needs "how many more
 since I last looked".
+
+## 108. Notifications: only additions push, batched properly, one per list
+
+**Context.** Once the server had its Firebase key, real pushes showed four problems. (1) Ticks,
+unticks and edits arrived as "X added Milk": every item change was queued for push, and the
+summary called every queued change an addition. (2) A busy list sent a push every few seconds:
+Serverpod's future-call `identifier` doesn't replace an earlier call with the same id (it's only
+for cancelling), so each change scheduled its own send 20 seconds later. (3) "List finished"
+never came, because it was off by default (as the design had it). (4) Android showed a grey
+square for the icon.
+
+**Decisions** (confirmed with Nikolaos):
+- **Only additions push.** Ticking, unticking, editing, moving and deleting stay live-only (the
+  in-app stream); they aren't news to someone away from the list. `ItemService._announce` queues
+  a push only when given `notifyAddedName`, which only `add` passes.
+- **Batching:** each add cancels the list's scheduled send and reschedules it one minute out,
+  capped at three minutes after the first add still waiting (`NotificationService.sendDelay`, a
+  pure function with its own tests). A whole list-writing session becomes one notification,
+  and a long one still reports within three minutes.
+- **The text names the items**: "Sam added Milk, Eggs and 3 more", "Sam and Alex added Milk and
+  Eggs", "3 people added 7 items". An item added twice is named once.
+- **One notification per list in the tray** (Android `tag`, APNs `apns-collapse-id`): a newer
+  one replaces the older, so they never pile up.
+- **"List finished" and "someone joined" are on by default**, against the design ("off by default
+  except the first"). Finished is the most useful thing a shared list can say ("the shopping is
+  done, don't go"), and joins are rare enough never to be noise. Users who already saved a
+  choice keep it.
+- **Icon:** the basket mark as a white vector, tinted ink, via Firebase's
+  `default_notification_icon`/`_color` metadata.
+
+**Still English-only.** Push text is built on the server, which has no translations; the app's
+five languages don't reach notifications yet.
