@@ -19,13 +19,11 @@ class RecordingPushSender implements PushSender {
 PendingItemNotification pending({
   required String actorName,
   String itemName = 'Milk',
-  ItemChangeKind kind = ItemChangeKind.upserted,
 }) => PendingItemNotification(
   listId: UuidValue.withValidation('00000000-0000-4000-8000-000000000001'),
   actorId: UuidValue.withValidation('00000000-0000-4000-8000-000000000002'),
   actorName: actorName,
   itemName: itemName,
-  kind: kind,
 );
 
 void main() {
@@ -48,29 +46,74 @@ void main() {
         pending(actorName: 'Mom', itemName: 'Eggs'),
       ]);
 
-      expect(digest?.body, 'Mom added 3 items');
+      // Names them: what was added is the point.
+      expect(digest?.body, 'Mom added Milk, Bread and Eggs');
     });
 
-    test('does not try to name several people', () {
+    test('past three items, names two and counts the rest', () {
       final digest = NotificationDigest.summarise('Groceries', [
-        pending(actorName: 'Mom'),
-        pending(actorName: 'Dad'),
+        for (final name in ['Milk', 'Bread', 'Eggs', 'Butter', 'Rice'])
+          pending(actorName: 'Mom', itemName: name),
       ]);
 
-      expect(digest?.body, '2 items added to your list');
+      expect(digest?.body, 'Mom added Milk, Bread and 3 more');
     });
 
-    test('stays silent for removals alone', () {
-      // Not worth waking a phone for.
+    test('an item added twice in the batch is named once', () {
       final digest = NotificationDigest.summarise('Groceries', [
-        pending(actorName: 'Mom', kind: ItemChangeKind.removed),
+        pending(actorName: 'Mom', itemName: 'Milk'),
+        pending(actorName: 'Mom', itemName: 'milk'),
+        pending(actorName: 'Mom', itemName: 'Eggs'),
       ]);
 
-      expect(digest, isNull);
+      expect(digest?.body, 'Mom added Milk and Eggs');
+    });
+
+    test('names two people, and counts for more', () {
+      final two = NotificationDigest.summarise('Groceries', [
+        pending(actorName: 'Mom', itemName: 'Milk'),
+        pending(actorName: 'Dad', itemName: 'Eggs'),
+      ]);
+      expect(two?.body, 'Mom and Dad added Milk and Eggs');
+
+      final three = NotificationDigest.summarise('Groceries', [
+        pending(actorName: 'Mom', itemName: 'Milk'),
+        pending(actorName: 'Dad', itemName: 'Eggs'),
+        pending(actorName: 'Sam', itemName: 'Rice'),
+      ]);
+      expect(three?.body, '3 people added 3 items');
     });
 
     test('stays silent for an empty batch', () {
       expect(NotificationDigest.summarise('Groceries', []), isNull);
+    });
+  });
+
+  group('NotificationService.sendDelay', () {
+    final first = DateTime.utc(2026, 10, 3, 12);
+
+    test('one minute after the last add, normally', () {
+      expect(
+        NotificationService.sendDelay(now: first, firstPendingAt: first),
+        const Duration(minutes: 1),
+      );
+    });
+
+    test('never later than three minutes after the first add', () {
+      // Adding all along: 2.5 minutes in, only 30s of the cap is left.
+      final now = first.add(const Duration(minutes: 2, seconds: 30));
+      expect(
+        NotificationService.sendDelay(now: now, firstPendingAt: first),
+        const Duration(seconds: 30),
+      );
+    });
+
+    test('straight away once the cap has passed', () {
+      final now = first.add(const Duration(minutes: 4));
+      expect(
+        NotificationService.sendDelay(now: now, firstPendingAt: first),
+        Duration.zero,
+      );
     });
   });
 
@@ -209,15 +252,15 @@ void main() {
 
     group('NotificationPreferences (decisions #80, phase 2)', () {
       test(
-        'defaults to item-added on, joins/finished off, with no row written',
+        'defaults to everything on (decision #108), with no row written',
         () async {
           final prefs = await endpoints.notification.preferences(
             as(aliceId),
           );
 
           expect(prefs.itemAdded, isTrue);
-          expect(prefs.memberJoined, isFalse);
-          expect(prefs.listFinished, isFalse);
+          expect(prefs.memberJoined, isTrue);
+          expect(prefs.listFinished, isTrue);
 
           final session = sessionBuilder.build();
           final rows = await NotificationPreferences.db.find(
@@ -239,7 +282,7 @@ void main() {
         expect(prefs.itemAdded, isFalse);
         expect(prefs.memberJoined, isTrue);
         // Untouched setting keeps its default.
-        expect(prefs.listFinished, isFalse);
+        expect(prefs.listFinished, isTrue);
       });
     });
 
@@ -264,9 +307,55 @@ void main() {
       await NotificationService.flush(session, list.id!);
 
       expect(recorder.sent, hasLength(1));
-      expect(recorder.sent.single.body, contains('3 items'));
+      expect(recorder.sent.single.body, endsWith('added Milk, Bread and Eggs'));
       expect(recorder.sent.single.tokens, ['token-b']);
     });
+
+    test(
+      'ticking, unticking and editing queue no push: only additions do',
+      () async {
+        final recorder = RecordingPushSender();
+        NotificationService.sender = recorder;
+        addTearDown(
+          () => NotificationService.sender = const LoggingPushSender(),
+        );
+
+        final list = await aSharedList();
+        await endpoints.notification.registerDevice(
+          as(bobId),
+          'token-b-tick',
+          DevicePlatform.android,
+        );
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+        final session = sessionBuilder.build();
+        await NotificationService.flush(session, list.id!);
+        expect(recorder.sent, hasLength(1)); // the two adds
+        recorder.sent.clear();
+
+        // Tick, untick, then rename: none of these is an addition.
+        final ticked = await endpoints.item.save(
+          as(aliceId),
+          milk.copyWith(isChecked: true),
+        );
+        final unticked = await endpoints.item.save(
+          as(aliceId),
+          ticked.copyWith(isChecked: false),
+        );
+        await endpoints.item.save(
+          as(aliceId),
+          unticked.copyWith(name: 'Oat milk'),
+        );
+
+        final queued = await PendingItemNotification.db.find(
+          session,
+          where: (t) => t.listId.equals(list.id!),
+        );
+        expect(queued, isEmpty);
+        await NotificationService.flush(session, list.id!);
+        expect(recorder.sent, isEmpty);
+      },
+    );
 
     test('flushing twice does not resend the same batch', () async {
       final recorder = RecordingPushSender();
@@ -341,8 +430,8 @@ void main() {
     );
 
     test(
-      'someone joining sends nothing by default -- member-joined is off '
-      'unless a recipient opts in',
+      'someone joining notifies by default (decision #108), but not a '
+      'member who switched it off',
       () async {
         final recorder = RecordingPushSender();
         NotificationService.sender = recorder;
@@ -358,7 +447,14 @@ void main() {
         );
 
         await endpoints.list.join(as(bobId), list.joinCode);
+        expect(recorder.sent, hasLength(1));
+        recorder.sent.clear();
 
+        await endpoints.notification.setMemberJoinedEnabled(
+          as(aliceId),
+          false,
+        );
+        await endpoints.list.join(as(carolId), list.joinCode);
         expect(recorder.sent, isEmpty);
       },
     );
