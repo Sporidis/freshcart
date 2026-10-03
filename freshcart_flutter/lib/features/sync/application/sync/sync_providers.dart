@@ -45,7 +45,7 @@ SyncBanner syncBanner(Ref ref) {
   final status = ref.watch(syncProvider).value;
   final pending = ref.watch(pendingWriteCountProvider).value ?? 0;
   return switch (status) {
-    SyncStatus.offline => const SyncBannerOffline(),
+    SyncStatus.offline => SyncBannerOffline(pending),
     SyncStatus.online when pending > 0 => SyncBannerSyncing(pending),
     _ => const SyncBannerHidden(),
   };
