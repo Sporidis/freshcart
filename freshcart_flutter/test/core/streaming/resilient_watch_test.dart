@@ -453,4 +453,45 @@ void main() {
       await live.close();
     },
   );
+
+  test(
+    'a resync fetches a fresh snapshot and shows it, while staying '
+    'subscribed to live changes',
+    () async {
+      final live = StreamController<int>();
+      final resync = StreamController<void>();
+      var snapshot = 1;
+      var fetches = 0;
+      final events = <Result<int>>[];
+      final sub = resilientWatch<int, int>(
+        fetch: () async {
+          fetches++;
+          return snapshot;
+        },
+        watch: () => live.stream,
+        reduce: (current, event) => event,
+        online: () => const Stream<bool>.empty(),
+        resync: resync.stream,
+      ).listen(events.add);
+      await Future<void>.delayed(Duration.zero);
+      expect(events.last.valueOrNull, 1);
+
+      // The server has a change whose live update we never got.
+      snapshot = 7;
+      resync.add(null);
+      await Future<void>.delayed(Duration.zero);
+      await Future<void>.delayed(Duration.zero);
+      expect(fetches, 2);
+      expect(events.last.valueOrNull, 7);
+
+      // Still live afterwards.
+      live.add(9);
+      await Future<void>.delayed(Duration.zero);
+      expect(events.last.valueOrNull, 9);
+
+      await sub.cancel();
+      await live.close();
+      await resync.close();
+    },
+  );
 }

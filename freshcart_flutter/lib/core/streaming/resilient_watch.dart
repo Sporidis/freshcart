@@ -34,6 +34,14 @@ import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 /// saved to disk. Then if the app starts without internet, it can show the
 /// saved data instead of an error.
 ///
+/// [resync] asks for a fresh snapshot while staying subscribed. Listening
+/// first only closes the gap on our side: the server starts sending a
+/// moment after we subscribe, and a change landing in that moment is
+/// still missed. So when we *know* a change just reached the server (an
+/// offline change that just synced), a resync fetches the list again, which
+/// is sure to include it. Several requests while one is running are folded
+/// into one more fetch.
+///
 /// Built on a [StreamController], not an `async*` generator: cancelling a
 /// generator that's waiting inside `await for` only takes effect at its
 /// next event, so leaving a list kept its live connection open until that
@@ -47,11 +55,19 @@ Stream<Result<T>> resilientWatch<T, E>({
   Duration reconnectBackoff = const Duration(seconds: 3),
   void Function(T snapshot)? cacheWrite,
   Future<T?> Function()? cacheRead,
+  Stream<void>? resync,
 }) {
   late final StreamController<Result<T>> out;
   StreamSubscription<E>? source;
   StreamController<E>? inbox;
   var stopped = false;
+
+  // The latest value shown, kept out here so a resync can replace it.
+  late T current;
+  var hasCurrent = false;
+  StreamSubscription<void>? resyncSub;
+  var resyncing = false;
+  var resyncAgain = false;
 
   /// Starts listening to [watch] now. Its changes wait in the returned
   /// stream until they're read, so none are missed while fetching.
@@ -87,8 +103,34 @@ Stream<Result<T>> resilientWatch<T, E>({
   }
 
   void show(T value, {bool save = true}) {
+    current = value;
+    hasCurrent = true;
     if (save) cacheWrite?.call(value);
     out.add(Ok(value));
+  }
+
+  /// Fetches a fresh snapshot without touching the live subscription. A
+  /// failure is left to the live stream's own error handling.
+  Future<void> resyncNow() async {
+    if (resyncing) {
+      resyncAgain = true;
+      return;
+    }
+    resyncing = true;
+    try {
+      do {
+        resyncAgain = false;
+        try {
+          final value = await fetch();
+          if (stopped || out.isClosed) return;
+          show(value);
+        } on Object catch (_) {
+          // Offline again, say: the live stream reconnects and re-fetches.
+        }
+      } while (resyncAgain && !stopped);
+    } finally {
+      resyncing = false;
+    }
   }
 
   /// Waits until we're online, then listens to [watch] and fetches. If the
@@ -113,12 +155,11 @@ Stream<Result<T>> resilientWatch<T, E>({
 
   Future<void> run() async {
     // Step 1: the first full load, listening already.
-    T current;
     var live = listenLive();
     try {
-      current = await fetch();
+      final value = await fetch();
       if (stopped) return;
-      show(current);
+      show(value);
     } on Object catch (error) {
       stopLive();
       final failure = mapExceptionToFailure(error);
@@ -129,15 +170,13 @@ Stream<Result<T>> resilientWatch<T, E>({
 
       // Offline at startup, but we have saved data: show it, then wait
       // until we're online and load the real data.
-      current = cached;
-      show(current, save: false);
+      show(cached, save: false);
       final result = await reconnect();
       if (result == null || stopped) return;
       switch (result) {
         case Ok(value: (final value, final stream)):
-          current = value;
           live = stream;
-          show(current);
+          show(value);
         case Err(:final failure):
           return finish(failure);
       }
@@ -148,8 +187,7 @@ Stream<Result<T>> resilientWatch<T, E>({
       try {
         await for (final event in live) {
           if (stopped) return;
-          current = reduce(current, event);
-          show(current);
+          show(reduce(current, event));
         }
         // The server closed the stream normally (or we were cancelled).
         return finish();
@@ -165,9 +203,8 @@ Stream<Result<T>> resilientWatch<T, E>({
         if (result == null || stopped) return;
         switch (result) {
           case Ok(value: (final value, final stream)):
-            current = value;
             live = stream;
-            show(current);
+            show(value);
           case Err(:final failure):
             return finish(failure);
         }
@@ -176,13 +213,20 @@ Stream<Result<T>> resilientWatch<T, E>({
   }
 
   out = StreamController<Result<T>>(
-    onListen: () => unawaited(
-      run().catchError((Object error, StackTrace stack) {
-        if (!out.isClosed) out.addError(error, stack);
-      }),
-    ),
+    onListen: () {
+      resyncSub = resync?.listen((_) {
+        // Nothing to refresh before the first value.
+        if (hasCurrent && !stopped) unawaited(resyncNow());
+      });
+      unawaited(
+        run().catchError((Object error, StackTrace stack) {
+          if (!out.isClosed) out.addError(error, stack);
+        }),
+      );
+    },
     onCancel: () {
       stopped = true;
+      unawaited(resyncSub?.cancel());
       stopLive();
     },
   );
