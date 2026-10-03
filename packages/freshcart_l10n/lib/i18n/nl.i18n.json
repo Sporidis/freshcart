@@ -184,7 +184,8 @@
     "thisWeek": "Deze week",
     "lastWeek": "Vorige week",
     "earlier": "Eerder",
-    "addAgain": "Opnieuw toevoegen"
+    "addAgain": "Opnieuw toevoegen",
+    "added": "Toegevoegd"
   },
   "settings": {
     "title": "Instellingen",
@@ -290,6 +291,15 @@
   },
   "sync": {
     "offline": "Offline – wijzigingen worden later gesynchroniseerd",
+    "offlineWaiting": {
+      "one": "Offline – {{n}} wijziging wordt later gesynchroniseerd",
+      "other": "Offline – {{n}} wijzigingen worden later gesynchroniseerd"
+    },
+    "upToDate": "Bijgewerkt",
+    "conflicts": {
+      "one": "{{n}} wijziging kon niet worden toegepast – iemand anders was je voor",
+      "other": "{{n}} wijzigingen konden niet worden toegepast – iemand anders was je voor"
+    },
     "syncing": {
       "one": "{{n}} wijziging synchroniseren…",
       "other": "{{n}} wijzigingen synchroniseren…"

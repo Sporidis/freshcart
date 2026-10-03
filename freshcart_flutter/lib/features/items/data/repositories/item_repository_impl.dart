@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
@@ -9,8 +10,10 @@ import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapp
 import 'package:freshcart_flutter/features/items/data/sources/item_realtime_source.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_store.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/queue/queued_item_changes.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -189,13 +192,78 @@ class ItemRepositoryImpl implements ItemRepository {
     },
   );
 
+  /// The list's items, live, with the changes still waiting in the offline
+  /// queue applied on top (see [applyQueuedItemChanges]). Re-sent whenever
+  /// either side changes: a server update, or the queue growing or
+  /// draining.
   @override
-  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) =>
-      ItemRealtimeSource(
-        _client,
-        _connectivityAdapter,
-        _cache,
-      ).watchByList(listId);
+  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
+    // When a queued change leaves the queue it has reached the server, but
+    // its live update can be missed (see resilientWatch's `resync`), so the
+    // list re-fetches then.
+    final resync = StreamController<void>.broadcast();
+    final server = ItemRealtimeSource(
+      _client,
+      _connectivityAdapter,
+      _cache,
+    ).watchByList(listId, resync: resync.stream);
+
+    StreamSubscription<Result<List<ShoppingItem>>>? serverSub;
+    StreamSubscription<List<PendingOperation>>? queueSub;
+    Result<List<ShoppingItem>>? latest;
+    var queued = const <PendingOperation>[];
+    late final StreamController<Result<List<ShoppingItem>>> out;
+
+    void emit() {
+      final current = latest;
+      // Nothing from the server or cache yet: wait, rather than show a
+      // list made only of queued changes.
+      if (current == null || out.isClosed) return;
+      out.add(
+        current.map(
+          (items) => applyQueuedItemChanges(
+            items,
+            queued,
+            listId,
+            me: currentUserId,
+          ),
+        ),
+      );
+    }
+
+    out = StreamController<Result<List<ShoppingItem>>>(
+      onListen: () {
+        serverSub = server.listen(
+          (event) {
+            latest = event;
+            emit();
+          },
+          onError: out.addError,
+          onDone: out.close,
+        );
+        queueSub = queue.watchAll().listen(
+          (ops) {
+            // An empty queue that was already empty changes nothing on
+            // screen: don't send the same list twice.
+            final changed = ops.isNotEmpty || queued.isNotEmpty;
+            final synced = ops.length < queued.length;
+            queued = ops;
+            if (changed) emit();
+            if (synced) resync.add(null);
+          },
+          // The queue is only an overlay: if reading it fails, keep
+          // showing the server's items as they are.
+          onError: (Object _) {},
+        );
+      },
+      onCancel: () async {
+        await queueSub?.cancel();
+        await serverSub?.cancel();
+        await resync.close();
+      },
+    );
+    return out.stream;
+  }
 
   @override
   Future<Result<List<String>>> suggestNames(ListId listId, String query) =>

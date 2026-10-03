@@ -170,6 +170,42 @@ void main() {
       expect(repository.addCalls.single.name, 'Milk');
     });
 
+    testWidgets('after re-adding, the + shows a tick for a moment', (
+      tester,
+    ) async {
+      repository.recentNamesResult = Ok([
+        NameHistoryEntry(name: 'Milk', lastUsedAt: now),
+      ]);
+      repository.addResult = Ok(buildItem(name: 'Milk'));
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.check_rounded), findsOneWidget);
+      // Read with the row's name: "Milk, Added".
+      expect(find.bySemanticsLabel(RegExp(r'^Milk\nAdded$')), findsOneWidget);
+
+      await tester.pump(const Duration(milliseconds: 1300));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.check_rounded), findsNothing);
+      expect(
+        find.bySemanticsLabel(RegExp(r'^Milk\nAdd again$')),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('a failed re-add shows no tick', (tester) async {
+      repository.recentNamesResult = Ok([
+        NameHistoryEntry(name: 'Milk', lastUsedAt: now),
+      ]);
+      repository.addResult = const Err(Failure.network());
+      await pump(tester);
+
+      await tester.tap(find.byIcon(Icons.add));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.check_rounded), findsNothing);
+    });
+
     testWidgets('a rapid second tap does not start a second add', (
       tester,
     ) async {

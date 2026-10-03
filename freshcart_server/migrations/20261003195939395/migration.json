@@ -1,0 +1,82 @@
+{
+  "__className__": "serverpod.DatabaseMigration",
+  "actions": [
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "freshcart_notification_preferences",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [],
+        "modifyColumns": [
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "memberJoined",
+            "addNullable": false,
+            "removeNullable": false,
+            "changeDefault": true,
+            "newDefault": "true"
+          },
+          {
+            "__className__": "serverpod.ColumnMigration",
+            "columnName": "listFinished",
+            "addNullable": false,
+            "removeNullable": false,
+            "changeDefault": true,
+            "newDefault": "true"
+          }
+        ],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": []
+      }
+    },
+    {
+      "__className__": "serverpod.DatabaseMigrationAction",
+      "type": "alterTable",
+      "alterTable": {
+        "__className__": "serverpod.TableMigration",
+        "name": "freshcart_pending_item_notification",
+        "schema": "public",
+        "addColumns": [],
+        "deleteColumns": [
+          "kind"
+        ],
+        "modifyColumns": [],
+        "addIndexes": [],
+        "deleteIndexes": [],
+        "addForeignKeys": [],
+        "deleteForeignKeys": [],
+        "warnings": [
+          {
+            "__className__": "serverpod.DatabaseMigrationWarning",
+            "type": "columnDropped",
+            "message": "Column \"kind\" of table \"freshcart_pending_item_notification\" will be dropped.",
+            "table": "freshcart_pending_item_notification",
+            "columns": [
+              "kind"
+            ],
+            "destrucive": true
+          }
+        ]
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "__className__": "serverpod.DatabaseMigrationWarning",
+      "type": "columnDropped",
+      "message": "Column \"kind\" of table \"freshcart_pending_item_notification\" will be dropped.",
+      "table": "freshcart_pending_item_notification",
+      "columns": [
+        "kind"
+      ],
+      "destrucive": true
+    }
+  ],
+  "migrationApiVersion": 1
+}

@@ -18,11 +18,14 @@ fields:
   ### alerts."
   itemAdded: bool, defaultModel=true, defaultPersist=true
 
-  ### "Someone joins a list."
-  memberJoined: bool, defaultModel=false, defaultPersist=false
+  ### "Someone joins a list." On by default since decision #108 (the design
+  ### had it off): joins are rare, so it can't become noise.
+  memberJoined: bool, defaultModel=true, defaultPersist=true
 
-  ### "A list is finished" -- when the last item is checked off.
-  listFinished: bool, defaultModel=false, defaultPersist=false
+  ### "A list is finished" -- when the last item is checked off. On by
+  ### default since decision #108 (the design had it off): "the shopping is
+  ### done, don't go" is the most useful thing a shared list can tell you.
+  listFinished: bool, defaultModel=true, defaultPersist=true
 
 indexes:
   freshcart_notification_preferences_user_idx:

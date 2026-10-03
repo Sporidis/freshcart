@@ -30,7 +30,12 @@ class ItemRealtimeSource {
   /// [resilientWatch]: if the connection drops, it keeps the last items and
   /// reconnects when we're back online. Every update is also saved to
   /// [_cache], so the app can show it when starting offline.
-  Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
+  ///
+  /// [resync] asks for a fresh full load (see [resilientWatch]).
+  Stream<Result<List<ShoppingItem>>> watchByList(
+    ListId listId, {
+    Stream<void>? resync,
+  }) {
     final listUuid = dto.UuidValue.withValidation(listId.value);
 
     return resilientWatch(
@@ -46,6 +51,7 @@ class ItemRealtimeSource {
       cacheWrite: (items) =>
           unawaited(_cache.replaceForList(listId, items).catchError((_) {})),
       cacheRead: () => _cache.readForList(listId),
+      resync: resync,
     );
   }
 

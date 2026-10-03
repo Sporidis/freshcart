@@ -184,7 +184,8 @@
     "thisWeek": "Cette semaine",
     "lastWeek": "La semaine dernière",
     "earlier": "Plus tôt",
-    "addAgain": "Ajouter à nouveau"
+    "addAgain": "Ajouter à nouveau",
+    "added": "Ajouté"
   },
   "settings": {
     "title": "Paramètres",
@@ -290,6 +291,15 @@
   },
   "sync": {
     "offline": "Hors ligne – les modifications seront synchronisées",
+    "offlineWaiting": {
+      "one": "Hors ligne – {{n}} modification sera synchronisée",
+      "other": "Hors ligne – {{n}} modifications seront synchronisées"
+    },
+    "upToDate": "À jour",
+    "conflicts": {
+      "one": "{{n}} modification n'a pas pu être appliquée – quelqu'un l'a modifiée avant vous",
+      "other": "{{n}} modifications n'ont pas pu être appliquées – quelqu'un les a modifiées avant vous"
+    },
     "syncing": {
       "one": "Synchronisation de {{n}} modification…",
       "other": "Synchronisation de {{n}} modifications…"

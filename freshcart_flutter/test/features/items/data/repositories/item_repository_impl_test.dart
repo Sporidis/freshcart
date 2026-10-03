@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_
 import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
 
 import '../../../../fakes/dto_builders.dart';
 import '../../../../fakes/fake_client.dart';
@@ -280,6 +281,104 @@ void main() {
 
         expect(events, hasLength(2)); // seed Ok, then one Err
         expect(events.last.failureOrNull, const Failure.unauthorized());
+      },
+    );
+  });
+
+  group('ItemRepositoryImpl.watchByList — queued changes (Phase E)', () {
+    test(
+      'a change waiting in the queue shows as pending, and clears once it '
+      'leaves the queue',
+      () async {
+        client.handler = (_, _, _) => [buildItemDto()];
+        // Kept open, like a live connection: a stream that ends counts as
+        // a dropped connection.
+        final changes = StreamController<dto.ItemChange>();
+        client.streamHandler = (_, _, _) => changes.stream;
+        final queue = PendingOperationsQueue(db);
+
+        final events = <List<ShoppingItem>>[];
+        final subscription = repository
+            .watchByList(ListId(listUuid.uuid))
+            .listen((event) => events.add(event.valueOrNull!));
+        // Registered in this order so the live stream closes first (tear
+        // downs run last-in, first-out), as in the reconnect tests above.
+        addTearDown(subscription.cancel);
+        addTearDown(changes.close);
+        await pumpEventQueue();
+        expect(events.last.single.pending, isFalse);
+
+        // Offline: an item is added, so it's only in the queue.
+        await queue.enqueue(
+          entityType: PendingEntityType.item,
+          opType: PendingOpType.create,
+          tempId: 'temp-1',
+          payload: {
+            'listId': listUuid.uuid,
+            'name': 'Eggs',
+            'quantity': 1,
+            'shopId': null,
+            'noteText': null,
+          },
+        );
+        await pumpEventQueue();
+        final eggs = events.last.singleWhere((i) => i.name == 'Eggs');
+        expect(eggs.pending, isTrue);
+
+        // Back online: the drainer sent it and took it off the queue.
+        for (final op in await queue.getAll()) {
+          await queue.remove(op.id);
+        }
+        await pumpEventQueue();
+        expect(events.last.any((i) => i.pending), isFalse);
+      },
+    );
+  });
+
+  group('ItemRepositoryImpl.watchByList — after an offline change syncs', () {
+    test(
+      'the list re-fetches, so a tick whose live update was missed still '
+      'shows (the device trace: back online, tick 1 replayed while the '
+      "server was still setting up the live stream, so its update didn't "
+      'arrive)',
+      () async {
+        var checked = false;
+        client.handler = (_, _, _) => [buildItemDto(isChecked: checked)];
+        final changes = StreamController<dto.ItemChange>();
+        client.streamHandler = (_, _, _) => changes.stream;
+        final queue = PendingOperationsQueue(db);
+
+        final events = <List<ShoppingItem>>[];
+        final subscription = repository
+            .watchByList(ListId(listUuid.uuid))
+            .listen((event) => events.add(event.valueOrNull!));
+        addTearDown(subscription.cancel);
+        await pumpEventQueue();
+        expect(events.last.single.isChecked, isFalse);
+
+        // Ticked offline: queued.
+        final item = events.last.single;
+        await queue.enqueue(
+          entityType: PendingEntityType.item,
+          opType: PendingOpType.edit,
+          payload: item
+              .toggleChecked(by: item.addedBy, at: DateTime.utc(2026, 10))
+              .toQueuePayload(),
+        );
+        await pumpEventQueue();
+        expect(events.last.single.isChecked, isTrue);
+
+        // Back online: the drainer sends it (the server now has it ticked)
+        // and takes it off the queue. No live update arrives.
+        checked = true;
+        for (final op in await queue.getAll()) {
+          await queue.remove(op.id);
+        }
+        await pumpEventQueue();
+
+        expect(events.last.single.isChecked, isTrue);
+        expect(events.last.single.pending, isFalse);
+        await changes.close();
       },
     );
   });

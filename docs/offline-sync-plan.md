@@ -196,9 +196,21 @@ surfaces somewhere a user will actually see it (matches the existing three-tier 
 surfacing from decision #42, rather than inventing a fourth).
 
 **Accept:** widget test — go offline, make a change, see the pending badge; come back online,
-watch it clear. **Not yet built** — `item.pending`/`list.pending` exist on the domain entities
-and are set correctly by the repositories, but nothing in `presentation/` reads them yet. This
-is the natural next phase.
+watch it clear.
+
+**Built (items), decisions #107:** `applyQueuedItemChanges` replays the queue onto
+`watchByList`'s items, so the queue is the source of truth for "pending" (it survives a restart
+offline, which the server-only cache didn't). Rows carry a dashed edge while pending; the bar
+reads offline / syncing / up to date. Tests: `queued_item_changes_test.dart`, the Phase E group
+in `item_repository_impl_test.dart`, `offline_banner_test.dart`.
+
+**Conflicts, built:** `queueDrainCoordinator` passes the changes the server rejected on replay
+to `SyncConflictsController` (a running total), and the offline bar shows the difference as a
+snackbar-tier toast (decision #42): "1 change couldn't be applied – someone changed it first".
+The list itself re-fetches as the change leaves the queue, so it already shows the server's
+version.
+
+**Still open:** a list's own `pending` (a rename made offline) isn't drawn yet.
 
 ### Phase F — in-memory resilience across a live connection drop ✅ built
 

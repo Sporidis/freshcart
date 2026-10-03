@@ -1,15 +1,28 @@
+import 'dart:async';
+
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 
 /// A live data stream that survives losing the internet connection.
 ///
 /// How it works:
-/// 1. [fetch] loads the full data once.
-/// 2. [watch] then sends small changes, and [reduce] applies each change to
-///    the current data.
+/// 1. It starts listening to [watch] (the small changes), holding them
+///    back for now.
+/// 2. [fetch] loads the full data once. Then the held changes are applied
+///    with [reduce], and every later change as it arrives.
 /// 3. If the connection drops, the user keeps seeing the last data. When
-///    [online] says we're back, it calls [fetch] again (to catch up on what
-///    was missed) and starts watching again.
+///    [online] says we're back, it does 1 and 2 again (to catch up on what
+///    was missed).
+///
+/// Why listen before fetching: a change that happens while the snapshot is
+/// loading would otherwise be in neither, and lost until the next reload.
+/// That's exactly what happened after coming back online: the offline
+/// queue replays your changes at the same moment the list reloads, so some
+/// of them landed in that gap and the list kept showing them undone (and a
+/// later edit was refused as out of date). Listening first means such a
+/// change may arrive twice (in the snapshot and as a change); [reduce]
+/// must cope with that, which ours does, since each change carries the
+/// item's whole new state.
 ///
 /// Only network errors are retried. Other errors (list deleted, no access)
 /// end the stream with an [Err], because retrying won't fix them.
@@ -20,6 +33,20 @@ import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 /// [cacheWrite] and [cacheRead] are optional. If given, every new value is
 /// saved to disk. Then if the app starts without internet, it can show the
 /// saved data instead of an error.
+///
+/// [resync] asks for a fresh snapshot while staying subscribed. Listening
+/// first only closes the gap on our side: the server starts sending a
+/// moment after we subscribe, and a change landing in that moment is
+/// still missed. So when we *know* a change just reached the server (an
+/// offline change that just synced), a resync fetches the list again, which
+/// is sure to include it. Several requests while one is running are folded
+/// into one more fetch.
+///
+/// Built on a [StreamController], not an `async*` generator: cancelling a
+/// generator that's waiting inside `await for` only takes effect at its
+/// next event, so leaving a list kept its live connection open until that
+/// list changed again. Here, cancelling cancels the live subscription at
+/// once.
 Stream<Result<T>> resilientWatch<T, E>({
   required Future<T> Function() fetch,
   required Stream<E> Function() watch,
@@ -28,93 +55,180 @@ Stream<Result<T>> resilientWatch<T, E>({
   Duration reconnectBackoff = const Duration(seconds: 3),
   void Function(T snapshot)? cacheWrite,
   Future<T?> Function()? cacheRead,
-}) async* {
-  // Step 1: the first full load.
-  T current;
-  try {
-    current = await fetch();
-    cacheWrite?.call(current);
-  } on Object catch (error) {
-    final failure = mapExceptionToFailure(error);
-    // Only fall back to the saved copy if the problem is the network.
-    final cached = failure is NetworkFailure ? await cacheRead?.call() : null;
-    if (cached == null) {
-      yield Err(failure);
+  Stream<void>? resync,
+}) {
+  late final StreamController<Result<T>> out;
+  StreamSubscription<E>? source;
+  StreamController<E>? inbox;
+  var stopped = false;
+
+  // The latest value shown, kept out here so a resync can replace it.
+  late T current;
+  var hasCurrent = false;
+  StreamSubscription<void>? resyncSub;
+  var resyncing = false;
+  var resyncAgain = false;
+
+  /// Starts listening to [watch] now. Its changes wait in the returned
+  /// stream until they're read, so none are missed while fetching.
+  Stream<E> listenLive() {
+    final box = StreamController<E>();
+    inbox = box;
+    try {
+      source = watch().listen(
+        box.add,
+        onError: box.addError,
+        onDone: box.close,
+      );
+    } on Object catch (error, stack) {
+      // Couldn't even start (for example a closed client): treat it like a
+      // live stream that failed straight away.
+      box.addError(error, stack);
+    }
+    return box.stream;
+  }
+
+  void stopLive() {
+    unawaited(source?.cancel());
+    source = null;
+    unawaited(inbox?.close());
+    inbox = null;
+  }
+
+  void finish([Failure? failure]) {
+    stopLive();
+    if (out.isClosed) return;
+    if (failure != null) out.add(Err(failure));
+    unawaited(out.close());
+  }
+
+  void show(T value, {bool save = true}) {
+    current = value;
+    hasCurrent = true;
+    if (save) cacheWrite?.call(value);
+    out.add(Ok(value));
+  }
+
+  /// Fetches a fresh snapshot without touching the live subscription. A
+  /// failure is left to the live stream's own error handling.
+  Future<void> resyncNow() async {
+    if (resyncing) {
+      resyncAgain = true;
       return;
     }
-
-    // Offline at startup, but we have saved data: show it, then wait until
-    // we're online and load the real data.
-    current = cached;
-    yield Ok(current);
-    switch (await _reconnect(
-      fetch: fetch,
-      online: online,
-      backoff: reconnectBackoff,
-    )) {
-      case Ok(:final value):
-        current = value;
-        cacheWrite?.call(current);
-      case Err(:final failure):
-        yield Err(failure);
-        return;
+    resyncing = true;
+    try {
+      do {
+        resyncAgain = false;
+        try {
+          final value = await fetch();
+          if (stopped || out.isClosed) return;
+          show(value);
+        } on Object catch (_) {
+          // Offline again, say: the live stream reconnects and re-fetches.
+        }
+      } while (resyncAgain && !stopped);
+    } finally {
+      resyncing = false;
     }
   }
-  yield Ok(current);
 
-  // Step 2: listen for live changes, forever.
-  while (true) {
+  /// Waits until we're online, then listens to [watch] and fetches. If the
+  /// fetch fails because of the network, waits [reconnectBackoff] and tries
+  /// again. Returns null if stopped, or the failure if it can't recover.
+  Future<Result<(T, Stream<E>)>?> reconnect() async {
+    while (!stopped) {
+      await online().firstWhere((isOnline) => isOnline);
+      if (stopped) return null;
+      final live = listenLive();
+      try {
+        return Ok((await fetch(), live));
+      } on Object catch (error) {
+        stopLive();
+        final failure = mapExceptionToFailure(error);
+        if (failure is! NetworkFailure) return Err(failure);
+        await Future<void>.delayed(reconnectBackoff);
+      }
+    }
+    return null;
+  }
+
+  Future<void> run() async {
+    // Step 1: the first full load, listening already.
+    var live = listenLive();
     try {
-      await for (final event in watch()) {
-        current = reduce(current, event);
-        cacheWrite?.call(current);
-        yield Ok(current);
-      }
-      // The server closed the stream normally, so we're done.
-      return;
+      final value = await fetch();
+      if (stopped) return;
+      show(value);
     } on Object catch (error) {
+      stopLive();
       final failure = mapExceptionToFailure(error);
-      if (failure is! NetworkFailure) {
-        yield Err(failure);
-        return;
-      }
+      // Only fall back to the saved copy if the problem is the network.
+      final cached = failure is NetworkFailure ? await cacheRead?.call() : null;
+      if (stopped) return;
+      if (cached == null) return finish(failure);
 
-      // Step 3: connection lost. Wait to be online, reload, keep going.
-      switch (await _reconnect(
-        fetch: fetch,
-        online: online,
-        backoff: reconnectBackoff,
-      )) {
-        case Ok(:final value):
-          current = value;
-          cacheWrite?.call(current);
+      // Offline at startup, but we have saved data: show it, then wait
+      // until we're online and load the real data.
+      show(cached, save: false);
+      final result = await reconnect();
+      if (result == null || stopped) return;
+      switch (result) {
+        case Ok(value: (final value, final stream)):
+          live = stream;
+          show(value);
         case Err(:final failure):
-          yield Err(failure);
-          return;
+          return finish(failure);
       }
-      yield Ok(current);
-      // Loop back to the top and start watching again.
     }
-  }
-}
 
-/// Waits until we're online, then tries [fetch].
-///
-/// If it fails because of the network, waits [backoff] and tries again.
-/// If it fails for any other reason, gives up and returns the [Err].
-Future<Result<T>> _reconnect<T>({
-  required Future<T> Function() fetch,
-  required Stream<bool> Function() online,
-  required Duration backoff,
-}) async {
-  while (true) {
-    await online().firstWhere((isOnline) => isOnline);
-    try {
-      return Ok(await fetch());
-    } on Object catch (error) {
-      final failure = mapExceptionToFailure(error);
-      if (failure is! NetworkFailure) return Err(failure);
-      await Future<void>.delayed(backoff);
+    // Step 2: apply the changes, the held-back ones first, forever.
+    while (!stopped) {
+      try {
+        await for (final event in live) {
+          if (stopped) return;
+          show(reduce(current, event));
+        }
+        // The server closed the stream normally (or we were cancelled).
+        return finish();
+      } on Object catch (error) {
+        stopLive();
+        if (stopped) return;
+        final failure = mapExceptionToFailure(error);
+        if (failure is! NetworkFailure) return finish(failure);
+
+        // Step 3: connection lost. Keep the last data, wait to be online,
+        // reload, keep going.
+        final result = await reconnect();
+        if (result == null || stopped) return;
+        switch (result) {
+          case Ok(value: (final value, final stream)):
+            live = stream;
+            show(value);
+          case Err(:final failure):
+            return finish(failure);
+        }
+      }
     }
   }
+
+  out = StreamController<Result<T>>(
+    onListen: () {
+      resyncSub = resync?.listen((_) {
+        // Nothing to refresh before the first value.
+        if (hasCurrent && !stopped) unawaited(resyncNow());
+      });
+      unawaited(
+        run().catchError((Object error, StackTrace stack) {
+          if (!out.isClosed) out.addError(error, stack);
+        }),
+      );
+    },
+    onCancel: () {
+      stopped = true;
+      unawaited(resyncSub?.cancel());
+      stopLive();
+    },
+  );
+  return out.stream;
 }

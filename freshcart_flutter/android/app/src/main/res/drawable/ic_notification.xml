@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The notification icon: the FreshCart basket mark (BasketMark, from the
+  design's 58x58 SVG), white on transparent, as Android requires for a
+  notification's small icon (it only uses the shape and tints it itself).
+  The 48x48 viewport crops the logo's margin and centres the mark, so it
+  reads at notification size.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <group
+        android:translateX="-5"
+        android:translateY="-6.75">
+        <!-- The basket: wider at the top, rounded at the bottom. -->
+        <path
+            android:pathData="M12,22 L46,22 L42,48 C42,50.2 40.2,51.4 38,51.4 L20,51.4 C17.8,51.4 16.2,50.2 16,48 Z"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="3.5"
+            android:strokeLineCap="round"
+            android:strokeLineJoin="round" />
+        <!-- The handle. -->
+        <path
+            android:pathData="M19,22 C19,15 23.5,10 29,10 C34.5,10 39,15 39,22"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="3.5"
+            android:strokeLineCap="round" />
+        <!-- The two lines across the front. -->
+        <path
+            android:pathData="M16,30 L42,30 M17.3,38 L40.7,38"
+            android:strokeColor="#FFFFFFFF"
+            android:strokeWidth="3" />
+    </group>
+</vector>

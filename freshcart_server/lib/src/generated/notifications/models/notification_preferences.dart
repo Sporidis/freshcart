@@ -31,8 +31,8 @@ abstract class NotificationPreferences
     bool? memberJoined,
     bool? listFinished,
   }) : itemAdded = itemAdded ?? true,
-       memberJoined = memberJoined ?? false,
-       listFinished = listFinished ?? false;
+       memberJoined = memberJoined ?? true,
+       listFinished = listFinished ?? true;
 
   factory NotificationPreferences({
     _i1.UuidValue? id,
@@ -76,10 +76,13 @@ abstract class NotificationPreferences
   /// alerts."
   bool itemAdded;
 
-  /// "Someone joins a list."
+  /// "Someone joins a list." On by default since decision #108 (the design
+  /// had it off): joins are rare, so it can't become noise.
   bool memberJoined;
 
-  /// "A list is finished" -- when the last item is checked off.
+  /// "A list is finished" -- when the last item is checked off. On by
+  /// default since decision #108 (the design had it off): "the shopping is
+  /// done, don't go" is the most useful thing a shared list can tell you.
   bool listFinished;
 
   @override
@@ -247,10 +250,13 @@ class NotificationPreferencesTable extends _i1.Table<_i1.UuidValue?> {
   /// alerts."
   late final _i1.ColumnBool itemAdded;
 
-  /// "Someone joins a list."
+  /// "Someone joins a list." On by default since decision #108 (the design
+  /// had it off): joins are rare, so it can't become noise.
   late final _i1.ColumnBool memberJoined;
 
-  /// "A list is finished" -- when the last item is checked off.
+  /// "A list is finished" -- when the last item is checked off. On by
+  /// default since decision #108 (the design had it off): "the shopping is
+  /// done, don't go" is the most useful thing a shared list can tell you.
   late final _i1.ColumnBool listFinished;
 
   @override

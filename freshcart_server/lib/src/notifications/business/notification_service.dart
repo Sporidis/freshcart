@@ -6,27 +6,40 @@ import 'package:serverpod/serverpod.dart';
 
 /// Decides who gets which push notification, and when.
 abstract final class NotificationService {
-  /// How long changes are collected before sending one push.
-  ///
-  /// Long enough that adding several items is one notification, short
-  /// enough that others don't wait long.
-  static const Duration aggregationWindow = Duration(seconds: 20);
+  /// How long after the last added item the push waits, so a burst of
+  /// adds (writing a shopping list) becomes one notification.
+  static const Duration quietWindow = Duration(minutes: 1);
+
+  /// The most a push waits after the first item it reports, so a long
+  /// session of adding still tells the others within a few minutes.
+  static const Duration maxWait = Duration(minutes: 3);
 
   /// The name of the scheduled "send collected changes" job.
   static const String flushCallName = 'flushListNotifications';
 
+  /// One scheduled send per list; a later add moves it (see
+  /// [enqueueAddition]).
+  static String flushIdFor(UuidValue listId) => 'flush-$listId';
+
   /// What actually sends the push. Tests use a fake.
   static PushSender sender = const LoggingPushSender();
 
-  /// Saves a change, and makes sure sending is scheduled.
-  static Future<void> enqueue(
+  /// Records that [actorName] added [itemName], and (re)schedules the push.
+  ///
+  /// Batching: each add moves the send to [quietWindow] from now, but never
+  /// past [maxWait] after the first add still waiting. Serverpod's job
+  /// `identifier` doesn't replace an earlier job with the same id (it's
+  /// only for cancelling), so the earlier one is cancelled first; before
+  /// that, every change scheduled its own send and a busy list sent one
+  /// every few seconds.
+  static Future<void> enqueueAddition(
     Session session, {
     required UuidValue listId,
     required UuidValue actorId,
     required String actorName,
     required String itemName,
-    required ItemChangeKind kind,
   }) async {
+    final now = DateTime.now().toUtc();
     await PendingItemNotification.db.insertRow(
       session,
       PendingItemNotification(
@@ -34,23 +47,46 @@ abstract final class NotificationService {
         actorId: actorId,
         actorName: actorName,
         itemName: itemName,
-        kind: kind,
+        createdAt: now,
       ),
     );
 
-    // One scheduled job per list, so a second change in the same window
-    // joins the same batch.
-    //
-    // `futureCallWithDelay` is deprecated in Serverpod 3.4.13, but the
-    // replacement isn't available yet in this version. So we use it anyway
+    final first = await PendingItemNotification.db.findFirstRow(
+      session,
+      where: (t) => t.listId.equals(listId),
+      orderBy: (t) => t.createdAt,
+    );
+    final delay = sendDelay(
+      now: now,
+      firstPendingAt: first?.createdAt ?? now,
+    );
+
+    final id = flushIdFor(listId);
+    // `cancelFutureCall` and `futureCallWithDelay` are deprecated in
+    // Serverpod 3.4.13, but their replacement (generated future call
+    // methods) isn't available yet in this version. So we use them anyway
     // and hide the warning. Change this when the replacement exists.
+    // ignore: deprecated_member_use
+    await session.serverpod.cancelFutureCall(id);
     // ignore: deprecated_member_use
     await session.serverpod.futureCallWithDelay(
       flushCallName,
       ListReference(listId: listId),
-      aggregationWindow,
-      identifier: 'flush-$listId',
+      delay,
+      identifier: id,
     );
+  }
+
+  /// How long to wait before sending, at [now], when the oldest add still
+  /// waiting came in at [firstPendingAt]: [quietWindow], cut short so the
+  /// send never lands later than [maxWait] after that first add.
+  static Duration sendDelay({
+    required DateTime now,
+    required DateTime firstPendingAt,
+  }) {
+    final untilCap = firstPendingAt.add(maxWait).difference(now);
+    if (untilCap.isNegative) return Duration.zero;
+    return untilCap < quietWindow ? untilCap : quietWindow;
   }
 
   /// The phones that should get a notification about [listId].

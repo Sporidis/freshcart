@@ -1,9 +1,10 @@
-### One buffered item change, waiting to be summarised into a push.
+### One added item, waiting to be summarised into a push. Only additions are
+### queued (decision #108): ticks, edits and deletes are live-only.
 ###
 ### Buffered rather than sent immediately so a burst — "mom added 3 items" —
-### arrives as one notification instead of three. The flush is scheduled by a
-### future call keyed on the list, so a second change inside the window joins
-### the existing batch rather than starting another.
+### arrives as one notification instead of three. Each add moves the list's
+### scheduled send (NotificationService.enqueueAddition): one minute after the
+### last add, at most three after the first.
 class: PendingItemNotification
 table: freshcart_pending_item_notification
 fields:
@@ -18,10 +19,8 @@ fields:
   ### if they later change it.
   actorName: String
 
-  ### The item's name, for a single-change summary.
+  ### The item's name, for the summary ("Sam added Milk, Eggs").
   itemName: String
-
-  kind: ItemChangeKind
 
   createdAt: DateTime, defaultModel=now
 

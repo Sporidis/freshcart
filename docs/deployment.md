@@ -32,6 +32,19 @@ Read this before touching anything server-side in production, and definitely bef
   `config/passwords.yaml` on the VM, which is gitignored and was never committed anywhere.
 - **Secrets file:** `~/freshcart/freshcart_server/config/passwords.yaml` — created by hand
   on the VM from `config/passwords.example.yaml`, never via git.
+- **Push notifications key:** `~/freshcart/freshcart_server/config/firebase-service-account.json`
+  — a Firebase service-account key for the **`freshcart-portfolio`** project (Firebase console →
+  Project settings → Service accounts → Generate new private key), copied up by hand and never
+  committed (it's gitignored):
+  ```bash
+  scp -i ~/.ssh/oracle_freshcart <downloaded-key>.json \
+    ubuntu@134.98.159.244:~/freshcart/freshcart_server/config/firebase-service-account.json
+  ssh -i ~/.ssh/oracle_freshcart ubuntu@134.98.159.244 \
+    'chmod 600 ~/freshcart/freshcart_server/config/firebase-service-account.json && sudo systemctl restart freshcart-server'
+  ```
+  Without it the server still runs, but only **logs** notifications (`[push] …` in the journal)
+  instead of sending them (decisions.md #7). On macOS, copy the key out of Downloads first if
+  your terminal isn't allowed to read that folder. Delete the local copy afterwards.
 
 ## Updating the deployed server
 

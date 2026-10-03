@@ -2706,3 +2706,78 @@ interaction.
   circle, the add button fades instead of rolling out or scaling, no press-and-hold shrink, no
   re-add pop. The hold menu, onboarding, the welcome cards, the empty state and the title flight
   all fall back to a 120ms fade, or skip the movement entirely.
+
+## 107. Offline Phase E: the queue is the source of truth for "pending"
+
+**Context.** The domain entities had a `pending` flag, set by the repositories on an offline
+write, but it only lived in memory, and the offline cache is written from server data only. So an
+item added offline vanished from the screen if the app restarted before reconnecting, although
+it was safely queued and would still sync.
+
+**Decision.** `watchByList` replays the offline queue on top of whatever the server or cache
+gives (`applyQueuedItemChanges`, a pure function): queued adds appear under their temporary ids,
+edits, ticks and moves apply, deletes hide rows, and every touched row is `pending`. The mark
+clears exactly when its change leaves the queue. Queued adds are attributed to the signed-in user,
+since everything in this phone's queue is theirs.
+
+**The visible half, per design Flow 07:** no colour alarm. A quiet bar under the header ("Offline –
+2 changes will sync", "Syncing 2 changes…" over a 2px line, then "Up to date" for 1.6s), and a
+dashed left edge on pending rows that fades out row by row (40ms apart) as they sync.
+
+**Alongside it:**
+- **New rows** drop in from 6px with an 8% shop-colour flash, plus a haptic for your own adds.
+  What counts as "new" is computed from the data (`itemArrivals`), not from rows being built,
+  since rows also build on first load, tab switches and scrolling. An offline item syncing under
+  its real id doesn't count as new.
+- **Recently bought** moves onto the v3 design: 52px rows that cascade in, and a + that turns into
+  a tick after re-adding.
+
+**Trade-offs.**
+- While the server echoes a just-replayed add and the queue drops it, the temporary row and the
+  real one can both exist for a moment.
+- **Coming back online lost ticks** (found on a phone, with an on-device trace). Two gaps:
+  `resilientWatch` fetched before listening, so a change in between was missed; and even
+  listening first, the server only starts sending about 200ms after the app subscribes. The
+  first is fixed by listening first and holding changes back. The second can't be closed from
+  the app, so when a queued change leaves the queue (the server has it), the list fetches a
+  fresh snapshot (`resync`), a burst folded into one more fetch.
+- **`resilientWatch` is a `StreamController`, not an `async*` generator.** Cancelling a generator
+  parked in `await for` only finishes on its next event, so a list's live connection outlived
+  leaving the list. Now cancelling lets go at once.
+
+**Conflicts** (server wins, Phase D) now reach the user: the coordinator counts the changes the
+server turned down in `SyncConflictsController`, a running total, and the offline bar shows the
+increase as a toast. A total rather than a list, because the screen only needs "how many more
+since I last looked".
+
+## 108. Notifications: only additions push, batched properly, one per list
+
+**Context.** Once the server had its Firebase key, real pushes showed four problems. (1) Ticks,
+unticks and edits arrived as "X added Milk": every item change was queued for push, and the
+summary called every queued change an addition. (2) A busy list sent a push every few seconds:
+Serverpod's future-call `identifier` doesn't replace an earlier call with the same id (it's only
+for cancelling), so each change scheduled its own send 20 seconds later. (3) "List finished"
+never came, because it was off by default (as the design had it). (4) Android showed a grey
+square for the icon.
+
+**Decisions** (confirmed with Nikolaos):
+- **Only additions push.** Ticking, unticking, editing, moving and deleting stay live-only (the
+  in-app stream); they aren't news to someone away from the list. `ItemService._announce` queues
+  a push only when given `notifyAddedName`, which only `add` passes.
+- **Batching:** each add cancels the list's scheduled send and reschedules it one minute out,
+  capped at three minutes after the first add still waiting (`NotificationService.sendDelay`, a
+  pure function with its own tests). A whole list-writing session becomes one notification,
+  and a long one still reports within three minutes.
+- **The text names the items**: "Sam added Milk, Eggs and 3 more", "Sam and Alex added Milk and
+  Eggs", "3 people added 7 items". An item added twice is named once.
+- **One notification per list in the tray** (Android `tag`, APNs `apns-collapse-id`): a newer
+  one replaces the older, so they never pile up.
+- **"List finished" and "someone joined" are on by default**, against the design ("off by default
+  except the first"). Finished is the most useful thing a shared list can say ("the shopping is
+  done, don't go"), and joins are rare enough never to be noise. Users who already saved a
+  choice keep it.
+- **Icon:** the basket mark as a white vector, tinted ink, via Firebase's
+  `default_notification_icon`/`_color` metadata.
+
+**Still English-only.** Push text is built on the server, which has no translations; the app's
+five languages don't reach notifications yet.

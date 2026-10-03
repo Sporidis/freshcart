@@ -16,9 +16,12 @@ class AccountCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return DecoratedBox(
+      // A v3 card, like the settings groups below it: the surface colour
+      // with a thin line, not a grey block.
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(AppRadii.card),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.screen),

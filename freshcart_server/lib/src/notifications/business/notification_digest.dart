@@ -4,44 +4,47 @@ import 'package:freshcart_server/src/generated/protocol.dart';
 ///
 /// No database or Firebase here, so the wording rules are easy to test.
 abstract final class NotificationDigest {
-  /// Makes one notification for [pending] (all for the same list).
+  /// Makes one notification for [pending] (items added to the same list),
+  /// or null when there's nothing to say.
   ///
-  /// Returns null if there's nothing worth sending: no changes, or only
-  /// deletions (not worth waking up a phone for).
+  /// Names the items, because "what was added" is the point: one person,
+  /// "Sam added Milk, Eggs and Bread", or "Sam added Milk, Eggs and 3 more";
+  /// two people, "Sam and Alex added Milk and Eggs"; more, "3 people added
+  /// 7 items". An item added twice in the batch is named once.
   static ({String title, String body})? summarise(
     String listName,
     List<PendingItemNotification> pending,
   ) {
-    final additions = [
-      for (final entry in pending)
-        if (entry.kind == ItemChangeKind.upserted) entry,
-    ];
-    if (additions.isEmpty) return null;
+    if (pending.isEmpty) return null;
 
-    final actors = additions.map((e) => e.actorName).toSet();
-
-    // One person, one item: say which item.
-    if (additions.length == 1) {
-      return (
-        title: listName,
-        body:
-            '${additions.single.actorName} added ${additions.single.itemName}',
-      );
+    final actors = <String>{for (final entry in pending) entry.actorName};
+    // Same name, case aside, counts once ("Milk" then "milk"), spelled as
+    // it was first added.
+    final byKey = <String, String>{};
+    for (final entry in pending) {
+      final name = entry.itemName.trim();
+      byKey.putIfAbsent(name.toLowerCase(), () => name);
     }
+    final items = byKey.values.toList();
 
-    // One person, several items: one notification with the count.
-    if (actors.length == 1) {
-      return (
-        title: listName,
-        body: '${actors.single} added ${additions.length} items',
-      );
+    final who = switch (actors.length) {
+      1 => actors.single,
+      2 => '${actors.first} and ${actors.last}',
+      _ => '${actors.length} people',
+    };
+    final what = actors.length > 2 ? '${items.length} items' : _named(items);
+    return (title: listName, body: '$who added $what');
+  }
+
+  /// "Milk", "Milk and Eggs", "Milk, Eggs and Bread", or the first two and
+  /// "N more" past three, so the text fits a notification line.
+  static String _named(List<String> items) {
+    if (items.length == 1) return items.single;
+    if (items.length <= 3) {
+      return '${items.sublist(0, items.length - 1).join(', ')} '
+          'and ${items.last}';
     }
-
-    // Several people: too many names to fit, so just the count.
-    return (
-      title: listName,
-      body: '${additions.length} items added to your list',
-    );
+    return '${items[0]}, ${items[1]} and ${items.length - 2} more';
   }
 
   /// "Someone joins a list". Always one person, so no grouping needed

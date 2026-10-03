@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/completion_celebration_card.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/done_divider.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/pending_edge.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/screens/join_flow_screen.dart';
@@ -33,6 +34,7 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
+import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Renders every `@Preview` in the app.
@@ -85,6 +87,8 @@ void main() {
     'colour swatch picker': colorSwatchPickerPreview,
     'setting row': settingRowPreview,
     'settings section': settingsSectionPreview,
+    'pending edge': pendingEdgePreview,
+    'offline bar': offlineBarPreview,
     'shop picker': shopPickerPreview,
     'shop picker pill': shopPickerPillPreview,
     'sheet scaffold': appSheetScaffoldPreview,
