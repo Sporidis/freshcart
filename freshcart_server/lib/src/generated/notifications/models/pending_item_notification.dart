@@ -12,14 +12,14 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 
 import 'package:serverpod/serverpod.dart' as _i1;
-import '../../items/models/item_change_kind.dart' as _i2;
 
-/// One buffered item change, waiting to be summarised into a push.
+/// One added item, waiting to be summarised into a push. Only additions are
+/// queued (decision #108): ticks, edits and deletes are live-only.
 ///
 /// Buffered rather than sent immediately so a burst — "mom added 3 items" —
-/// arrives as one notification instead of three. The flush is scheduled by a
-/// future call keyed on the list, so a second change inside the window joins
-/// the existing batch rather than starting another.
+/// arrives as one notification instead of three. Each add moves the list's
+/// scheduled send (NotificationService.enqueueAddition): one minute after the
+/// last add, at most three after the first.
 abstract class PendingItemNotification
     implements _i1.TableRow<_i1.UuidValue?>, _i1.ProtocolSerialization {
   PendingItemNotification._({
@@ -28,7 +28,6 @@ abstract class PendingItemNotification
     required this.actorId,
     required this.actorName,
     required this.itemName,
-    required this.kind,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
 
@@ -38,7 +37,6 @@ abstract class PendingItemNotification
     required _i1.UuidValue actorId,
     required String actorName,
     required String itemName,
-    required _i2.ItemChangeKind kind,
     DateTime? createdAt,
   }) = _PendingItemNotificationImpl;
 
@@ -55,7 +53,6 @@ abstract class PendingItemNotification
       ),
       actorName: jsonSerialization['actorName'] as String,
       itemName: jsonSerialization['itemName'] as String,
-      kind: _i2.ItemChangeKind.fromJson((jsonSerialization['kind'] as String)),
       createdAt: jsonSerialization['createdAt'] == null
           ? null
           : _i1.DateTimeJsonExtension.fromJson(jsonSerialization['createdAt']),
@@ -78,10 +75,8 @@ abstract class PendingItemNotification
   /// if they later change it.
   String actorName;
 
-  /// The item's name, for a single-change summary.
+  /// The item's name, for the summary ("Sam added Milk, Eggs").
   String itemName;
-
-  _i2.ItemChangeKind kind;
 
   DateTime createdAt;
 
@@ -97,7 +92,6 @@ abstract class PendingItemNotification
     _i1.UuidValue? actorId,
     String? actorName,
     String? itemName,
-    _i2.ItemChangeKind? kind,
     DateTime? createdAt,
   });
   @override
@@ -109,7 +103,6 @@ abstract class PendingItemNotification
       'actorId': actorId.toJson(),
       'actorName': actorName,
       'itemName': itemName,
-      'kind': kind.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -123,7 +116,6 @@ abstract class PendingItemNotification
       'actorId': actorId.toJson(),
       'actorName': actorName,
       'itemName': itemName,
-      'kind': kind.toJson(),
       'createdAt': createdAt.toJson(),
     };
   }
@@ -167,7 +159,6 @@ class _PendingItemNotificationImpl extends PendingItemNotification {
     required _i1.UuidValue actorId,
     required String actorName,
     required String itemName,
-    required _i2.ItemChangeKind kind,
     DateTime? createdAt,
   }) : super._(
          id: id,
@@ -175,7 +166,6 @@ class _PendingItemNotificationImpl extends PendingItemNotification {
          actorId: actorId,
          actorName: actorName,
          itemName: itemName,
-         kind: kind,
          createdAt: createdAt,
        );
 
@@ -189,7 +179,6 @@ class _PendingItemNotificationImpl extends PendingItemNotification {
     _i1.UuidValue? actorId,
     String? actorName,
     String? itemName,
-    _i2.ItemChangeKind? kind,
     DateTime? createdAt,
   }) {
     return PendingItemNotification(
@@ -198,7 +187,6 @@ class _PendingItemNotificationImpl extends PendingItemNotification {
       actorId: actorId ?? this.actorId,
       actorName: actorName ?? this.actorName,
       itemName: itemName ?? this.itemName,
-      kind: kind ?? this.kind,
       createdAt: createdAt ?? this.createdAt,
     );
   }
@@ -230,13 +218,6 @@ class PendingItemNotificationUpdateTable
     value,
   );
 
-  _i1.ColumnValue<_i2.ItemChangeKind, _i2.ItemChangeKind> kind(
-    _i2.ItemChangeKind value,
-  ) => _i1.ColumnValue(
-    table.kind,
-    value,
-  );
-
   _i1.ColumnValue<DateTime, DateTime> createdAt(DateTime value) =>
       _i1.ColumnValue(
         table.createdAt,
@@ -264,11 +245,6 @@ class PendingItemNotificationTable extends _i1.Table<_i1.UuidValue?> {
       'itemName',
       this,
     );
-    kind = _i1.ColumnEnum(
-      'kind',
-      this,
-      _i1.EnumSerialization.byName,
-    );
     createdAt = _i1.ColumnDateTime(
       'createdAt',
       this,
@@ -286,10 +262,8 @@ class PendingItemNotificationTable extends _i1.Table<_i1.UuidValue?> {
   /// if they later change it.
   late final _i1.ColumnString actorName;
 
-  /// The item's name, for a single-change summary.
+  /// The item's name, for the summary ("Sam added Milk, Eggs").
   late final _i1.ColumnString itemName;
-
-  late final _i1.ColumnEnum<_i2.ItemChangeKind> kind;
 
   late final _i1.ColumnDateTime createdAt;
 
@@ -300,7 +274,6 @@ class PendingItemNotificationTable extends _i1.Table<_i1.UuidValue?> {
     actorId,
     actorName,
     itemName,
-    kind,
     createdAt,
   ];
 }

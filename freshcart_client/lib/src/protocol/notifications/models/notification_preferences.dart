@@ -30,8 +30,8 @@ abstract class NotificationPreferences implements _i1.SerializableModel {
     bool? memberJoined,
     bool? listFinished,
   }) : itemAdded = itemAdded ?? true,
-       memberJoined = memberJoined ?? false,
-       listFinished = listFinished ?? false;
+       memberJoined = memberJoined ?? true,
+       listFinished = listFinished ?? true;
 
   factory NotificationPreferences({
     _i1.UuidValue? id,
@@ -73,10 +73,13 @@ abstract class NotificationPreferences implements _i1.SerializableModel {
   /// alerts."
   bool itemAdded;
 
-  /// "Someone joins a list."
+  /// "Someone joins a list." On by default since decision #108 (the design
+  /// had it off): joins are rare, so it can't become noise.
   bool memberJoined;
 
-  /// "A list is finished" -- when the last item is checked off.
+  /// "A list is finished" -- when the last item is checked off. On by
+  /// default since decision #108 (the design had it off): "the shopping is
+  /// done, don't go" is the most useful thing a shared list can tell you.
   bool listFinished;
 
   /// Returns a shallow copy of this [NotificationPreferences]

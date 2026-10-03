@@ -45,7 +45,7 @@ import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
 import 'dart:typed_data' as _i18;
 import 'protocol.dart' as _i19;
 
-/// Upgrading an anonymous account by attaching credentials to it.
+/// Endpoint to upgrade an anonymous account by adding a login (email).
 /// {@category Endpoint}
 class EndpointAccount extends _i1.EndpointRef {
   EndpointAccount(_i1.EndpointCaller caller) : super(caller);
@@ -53,7 +53,7 @@ class EndpointAccount extends _i1.EndpointRef {
   @override
   String get name => 'account';
 
-  /// Which providers are attached to the caller's account.
+  /// Which login methods the caller's account has.
   _i2.Future<List<_i3.LinkedProvider>> linkedProviders() =>
       caller.callServerEndpoint<List<_i3.LinkedProvider>>(
         'account',
@@ -61,9 +61,9 @@ class EndpointAccount extends _i1.EndpointRef {
         {},
       );
 
-  /// Attaches an email/password credential to the caller's existing account.
+  /// Adds an email and password to the caller's account.
   ///
-  /// The caller keeps the same `authUserId`, so nothing they created moves.
+  /// The `authUserId` stays the same, so all their lists stay theirs.
   _i2.Future<List<_i3.LinkedProvider>> linkEmail(
     String email,
     String password,
@@ -77,15 +77,14 @@ class EndpointAccount extends _i1.EndpointRef {
   );
 }
 
-/// Exposes the anonymous identity provider to clients.
+/// Endpoint for anonymous login.
 ///
-/// FreshCart is anonymous-first: a user gets a stable `authUserId` on first
-/// launch with no signup form, and Google/email are *linked* to that same id
-/// later (`docs/decisions.md` #6). Every endpoint sets `requireLogin`, so
-/// without this the app could not call anything at all.
+/// Users get an account on first launch, without a signup form. Later they
+/// can link email or Google to the same `authUserId` (decisions.md #6).
+/// Every endpoint requires login, so without this the app couldn't call
+/// anything.
 ///
-/// Extending the base endpoint is what publishes it — the Flutter side looks
-/// the endpoint up by type and fails loudly if a server has not exposed it.
+/// Just extending the base class is enough to make it available.
 /// {@category Endpoint}
 class EndpointAnonymousIdp extends _i4.EndpointAnonymousIdpBase {
   EndpointAnonymousIdp(_i1.EndpointCaller caller) : super(caller);
@@ -106,9 +105,8 @@ class EndpointAnonymousIdp extends _i4.EndpointAnonymousIdpBase {
       );
 }
 
-/// By extending [EmailIdpBaseEndpoint], the email identity provider endpoints
-/// are made available on the server and enable the corresponding sign-in widget
-/// on the client.
+/// Endpoint for email login. Just extending [EmailIdpBaseEndpoint] is
+/// enough to make it available.
 /// {@category Endpoint}
 class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   EndpointEmailIdp(_i1.EndpointCaller caller) : super(caller);
@@ -289,8 +287,8 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   );
 }
 
-/// By extending [RefreshJwtTokensEndpoint], the JWT token refresh endpoint
-/// is made available on the server and enables automatic token refresh on the client.
+/// Endpoint to refresh login tokens. The app uses it automatically.
+/// Just extending [RefreshJwtTokensEndpoint] is enough.
 /// {@category Endpoint}
 class EndpointJwtRefresh extends _i5.EndpointRefreshJwtTokens {
   EndpointJwtRefresh(_i1.EndpointCaller caller) : super(caller);
@@ -327,7 +325,7 @@ class EndpointJwtRefresh extends _i5.EndpointRefreshJwtTokens {
   );
 }
 
-/// The items on a list: read, add, save, remove.
+/// Endpoint for items on a list: read, add, save, delete.
 /// {@category Endpoint}
 class EndpointItem extends _i1.EndpointRef {
   EndpointItem(_i1.EndpointCaller caller) : super(caller);
@@ -335,7 +333,7 @@ class EndpointItem extends _i1.EndpointRef {
   @override
   String get name => 'item';
 
-  /// Every item on a list the caller belongs to.
+  /// All items on a list (the caller must be a member).
   _i2.Future<List<_i6.ShoppingItem>> byList(_i1.UuidValue listId) =>
       caller.callServerEndpoint<List<_i6.ShoppingItem>>(
         'item',
@@ -343,12 +341,11 @@ class EndpointItem extends _i1.EndpointRef {
         {'listId': listId},
       );
 
-  /// Adds an item to a list the caller belongs to.
+  /// Adds an item to a list (the caller must be a member).
   ///
-  /// [quantity] is nullable rather than defaulted because Serverpod's generator
-  /// drops Dart default values and emits any non-nullable named parameter as
-  /// `required`. Nullability is what makes a parameter optional in the
-  /// generated client, so the default lives here instead.
+  /// [quantity] is nullable instead of having a default value, because
+  /// Serverpod's generated client ignores defaults and makes every
+  /// non-null parameter required. So the default is applied here.
   _i2.Future<_i6.ShoppingItem> add(
     _i1.UuidValue listId,
     String name, {
@@ -367,8 +364,7 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
-  /// Writes an item back, rejecting the write on an optimistic-concurrency
-  /// clash.
+  /// Saves an item. Fails with a conflict if someone else changed it first.
   _i2.Future<_i6.ShoppingItem> save(_i6.ShoppingItem item) =>
       caller.callServerEndpoint<_i6.ShoppingItem>(
         'item',
@@ -384,7 +380,7 @@ class EndpointItem extends _i1.EndpointRef {
         {'itemId': itemId},
       );
 
-  /// Deletes every checked item on the list, returning how many were removed.
+  /// Deletes all checked items on the list. Returns how many.
   _i2.Future<int> clearChecked(_i1.UuidValue listId) =>
       caller.callServerEndpoint<int>(
         'item',
@@ -392,8 +388,7 @@ class EndpointItem extends _i1.EndpointRef {
         {'listId': listId},
       );
 
-  /// Deletes a multi-selected set of items from the list in one operation,
-  /// returning how many were removed.
+  /// Deletes the selected items (all at once). Returns how many.
   _i2.Future<int> removeMany(
     _i1.UuidValue listId,
     List<_i1.UuidValue> itemIds,
@@ -406,8 +401,8 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
-  /// Reassigns every one of [itemIds] to [shopId] (null untags them), in one
-  /// transaction, returning how many moved.
+  /// Moves [itemIds] to [shopId] (null = no shop), all at once. Returns how
+  /// many.
   _i2.Future<int> moveMany(
     _i1.UuidValue listId,
     List<_i1.UuidValue> itemIds,
@@ -422,8 +417,7 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
-  /// Product name suggestions for a list, matching [query], most recently
-  /// used first -- the add control's suggestion chips.
+  /// Name suggestions for a list that match [query], newest first.
   _i2.Future<List<String>> suggestNames(
     _i1.UuidValue listId,
     String query,
@@ -436,8 +430,7 @@ class EndpointItem extends _i1.EndpointRef {
     },
   );
 
-  /// Every distinct product name typed on a list before, most recently used
-  /// first -- the "Recently bought" shortcut.
+  /// Every item name ever used on a list, newest first ("Recently bought").
   _i2.Future<List<_i7.ItemNameHistory>> recentNames(_i1.UuidValue listId) =>
       caller.callServerEndpoint<List<_i7.ItemNameHistory>>(
         'item',
@@ -445,14 +438,14 @@ class EndpointItem extends _i1.EndpointRef {
         {'listId': listId},
       );
 
-  /// Live changes to a list's items.
+  /// Live updates to a list's items.
   ///
-  /// Emits a delta per change rather than the whole list — subscribers keep the
-  /// merged state themselves. Membership is checked once, when the stream
-  /// opens; the stream closes if the session ends.
+  /// Sends only what changed (not the whole list); the app applies it.
+  /// Membership is checked once, when the stream starts. The stream stops
+  /// if the session ends.
   ///
-  /// This is the in-app half of the two-layer story: it keeps open clients live
-  /// and is unrelated to FCM background push, which covers closed apps.
+  /// This is for live updates while the app is open, not push
+  /// notifications (those are for a closed app).
   _i2.Stream<_i8.ItemChange> watchList(_i1.UuidValue listId) => caller
       .callStreamingServerEndpoint<_i2.Stream<_i8.ItemChange>, _i8.ItemChange>(
         'item',
@@ -462,10 +455,10 @@ class EndpointItem extends _i1.EndpointRef {
       );
 }
 
-/// Shopping lists: create, read, join, rename, leave, delete.
+/// Endpoint for shopping lists: create, read, join, rename, leave, delete.
 ///
-/// Thin by design — every method resolves the caller and hands straight off to
-/// [ListService], which is where the rules and the transactions live.
+/// Kept small: each method gets the user and calls [ListService], where the
+/// rules are.
 /// {@category Endpoint}
 class EndpointList extends _i1.EndpointRef {
   EndpointList(_i1.EndpointCaller caller) : super(caller);
@@ -489,8 +482,7 @@ class EndpointList extends _i1.EndpointRef {
         {'listId': listId},
       );
 
-  /// Item counts for each of [listIds] the caller belongs to -- the
-  /// drawer's remaining-count row.
+  /// Item counts for the caller's lists in [listIds] (for the drawer).
   _i2.Future<List<_i10.ListSummary>> summaries(List<_i1.UuidValue> listIds) =>
       caller.callServerEndpoint<List<_i10.ListSummary>>(
         'list',
@@ -527,8 +519,8 @@ class EndpointList extends _i1.EndpointRef {
     },
   );
 
-  /// Sets whether a list the caller belongs to clears its checked items
-  /// automatically once everything on it is checked.
+  /// Sets whether a list removes checked items automatically when
+  /// everything is checked.
   _i2.Future<_i9.ShoppingList> setClearCheckedAfterShopping(
     _i1.UuidValue listId,
     bool value,
@@ -583,12 +575,10 @@ class EndpointList extends _i1.EndpointRef {
     },
   );
 
-  /// Live changes to a list itself — its name and its membership.
+  /// Live updates to a list (its name and members).
   ///
-  /// Sends the whole [ShoppingList], not a delta: unlike items, a list is a
-  /// single row, so there is nothing to merge. This is the in-app half of the
-  /// two-layer story, same as [ItemEndpoint.watchList] — it keeps open clients
-  /// live and is unrelated to FCM background push.
+  /// Sends the whole [ShoppingList] each time (it's one small row). This is
+  /// for live updates while the app is open, not push notifications.
   _i2.Stream<_i9.ShoppingList> watchList(_i1.UuidValue listId) =>
       caller.callStreamingServerEndpoint<
         _i2.Stream<_i9.ShoppingList>,
@@ -601,7 +591,7 @@ class EndpointList extends _i1.EndpointRef {
       );
 }
 
-/// Device registration and per-list notification settings.
+/// Endpoint for registering phones for push, and notification settings.
 /// {@category Endpoint}
 class EndpointNotification extends _i1.EndpointRef {
   EndpointNotification(_i1.EndpointCaller caller) : super(caller);
@@ -609,11 +599,11 @@ class EndpointNotification extends _i1.EndpointRef {
   @override
   String get name => 'notification';
 
-  /// Registers this device to receive pushes for the caller.
+  /// Registers this phone to get push notifications for the caller.
   ///
-  /// Idempotent: re-registering an existing token re-points it at the caller
-  /// rather than inserting a duplicate, so a shared device that changes hands
-  /// does not keep notifying the previous user.
+  /// Safe to call again: an existing token is moved to the caller (no
+  /// duplicate). So if someone else logs in on the phone, the previous
+  /// user stops getting notifications there.
   _i2.Future<_i11.DeviceToken> registerDevice(
     String token,
     _i12.DevicePlatform platform,
@@ -626,7 +616,7 @@ class EndpointNotification extends _i1.EndpointRef {
     },
   );
 
-  /// Stops pushes to this device. Called on sign-out.
+  /// Stops push notifications to this phone. Called on sign-out.
   _i2.Future<void> unregisterDevice(String token) =>
       caller.callServerEndpoint<void>(
         'notification',
@@ -655,7 +645,7 @@ class EndpointNotification extends _i1.EndpointRef {
         {'listId': listId},
       );
 
-  /// The caller's own notification preferences (decisions #80, phase 2).
+  /// The caller's notification preferences (decisions.md #80).
   _i2.Future<_i13.NotificationPreferences> preferences() =>
       caller.callServerEndpoint<_i13.NotificationPreferences>(
         'notification',
@@ -688,7 +678,7 @@ class EndpointNotification extends _i1.EndpointRef {
       );
 }
 
-/// The shops belonging to a list.
+/// Endpoint for a list's shops.
 /// {@category Endpoint}
 class EndpointShop extends _i1.EndpointRef {
   EndpointShop(_i1.EndpointCaller caller) : super(caller);
@@ -696,7 +686,7 @@ class EndpointShop extends _i1.EndpointRef {
   @override
   String get name => 'shop';
 
-  /// Every shop on a list the caller belongs to.
+  /// All shops on a list (the caller must be a member).
   _i2.Future<List<_i14.Shop>> byList(_i1.UuidValue listId) =>
       caller.callServerEndpoint<List<_i14.Shop>>(
         'shop',
@@ -704,7 +694,7 @@ class EndpointShop extends _i1.EndpointRef {
         {'listId': listId},
       );
 
-  /// Creates a shop on a list the caller belongs to.
+  /// Creates a shop on a list (the caller must be a member).
   _i2.Future<_i14.Shop> create(
     _i1.UuidValue listId,
     String name,
@@ -719,7 +709,7 @@ class EndpointShop extends _i1.EndpointRef {
     },
   );
 
-  /// Writes a shop back.
+  /// Saves changes to a shop.
   _i2.Future<_i14.Shop> save(_i14.Shop shop) =>
       caller.callServerEndpoint<_i14.Shop>(
         'shop',
@@ -727,8 +717,7 @@ class EndpointShop extends _i1.EndpointRef {
         {'shop': shop},
       );
 
-  /// Deletes a shop, untagging its items rather than deleting them.
-  /// How many products are tagged to a shop.
+  /// How many items a shop has.
   _i2.Future<int> itemCount(_i1.UuidValue shopId) =>
       caller.callServerEndpoint<int>(
         'shop',
@@ -736,11 +725,10 @@ class EndpointShop extends _i1.EndpointRef {
         {'shopId': shopId},
       );
 
-  /// Deletes a shop, disposing of its products as the caller chooses.
+  /// Deletes a shop. [disposition] says what happens to its items.
   ///
-  /// [disposition] is required at the call site rather than defaulted, because
-  /// the whole point of the flow is that someone decides what happens to the
-  /// products instead of finding out afterwards.
+  /// [disposition] has no default on purpose: the user must decide what
+  /// happens to the items.
   _i2.Future<void> remove(
     _i1.UuidValue shopId,
     _i15.ShopItemDisposition disposition,
@@ -756,7 +744,7 @@ class EndpointShop extends _i1.EndpointRef {
   );
 }
 
-/// The caller's own FreshCart profile.
+/// Endpoint for the user's own profile.
 /// {@category Endpoint}
 class EndpointProfile extends _i1.EndpointRef {
   EndpointProfile(_i1.EndpointCaller caller) : super(caller);
@@ -766,9 +754,8 @@ class EndpointProfile extends _i1.EndpointRef {
 
   /// Who the caller is.
   ///
-  /// The client cannot know its own auth user id any other way — it is minted
-  /// server-side — and needs it to render optimistic updates that attribute a
-  /// change to the right person.
+  /// The app can't know its own user id otherwise (the server creates it).
+  /// It needs it to show "you checked this" before the server answers.
   _i2.Future<_i16.CurrentUser> me() =>
       caller.callServerEndpoint<_i16.CurrentUser>(
         'profile',
@@ -776,7 +763,7 @@ class EndpointProfile extends _i1.EndpointRef {
         {},
       );
 
-  /// The caller's display name, falling back to a placeholder.
+  /// The caller's name, or a placeholder if not set.
   _i2.Future<String> displayName() => caller.callServerEndpoint<String>(
     'profile',
     'displayName',
@@ -799,7 +786,7 @@ class EndpointProfile extends _i1.EndpointRef {
         {'avatarColorArgb': avatarColorArgb},
       );
 
-  /// Uploads and sets the caller's avatar photo.
+  /// Uploads the caller's avatar photo.
   _i2.Future<_i17.MemberProfile> setAvatarPhoto(_i18.ByteData bytes) =>
       caller.callServerEndpoint<_i17.MemberProfile>(
         'profile',
@@ -807,7 +794,7 @@ class EndpointProfile extends _i1.EndpointRef {
         {'bytes': bytes},
       );
 
-  /// Removes the caller's avatar photo, if they have one.
+  /// Removes the caller's avatar photo.
   _i2.Future<_i17.MemberProfile?> clearAvatarPhoto() =>
       caller.callServerEndpoint<_i17.MemberProfile?>(
         'profile',

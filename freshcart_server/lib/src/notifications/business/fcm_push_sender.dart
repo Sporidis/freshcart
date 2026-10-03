@@ -55,6 +55,15 @@ class FcmPushSender implements PushSender {
               'token': token,
               'notification': {'title': message.title, 'body': message.body},
               'data': {'listId': message.listId.toString()},
+              // One notification per list in the tray: a newer one for the
+              // same list replaces the older (decision #108), on Android by
+              // tag and on iOS by collapse id.
+              'android': {
+                'notification': {'tag': message.listId.toString()},
+              },
+              'apns': {
+                'headers': {'apns-collapse-id': message.listId.toString()},
+              },
             },
           }),
         );
