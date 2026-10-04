@@ -35,6 +35,10 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.4.3
+  # Only for the web demo (lib/main_demo.dart): setUrlStrategy(null), so the
+  # demo never changes the host page's address bar. decisions.md #109.
+  flutter_web_plugins:
+    sdk: flutter
   freshcart_client:
     path: ../freshcart_client
   # The app depends on the pure domain for entities, ports and use cases. Only
