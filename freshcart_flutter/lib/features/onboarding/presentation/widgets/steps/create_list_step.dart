@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
@@ -16,7 +18,11 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboa
 /// Starts with a default name, already selected. Most people can just tap
 /// Continue. To change it, just start typing (it replaces the selection).
 class CreateListStep extends ConsumerStatefulWidget {
-  const CreateListStep({super.key});
+  const CreateListStep({this.scriptedField, super.key});
+
+  /// Lets the web demo type the list name. Null everywhere but there is the
+  /// same as not having it (decisions.md #109).
+  final ScriptedField? scriptedField;
 
   @override
   ConsumerState<CreateListStep> createState() => _CreateListStepState();
@@ -58,6 +64,11 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
     ref.read(onboardingControllerProvider.notifier).updateListName(suggestion);
   }
 
+  void _onScriptedText(String text) {
+    ScriptedTextListener.apply(_controller, text);
+    ref.read(onboardingControllerProvider.notifier).updateListName(text);
+  }
+
   @override
   Widget build(BuildContext context) {
     final controller = ref.read(onboardingControllerProvider.notifier);
@@ -75,6 +86,20 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
       onboardingControllerProvider.select((s) => s.listName.trim()),
     );
 
+    final nameField = ShakeOnError(
+      errorText: errorText,
+      child: TextField(
+        controller: _controller,
+        onChanged: controller.updateListName,
+        autofocus: true,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: InputDecoration(
+          hintText: t.onboarding.listPlaceholder,
+          errorText: errorText,
+        ),
+      ),
+    );
+
     return Padding(
       padding: onboardingStepPadding,
       child: Column(
@@ -87,19 +112,14 @@ class _CreateListStepState extends ConsumerState<CreateListStep> {
           const SizedBox(height: 28),
           OnboardingEntrance(
             index: 2,
-            child: ShakeOnError(
-              errorText: errorText,
-              child: TextField(
-                controller: _controller,
-                onChanged: controller.updateListName,
-                autofocus: true,
-                textCapitalization: TextCapitalization.sentences,
-                decoration: InputDecoration(
-                  hintText: t.onboarding.listPlaceholder,
-                  errorText: errorText,
-                ),
+            child: switch (widget.scriptedField) {
+              final scripted? => ScriptedTextListener(
+                field: scripted,
+                onText: _onScriptedText,
+                child: nameField,
               ),
-            ),
+              null => nameField,
+            },
           ),
           const SizedBox(height: AppSpacing.gap),
           OnboardingEntrance(

@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
@@ -102,6 +103,7 @@ class _NameStep extends ConsumerWidget {
               hintText: t.onboarding.namePlaceholder,
               onChanged: controller.updateDisplayName,
               errorText: error?.toMessage(t),
+              scriptedField: ScriptedField.joinName,
             ),
           ),
           const Spacer(),
@@ -152,6 +154,7 @@ class _CodeStep extends ConsumerWidget {
                 onChanged: controller.updateCode,
                 hasError: error != null,
                 autofocus: true,
+                scriptedField: ScriptedField.joinCode,
               ),
             ),
           ),

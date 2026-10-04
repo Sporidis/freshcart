@@ -7,17 +7,21 @@ import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/demo/demo_backend.dart';
 import 'package:freshcart_flutter/demo/demo_overrides.dart';
 import 'package:freshcart_flutter/demo/demo_persona.dart';
+import 'package:freshcart_flutter/demo/demo_stage.dart';
 
 /// One phone in the demo: the real [FreshCartApp] with its own
 /// [ProviderContainer] (its own router, controllers and settings), on the
 /// [backend] it shares with the other phone.
 ///
 /// Which persona it is comes from the host page's
-/// `addView({initialData: {persona: 'a' | 'b'}})`.
+/// `addView({initialData: {persona: 'a' | 'b'}})`. While [stage] is locked
+/// (the intro is playing), the visitor can't tap or type, and a Skip chip
+/// finishes the intro.
 class DemoPhone extends StatefulWidget {
-  const DemoPhone({required this.backend, super.key});
+  const DemoPhone({required this.backend, required this.stage, super.key});
 
   final DemoBackend backend;
+  final DemoStage stage;
 
   @override
   State<DemoPhone> createState() => _DemoPhoneState();
@@ -31,10 +35,11 @@ class _DemoPhoneState extends State<DemoPhone> {
     super.didChangeDependencies();
     // Here, not in initState: View.of needs an inherited widget lookup.
     // Created once; the view id never changes for this State.
-    _container ??= createPhoneContainer(
-      widget.backend,
-      _personaFor(View.of(context).viewId),
-    );
+    if (_container != null) return;
+    final persona = _personaFor(View.of(context).viewId);
+    final container = createPhoneContainer(widget.backend, persona);
+    widget.stage.register(persona, container);
+    _container = container;
   }
 
   @override
@@ -44,9 +49,63 @@ class _DemoPhoneState extends State<DemoPhone> {
   }
 
   @override
-  Widget build(BuildContext context) => UncontrolledProviderScope(
-    container: _container!,
-    child: const FreshCartApp(),
+  Widget build(BuildContext context) => Directionality(
+    // Above MaterialApp, so nothing provides a direction yet.
+    textDirection: TextDirection.ltr,
+    child: ValueListenableBuilder<bool>(
+      valueListenable: widget.stage.locked,
+      child: UncontrolledProviderScope(
+        container: _container!,
+        child: const FreshCartApp(),
+      ),
+      builder: (context, locked, app) => Stack(
+        fit: StackFit.expand,
+        children: [
+          // Taps and the keyboard both wait for the intro: an autofocused
+          // field would otherwise take the visitor's typing mid-script.
+          ExcludeFocus(
+            excluding: locked,
+            child: AbsorbPointer(absorbing: locked, child: app),
+          ),
+          if (locked)
+            Positioned(
+              top: 8,
+              left: 0,
+              right: 0,
+              child: Center(child: _SkipChip(onTap: widget.stage.skip)),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// "Skip intro". Plain widgets only: it sits above MaterialApp, so there's
+/// no Material, theme or translations here.
+class _SkipChip extends StatelessWidget {
+  const _SkipChip({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => GestureDetector(
+    onTap: onTap,
+    child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+      decoration: BoxDecoration(
+        color: const Color(0xCC1A1A18),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: const Text(
+        'Skip intro  ›',
+        style: TextStyle(
+          color: Color(0xFFFAFAF8),
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          decoration: TextDecoration.none,
+        ),
+      ),
+    ),
   );
 }
 

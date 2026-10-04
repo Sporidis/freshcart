@@ -2810,6 +2810,11 @@ up. Plan: `docs/web-demo-plan.md`.
 - **The scripted-text hook** (`lib/core/demo_hooks/`, phase D4) is the one piece of production
   code the demo needs. Onboarding text fields own private controllers, so a script can't fill
   them any other way. With the hook unset, the widgets behave exactly as before.
+  Built in D4 as a `ScriptedTextListener` that a field wraps itself in *only* when given a
+  `ScriptedField`, not by turning the fields into `Consumer` widgets. A field without one is
+  the same widget as before, and still works with no `ProviderScope` above it. The demo's
+  director types into `ScriptedTextController`, one character at a time. Production never
+  writes to it.
 
 ## 110. Device settings go through a `PreferencesStore` port, not `SharedPreferences` directly
 
