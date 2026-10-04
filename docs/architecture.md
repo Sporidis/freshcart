@@ -80,7 +80,7 @@ even when a subfolder holds a single file.
 ```
 freshcart_flutter/lib/
 ├── core/                   # cross-cutting, one concern per folder (not a feature)
-│   ├── di/  error/  l10n/  router/  session/  streaming/  ui/
+│   ├── di/  error/  l10n/  preferences/  router/  session/  streaming/  ui/
 │   └── theme/              # tokens/  preferences/  reveal/
 └── features/<feature>/
     ├── application/        # one folder per unit, its .g.dart beside it:

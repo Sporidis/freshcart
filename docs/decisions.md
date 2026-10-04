@@ -2810,3 +2810,25 @@ up. Plan: `docs/web-demo-plan.md`.
 - **The scripted-text hook** (`lib/core/demo_hooks/`, phase D4) is the one piece of production
   code the demo needs. Onboarding text fields own private controllers, so a script can't fill
   them any other way. With the hook unset, the widgets behave exactly as before.
+
+## 110. Device settings go through a `PreferencesStore` port, not `SharedPreferences` directly
+
+**Context.** Five controllers (appearance, large text, haptics, last opened list, upgrade nudge)
+called `SharedPreferences.getInstance()` themselves. That's a global with no constructor, so it
+can't be replaced through Riverpod. The web demo (#109) runs two phones in one page. They would
+share one settings store (dark mode on phone A flips phone B), and both would write into the
+portfolio site's `localStorage`.
+
+**Decision** (confirmed with Nikolaos): a four-method `PreferencesStore` interface
+(`core/preferences/`). The real implementation is `SharedPreferencesStore`, which does exactly
+what the controllers did before, and `preferencesStoreProvider` sits at the bottom of that file,
+like a repository's provider. The controllers read the store through the provider. The demo
+overrides it with one `InMemoryPreferencesStore` per phone.
+
+**Why an interface and not a provider of `SharedPreferences`:** handing out the instance through
+a provider would still mean one shared global store, since every instance is backed by the same
+platform storage. Only a small interface lets each phone have its own.
+
+**Side benefit:** the controllers no longer do I/O themselves, which is the same rule the
+repositories already follow. Existing tests that use `SharedPreferences.setMockInitialValues`
+keep working unchanged, because the real store still goes through it.

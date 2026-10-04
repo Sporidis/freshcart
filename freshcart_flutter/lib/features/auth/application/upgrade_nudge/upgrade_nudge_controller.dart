@@ -1,5 +1,5 @@
+import 'package:freshcart_flutter/core/preferences/shared_preferences_store.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'upgrade_nudge_controller.g.dart';
 
@@ -16,13 +16,13 @@ class UpgradeNudgeController extends _$UpgradeNudgeController {
 
   @override
   Future<bool> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getBool(_prefsKey) ?? false;
+    final prefs = ref.watch(preferencesStoreProvider);
+    return await prefs.getBool(_prefsKey) ?? false;
   }
 
   /// Dismisses the nudge for good.
   Future<void> dismiss() async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = ref.read(preferencesStoreProvider);
     await prefs.setBool(_prefsKey, true);
     if (ref.mounted) state = const AsyncData(true);
   }
