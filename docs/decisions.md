@@ -2781,3 +2781,32 @@ square for the icon.
 
 **Still English-only.** Push text is built on the server, which has no translations; the app's
 five languages don't reach notifications yet.
+
+## 109. A web demo: two phones, one engine, fakes at the port boundary
+
+**Context.** The portfolio site should let a visitor *use* FreshCart, not just read about it, and
+show the thing that makes it interesting: two people on one list, live. Running the real backend
+for anonymous portfolio visitors means a public server, an account per visit and data to clean
+up. Plan: `docs/web-demo-plan.md`.
+
+**Decisions** (confirmed with Nikolaos):
+- **A web-only demo build** (`lib/main_demo.dart`, everything else in `lib/demo/`). Production
+  code never imports `lib/demo/`, and `main.dart`, the real repositories and the router are not
+  changed, so iOS, Android and the PWA behave as before.
+- **Two phones from one Flutter engine (multi-view)**, not two iframes. One engine downloads and
+  starts once, and both views can share one in-memory backend directly. With two iframes, the
+  two apps couldn't share it without a messaging layer.
+- **Fakes at the port boundary.** `DemoBackend` is plain maps plus one "something changed"
+  stream. Each phone gets fakes of `ListRepository`, `ItemRepository`, `ShopRepository`,
+  `AuthPort` and `PushPort` for its own user. Every screen, controller and use case above them
+  is the real code. This is the layering paying off: swapping the backend meant writing five
+  adapters, with no changes to the app. The fakes copy the server's rules (owner-only actions,
+  merging the same product, `updatedAt` conflicts, an unknown join code gives the same
+  validation failure as production), so the demo doesn't show behaviour the real app doesn't
+  have. Signing out, linking an account and uploading a photo return "Not available in the
+  demo". An anonymous demo phone could never sign back in.
+- **Live streams use `Stream.multi`, not `async*`**: they start listening for changes before
+  sending the first value, so a change made by the other phone in between is not lost.
+- **The scripted-text hook** (`lib/core/demo_hooks/`, phase D4) is the one piece of production
+  code the demo needs. Onboarding text fields own private controllers, so a script can't fill
+  them any other way. With the hook unset, the widgets behave exactly as before.
