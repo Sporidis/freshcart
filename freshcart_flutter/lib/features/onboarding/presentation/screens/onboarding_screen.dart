@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
@@ -91,7 +92,9 @@ class OnboardingScreen extends ConsumerWidget {
                   index: step.index,
                   child: switch (step) {
                     OnboardingStep.displayName => const DisplayNameStep(),
-                    OnboardingStep.createList => const CreateListStep(),
+                    OnboardingStep.createList => const CreateListStep(
+                      scriptedField: ScriptedField.onboardingListName,
+                    ),
                     OnboardingStep.addShop => const AddShopStep(),
                     OnboardingStep.invite => const InviteStep(),
                   },

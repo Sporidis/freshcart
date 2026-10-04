@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
@@ -38,6 +39,7 @@ class DisplayNameStep extends ConsumerWidget {
               hintText: t.onboarding.namePlaceholder,
               onChanged: controller.updateDisplayName,
               errorText: error?.toMessage(t),
+              scriptedField: ScriptedField.onboardingName,
             ),
           ),
         ],
