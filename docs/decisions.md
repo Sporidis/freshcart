@@ -2832,3 +2832,24 @@ platform storage. Only a small interface lets each phone have its own.
 **Side benefit:** the controllers no longer do I/O themselves, which is the same rule the
 repositories already follow. Existing tests that use `SharedPreferences.setMockInitialValues`
 keep working unchanged, because the real store still goes through it.
+
+## 111. The avatar keeps the colour onboarding showed
+
+**Context.** While the name is typed in onboarding or the join flow, the avatar preview takes its
+colour from the name, so it changes with each letter. A user with no saved colour is shown
+everywhere else with the automatic colour for their *user id*. So the colour a new user watched
+while typing was usually not the one they got (with 8 preset colours, it matched only by
+chance). The web demo made this obvious by showing both within seconds.
+
+**Decision** (confirmed with Nikolaos): keep the colour changing as you type, because it's part
+of the fun of the step. When the name is saved (`OnboardingController.submit`,
+`JoinFlowController.submit`), also save the colour on screen as the user's avatar colour.
+`AppColors.avatarHexColorFor(seed)` is the single function both the preview and the save use,
+so they can't drift apart.
+
+- Skipped if the user already has a colour, so a choice made in their profile is never
+  overwritten.
+- Failure is ignored on purpose. It's cosmetic, and the automatic colour is still a fine
+  fallback, so it shouldn't block someone getting into their list.
+- **Side benefit:** a stored colour is the same on every device. The automatic colour comes from
+  `String.hashCode`, which Dart doesn't promise is the same on web and on phones.

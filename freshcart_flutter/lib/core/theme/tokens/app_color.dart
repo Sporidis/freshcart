@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_domain/freshcart_domain.dart';
 
 /// All colours used in the app.
 ///
@@ -71,12 +72,18 @@ class AppColors {
   /// Used when a shop somehow has no colour assigned.
   static const Color shopColorFallback = Color(0xFF8A8A86);
 
-  /// The avatar colour for a household member.
+  /// The automatic avatar colour for [seed].
   ///
-  /// Based on their user id, so the same person always gets the same colour,
-  /// on every phone.
-  static Color avatarColorFor(String userId) =>
-      presetShopColors[userId.hashCode.abs() % presetShopColors.length];
+  /// For a member with no saved colour, [seed] is their user id, so the same
+  /// person always gets the same colour. During onboarding it's the name
+  /// being typed, so the preview changes as you type; the colour on screen
+  /// at the end is then saved (see [avatarHexColorFor], decisions.md #111).
+  static Color avatarColorFor(String seed) =>
+      presetShopColors[seed.hashCode.abs() % presetShopColors.length];
+
+  /// [avatarColorFor] as a domain [HexColor], for saving it.
+  static HexColor avatarHexColorFor(String seed) =>
+      HexColor.fromArgb(avatarColorFor(seed).toARGB32());
 
   /// Blends colour [a] into colour [b]. [t] goes from 0 (all [a]) to 1
   /// (all [b]).
