@@ -95,6 +95,9 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
             // autofill. The boxes only display.
             Opacity(
               opacity: 0,
+              // Opacity 0 also hides a widget from screen readers, which
+              // would make the code impossible to type with one on.
+              alwaysIncludeSemantics: true,
               child: TextField(
                 controller: _controller,
                 focusNode: _focus,
