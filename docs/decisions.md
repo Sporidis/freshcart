@@ -2853,3 +2853,22 @@ so they can't drift apart.
   fallback, so it shouldn't block someone getting into their list.
 - **Side benefit:** a stored colour is the same on every device. The automatic colour comes from
   `String.hashCode`, which Dart doesn't promise is the same on web and on phones.
+
+## 112. The lists route observer lives in a provider, not a global
+
+**Context.** `ListsScreen` uses a `RouteObserver` to know when the user comes back to it. It was a
+top-level global that every `GoRouter` received. A Flutter `NavigatorObserver` can belong to only
+one navigator at a time. The real app has one router, so it never showed. The web demo (#109)
+runs two apps, so two routers, in one engine. In debug builds the second phone fails an
+assertion. In release builds assertions are off, and the second navigator silently takes the
+observer over.
+
+**Decision** (confirmed with Nikolaos, an approved exception to the demo plan's "don't modify the
+router" rule): `listsRouteObserverProvider`, kept alive like the router that uses it. Each
+`ProviderContainer` (each phone) gets its own observer, like it already gets its own router.
+`ListsScreen` reads it once and keeps the reference for `dispose`.
+
+**Lesson:** a global is an unstated "there is only ever one of these". Everything else per-app
+was already in the container. This was the last thing outside it, and the first time the app ran
+twice in one process exposed it. The debug-mode widget test of the demo's intro caught it; the
+release-build browser check couldn't have.
