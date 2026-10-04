@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_state.dart';
@@ -68,6 +69,14 @@ class JoinFlowController extends _$JoinFlowController {
     if (nameResult case Err(:final failure)) {
       state = state.copyWith(isSubmitting: false, error: failure);
       return Err(failure);
+    }
+
+    // Keep the colour the avatar showed while the name was typed, so lists
+    // show the same one (decisions.md #111). Not if the user already chose
+    // a colour. Cosmetic: if saving fails, the automatic colour is used.
+    final auth = ref.read(authRepositoryProvider);
+    if (auth.currentUser?.avatarColor == null) {
+      await auth.setAvatarColor(AppColors.avatarHexColorFor(state.displayName));
     }
 
     final joinResult = await JoinList(ref.read(listRepositoryProvider))(
