@@ -1,6 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/join_code_generator.dart';
+import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/profile/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
@@ -64,7 +65,7 @@ abstract final class ListService {
   ) async {
     final list = await ShoppingList.db.findById(session, listId);
     if (list == null) throw ListNotFoundException();
-    await requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     return _withMembers(session, list);
   }
 
@@ -162,9 +163,7 @@ abstract final class ListService {
     UuidValue userId,
     String name,
   ) async {
-    final list = await ShoppingList.db.findById(session, listId);
-    if (list == null) throw ListNotFoundException();
-    if (list.ownerId != userId) throw NotAMemberException();
+    final list = await ListAccess.requireOwner(session, listId, userId);
 
     final updated = await ShoppingList.db.updateRow(
       session,
@@ -187,7 +186,7 @@ abstract final class ListService {
   ) async {
     final list = await ShoppingList.db.findById(session, listId);
     if (list == null) throw ListNotFoundException();
-    await requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
 
     final updated = await ShoppingList.db.updateRow(
       session,
@@ -224,9 +223,7 @@ abstract final class ListService {
     UuidValue listId,
     UuidValue userId,
   ) async {
-    final list = await ShoppingList.db.findById(session, listId);
-    if (list == null) throw ListNotFoundException();
-    if (list.ownerId != userId) throw NotAMemberException();
+    final list = await ListAccess.requireOwner(session, listId, userId);
 
     // Tell watchers BEFORE deleting (after, there's no list left to send).
     // Otherwise their screen would just stop updating.
@@ -245,13 +242,11 @@ abstract final class ListService {
     UuidValue actorId,
     UuidValue targetUserId,
   ) async {
-    final list = await ShoppingList.db.findById(session, listId);
-    if (list == null) throw ListNotFoundException();
-    if (list.ownerId != actorId) throw NotAMemberException();
+    final list = await ListAccess.requireOwner(session, listId, actorId);
     // To remove yourself, use `leave`. The owner can't be removed.
     if (targetUserId == list.ownerId) throw NotAMemberException();
 
-    await requireMembership(session, listId, targetUserId);
+    await ListAccess.requireMember(session, listId, targetUserId);
     await ListMember.db.deleteWhere(
       session,
       where: (t) => t.listId.equals(listId) & t.userId.equals(targetUserId),
@@ -269,12 +264,14 @@ abstract final class ListService {
     UuidValue actorId,
     UuidValue newOwnerId,
   ) async {
-    final list = await ShoppingList.db.findById(session, listId);
-    if (list == null) throw ListNotFoundException();
-    if (list.ownerId != actorId) throw NotAMemberException();
+    final list = await ListAccess.requireOwner(session, listId, actorId);
 
-    final incoming = await requireMembership(session, listId, newOwnerId);
-    final outgoing = await requireMembership(session, listId, actorId);
+    final incoming = await ListAccess.requireMember(
+      session,
+      listId,
+      newOwnerId,
+    );
+    final outgoing = await ListAccess.requireMember(session, listId, actorId);
     if (newOwnerId == actorId) return _withMembers(session, list);
 
     final updated = await session.db.transaction((transaction) async {
@@ -337,23 +334,6 @@ abstract final class ListService {
     }
 
     return Future.wait(allowed.map(summaryFor));
-  }
-
-  /// Throws [NotAMemberException] if [userId] isn't on [listId].
-  ///
-  /// Every read and write uses this, so the permission check is in one
-  /// place instead of copied into every endpoint.
-  static Future<ListMember> requireMembership(
-    Session session,
-    UuidValue listId,
-    UuidValue userId,
-  ) async {
-    final membership = await ListMember.db.findFirstRow(
-      session,
-      where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
-    );
-    if (membership == null) throw NotAMemberException();
-    return membership;
   }
 
   /// [list] with its members, each with their current name, colour and

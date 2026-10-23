@@ -1,0 +1,3 @@
+### Thrown when a member tries something only the list's owner may do:
+### rename or delete the list, remove a member, or hand over ownership.
+exception: NotListOwnerException

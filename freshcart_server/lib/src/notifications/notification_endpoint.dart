@@ -1,6 +1,6 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
-import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/notifications/business/notification_preferences_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -51,7 +51,7 @@ class NotificationEndpoint extends Endpoint {
     bool muted,
   ) async {
     final userId = session.requireUserId;
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
 
     if (!muted) {
       await ListMute.db.deleteWhere(

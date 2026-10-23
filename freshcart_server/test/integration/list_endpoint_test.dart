@@ -148,7 +148,7 @@ void main() {
 
       await expectLater(
         endpoints.list.rename(as(bobId), list.id!, 'Hijacked'),
-        throwsA(isA<NotAMemberException>()),
+        throwsA(isA<NotListOwnerException>()),
       );
     });
 
@@ -202,7 +202,7 @@ void main() {
 
       await expectLater(
         endpoints.list.delete(as(bobId), list.id!),
-        throwsA(isA<NotAMemberException>()),
+        throwsA(isA<NotListOwnerException>()),
       );
       expect(await endpoints.list.myLists(as(aliceId)), hasLength(1));
     });
@@ -232,7 +232,7 @@ void main() {
             list.id!,
             UuidValue.withValidation(aliceId),
           ),
-          throwsA(isA<NotAMemberException>()),
+          throwsA(isA<NotListOwnerException>()),
         );
       });
 
@@ -283,7 +283,7 @@ void main() {
 
         await expectLater(
           endpoints.list.delete(as(aliceId), list.id!),
-          throwsA(isA<NotAMemberException>()),
+          throwsA(isA<NotListOwnerException>()),
         );
         await endpoints.list.delete(as(bobId), list.id!);
         expect(await endpoints.list.myLists(as(bobId)), isEmpty);

@@ -4,7 +4,7 @@
 // numbers and rules.
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
-import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/profile/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
@@ -51,7 +51,7 @@ abstract final class ItemService {
     UuidValue listId,
     UuidValue userId,
   ) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     return ShoppingItem.db.find(
       session,
       where: (t) => t.listId.equals(listId),
@@ -101,7 +101,7 @@ abstract final class ItemService {
     UuidValue? shopId,
     String? noteText,
   }) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     await _requireShopOnList(session, listId, shopId);
     final now = DateTime.now().toUtc();
 
@@ -223,7 +223,7 @@ abstract final class ItemService {
     String query, {
     int limit = 5,
   }) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     final trimmed = query.trim();
     if (trimmed.length < 2) return const [];
     final rows = await ItemNameHistory.db.find(
@@ -244,7 +244,7 @@ abstract final class ItemService {
     UuidValue userId, {
     int limit = 40,
   }) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     return ItemNameHistory.db.find(
       session,
       where: (t) => t.listId.equals(listId),
@@ -272,7 +272,7 @@ abstract final class ItemService {
         transaction: transaction,
       );
       if (stored == null) throw ItemNotFoundException();
-      await ListService.requireMembership(session, stored.listId, userId);
+      await ListAccess.requireMember(session, stored.listId, userId);
 
       if (!stored.updatedAt.isAtSameMomentAs(incoming.updatedAt)) {
         throw EditConflictException();
@@ -352,7 +352,7 @@ abstract final class ItemService {
   ) async {
     final stored = await ShoppingItem.db.findById(session, itemId);
     if (stored == null) throw ItemNotFoundException();
-    await ListService.requireMembership(session, stored.listId, userId);
+    await ListAccess.requireMember(session, stored.listId, userId);
     await ShoppingItem.db.deleteRow(session, stored);
     await _announce(
       session,
@@ -374,7 +374,7 @@ abstract final class ItemService {
     UuidValue listId,
     UuidValue userId,
   ) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     final removed = await session.db.transaction(
       (transaction) => ShoppingItem.db.deleteWhere(
         session,
@@ -397,7 +397,7 @@ abstract final class ItemService {
     UuidValue userId,
     List<UuidValue> itemIds,
   ) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     if (itemIds.isEmpty) return 0;
     final removed = await session.db.transaction(
       (transaction) => ShoppingItem.db.deleteWhere(
@@ -422,7 +422,7 @@ abstract final class ItemService {
     List<UuidValue> itemIds,
     UuidValue? shopId,
   ) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     await _requireShopOnList(session, listId, shopId);
     if (itemIds.isEmpty) return 0;
     final now = DateTime.now().toUtc();

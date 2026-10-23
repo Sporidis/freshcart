@@ -19,6 +19,10 @@ void main() {
         const Failure.notFound(),
       );
       expect(
+        mapExceptionToFailure(dto.NotListOwnerException()),
+        const Failure.unauthorized(),
+      );
+      expect(
         mapExceptionToFailure(dto.NotAMemberException()),
         const Failure.unauthorized(),
       );

@@ -1,5 +1,6 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -90,7 +91,7 @@ class ListEndpoint extends Endpoint {
   /// Sends the whole [ShoppingList] each time (it's one small row). This is
   /// for live updates while the app is open, not push notifications.
   Stream<ShoppingList> watchList(Session session, UuidValue listId) async* {
-    await ListService.requireMembership(session, listId, session.requireUserId);
+    await ListAccess.requireMember(session, listId, session.requireUserId);
     yield* session.messages.createStream<ShoppingList>(
       ListService.channelFor(listId),
     );

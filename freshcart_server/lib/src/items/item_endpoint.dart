@@ -1,7 +1,7 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/items/business/item_service.dart';
-import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Endpoint for items on a list: read, add, save, delete.
@@ -99,7 +99,7 @@ class ItemEndpoint extends Endpoint {
   /// This is for live updates while the app is open, not push
   /// notifications (those are for a closed app).
   Stream<ItemChange> watchList(Session session, UuidValue listId) async* {
-    await ListService.requireMembership(session, listId, session.requireUserId);
+    await ListAccess.requireMember(session, listId, session.requireUserId);
     yield* session.messages.createStream<ItemChange>(
       ItemService.channelFor(listId),
     );

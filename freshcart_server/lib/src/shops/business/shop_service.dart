@@ -1,5 +1,5 @@
 import 'package:freshcart_server/src/generated/protocol.dart';
-import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// The logic for a list's shops.
@@ -10,7 +10,7 @@ abstract final class ShopService {
     UuidValue listId,
     UuidValue userId,
   ) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     return Shop.db.find(session, where: (t) => t.listId.equals(listId));
   }
 
@@ -22,7 +22,7 @@ abstract final class ShopService {
     required String name,
     required int colorArgb,
   }) async {
-    await ListService.requireMembership(session, listId, userId);
+    await ListAccess.requireMember(session, listId, userId);
     return Shop.db.insertRow(
       session,
       Shop(listId: listId, name: name, colorArgb: colorArgb),
@@ -37,7 +37,7 @@ abstract final class ShopService {
   ) async {
     final stored = await Shop.db.findById(session, incoming.id!);
     if (stored == null) throw ShopNotFoundException();
-    await ListService.requireMembership(session, stored.listId, userId);
+    await ListAccess.requireMember(session, stored.listId, userId);
 
     // listId is set by the server only (like items), so a shop can't be
     // moved to another list.
@@ -55,7 +55,7 @@ abstract final class ShopService {
   ) async {
     final stored = await Shop.db.findById(session, shopId);
     if (stored == null) throw ShopNotFoundException();
-    await ListService.requireMembership(session, stored.listId, userId);
+    await ListAccess.requireMember(session, stored.listId, userId);
     return ShoppingItem.db.count(
       session,
       where: (t) => t.shopId.equals(shopId),
@@ -79,7 +79,7 @@ abstract final class ShopService {
   }) async {
     final stored = await Shop.db.findById(session, shopId);
     if (stored == null) throw ShopNotFoundException();
-    await ListService.requireMembership(session, stored.listId, userId);
+    await ListAccess.requireMember(session, stored.listId, userId);
 
     if (disposition == ShopItemDisposition.moveToShop) {
       if (moveToShopId == null) {

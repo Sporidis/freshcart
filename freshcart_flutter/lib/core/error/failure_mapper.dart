@@ -13,7 +13,8 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.ListNotFoundException() ||
   dto.ItemNotFoundException() ||
   dto.ShopNotFoundException() => const Failure.notFound(),
-  dto.NotAMemberException() => const Failure.unauthorized(),
+  dto.NotAMemberException() ||
+  dto.NotListOwnerException() => const Failure.unauthorized(),
   dto.EditConflictException() => const Failure.conflict(),
   // TODO: this message is hard-coded English, and `toMessage` shows a
   // validation message as-is, so nl/fr/ru/tl users see English here. Give
