@@ -5,7 +5,8 @@ import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet/item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet/item_sheet_outcome.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Helper for the actions that need a `BuildContext` (sheets, snackbars),

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet/item_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
-import '../../../../fakes/fake_shop_repository.dart';
+import '../../../../../fakes/fake_shop_repository.dart';
 
 void main() {
   setUpAll(configurePluralResolvers);

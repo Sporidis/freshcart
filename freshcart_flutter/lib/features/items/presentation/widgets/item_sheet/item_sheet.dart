@@ -1,37 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/sheet/sheet_close_button.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet/compact_quantity_stepper.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet/item_note_field.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_sheet/item_sheet_outcome.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
-
-/// What [ItemSheet] returns: either "save these details" or "delete the
-/// item". A sealed class, so the caller's `switch` must handle both cases.
-sealed class ItemSheetOutcome {}
-
-/// Save these details (a new item, or changes to an existing one).
-class ItemSheetSave extends ItemSheetOutcome {
-  /// Creates the outcome.
-  ItemSheetSave({
-    required this.name,
-    required this.quantity,
-    this.shopId,
-    this.noteText,
-  });
-
-  final String name;
-  final int quantity;
-  final ShopId? shopId;
-  final String? noteText;
-}
-
-/// Delete the item. Only possible when editing (not when adding).
-class ItemSheetRemove extends ItemSheetOutcome {}
 
 /// The bottom sheet for adding a new item or editing one (design v3,
 /// "shop-first"): the name and amount share one line because both are
@@ -112,31 +90,24 @@ class _ItemSheetState extends State<ItemSheet> {
   void dispose() {
     _name.dispose();
     _note.dispose();
-    _noteFocus.dispose();
     super.dispose();
   }
 
   void _save() {
     final name = _name.text.trim();
     if (name.isEmpty) return;
-    final note = _note.text.trim();
     Navigator.of(context).pop<ItemSheetOutcome>(
       ItemSheetSave(
         name: name,
         quantity: _quantity,
         shopId: _shopId,
-        noteText: note.isEmpty ? null : note,
+        noteText: ShoppingItem.cleanNoteText(_note.text),
       ),
     );
   }
 
   void _remove() =>
       Navigator.of(context).pop<ItemSheetOutcome>(ItemSheetRemove());
-
-  /// Whether the note field shows. Open from the start only if there's
-  /// already a note.
-  late bool _noteOpen = _note.text.isNotEmpty;
-  final FocusNode _noteFocus = FocusNode();
 
   /// Adding from a shop's tab: "No shop" isn't offered (you're adding to
   /// that shop), as in the design.
@@ -221,7 +192,7 @@ class _ItemSheetState extends State<ItemSheet> {
               ),
             ),
             const SizedBox(width: AppSpacing.md),
-            _CompactStepper(
+            CompactQuantityStepper(
               quantity: _quantity,
               // Minimum is 1. Zero of something makes no sense on a
               // shopping list (and AddItem rejects it).
@@ -247,35 +218,11 @@ class _ItemSheetState extends State<ItemSheet> {
           ),
         ],
         const SizedBox(height: AppSpacing.md),
-        AnimatedSize(
-          duration: AppMotion.durationFor(context, AppMotion.standard),
-          curve: AppMotion.emphasized,
-          alignment: Alignment.topLeft,
-          child: _noteOpen
-              ? _NoteField(
-                  controller: _note,
-                  focusNode: _noteFocus,
-                  hint: t.items.noteExample,
-                  onSubmitted: _save,
-                )
-              : Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton.icon(
-                    onPressed: () {
-                      setState(() => _noteOpen = true);
-                      _noteFocus.requestFocus();
-                    },
-                    icon: const Icon(Icons.add, size: 14),
-                    label: Text(t.items.addNote),
-                    style: TextButton.styleFrom(
-                      foregroundColor: scheme.onSurfaceVariant,
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      textStyle: AppTextStyles.bodyStrong.copyWith(
-                        fontSize: 15,
-                      ),
-                    ),
-                  ),
-                ),
+        ItemNoteField(
+          controller: _note,
+          hint: t.items.noteExample,
+          addLabel: t.items.addNote,
+          onSubmitted: _save,
         ),
         const SizedBox(height: AppSpacing.lg),
         AnimatedOpacity(
@@ -298,161 +245,6 @@ class _ItemSheetState extends State<ItemSheet> {
           ),
         ],
       ],
-    );
-  }
-}
-
-/// The sheet's amount: a compact "− 2 +" on the fill colour, the + raised
-/// on the surface. Smaller and quieter than the row stepper, because here
-/// the amount is usually already right.
-class _CompactStepper extends StatelessWidget {
-  const _CompactStepper({
-    required this.quantity,
-    required this.onDecrement,
-    required this.onIncrement,
-    required this.decreaseLabel,
-    required this.increaseLabel,
-  });
-
-  final int quantity;
-  final VoidCallback? onDecrement;
-  final VoidCallback onIncrement;
-  final String decreaseLabel;
-  final String increaseLabel;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    Widget button({
-      required IconData icon,
-      required String label,
-      required VoidCallback? onTap,
-      bool raised = false,
-    }) => Semantics(
-      button: true,
-      enabled: onTap != null,
-      label: label,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: onTap,
-        child: AnimatedOpacity(
-          opacity: onTap == null ? .3 : 1,
-          duration: AppMotion.durationFor(context, AppMotion.quick),
-          child: Container(
-            width: 34,
-            height: 34,
-            decoration: raised
-                ? BoxDecoration(
-                    color: scheme.surface,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: .12),
-                        blurRadius: 3,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  )
-                : null,
-            child: Icon(icon, size: 16, color: scheme.onSurface),
-          ),
-        ),
-      ),
-    );
-
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: scheme.fill,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          button(
-            icon: Icons.remove,
-            label: decreaseLabel,
-            onTap: onDecrement,
-          ),
-          SizedBox(
-            width: 24,
-            child: Text(
-              '$quantity',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.bodyStrong.copyWith(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: scheme.onSurface,
-                fontFeatures: const [FontFeature.tabularFigures()],
-              ),
-            ),
-          ),
-          button(
-            icon: Icons.add,
-            label: increaseLabel,
-            onTap: onIncrement,
-            raised: true,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// The note, once opened: a 50px field on the fill colour with a lines
-/// glyph.
-class _NoteField extends StatelessWidget {
-  const _NoteField({
-    required this.controller,
-    required this.focusNode,
-    required this.hint,
-    required this.onSubmitted,
-  });
-
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final String hint;
-  final VoidCallback onSubmitted;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: scheme.fill,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.notes_rounded,
-            size: 16,
-            color: scheme.onSurface.withValues(alpha: .36),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              textCapitalization: TextCapitalization.sentences,
-              textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                hintText: hint,
-                filled: false,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                isDense: true,
-                contentPadding: EdgeInsets.zero,
-              ),
-              onSubmitted: (_) => onSubmitted(),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
