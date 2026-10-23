@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/core/validation_issue.dart';
 
 /// The short code to join someone else's list.
 ///
@@ -21,13 +22,17 @@ extension type const JoinCode._(String value) implements Object {
     final cleaned = input.trim().toUpperCase().replaceAll('-', '');
     if (cleaned.length != length) {
       return const Err(
-        Failure.validation('joinCode', 'A join code is $length characters'),
+        Failure.validation(
+          ValidationIssue.invalidFormat(ValidatedInput.joinCode),
+        ),
       );
     }
     for (final unit in cleaned.split('')) {
       if (!alphabet.contains(unit)) {
         return const Err(
-          Failure.validation('joinCode', 'That is not a valid join code'),
+          Failure.validation(
+            ValidationIssue.invalidFormat(ValidatedInput.joinCode),
+          ),
         );
       }
     }

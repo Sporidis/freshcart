@@ -5,7 +5,9 @@ import 'package:freshcart_flutter/core/error/error_tier.dart';
 void main() {
   group('tierFor', () {
     test('a validation failure is inline wherever it came from', () {
-      const failure = Failure.validation('name', 'Give the list a name');
+      const failure = Failure.validation(
+        ValidationIssue.missing(ValidatedInput.listName),
+      );
       for (final source in FailureSource.values) {
         expect(tierFor(failure, source), ErrorTier.inline, reason: '$source');
       }
@@ -52,7 +54,14 @@ void main() {
 
   group('shakesOn', () {
     test('shakes for what the user can retype', () {
-      expect(shakesOn(const Failure.validation('code', 'bad')), isTrue);
+      expect(
+        shakesOn(
+          const Failure.validation(
+            ValidationIssue.invalidFormat(ValidatedInput.joinCode),
+          ),
+        ),
+        isTrue,
+      );
       expect(shakesOn(const Failure.notFound()), isTrue);
     });
 

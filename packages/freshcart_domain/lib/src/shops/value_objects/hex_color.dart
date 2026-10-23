@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/core/validation_issue.dart';
 
 /// A colour (for shops and avatars), stored as a 32-bit ARGB number.
 ///
@@ -27,7 +28,7 @@ extension type const HexColor._(int argb) implements Object {
     final cleaned = input.trim().replaceFirst('#', '').toUpperCase();
     if (!RegExp(r'^[0-9A-F]{6}$|^[0-9A-F]{8}$').hasMatch(cleaned)) {
       return const Err(
-        Failure.validation('color', 'Expected a hex colour like #4CAF50'),
+        Failure.validation(ValidationIssue.invalidFormat(ValidatedInput.color)),
       );
     }
     final withAlpha = cleaned.length == 6 ? 'FF$cleaned' : cleaned;

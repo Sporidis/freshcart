@@ -152,6 +152,21 @@
     "unexpectedBody": "Subukan ulit. Kung paulit-ulit, isara at buksan muli ang app.",
     "backToLists": "Bumalik sa mga listahan mo"
   },
+  "validation": {
+    "itemNameMissing": "Bigyan ng pangalan ang item",
+    "listNameMissing": "Bigyan ng pangalan ang listahan",
+    "shopNameMissing": "Bigyan ng pangalan ang tindahan",
+    "displayNameMissing": "Ilagay ang pangalan mo para magpatuloy",
+    "photoMissing": "Mukhang walang laman ang larawang iyan",
+    "tooLong": "Masyadong mahaba (hanggang {{max}} na character)",
+    "tooShort": "Gumamit ng hindi bababa sa {{min}} na character",
+    "quantityTooFew": "Magdagdag ng hindi bababa sa {{min}}",
+    "photoTooLarge": "Masyadong malaki ang larawan (hanggang {{megabytes}} MB)",
+    "joinCodeInvalid": "Hindi wastong code ng pagsali iyan",
+    "joinCodeNotFound": "Walang listahang tumutugma sa code ng pagsali na iyan",
+    "colorInvalid": "Hex na kulay ang kailangan, gaya ng #4CAF50",
+    "emailInUse": "Ginagamit na ang email na iyan"
+  },
   "account": {
     "title": "Protektahan ang iyong mga listahan",
     "body": "Nasa device na ito lang ang iyong account. Mag-link ng email para hindi mawala ang iyong mga listahan.",

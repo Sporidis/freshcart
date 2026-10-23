@@ -81,7 +81,7 @@ void main() {
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Please enter your name to continue'), findsOneWidget);
+    expect(find.text('Use at least 2 characters'), findsOneWidget);
   });
 
   testWidgets('tapping a swatch sets the avatar colour', (tester) async {

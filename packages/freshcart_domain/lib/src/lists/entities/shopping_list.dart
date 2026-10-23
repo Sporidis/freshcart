@@ -2,6 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/core/validation_issue.dart';
 import 'package:freshcart_domain/src/lists/entities/list_member.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
@@ -46,10 +47,16 @@ abstract class ShoppingList with _$ShoppingList {
   static Result<String> validateName(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      return const Err(Failure.validation('name', 'Give the list a name'));
+      return const Err(
+        Failure.validation(ValidationIssue.missing(ValidatedInput.listName)),
+      );
     }
     if (trimmed.length > maxNameLength) {
-      return const Err(Failure.validation('name', 'That name is too long'));
+      return const Err(
+        Failure.validation(
+          ValidationIssue.tooLong(ValidatedInput.listName, max: maxNameLength),
+        ),
+      );
     }
     return Ok(trimmed);
   }

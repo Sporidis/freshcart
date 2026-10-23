@@ -22,6 +22,8 @@ export 'src/auth/value_objects/user_id.dart';
 export 'src/core/clock.dart';
 export 'src/core/failure.dart';
 export 'src/core/result.dart';
+export 'src/core/validation_issue.dart';
+export 'src/core/validation_issue_wire.dart';
 // Items
 export 'src/items/entities/name_history_entry.dart';
 export 'src/items/entities/note.dart';

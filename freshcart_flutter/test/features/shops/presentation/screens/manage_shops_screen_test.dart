@@ -118,7 +118,7 @@ void main() {
     testWidgets('a rejected name keeps the sheet open', (tester) async {
       shops.byListResult = const Ok([]);
       shops.createResult = const Err(
-        Failure.validation('name', 'Give the shop a name'),
+        Failure.validation(ValidationIssue.missing(ValidatedInput.shopName)),
       );
       await pump(tester);
 

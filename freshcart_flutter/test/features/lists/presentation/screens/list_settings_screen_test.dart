@@ -126,7 +126,9 @@ void main() {
   ) async {
     final list = buildList(name: 'Groceries', members: [buildMember()]);
     repository.renameResult = const Err(
-      Failure.validation('name', 'That name is too long'),
+      Failure.validation(
+        ValidationIssue.tooLong(ValidatedInput.listName, max: 60),
+      ),
     );
     await pump(tester, list: list);
 
@@ -134,7 +136,10 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    expect(find.text('That name is too long'), findsOneWidget);
+    expect(
+      find.text('That’s too long (at most 60 characters)'),
+      findsOneWidget,
+    );
   });
 
   testWidgets(
@@ -167,7 +172,7 @@ void main() {
     (tester) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
       repository.setClearCheckedAfterShoppingResult = const Err(
-        Failure.validation('clearChecked', 'Could not save that'),
+        Failure.network(),
       );
       await pump(tester, list: list);
 
@@ -183,7 +188,7 @@ void main() {
       expect(
         find.descendant(
           of: find.byType(SnackBar),
-          matching: find.text('Could not save that'),
+          matching: find.text('Could not reach the server.'),
         ),
         findsOneWidget,
       );

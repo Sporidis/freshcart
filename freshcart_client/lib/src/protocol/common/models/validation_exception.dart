@@ -14,60 +14,72 @@
 import 'package:serverpod_client/serverpod_client.dart' as _i1;
 
 /// Thrown when input breaks a domain rule (a blank name, a quantity
-/// below 1). [field] and [message] are the domain Failure's, so the app
-/// shows the same text it would have checked for itself.
+/// below 1). The three fields are the domain ValidationIssue as plain
+/// values (ValidationIssueWire): the app rebuilds the issue and shows it
+/// in the user's language.
 abstract class ValidationException
     implements _i1.SerializableException, _i1.SerializableModel {
   ValidationException._({
-    required this.field,
-    required this.message,
+    required this.kind,
+    required this.input,
+    this.limit,
   });
 
   factory ValidationException({
-    required String field,
-    required String message,
+    required String kind,
+    required String input,
+    int? limit,
   }) = _ValidationExceptionImpl;
 
   factory ValidationException.fromJson(Map<String, dynamic> jsonSerialization) {
     return ValidationException(
-      field: jsonSerialization['field'] as String,
-      message: jsonSerialization['message'] as String,
+      kind: jsonSerialization['kind'] as String,
+      input: jsonSerialization['input'] as String,
+      limit: jsonSerialization['limit'] as int?,
     );
   }
 
-  String field;
+  String kind;
 
-  String message;
+  String input;
+
+  int? limit;
 
   /// Returns a shallow copy of this [ValidationException]
   /// with some or all fields replaced by the given arguments.
   @_i1.useResult
   ValidationException copyWith({
-    String? field,
-    String? message,
+    String? kind,
+    String? input,
+    int? limit,
   });
   @override
   Map<String, dynamic> toJson() {
     return {
       '__className__': 'ValidationException',
-      'field': field,
-      'message': message,
+      'kind': kind,
+      'input': input,
+      if (limit != null) 'limit': limit,
     };
   }
 
   @override
   String toString() {
-    return 'ValidationException(field: $field, message: $message)';
+    return 'ValidationException(kind: $kind, input: $input, limit: $limit)';
   }
 }
 
+class _Undefined {}
+
 class _ValidationExceptionImpl extends ValidationException {
   _ValidationExceptionImpl({
-    required String field,
-    required String message,
+    required String kind,
+    required String input,
+    int? limit,
   }) : super._(
-         field: field,
-         message: message,
+         kind: kind,
+         input: input,
+         limit: limit,
        );
 
   /// Returns a shallow copy of this [ValidationException]
@@ -75,12 +87,14 @@ class _ValidationExceptionImpl extends ValidationException {
   @_i1.useResult
   @override
   ValidationException copyWith({
-    String? field,
-    String? message,
+    String? kind,
+    String? input,
+    Object? limit = _Undefined,
   }) {
     return ValidationException(
-      field: field ?? this.field,
-      message: message ?? this.message,
+      kind: kind ?? this.kind,
+      input: input ?? this.input,
+      limit: limit is int? ? limit : this.limit,
     );
   }
 }

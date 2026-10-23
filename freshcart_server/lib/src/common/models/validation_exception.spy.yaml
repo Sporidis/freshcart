@@ -1,7 +1,9 @@
 ### Thrown when input breaks a domain rule (a blank name, a quantity
-### below 1). [field] and [message] are the domain Failure's, so the app
-### shows the same text it would have checked for itself.
+### below 1). The three fields are the domain ValidationIssue as plain
+### values (ValidationIssueWire): the app rebuilds the issue and shows it
+### in the user's language.
 exception: ValidationException
 fields:
-  field: String
-  message: String
+  kind: String
+  input: String
+  limit: int?

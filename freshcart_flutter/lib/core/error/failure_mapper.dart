@@ -16,16 +16,21 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.NotAMemberException() ||
   dto.NotListOwnerException() => const Failure.unauthorized(),
   dto.EditConflictException() => const Failure.conflict(),
-  dto.ValidationException(:final field, :final message) => Failure.validation(
-    field,
-    message,
-  ),
-  // TODO: this message is hard-coded English, and `toMessage` shows a
-  // validation message as-is, so nl/fr/ru/tl users see English here. Give
-  // it a translation key (e.g. a failure the UI maps via `t.errors`).
+  dto.ValidationException(:final kind, :final input, :final limit) =>
+    switch (ValidationIssueWire.fromWire(
+      kind: kind,
+      input: input,
+      limit: limit,
+    )) {
+      final issue? => Failure.validation(issue),
+      // A newer server's rule this version doesn't know yet.
+      null => Failure.unexpected(error),
+    },
   dto.InvalidJoinCodeException() => const Failure.validation(
-    'joinCode',
-    'That code does not match a list',
+    ValidationIssue.notFound(ValidatedInput.joinCode),
+  ),
+  dto.EmailAlreadyInUseException() => const Failure.validation(
+    ValidationIssue.alreadyInUse(ValidatedInput.email),
   ),
 
   // Serverpod's built-in HTTP errors.

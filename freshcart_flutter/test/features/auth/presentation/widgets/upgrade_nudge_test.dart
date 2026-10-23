@@ -84,7 +84,7 @@ void main() {
     tester,
   ) async {
     auth.linkResult = const Err(
-      Failure.validation('email', 'That email is already in use'),
+      Failure.validation(ValidationIssue.alreadyInUse(ValidatedInput.email)),
     );
 
     await pump(tester);
@@ -130,6 +130,6 @@ void main() {
   ) async {
     // Deliberately not faked as working — see decisions #39.
     final result = await auth.linkGoogle();
-    expect(result.failureOrNull, isA<ValidationFailure>());
+    expect(result.failureOrNull, isA<UnexpectedFailure>());
   });
 }

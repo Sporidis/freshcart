@@ -91,10 +91,7 @@ class AuthRepositoryImpl implements AuthPort {
     // honest error is better than a fake that looks like it works.
     // See decisions.md #39.
     return const Err(
-      Failure.validation(
-        'google',
-        'Google sign-in is not configured for this build yet',
-      ),
+      Failure.unexpected('Google sign-in is not configured for this build yet'),
     );
   }
 

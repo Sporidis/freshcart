@@ -63,7 +63,11 @@ void main() {
     });
 
     test('any other failure is passed on, and nothing is queued', () async {
-      remote.addResult = const Err(Failure.validation('name', 'too long'));
+      remote.addResult = const Err(
+        Failure.validation(
+          ValidationIssue.tooLong(ValidatedInput.itemName, max: 80),
+        ),
+      );
 
       final result = await repository.add(listId: list, name: 'Milk');
 

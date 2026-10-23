@@ -152,6 +152,21 @@
     "unexpectedBody": "Réessayez. Si cela persiste, fermez puis rouvrez l’application.",
     "backToLists": "Retour à vos listes"
   },
+  "validation": {
+    "itemNameMissing": "Donnez un nom à l’article",
+    "listNameMissing": "Donnez un nom à la liste",
+    "shopNameMissing": "Donnez un nom au magasin",
+    "displayNameMissing": "Entrez votre nom pour continuer",
+    "photoMissing": "Cette photo semble vide",
+    "tooLong": "C’est trop long ({{max}} caractères maximum)",
+    "tooShort": "Utilisez au moins {{min}} caractères",
+    "quantityTooFew": "Ajoutez-en au moins {{min}}",
+    "photoTooLarge": "Cette photo est trop lourde ({{megabytes}} Mo maximum)",
+    "joinCodeInvalid": "Ce code d'invitation n’est pas valide",
+    "joinCodeNotFound": "Ce code d'invitation ne correspond à aucune liste",
+    "colorInvalid": "Couleur hexadécimale attendue, comme #4CAF50",
+    "emailInUse": "Cette adresse e-mail est déjà utilisée"
+  },
   "account": {
     "title": "Sécurisez vos listes",
     "body": "Votre compte n'existe que sur cet appareil. Liez une adresse e-mail pour ne pas perdre vos listes.",

@@ -58,7 +58,7 @@ class FakeListRepository implements ListRepository {
     // Same failure the real app gets (core/error/failure_mapper.dart).
     if (list == null) {
       return const Err(
-        Failure.validation('joinCode', 'That code does not match a list'),
+        Failure.validation(ValidationIssue.notFound(ValidatedInput.joinCode)),
       );
     }
     if (list.hasMember(_me)) return Ok(list);

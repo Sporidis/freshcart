@@ -282,7 +282,7 @@ void main() {
         reason: 'JoinList parses the code before spending a request',
       );
       expect(find.byType(AlertDialog), findsOneWidget);
-      expect(find.text('A join code is 5 characters'), findsOneWidget);
+      expect(find.text('That is not a valid join code'), findsOneWidget);
     });
 
     testWidgets('surfaces a code that matches no list', (tester) async {
@@ -336,7 +336,9 @@ void main() {
       repository.myListsResult = Ok([list]);
       repository.byIdResult = Ok(list);
       repository.renameResult = const Err(
-        Failure.validation('name', 'That name is too long'),
+        Failure.validation(
+          ValidationIssue.tooLong(ValidatedInput.listName, max: 60),
+        ),
       );
 
       // Same reason as the test above: rename is owner-only (§15).

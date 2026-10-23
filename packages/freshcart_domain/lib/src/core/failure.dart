@@ -1,4 +1,5 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:freshcart_domain/src/core/validation_issue.dart';
 
 part 'failure.freezed.dart';
 
@@ -24,9 +25,9 @@ sealed class Failure with _$Failure {
   /// rejected this change. The caller undoes it on screen.
   const factory Failure.conflict() = ConflictFailure;
 
-  /// The input broke a rule (like "name too long"). [field] says which field.
-  const factory Failure.validation(String field, String message) =
-      ValidationFailure;
+  /// The input broke a rule. [issue] says which input and what's wrong,
+  /// as data: the app turns it into text in the user's language.
+  const factory Failure.validation(ValidationIssue issue) = ValidationFailure;
 
   /// Anything else (a bug). [cause] is for logging, never shown to users.
   const factory Failure.unexpected([Object? cause]) = UnexpectedFailure;

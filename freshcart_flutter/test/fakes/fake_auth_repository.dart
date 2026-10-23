@@ -117,7 +117,7 @@ class FakeAuthRepository implements AuthPort {
 
   @override
   Future<Result<AuthUser>> linkGoogle() async => const Err(
-    Failure.validation('google', 'Google sign-in is not configured'),
+    Failure.unexpected('Google sign-in is not configured'),
   );
 
   /// What [signOut] returns.

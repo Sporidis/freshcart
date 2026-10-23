@@ -516,8 +516,8 @@ void main() {
           endpoints.profile.setDisplayName(as(userId), '   '),
           throwsA(
             isA<ValidationException>().having(
-              (e) => e.field,
-              'field',
+              (e) => e.input,
+              'input',
               'displayName',
             ),
           ),

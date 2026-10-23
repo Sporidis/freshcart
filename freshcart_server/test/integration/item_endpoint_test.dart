@@ -40,7 +40,11 @@ void main() {
         await expectLater(
           endpoints.item.add(as(aliceId), list.id!, '   '),
           throwsA(
-            isA<ValidationException>().having((e) => e.field, 'field', 'name'),
+            isA<ValidationException>().having(
+              (e) => e.input,
+              'input',
+              'itemName',
+            ),
           ),
         );
       });
@@ -60,8 +64,8 @@ void main() {
           endpoints.item.add(as(aliceId), list.id!, 'Milk', quantity: 0),
           throwsA(
             isA<ValidationException>().having(
-              (e) => e.field,
-              'field',
+              (e) => e.input,
+              'input',
               'quantity',
             ),
           ),

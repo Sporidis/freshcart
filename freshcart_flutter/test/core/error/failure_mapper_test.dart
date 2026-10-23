@@ -33,19 +33,37 @@ void main() {
         const Failure.conflict(),
       );
       // The server ran the same domain rule, so the app gets the same
-      // validation failure it would have produced itself.
+      // validation issue it would have produced itself.
       expect(
         mapExceptionToFailure(
           dto.ValidationException(
-            field: 'name',
-            message: 'Give the item a name',
+            kind: 'tooLong',
+            input: 'itemName',
+            limit: 80,
           ),
         ),
-        const Failure.validation('name', 'Give the item a name'),
+        const Failure.validation(
+          ValidationIssue.tooLong(ValidatedInput.itemName, max: 80),
+        ),
+      );
+      // A rule this version doesn't know (a newer server): not a crash.
+      expect(
+        mapExceptionToFailure(
+          dto.ValidationException(kind: 'newerRule', input: 'itemName'),
+        ),
+        isA<UnexpectedFailure>(),
       );
       expect(
         mapExceptionToFailure(dto.InvalidJoinCodeException()),
-        isA<ValidationFailure>().having((f) => f.field, 'field', 'joinCode'),
+        const Failure.validation(
+          ValidationIssue.notFound(ValidatedInput.joinCode),
+        ),
+      );
+      expect(
+        mapExceptionToFailure(dto.EmailAlreadyInUseException()),
+        const Failure.validation(
+          ValidationIssue.alreadyInUse(ValidatedInput.email),
+        ),
       );
     });
 

@@ -4,6 +4,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/core/validation_issue.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
 part 'auth_user.freezed.dart';
@@ -46,14 +47,29 @@ abstract class AuthUser with _$AuthUser {
   /// Trims first, then checks the length, so "  " (two spaces) is rejected.
   static Result<String> validateDisplayName(String displayName) {
     final trimmed = displayName.trim();
+    if (trimmed.isEmpty) {
+      return const Err(
+        Failure.validation(ValidationIssue.missing(ValidatedInput.displayName)),
+      );
+    }
     if (trimmed.length < minDisplayNameLength) {
       return const Err(
-        Failure.validation('displayName', 'Please enter your name to continue'),
+        Failure.validation(
+          ValidationIssue.tooShort(
+            ValidatedInput.displayName,
+            min: minDisplayNameLength,
+          ),
+        ),
       );
     }
     if (trimmed.length > maxDisplayNameLength) {
       return const Err(
-        Failure.validation('displayName', 'That name is too long'),
+        Failure.validation(
+          ValidationIssue.tooLong(
+            ValidatedInput.displayName,
+            max: maxDisplayNameLength,
+          ),
+        ),
       );
     }
     return Ok(trimmed);
@@ -77,12 +93,17 @@ abstract class AuthUser with _$AuthUser {
   static Result<Uint8List> validateAvatarPhoto(Uint8List bytes) {
     if (bytes.isEmpty) {
       return const Err(
-        Failure.validation('avatarPhoto', 'That photo looks empty'),
+        Failure.validation(ValidationIssue.missing(ValidatedInput.avatarPhoto)),
       );
     }
     if (bytes.length > maxAvatarPhotoBytes) {
       return const Err(
-        Failure.validation('avatarPhoto', 'That photo is too large'),
+        Failure.validation(
+          ValidationIssue.tooLarge(
+            ValidatedInput.avatarPhoto,
+            maxBytes: maxAvatarPhotoBytes,
+          ),
+        ),
       );
     }
     return Ok(bytes);

@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/error/validation_messages.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Turns a [Failure] into a message the user can read.
@@ -12,8 +13,7 @@ extension FailureMessage on Failure {
     NotFoundFailure() => t.errors.notFound,
     UnauthorizedFailure() => t.errors.unauthorized,
     ConflictFailure() => t.errors.conflict,
-    // Validation failures already have a specific message, so show that.
-    ValidationFailure(:final message) => message,
+    ValidationFailure(:final issue) => issue.toMessage(t),
     UnexpectedFailure() => t.errors.unexpected,
   };
 }

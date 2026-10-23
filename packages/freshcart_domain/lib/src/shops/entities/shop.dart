@@ -1,6 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
+import 'package:freshcart_domain/src/core/validation_issue.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 import 'package:freshcart_domain/src/shops/value_objects/shop_id.dart';
@@ -45,11 +46,15 @@ abstract class Shop with _$Shop {
   static Result<String> validateName(String name) {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
-      return const Err(Failure.validation('name', 'Give the shop a name'));
+      return const Err(
+        Failure.validation(ValidationIssue.missing(ValidatedInput.shopName)),
+      );
     }
     if (trimmed.length > maxNameLength) {
       return const Err(
-        Failure.validation('name', 'That name is too long for a tab'),
+        Failure.validation(
+          ValidationIssue.tooLong(ValidatedInput.shopName, max: maxNameLength),
+        ),
       );
     }
     return Ok(trimmed);

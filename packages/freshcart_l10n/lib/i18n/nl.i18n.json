@@ -152,6 +152,21 @@
     "unexpectedBody": "Probeer het opnieuw. Blijft het misgaan, sluit de app dan even af.",
     "backToLists": "Terug naar je lijsten"
   },
+  "validation": {
+    "itemNameMissing": "Geef het product een naam",
+    "listNameMissing": "Geef de lijst een naam",
+    "shopNameMissing": "Geef de winkel een naam",
+    "displayNameMissing": "Vul je naam in om verder te gaan",
+    "photoMissing": "Die foto lijkt leeg",
+    "tooLong": "Dat is te lang (maximaal {{max}} tekens)",
+    "tooShort": "Gebruik minstens {{min}} tekens",
+    "quantityTooFew": "Voeg er minstens {{min}} toe",
+    "photoTooLarge": "Die foto is te groot (maximaal {{megabytes}} MB)",
+    "joinCodeInvalid": "Dat is geen geldige deelcode",
+    "joinCodeNotFound": "Die deelcode hoort bij geen enkele lijst",
+    "colorInvalid": "Verwacht een hexkleur zoals #4CAF50",
+    "emailInUse": "Dat e-mailadres is al in gebruik"
+  },
   "account": {
     "title": "Beveilig je lijsten",
     "body": "Je account bestaat alleen op dit toestel. Koppel een e-mailadres zodat je je lijsten niet kwijtraakt.",
