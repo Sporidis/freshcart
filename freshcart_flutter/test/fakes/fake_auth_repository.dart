@@ -116,10 +116,13 @@ class FakeAuthRepository implements AuthPort {
     Failure.validation('google', 'Google sign-in is not configured'),
   );
 
+  /// What [signOut] returns.
+  Result<void> signOutResult = const Ok<void>(null);
+
   @override
   Future<Result<void>> signOut() async {
     signOutCalls++;
-    return const Ok<void>(null);
+    return signOutResult;
   }
 
   /// Closes the change stream. Call from a test teardown.

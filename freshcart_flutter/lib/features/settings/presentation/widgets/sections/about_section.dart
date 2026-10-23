@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
+import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
@@ -54,7 +55,11 @@ class AboutSection extends ConsumerWidget {
     final failure = await ref
         .read(profileControllerProvider.notifier)
         .signOut();
-    if (!context.mounted || failure != null) return;
+    if (!context.mounted) return;
+    if (failure != null) {
+      showFailureSnackBar(context, failure: failure, t: t);
+      return;
+    }
     final router = GoRouter.maybeOf(context);
     if (router != null) {
       router.go(Routes.welcome);

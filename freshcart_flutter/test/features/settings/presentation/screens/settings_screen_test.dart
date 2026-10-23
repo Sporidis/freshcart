@@ -144,6 +144,18 @@ void main() {
       expect(find.text('Sign out?'), findsNothing);
       expect(auth.signOutCalls, 1);
     });
+
+    testWidgets('a failed sign-out says so, instead of doing nothing', (
+      tester,
+    ) async {
+      auth
+        ..user = Ok(linkedUser())
+        ..signOutResult = const Err(Failure.network());
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      expect(find.byType(SnackBar), findsOneWidget);
+    });
   });
 
   testWidgets('New list is offered even with no lists yet', (tester) async {
