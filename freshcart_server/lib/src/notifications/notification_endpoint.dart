@@ -1,6 +1,7 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
-import 'package:freshcart_server/src/lists/business/list_access.dart';
+import 'package:freshcart_server/src/notifications/business/device_token_service.dart';
+import 'package:freshcart_server/src/notifications/business/list_mute_service.dart';
 import 'package:freshcart_server/src/notifications/business/notification_preferences_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -18,69 +19,32 @@ class NotificationEndpoint extends Endpoint {
     Session session,
     String token,
     DevicePlatform platform,
-  ) async {
-    final userId = session.requireUserId;
-    final existing = await DeviceToken.db.findFirstRow(
-      session,
-      where: (t) => t.token.equals(token),
-    );
-    if (existing != null) {
-      return DeviceToken.db.updateRow(
-        session,
-        existing.copyWith(ownerId: userId, platform: platform),
-      );
-    }
-    return DeviceToken.db.insertRow(
-      session,
-      DeviceToken(ownerId: userId, token: token, platform: platform),
-    );
-  }
+  ) => DeviceTokenService.register(
+    session,
+    session.requireUserId,
+    token,
+    platform,
+  );
 
   /// Stops push notifications to this phone. Called on sign-out.
-  Future<void> unregisterDevice(Session session, String token) async {
-    await DeviceToken.db.deleteWhere(
-      session,
-      where: (t) => t.token.equals(token),
-    );
-  }
+  Future<void> unregisterDevice(Session session, String token) =>
+      DeviceTokenService.unregister(session, token);
 
   /// Mutes or unmutes a list for the caller.
   Future<void> setListMuted(
     Session session,
     UuidValue listId,
     bool muted,
-  ) async {
-    final userId = session.requireUserId;
-    await ListAccess.requireMember(session, listId, userId);
-
-    if (!muted) {
-      await ListMute.db.deleteWhere(
-        session,
-        where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
-      );
-      return;
-    }
-    final existing = await ListMute.db.findFirstRow(
-      session,
-      where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
-    );
-    if (existing == null) {
-      await ListMute.db.insertRow(
-        session,
-        ListMute(listId: listId, userId: userId),
-      );
-    }
-  }
+  ) => ListMuteService.setMuted(
+    session,
+    listId,
+    session.requireUserId,
+    muted: muted,
+  );
 
   /// Whether the caller has muted [listId].
-  Future<bool> isListMuted(Session session, UuidValue listId) async {
-    final existing = await ListMute.db.findFirstRow(
-      session,
-      where: (t) =>
-          t.listId.equals(listId) & t.userId.equals(session.requireUserId),
-    );
-    return existing != null;
-  }
+  Future<bool> isListMuted(Session session, UuidValue listId) =>
+      ListMuteService.isMuted(session, listId, session.requireUserId);
 
   /// The caller's notification preferences (decisions.md #80).
   Future<NotificationPreferences> preferences(Session session) =>
