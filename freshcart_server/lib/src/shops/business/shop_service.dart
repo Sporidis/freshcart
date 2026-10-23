@@ -35,9 +35,11 @@ abstract final class ShopService {
     Shop incoming,
     UuidValue userId,
   ) async {
-    final stored = await Shop.db.findById(session, incoming.id!);
-    if (stored == null) throw ShopNotFoundException();
-    await ListAccess.requireMember(session, stored.listId, userId);
+    final stored = await ListAccess.requireShopAccess(
+      session,
+      incoming.id!,
+      userId,
+    );
 
     // listId is set by the server only (like items), so a shop can't be
     // moved to another list.
@@ -53,9 +55,7 @@ abstract final class ShopService {
     UuidValue shopId,
     UuidValue userId,
   ) async {
-    final stored = await Shop.db.findById(session, shopId);
-    if (stored == null) throw ShopNotFoundException();
-    await ListAccess.requireMember(session, stored.listId, userId);
+    await ListAccess.requireShopAccess(session, shopId, userId);
     return ShoppingItem.db.count(
       session,
       where: (t) => t.shopId.equals(shopId),
@@ -77,19 +77,13 @@ abstract final class ShopService {
     ShopItemDisposition disposition = ShopItemDisposition.untag,
     UuidValue? moveToShopId,
   }) async {
-    final stored = await Shop.db.findById(session, shopId);
-    if (stored == null) throw ShopNotFoundException();
-    await ListAccess.requireMember(session, stored.listId, userId);
+    final stored = await ListAccess.requireShopAccess(session, shopId, userId);
 
     if (disposition == ShopItemDisposition.moveToShop) {
       if (moveToShopId == null) {
         throw ShopNotFoundException();
       }
-      final target = await Shop.db.findById(session, moveToShopId);
-      // Can't move items to a shop on another list (they'd leave their list).
-      if (target == null || target.listId != stored.listId) {
-        throw ShopNotFoundException();
-      }
+      await ListAccess.requireShopOnList(session, stored.listId, moveToShopId);
     }
 
     await session.db.transaction((transaction) async {

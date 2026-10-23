@@ -8,11 +8,13 @@ abstract final class ListAccess {
   static Future<ListMember> requireMember(
     Session session,
     UuidValue listId,
-    UuidValue userId,
-  ) async {
+    UuidValue userId, {
+    Transaction? transaction,
+  }) async {
     final membership = await ListMember.db.findFirstRow(
       session,
       where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
+      transaction: transaction,
     );
     if (membership == null) throw NotAMemberException();
     return membership;
@@ -31,5 +33,55 @@ abstract final class ListAccess {
     if (list == null) throw ListNotFoundException();
     if (list.ownerId != userId) throw NotListOwnerException();
     return list;
+  }
+
+  /// The item, if [userId] is on its list.
+  ///
+  /// Throws [ItemNotFoundException] or [NotAMemberException].
+  static Future<ShoppingItem> requireItemAccess(
+    Session session,
+    UuidValue itemId,
+    UuidValue userId, {
+    Transaction? transaction,
+  }) async {
+    final item = await ShoppingItem.db.findById(
+      session,
+      itemId,
+      transaction: transaction,
+    );
+    if (item == null) throw ItemNotFoundException();
+    await requireMember(session, item.listId, userId, transaction: transaction);
+    return item;
+  }
+
+  /// The shop, if [userId] is on its list.
+  ///
+  /// Throws [ShopNotFoundException] or [NotAMemberException].
+  static Future<Shop> requireShopAccess(
+    Session session,
+    UuidValue shopId,
+    UuidValue userId,
+  ) async {
+    final shop = await Shop.db.findById(session, shopId);
+    if (shop == null) throw ShopNotFoundException();
+    await requireMember(session, shop.listId, userId);
+    return shop;
+  }
+
+  /// Throws [ShopNotFoundException] unless [shopId] is null or a shop on
+  /// [listId]: an item can't be tagged with another list's shop.
+  static Future<void> requireShopOnList(
+    Session session,
+    UuidValue listId,
+    UuidValue? shopId, {
+    Transaction? transaction,
+  }) async {
+    if (shopId == null) return;
+    final shop = await Shop.db.findById(
+      session,
+      shopId,
+      transaction: transaction,
+    );
+    if (shop == null || shop.listId != listId) throw ShopNotFoundException();
   }
 }

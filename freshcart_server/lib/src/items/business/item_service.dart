@@ -102,7 +102,7 @@ abstract final class ItemService {
     String? noteText,
   }) async {
     await ListAccess.requireMember(session, listId, userId);
-    await _requireShopOnList(session, listId, shopId);
+    await ListAccess.requireShopOnList(session, listId, shopId);
     final now = DateTime.now().toUtc();
 
     final result = await session.db.transaction((transaction) async {
@@ -266,19 +266,18 @@ abstract final class ItemService {
     UuidValue userId,
   ) async {
     final result = await session.db.transaction((transaction) async {
-      final stored = await ShoppingItem.db.findById(
+      final stored = await ListAccess.requireItemAccess(
         session,
         incoming.id!,
+        userId,
         transaction: transaction,
       );
-      if (stored == null) throw ItemNotFoundException();
-      await ListAccess.requireMember(session, stored.listId, userId);
 
       if (!stored.updatedAt.isAtSameMomentAs(incoming.updatedAt)) {
         throw EditConflictException();
       }
       if (incoming.shopId != stored.shopId) {
-        await _requireShopOnList(
+        await ListAccess.requireShopOnList(
           session,
           stored.listId,
           incoming.shopId,
@@ -350,9 +349,7 @@ abstract final class ItemService {
     UuidValue itemId,
     UuidValue userId,
   ) async {
-    final stored = await ShoppingItem.db.findById(session, itemId);
-    if (stored == null) throw ItemNotFoundException();
-    await ListAccess.requireMember(session, stored.listId, userId);
+    final stored = await ListAccess.requireItemAccess(session, itemId, userId);
     await ShoppingItem.db.deleteRow(session, stored);
     await _announce(
       session,
@@ -423,7 +420,7 @@ abstract final class ItemService {
     UuidValue? shopId,
   ) async {
     await ListAccess.requireMember(session, listId, userId);
-    await _requireShopOnList(session, listId, shopId);
+    await ListAccess.requireShopOnList(session, listId, shopId);
     if (itemIds.isEmpty) return 0;
     final now = DateTime.now().toUtc();
     final moved = await session.db.transaction((transaction) async {
@@ -456,23 +453,6 @@ abstract final class ItemService {
       );
     }
     return moved.length;
-  }
-
-  /// Throws [ShopNotFoundException] unless [shopId] is null or a shop on
-  /// [listId]: an item can't be tagged with another list's shop.
-  static Future<void> _requireShopOnList(
-    Session session,
-    UuidValue listId,
-    UuidValue? shopId, {
-    Transaction? transaction,
-  }) async {
-    if (shopId == null) return;
-    final shop = await Shop.db.findById(
-      session,
-      shopId,
-      transaction: transaction,
-    );
-    if (shop == null || shop.listId != listId) throw ShopNotFoundException();
   }
 
   /// Tells everyone watching [listId] that [removed] are gone. Called after
