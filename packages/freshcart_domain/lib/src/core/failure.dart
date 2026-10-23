@@ -11,7 +11,7 @@ part 'failure.freezed.dart';
 /// The UI turns a [Failure] into a translated message before showing it.
 @freezed
 sealed class Failure with _$Failure {
-  /// Couldn't reach the server, or it didn't answer.
+  /// Couldn't reach the server at all, e.g., no internet or server down.
   const factory Failure.network([String? message]) = NetworkFailure;
 
   /// The thing doesn't exist, or this user can't see it.

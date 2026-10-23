@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
@@ -49,10 +51,24 @@ void main() {
         mapExceptionToFailure(dto.ServerpodClientNotFound()),
         const Failure.notFound(),
       );
+      // The server answered, with an error it didn't handle: a bug, not
+      // a connection problem, so it must not be queued for later.
       expect(
         mapExceptionToFailure(
           dto.ServerpodClientInternalServerError(),
         ),
+        isA<UnexpectedFailure>(),
+      );
+    });
+
+    test('network means exactly: the server could not be reached', () {
+      // Serverpod's status -1: no response came back at all.
+      expect(
+        mapExceptionToFailure(const dto.ServerpodClientException('down', -1)),
+        isA<NetworkFailure>(),
+      );
+      expect(
+        mapExceptionToFailure(TimeoutException('slow')),
         isA<NetworkFailure>(),
       );
     });

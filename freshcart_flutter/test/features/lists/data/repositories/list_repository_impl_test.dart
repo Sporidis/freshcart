@@ -95,13 +95,13 @@ void main() {
       );
     });
 
-    test('a transport error becomes a network failure', () async {
+    test('a server error (500) is unexpected, not a network problem', () async {
       client.handler = (_, _, _) =>
           throw dto.ServerpodClientInternalServerError();
 
       expect(
         (await repository.myLists()).failureOrNull,
-        isA<NetworkFailure>(),
+        isA<UnexpectedFailure>(),
       );
     });
 

@@ -28,7 +28,12 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.ServerpodClientUnauthorized() ||
   dto.ServerpodClientForbidden() => const Failure.unauthorized(),
   dto.ServerpodClientNotFound() => const Failure.notFound(),
-  dto.ServerpodClientException() => Failure.network(error.toString()),
+  // Only "no answer at all" is a network failure; an error the server
+  // answered with (a 500) is a bug on its side.
+  dto.ServerpodClientException() =>
+    isUnreachable(error)
+        ? Failure.network(error.toString())
+        : Failure.unexpected(error),
 
   // The request took too long.
   TimeoutException() => Failure.network(error.toString()),
