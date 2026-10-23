@@ -5,6 +5,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/items/business/item_name_history_service.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/profile/business/profile_service.dart';
@@ -111,28 +112,14 @@ abstract final class ItemService {
     final now = DateTime.now().toUtc();
 
     final result = await session.db.transaction((transaction) async {
-      // A list only has a few open items, so we compare them in Dart (with
-      // the domain rule). Simpler than doing it in SQL, especially for the
-      // note, which is stored as JSON.
-      final open = await ShoppingItem.db.find(
+      final existing = await _sameOpenProduct(
         session,
-        where: (t) => t.listId.equals(listId) & t.isChecked.equals(false),
+        listId,
+        shopId: shopId,
+        name: validatedName,
+        noteText: noteText,
         transaction: transaction,
       );
-      ShoppingItem? existing;
-      for (final row in open) {
-        if (row.shopId == shopId &&
-            domain.ShoppingItem.sameProduct(
-              nameA: row.name,
-              noteTextA: row.note?.text,
-              nameB: validatedName,
-              noteTextB: noteText,
-            )) {
-          existing = row;
-          break;
-        }
-      }
-
       if (existing != null) {
         return ShoppingItem.db.updateRow(
           session,
@@ -182,81 +169,44 @@ abstract final class ItemService {
     // Save the name for suggestions. If this fails, the add must still
     // succeed.
     try {
-      await _recordNameHistory(session, listId, validatedName);
+      await ItemNameHistoryService.record(session, listId, validatedName);
     } on Object catch (_) {
       // Ignored on purpose: the item was already added.
     }
     return result;
   }
 
-  /// Remembers that [name] was added to [listId], for suggestions later.
+  /// The open (unchecked) item on [listId] in the same shop that is the
+  /// same product (domain rule: same name and note), to add onto.
   ///
-  /// Updates the existing row if the name is already there (there's a
-  /// unique index on listId + name), otherwise inserts one.
-  static Future<void> _recordNameHistory(
+  /// A list only has a few open items, so we compare them in Dart (with
+  /// the domain rule). Simpler than doing it in SQL, especially for the
+  /// note, which is stored as JSON.
+  static Future<ShoppingItem?> _sameOpenProduct(
     Session session,
-    UuidValue listId,
-    String name,
-  ) async {
-    final now = DateTime.now().toUtc();
-    final existing = await ItemNameHistory.db.findFirstRow(
-      session,
-      where: (t) => t.listId.equals(listId) & t.name.equals(name),
-    );
-    if (existing == null) {
-      await ItemNameHistory.db.insertRow(
-        session,
-        ItemNameHistory(listId: listId, name: name, lastUsedAt: now),
-      );
-    } else {
-      await ItemNameHistory.db.updateRow(
-        session,
-        existing.copyWith(lastUsedAt: now),
-      );
-    }
-  }
-
-  /// Item names used on [listId] before that match [query], newest first.
-  /// For the suggestion chips.
-  ///
-  /// Empty for less than 2 letters: one letter would match almost
-  /// everything.
-  static Future<List<String>> suggestNames(
-    Session session,
-    UuidValue listId,
-    UuidValue userId,
-    String query, {
-    int limit = 5,
+    UuidValue listId, {
+    required UuidValue? shopId,
+    required String name,
+    required String? noteText,
+    required Transaction transaction,
   }) async {
-    await ListAccess.requireMember(session, listId, userId);
-    final trimmed = query.trim();
-    if (trimmed.length < 2) return const [];
-    final rows = await ItemNameHistory.db.find(
+    final open = await ShoppingItem.db.find(
       session,
-      where: (t) => t.listId.equals(listId) & t.name.ilike('%$trimmed%'),
-      orderBy: (t) => t.lastUsedAt,
-      orderDescending: true,
-      limit: limit,
+      where: (t) => t.listId.equals(listId) & t.isChecked.equals(false),
+      transaction: transaction,
     );
-    return [for (final row in rows) row.name];
-  }
-
-  /// Every item name ever used on [listId], newest first. For "Recently
-  /// bought". Like [suggestNames], but without a search text.
-  static Future<List<ItemNameHistory>> recentNames(
-    Session session,
-    UuidValue listId,
-    UuidValue userId, {
-    int limit = 40,
-  }) async {
-    await ListAccess.requireMember(session, listId, userId);
-    return ItemNameHistory.db.find(
-      session,
-      where: (t) => t.listId.equals(listId),
-      orderBy: (t) => t.lastUsedAt,
-      orderDescending: true,
-      limit: limit,
-    );
+    return open
+        .where(
+          (row) =>
+              row.shopId == shopId &&
+              domain.ShoppingItem.sameProduct(
+                nameA: row.name,
+                noteTextA: row.note?.text,
+                nameB: name,
+                noteTextB: noteText,
+              ),
+        )
+        .firstOrNull;
   }
 
   /// Saves [incoming], unless someone else changed the item first.

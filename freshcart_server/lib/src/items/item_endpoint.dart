@@ -1,5 +1,6 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/items/business/item_name_history_service.dart';
 import 'package:freshcart_server/src/items/business/item_service.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:serverpod/serverpod.dart';
@@ -77,7 +78,7 @@ class ItemEndpoint extends Endpoint {
     Session session,
     UuidValue listId,
     String query,
-  ) => ItemService.suggestNames(
+  ) => ItemNameHistoryService.suggestNames(
     session,
     listId,
     session.requireUserId,
@@ -88,7 +89,11 @@ class ItemEndpoint extends Endpoint {
   Future<List<ItemNameHistory>> recentNames(
     Session session,
     UuidValue listId,
-  ) => ItemService.recentNames(session, listId, session.requireUserId);
+  ) => ItemNameHistoryService.recentNames(
+    session,
+    listId,
+    session.requireUserId,
+  );
 
   /// Live updates to a list's items.
   ///
