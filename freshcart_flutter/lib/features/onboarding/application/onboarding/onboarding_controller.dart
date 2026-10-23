@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/features/lists/data/repositories/list_reposito
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_shop_draft.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_step.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/preset_shops.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 

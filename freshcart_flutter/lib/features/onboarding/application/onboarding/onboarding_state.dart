@@ -1,18 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_shop_draft.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_step.dart';
-
-/// The shops offered on the "Where do you shop?" step.
-///
-/// The first two are selected by default. The user can also add their own.
-final List<OnboardingShopDraft> presetShops = [
-  OnboardingShopDraft(
-    name: 'Albert Heijn',
-    color: HexColor.fromArgb(0xFF2456A6),
-  ),
-  OnboardingShopDraft(name: 'Colruyt', color: HexColor.fromArgb(0xFFE8791A)),
-  OnboardingShopDraft(name: 'Delhaize', color: HexColor.fromArgb(0xFFC0392B)),
-];
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/preset_shops.dart';
 
 /// The user's answers in the onboarding wizard, before they're saved.
 ///

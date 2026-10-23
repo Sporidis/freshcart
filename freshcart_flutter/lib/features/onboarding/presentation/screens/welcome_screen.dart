@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_shop_draft.dart';
-import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/preset_shops.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
 import 'package:go_router/go_router.dart';
