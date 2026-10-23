@@ -132,39 +132,29 @@ GoRouter appRouter(Ref ref) => GoRouter(
           routes: <RouteBase>[
             GoRoute(
               path: Routes.householdPattern,
-              builder: (context, state) {
-                final raw = state.pathParameters['listId'];
-                if (raw == null || raw.isEmpty) return const ListsScreen();
-                return HouseholdScreen(listId: ListId(raw));
-              },
+              builder: (context, state) =>
+                  _forListId(state, (id) => HouseholdScreen(listId: id)),
             ),
             GoRoute(
               path: Routes.manageShopsPattern,
-              builder: (context, state) {
-                final raw = state.pathParameters['listId'];
-                if (raw == null || raw.isEmpty) return const ListsScreen();
-                return ManageShopsScreen(listId: ListId(raw));
-              },
+              builder: (context, state) =>
+                  _forListId(state, (id) => ManageShopsScreen(listId: id)),
             ),
             GoRoute(
               path: Routes.listSettingsPattern,
-              builder: (context, state) {
-                final raw = state.pathParameters['listId'];
-                if (raw == null || raw.isEmpty) return const ListsScreen();
-                return ListSettingsScreen(listId: ListId(raw));
-              },
+              builder: (context, state) =>
+                  _forListId(state, (id) => ListSettingsScreen(listId: id)),
             ),
           ],
           pageBuilder: (context, state) {
-            // A bad link with an empty id goes back to the lists screen,
-            // instead of crashing inside ListId.
             final raw = state.pathParameters['listId'];
             final flight = state.extra is ListTitleFlight
                 ? state.extra! as ListTitleFlight
                 : null;
-            final screen = raw == null || raw.isEmpty
-                ? const ListsScreen()
-                : ListDetailScreen(listId: ListId(raw), titleFlight: flight);
+            final screen = _forListId(
+              state,
+              (id) => ListDetailScreen(listId: id, titleFlight: flight),
+            );
             // One page key per list. go_router's own key is the route
             // pattern ('/lists/:listId'), the same for every list, so the
             // Navigator treated a switch as "same page, new data" and
@@ -195,3 +185,11 @@ GoRouter appRouter(Ref ref) => GoRouter(
   // would mean two places deciding the same thing.
   redirect: (context, state) => null,
 );
+
+/// [screen] for the route's `:listId`. A bad link with an empty id goes
+/// back to the lists screen, instead of crashing inside [ListId].
+Widget _forListId(GoRouterState state, Widget Function(ListId) screen) {
+  final raw = state.pathParameters['listId'];
+  if (raw == null || raw.isEmpty) return const ListsScreen();
+  return screen(ListId(raw));
+}
