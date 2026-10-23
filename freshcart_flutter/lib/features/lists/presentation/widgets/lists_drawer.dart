@@ -19,8 +19,7 @@ import 'package:freshcart_flutter/features/lists/application/list/list_providers
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_row.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_section_controller.dart';
-import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
-    show showCreateListDialog, showJoinListDialog;
+import 'package:freshcart_flutter/features/lists/presentation/widgets/create_or_join_list.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -176,7 +175,7 @@ class _ListRows extends StatelessWidget {
   /// Closes the drawer, then opens [dialog].
   ///
   /// Gets the [ProviderContainer] BEFORE closing, because after closing the
-  /// drawer's `ref` can't be used. See `showCreateListDialog`.
+  /// drawer's `ref` can't be used. See `showCreateListSheet`.
   Future<void> _popThen(
     BuildContext context,
     Future<void> Function(BuildContext, ProviderContainer, Translations) dialog,
@@ -220,7 +219,7 @@ class _ListRows extends StatelessWidget {
           icon: Icons.add,
           label: t.lists.create,
           strong: true,
-          onTap: () => _popThen(context, showCreateListDialog),
+          onTap: () => _popThen(context, showCreateListSheet),
         ),
         _DrawerAction(
           icon: Icons.login_rounded,

@@ -5,8 +5,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
-import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
-    show showCreateListDialog;
+import 'package:freshcart_flutter/features/lists/presentation/widgets/create_or_join_list.dart';
 import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_list_row.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
@@ -53,7 +52,7 @@ class ListsAndShopsSection extends StatelessWidget {
           leading: Icon(Icons.add, color: primary),
           title: t.lists.create,
           titleStyle: AppTextStyles.bodyStrong.copyWith(color: primary),
-          onTap: () => showCreateListDialog(
+          onTap: () => showCreateListSheet(
             context,
             ProviderScope.containerOf(context, listen: false),
             t,

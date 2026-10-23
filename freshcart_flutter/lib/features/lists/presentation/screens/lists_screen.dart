@@ -9,12 +9,9 @@ import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/ui/feedback/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/feedback/failure_state.dart';
-import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
-import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/new_list_sheet.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/text_prompt_dialog.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/create_or_join_list.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -143,7 +140,7 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
-                    onPressed: () => showCreateListDialog(
+                    onPressed: () => showCreateListSheet(
                       context,
                       ProviderScope.containerOf(context, listen: false),
                       t,
@@ -172,66 +169,4 @@ class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
           child: CircularProgressIndicator(),
         ),
       };
-}
-
-/// Opens the "New list" dialog. A top-level function, so the drawer and
-/// other screens can all use it (decisions.md #63).
-///
-/// Takes a [ProviderContainer], not a [WidgetRef]. Why: the drawer closes
-/// before the dialog is submitted. Once the drawer is closed, its `ref`
-/// can't be used anymore (Riverpod throws). The container doesn't belong
-/// to one widget, so it's always safe. Get it with
-/// `ProviderScope.containerOf(context, listen: false)` before closing
-/// anything.
-Future<void> showCreateListDialog(
-  BuildContext context,
-  ProviderContainer container,
-  Translations t,
-) async {
-  ShoppingList? created;
-  // A sheet in design v3 (was a dialog).
-  await showAppSheet<bool>(
-    context: context,
-    builder: (context) => NewListSheet(
-      onSubmit: (value) async => container
-          .read(listsControllerProvider.notifier)
-          .create(value)
-          .then((r) => r.map<void>((list) => created = list)),
-    ),
-  );
-  if (created case final list?) await _openNewList(container, list.id);
-}
-
-/// Opens the "Join a list" dialog. Works like [showCreateListDialog].
-Future<void> showJoinListDialog(
-  BuildContext context,
-  ProviderContainer container,
-  Translations t,
-) async {
-  ShoppingList? joined;
-  await showDialog<bool>(
-    context: context,
-    builder: (context) => TextPromptDialog(
-      title: t.lists.join,
-      label: t.lists.joinCodeLabel,
-      submitLabel: t.common.save,
-      cancelLabel: t.common.cancel,
-      capitalization: TextCapitalization.characters,
-      onSubmit: (value) async => container
-          .read(listsControllerProvider.notifier)
-          .join(value)
-          .then((r) => r.map<void>((list) => joined = list)),
-    ),
-  );
-  if (joined case final list?) await _openNewList(container, list.id);
-}
-
-/// Opens a list the user just created or joined.
-///
-/// Uses the router directly, not a `BuildContext`, because the widget that
-/// opened the dialog may already be gone. Also saves it as the last opened
-/// list.
-Future<void> _openNewList(ProviderContainer container, ListId id) async {
-  container.read(appRouterProvider).go(Routes.listDetail(id));
-  await container.read(lastOpenedListControllerProvider.notifier).select(id);
 }
