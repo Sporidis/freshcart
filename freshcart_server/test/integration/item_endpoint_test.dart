@@ -1,3 +1,4 @@
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
@@ -31,6 +32,56 @@ void main() {
       expect(item.addedBy, UuidValue.withValidation(aliceId));
       expect(item.shopId, isNull);
       expect(item.note, isNull);
+    });
+
+    group('add enforces the domain rules', () {
+      test('a blank name is refused', () async {
+        final list = await aSharedList();
+        await expectLater(
+          endpoints.item.add(as(aliceId), list.id!, '   '),
+          throwsA(
+            isA<ValidationException>().having((e) => e.field, 'field', 'name'),
+          ),
+        );
+      });
+
+      test('a name longer than the domain allows is refused', () async {
+        final list = await aSharedList();
+        final tooLong = 'x' * (domain.ShoppingItem.maxNameLength + 1);
+        await expectLater(
+          endpoints.item.add(as(aliceId), list.id!, tooLong),
+          throwsA(isA<ValidationException>()),
+        );
+      });
+
+      test('a quantity below 1 is refused', () async {
+        final list = await aSharedList();
+        await expectLater(
+          endpoints.item.add(as(aliceId), list.id!, 'Milk', quantity: 0),
+          throwsA(
+            isA<ValidationException>().having(
+              (e) => e.field,
+              'field',
+              'quantity',
+            ),
+          ),
+        );
+      });
+
+      test('the name is stored trimmed', () async {
+        final list = await aSharedList();
+        final item = await endpoints.item.add(as(aliceId), list.id!, '  Milk ');
+        expect(item.name, 'Milk');
+      });
+
+      test('the name is remembered trimmed, once, for suggestions', () async {
+        final list = await aSharedList();
+        await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        await endpoints.item.add(as(aliceId), list.id!, '  Milk ');
+
+        final recent = await endpoints.item.recentNames(as(aliceId), list.id!);
+        expect([for (final entry in recent) entry.name], ['Milk']);
+      });
     });
 
     test('add stores a note attributed to the caller', () async {

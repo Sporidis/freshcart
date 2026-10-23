@@ -3,6 +3,7 @@
 // for `sortOrderGap` and `sameProduct`, so server and app use the same
 // numbers and rules.
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
+import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
@@ -102,6 +103,10 @@ abstract final class ItemService {
     String? noteText,
   }) async {
     await ListAccess.requireMember(session, listId, userId);
+    final validatedName = requireValid(domain.ShoppingItem.validateName(name));
+    final validatedQuantity = requireValid(
+      domain.ShoppingItem.validateQuantity(quantity),
+    );
     await ListAccess.requireShopOnList(session, listId, shopId);
     final now = DateTime.now().toUtc();
 
@@ -120,7 +125,7 @@ abstract final class ItemService {
             domain.ShoppingItem.sameProduct(
               nameA: row.name,
               noteTextA: row.note?.text,
-              nameB: name,
+              nameB: validatedName,
               noteTextB: noteText,
             )) {
           existing = row;
@@ -132,7 +137,7 @@ abstract final class ItemService {
         return ShoppingItem.db.updateRow(
           session,
           existing.copyWith(
-            quantity: existing.quantity + quantity,
+            quantity: existing.quantity + validatedQuantity,
             updatedAt: now,
           ),
           transaction: transaction,
@@ -143,8 +148,8 @@ abstract final class ItemService {
         session,
         ShoppingItem(
           listId: listId,
-          name: name,
-          quantity: quantity,
+          name: validatedName,
+          quantity: validatedQuantity,
           isChecked: false,
           sortOrder: await _appendSortOrder(
             session,
@@ -177,7 +182,7 @@ abstract final class ItemService {
     // Save the name for suggestions. If this fails, the add must still
     // succeed.
     try {
-      await _recordNameHistory(session, listId, name);
+      await _recordNameHistory(session, listId, validatedName);
     } on Object catch (_) {
       // Ignored on purpose: the item was already added.
     }

@@ -16,6 +16,10 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.NotAMemberException() ||
   dto.NotListOwnerException() => const Failure.unauthorized(),
   dto.EditConflictException() => const Failure.conflict(),
+  dto.ValidationException(:final field, :final message) => Failure.validation(
+    field,
+    message,
+  ),
   // TODO: this message is hard-coded English, and `toMessage` shows a
   // validation message as-is, so nl/fr/ru/tl users see English here. Give
   // it a translation key (e.g. a failure the UI maps via `t.errors`).

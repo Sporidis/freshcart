@@ -32,6 +32,17 @@ void main() {
         mapExceptionToFailure(dto.EditConflictException()),
         const Failure.conflict(),
       );
+      // The server ran the same domain rule, so the app gets the same
+      // validation failure it would have produced itself.
+      expect(
+        mapExceptionToFailure(
+          dto.ValidationException(
+            field: 'name',
+            message: 'Give the item a name',
+          ),
+        ),
+        const Failure.validation('name', 'Give the item a name'),
+      );
       expect(
         mapExceptionToFailure(dto.InvalidJoinCodeException()),
         isA<ValidationFailure>().having((f) => f.field, 'field', 'joinCode'),
