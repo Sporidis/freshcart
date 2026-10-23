@@ -40,8 +40,11 @@ class DemoDirector {
   Future<void> run() async {
     try {
       await _play();
-    } on _Cancelled {
-      return;
+    } on Object {
+      // Once cancelled, anything can fail (the phones' containers are being
+      // disposed under it). That's the session ending, not a bug.
+      if (_cancelled) return;
+      rethrow;
     } finally {
       // Even if the script broke, the visitor gets working phones.
       if (!_cancelled) _stage.locked.value = false;

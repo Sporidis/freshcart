@@ -1,12 +1,7 @@
-import 'dart:async';
-
 import 'package:flutter/widgets.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
-import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/demo/demo_backend.dart';
 import 'package:freshcart_flutter/demo/demo_phone.dart';
-import 'package:freshcart_flutter/demo/demo_stage.dart';
-import 'package:freshcart_flutter/demo/director/demo_director.dart';
+import 'package:freshcart_flutter/demo/demo_session.dart';
 import 'package:freshcart_flutter/demo/multi_view_app.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -16,7 +11,9 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// are the visitor's.
 ///
 /// The host page starts the engine with `multiViewEnabled: true` and adds
-/// one view per phone. See docs/web-demo-plan.md.
+/// one view per phone. It can remove and add them again (a modal closing
+/// and reopening): every reopening is a fresh session with the intro.
+/// See docs/web-demo-plan.md.
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -27,16 +24,13 @@ void main() {
   // that page's address bar or history. `null` turns that off entirely.
   setUrlStrategy(null);
 
-  final backend = DemoBackend(clock: systemClock);
-  final stage = DemoStage();
-  // Waits for both phones to exist, then plays.
-  unawaited(DemoDirector(stage).run());
+  final sessions = DemoSessions();
 
   // runWidget, not runApp: runApp needs the single "implicit" view, which
   // doesn't exist in multi-view mode.
   runWidget(
     MultiViewApp(
-      viewBuilder: (_) => DemoPhone(backend: backend, stage: stage),
+      viewBuilder: (_) => DemoPhone(sessions: sessions),
     ),
   );
 }

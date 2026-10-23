@@ -32,7 +32,12 @@ class DemoBackend {
   // One broadcast stream = one "something changed" signal for every listener.
   final _changes = StreamController<void>.broadcast();
   Stream<void> get changes => _changes.stream;
-  void notify() => _changes.add(null);
+
+  /// Tells every listener something changed. Ignored once [dispose]d: a
+  /// save still in flight when the demo closes must not throw.
+  void notify() {
+    if (!_changes.isClosed) _changes.add(null);
+  }
 
   DateTime now() => _clock();
   String newId(String prefix) => '$prefix-${++_seq}';

@@ -4,30 +4,29 @@ import 'dart:ui_web' as ui_web;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/app.dart';
-import 'package:freshcart_flutter/demo/demo_backend.dart';
 import 'package:freshcart_flutter/demo/demo_overrides.dart';
 import 'package:freshcart_flutter/demo/demo_persona.dart';
-import 'package:freshcart_flutter/demo/demo_stage.dart';
+import 'package:freshcart_flutter/demo/demo_session.dart';
 
 /// One phone in the demo: the real [FreshCartApp] with its own
 /// [ProviderContainer] (its own router, controllers and settings), on the
-/// [backend] it shares with the other phone.
+/// backend of the [DemoSession] it shares with the other phone.
 ///
 /// Which persona it is comes from the host page's
-/// `addView({initialData: {persona: 'a' | 'b'}})`. While [stage] is locked
-/// (the intro is playing), the visitor can't tap or type, and a Skip chip
-/// finishes the intro.
+/// `addView({initialData: {persona: 'a' | 'b'}})`. While the session's
+/// stage is locked (the intro is playing), the visitor can't tap or type,
+/// and a Skip chip finishes the intro.
 class DemoPhone extends StatefulWidget {
-  const DemoPhone({required this.backend, required this.stage, super.key});
+  const DemoPhone({required this.sessions, super.key});
 
-  final DemoBackend backend;
-  final DemoStage stage;
+  final DemoSessions sessions;
 
   @override
   State<DemoPhone> createState() => _DemoPhoneState();
 }
 
 class _DemoPhoneState extends State<DemoPhone> {
+  DemoSession? _session;
   ProviderContainer? _container;
 
   @override
@@ -37,14 +36,18 @@ class _DemoPhoneState extends State<DemoPhone> {
     // Created once; the view id never changes for this State.
     if (_container != null) return;
     final persona = _personaFor(View.of(context).viewId);
-    final container = createPhoneContainer(widget.backend, persona);
-    widget.stage.register(persona, container);
+    final session = widget.sessions.attach();
+    final container = createPhoneContainer(session.backend, persona);
+    session.stage.register(persona, container);
+    _session = session;
     _container = container;
   }
 
   @override
   void dispose() {
     _container?.dispose();
+    // After the container: the last phone out ends the session.
+    if (_session case final session?) widget.sessions.detach(session);
     super.dispose();
   }
 
@@ -53,7 +56,7 @@ class _DemoPhoneState extends State<DemoPhone> {
     // Above MaterialApp, so nothing provides a direction yet.
     textDirection: TextDirection.ltr,
     child: ValueListenableBuilder<bool>(
-      valueListenable: widget.stage.locked,
+      valueListenable: _session!.stage.locked,
       child: UncontrolledProviderScope(
         container: _container!,
         child: const FreshCartApp(),
@@ -72,7 +75,7 @@ class _DemoPhoneState extends State<DemoPhone> {
               top: 8,
               left: 0,
               right: 0,
-              child: Center(child: _SkipChip(onTap: widget.stage.skip)),
+              child: Center(child: _SkipChip(onTap: _session!.stage.skip)),
             ),
         ],
       ),
