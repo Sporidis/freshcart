@@ -3,11 +3,12 @@
   Dev-only host page for the FreshCart web demo (docs/web-demo-plan.md).
   Does what the portfolio's modal does: defines window.freshcartDemo before
   flutter_bootstrap.js runs, starts the engine in multi-view mode, and adds
-  one view per phone. Not copied to the portfolio (tool/build_demo.sh).
+  one view per phone. "Close" / "Open" remove and add the views again, like
+  the modal closing and reopening.
 
-    flutter build web -t lib/main_demo.dart
-    cd build/web && python3 -m http.server 8090
-    open http://localhost:8090/demo.html
+  Lives outside web/ so the normal PWA build doesn't ship it. Run it with:
+
+    ./tool/build_demo.sh --serve      # then open http://localhost:8090/demo.html
 -->
 <html lang="en">
 <head>
@@ -19,14 +20,15 @@
       margin: 0;
       min-height: 100vh;
       display: flex;
-      flex-wrap: wrap;
-      gap: 32px;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      gap: 16px;
       background: #2b2b28;
       font-family: system-ui, sans-serif;
       color: #ddd;
     }
+    .phones { display: flex; flex-wrap: wrap; gap: 32px; justify-content: center; }
     figure { margin: 0; }
     /* Centre only the caption: text-align is inherited, and on the host it
        would shift Flutter's own elements off-centre. */
@@ -41,11 +43,18 @@
       border-radius: 28px;
       background: #fafaf8;
     }
+    button { font: inherit; padding: 6px 14px; }
   </style>
 </head>
 <body>
-  <figure><div class="phone" id="phone-a"></div><figcaption>A · Nikolaos</figcaption></figure>
-  <figure><div class="phone" id="phone-b"></div><figcaption>B · Anna</figcaption></figure>
+  <div>
+    <button id="close" disabled>Close</button>
+    <button id="open" disabled>Open</button>
+  </div>
+  <div class="phones">
+    <figure><div class="phone" id="phone-a"></div><figcaption>A · Nikolaos</figcaption></figure>
+    <figure><div class="phone" id="phone-b"></div><figcaption>B · Anna</figcaption></figure>
+  </div>
 
   <script>
     // Must exist before flutter_bootstrap.js runs, so it takes the demo
@@ -58,12 +67,27 @@
               multiViewEnabled: true,
             });
             const app = await engine.runApp();
-            for (const persona of ['a', 'b']) {
-              app.addView({
+            let viewIds = [];
+
+            const open = () => {
+              if (viewIds.length) return;
+              viewIds = ['a', 'b'].map((persona) => app.addView({
                 hostElement: document.getElementById(`phone-${persona}`),
                 initialData: { persona },
-              });
-            }
+              }));
+            };
+            const close = () => {
+              viewIds.forEach((id) => app.removeView(id));
+              viewIds = [];
+            };
+
+            document.getElementById('open').onclick = open;
+            document.getElementById('close').onclick = close;
+            document.getElementById('open').disabled = false;
+            document.getElementById('close').disabled = false;
+            // For scripted checks (tool/demo is dev-only).
+            window.freshcartDemoDev = { open, close };
+            open();
           },
         });
       },
