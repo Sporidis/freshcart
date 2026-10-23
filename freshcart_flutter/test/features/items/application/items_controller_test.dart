@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 

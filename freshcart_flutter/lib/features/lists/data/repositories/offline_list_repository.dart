@@ -6,7 +6,7 @@ import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -190,7 +190,7 @@ ListRepository listRepository(Ref ref) => OfflineListRepository(
   ref.watch(pendingOperationsQueueProvider),
   ref.watch(cachedListsStoreProvider),
   () =>
-      ref.read(currentUserIdProvider).asData?.value.valueOrNull ??
+      ref.read(authRepositoryProvider).currentUser?.id ??
       (throw StateError(
         'currentUserId not resolved — cannot queue an offline change without a known user',
       )),
