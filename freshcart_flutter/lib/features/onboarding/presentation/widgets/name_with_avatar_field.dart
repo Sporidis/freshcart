@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widget_previews.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
@@ -23,6 +25,7 @@ class NameWithAvatarField extends StatefulWidget {
     required this.onChanged,
     this.errorText,
     this.autofocus = true,
+    this.scriptedField,
     super.key,
   });
 
@@ -39,6 +42,10 @@ class NameWithAvatarField extends StatefulWidget {
 
   final bool autofocus;
 
+  /// Lets the web demo type into this field. Null everywhere but there is
+  /// the same as not having it (decisions.md #109).
+  final ScriptedField? scriptedField;
+
   @override
   State<NameWithAvatarField> createState() => _NameWithAvatarFieldState();
 }
@@ -52,9 +59,14 @@ class _NameWithAvatarFieldState extends State<NameWithAvatarField> {
     super.dispose();
   }
 
+  void _onScriptedText(String text) {
+    ScriptedTextListener.apply(_controller, text);
+    widget.onChanged(text);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final field = Row(
       // Aligned to the top, so the avatar doesn't move down when an error
       // appears under the field.
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,6 +94,14 @@ class _NameWithAvatarFieldState extends State<NameWithAvatarField> {
         ),
       ],
     );
+    return switch (widget.scriptedField) {
+      final scripted? => ScriptedTextListener(
+        field: scripted,
+        onText: _onScriptedText,
+        child: field,
+      ),
+      null => field,
+    };
   }
 }
 

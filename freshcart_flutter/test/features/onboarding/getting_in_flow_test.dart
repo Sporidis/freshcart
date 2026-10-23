@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
@@ -145,6 +146,8 @@ void main() {
 
         // Submitting created the list and both preset shops.
         expect(lists.createCalls, ['Weekly Groceries']);
+        // The colour the avatar showed for "Alex" is the one saved.
+        expect(auth.setAvatarColorCalls, [AppColors.avatarHexColorFor('Alex')]);
         expect(shops.createCalls, hasLength(2));
 
         // Invite — the fourth dot, showing the real list's join code (one
@@ -318,6 +321,7 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(lists.joinCalls, [JoinCode.parse('ABC23').valueOrNull]);
+        expect(auth.setAvatarColorCalls, [AppColors.avatarHexColorFor('Alex')]);
         expect(find.text("You're in"), findsOneWidget);
 
         // The confirmation step routes on by itself.

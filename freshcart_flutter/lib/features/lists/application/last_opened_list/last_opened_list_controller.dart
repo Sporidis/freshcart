@@ -1,6 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/preferences/shared_preferences_store.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'last_opened_list_controller.g.dart';
 
@@ -12,14 +12,14 @@ class LastOpenedListController extends _$LastOpenedListController {
 
   @override
   Future<ListId?> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastOpenedListId = prefs.getString(_prefsKey);
+    final prefs = ref.watch(preferencesStoreProvider);
+    final lastOpenedListId = await prefs.getString(_prefsKey);
     return lastOpenedListId != null ? ListId(lastOpenedListId) : null;
   }
 
   /// Remembers [id] as the last opened list.
   Future<void> select(ListId id) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = ref.read(preferencesStoreProvider);
     await prefs.setString(_prefsKey, id.value);
     if (ref.mounted) state = AsyncData(id);
   }

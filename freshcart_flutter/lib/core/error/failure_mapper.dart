@@ -14,6 +14,9 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.ItemNotFoundException() => const Failure.notFound(),
   dto.NotAMemberException() => const Failure.unauthorized(),
   dto.EditConflictException() => const Failure.conflict(),
+  // TODO: this message is hard-coded English, and `toMessage` shows a
+  // validation message as-is, so nl/fr/ru/tl users see English here. Give
+  // it a translation key (e.g. a failure the UI maps via `t.errors`).
   dto.InvalidJoinCodeException() => const Failure.validation(
     'joinCode',
     'That code does not match a list',

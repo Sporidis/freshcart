@@ -78,7 +78,13 @@ abstract final class Routes {
 /// Tells [ListsScreen] when the user comes back to it, for example by
 /// pressing back or swiping back from a list. See `didPopNext` in
 /// [ListsScreen].
-final listsRouteObserver = RouteObserver<PageRoute<void>>();
+///
+/// A provider, not a global: an observer can only watch one navigator, and
+/// the web demo runs two apps (two routers) in one engine (decisions.md
+/// #112). `keepAlive`, like the router that uses it.
+@Riverpod(keepAlive: true)
+RouteObserver<PageRoute<void>> listsRouteObserver(Ref ref) =>
+    RouteObserver<PageRoute<void>>();
 
 /// The app's [GoRouter].
 ///
@@ -86,7 +92,7 @@ final listsRouteObserver = RouteObserver<PageRoute<void>>();
 /// rebuilt, the user would be sent back to the first screen.
 @Riverpod(keepAlive: true)
 GoRouter appRouter(Ref ref) => GoRouter(
-  observers: [listsRouteObserver],
+  observers: [ref.watch(listsRouteObserverProvider)],
   // Always start on the splash screen. It decides where to go next:
   // new users go to Welcome, returning users go straight to their lists.
   initialLocation: Routes.splash,

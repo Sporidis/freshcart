@@ -1,3 +1,5 @@
+import 'dart:ui' show SemanticsFlag;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/join_code_input.dart';
@@ -20,6 +22,16 @@ void main() {
       ),
     );
   }
+
+  testWidgets('screen readers can reach the invisible field', (tester) async {
+    // The field is fully transparent. If it dropped out of the semantics
+    // tree with it, a screen-reader user couldn't type a code at all.
+    final semantics = tester.ensureSemantics();
+    await pump(tester, (_) {});
+
+    expect(find.semantics.byFlag(SemanticsFlag.isTextField), findsOne);
+    semantics.dispose();
+  });
 
   testWidgets('each typed character lands in its own box, left to right', (
     tester,

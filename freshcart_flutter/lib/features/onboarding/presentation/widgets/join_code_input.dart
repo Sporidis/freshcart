@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
+import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
 import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
@@ -25,6 +27,7 @@ class JoinCodeInput extends StatefulWidget {
     required this.onChanged,
     this.autofocus = false,
     this.hasError = false,
+    this.scriptedField,
     super.key,
   });
 
@@ -39,6 +42,10 @@ class JoinCodeInput extends StatefulWidget {
 
   /// Makes all box borders red, to show an error.
   final bool hasError;
+
+  /// Lets the web demo type into this field. Null everywhere but there is
+  /// the same as not having it (decisions.md #109).
+  final ScriptedField? scriptedField;
 
   @override
   State<JoinCodeInput> createState() => _JoinCodeInputState();
@@ -58,6 +65,12 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
     super.dispose();
   }
 
+  void _onScriptedText(String text) {
+    ScriptedTextListener.apply(_controller, text);
+    setState(() {}); // the boxes read _controller.text directly.
+    widget.onChanged(text);
+  }
+
   @override
   Widget build(BuildContext context) {
     final text = _controller.text;
@@ -65,7 +78,7 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
     // which acts as the cursor (the real cursor is invisible).
     final activeIndex = text.length.clamp(0, JoinCode.length - 1);
 
-    return GestureDetector(
+    final input = GestureDetector(
       // Tapping anywhere on the row opens the keyboard.
       onTap: () => _focus.requestFocus(),
       behavior: HitTestBehavior.translucent,
@@ -95,6 +108,9 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
             // autofill. The boxes only display.
             Opacity(
               opacity: 0,
+              // Opacity 0 also hides a widget from screen readers, which
+              // would make the code impossible to type with one on.
+              alwaysIncludeSemantics: true,
               child: TextField(
                 controller: _controller,
                 focusNode: _focus,
@@ -120,6 +136,14 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
         ),
       ),
     );
+    return switch (widget.scriptedField) {
+      final scripted? => ScriptedTextListener(
+        field: scripted,
+        onText: _onScriptedText,
+        child: input,
+      ),
+      null => input,
+    };
   }
 }
 

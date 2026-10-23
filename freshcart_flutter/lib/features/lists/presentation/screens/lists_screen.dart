@@ -34,16 +34,19 @@ class ListsScreen extends ConsumerStatefulWidget {
 }
 
 class _ListsScreenState extends ConsumerState<ListsScreen> with RouteAware {
+  // Kept here, because `ref` can't be used in dispose.
+  late final _routeObserver = ref.read(listsRouteObserverProvider);
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     final route = ModalRoute.of(context);
-    if (route is PageRoute<void>) listsRouteObserver.subscribe(this, route);
+    if (route is PageRoute<void>) _routeObserver.subscribe(this, route);
   }
 
   @override
   void dispose() {
-    listsRouteObserver.unsubscribe(this);
+    _routeObserver.unsubscribe(this);
     super.dispose();
   }
 

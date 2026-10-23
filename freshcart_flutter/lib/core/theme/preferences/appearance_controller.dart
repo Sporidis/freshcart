@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/core/preferences/shared_preferences_store.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 part 'appearance_controller.g.dart';
 
@@ -17,8 +17,8 @@ class AppearanceController extends _$AppearanceController {
 
   @override
   Future<Appearance> build() async {
-    final prefs = await SharedPreferences.getInstance();
-    final stored = prefs.getString(_prefsKey);
+    final prefs = ref.watch(preferencesStoreProvider);
+    final stored = await prefs.getString(_prefsKey);
     return Appearance.values.firstWhere(
       (appearance) => appearance.name == stored,
       orElse: () => Appearance.system,
@@ -27,7 +27,7 @@ class AppearanceController extends _$AppearanceController {
 
   /// Chooses [appearance] and persists it.
   Future<void> select(Appearance appearance) async {
-    final prefs = await SharedPreferences.getInstance();
+    final prefs = ref.read(preferencesStoreProvider);
     await prefs.setString(_prefsKey, appearance.name);
     if (ref.mounted) state = AsyncData(appearance);
   }
