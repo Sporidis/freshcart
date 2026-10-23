@@ -131,6 +131,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
     // all fit on a small phone.
     return AppSheetScaffold(
       title: _isCreate ? t.shops.add : t.shops.edit,
+      subtitle: _isCreate ? t.shops.addBody : null,
       children: [
         Text(t.shops.nameLabel, style: theme.textTheme.bodySmall),
         const SizedBox(height: AppSpacing.gapSmall),
@@ -143,7 +144,10 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
           textCapitalization: TextCapitalization.words,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _saving ? null : _save(),
-          decoration: InputDecoration(errorText: _error),
+          decoration: InputDecoration(
+            hintText: _isCreate ? t.shops.namePlaceholder : null,
+            errorText: _error,
+          ),
         ),
         const SizedBox(height: AppSpacing.screen),
         Text(t.shops.colorLabel, style: theme.textTheme.bodySmall),

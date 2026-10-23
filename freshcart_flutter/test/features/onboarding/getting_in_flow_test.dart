@@ -163,6 +163,46 @@ void main() {
       },
     );
 
+    testWidgets('a shop not listed is added through the shop sheet, which '
+        'refuses an empty name', (tester) async {
+      lists.createResult = Ok(buildList(name: 'Weekly Groceries'));
+      shops.createResult = Ok(buildShop());
+
+      await pump(tester, isNewIdentity: true);
+      await tester.tap(find.text('Get started'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Alex');
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField).first, 'Weekly Groceries');
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Add a shop not listed'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('Give it a name and choose a colour for its tab.'),
+        findsOneWidget,
+      );
+      final add = find.widgetWithText(ElevatedButton, 'Add shop');
+
+      // Empty: the sheet stays open and says why.
+      await tester.tap(add);
+      await tester.pumpAndSettle();
+      expect(find.text('Give the shop a name'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField).last, 'Aldi');
+      await tester.tap(add);
+      await tester.pumpAndSettle();
+      expect(add, findsNothing);
+      expect(find.text('Aldi'), findsOneWidget);
+
+      await tester.tap(find.text('Continue'));
+      await tester.pumpAndSettle();
+      // The two presets and Aldi.
+      expect(shops.createCalls, hasLength(3));
+    });
+
     testWidgets('going back from Invite to Shops and continuing again '
         'does not create a second list', (tester) async {
       lists.createResult = Ok(buildList());

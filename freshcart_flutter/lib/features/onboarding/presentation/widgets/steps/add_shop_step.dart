@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
@@ -8,9 +10,9 @@ import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/add_shop/add_shop_sheet.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
 
 /// Step 3: pick your shops (design v3).
@@ -59,7 +61,22 @@ class AddShopStep extends ConsumerWidget {
                   tooltip: t.onboarding.addShop,
                   onTap: () => showAppSheet<void>(
                     context: context,
-                    builder: (_) => AddShopSheet(onAdd: controller.addShop),
+                    // Drafts aren't saved shops yet, so there's nothing to
+                    // clash with; the name follows the same rule as a real
+                    // shop's.
+                    builder: (_) => EditShopSheet(
+                      shop: null,
+                      siblings: const [],
+                      onSave: ({required name, required color}) async {
+                        switch (Shop.validateName(name)) {
+                          case Err(:final failure):
+                            return failure.toMessage(t);
+                          case Ok():
+                            controller.addShop(name, color);
+                            return null;
+                        }
+                      },
+                    ),
                   ),
                 ),
               ],
