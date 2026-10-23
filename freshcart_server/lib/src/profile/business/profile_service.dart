@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
+import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -89,11 +91,14 @@ abstract final class ProfileService {
     UuidValue authUserId,
     String displayName,
   ) async {
+    final validName = requireValid(
+      domain.AuthUser.validateDisplayName(displayName),
+    );
     return _upsert(
       session,
       authUserId,
       await _profileFor(session, authUserId),
-      (p) => p.copyWith(displayName: displayName),
+      (p) => p.copyWith(displayName: validName),
     );
   }
 

@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
+import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/join_code_generator.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
@@ -75,12 +76,13 @@ abstract final class ListService {
     UuidValue userId,
     String name,
   ) async {
+    final validName = requireValid(domain.ShoppingList.validateName(name));
     return session.db
         .transaction((transaction) async {
           final list = await ShoppingList.db.insertRow(
             session,
             ShoppingList(
-              name: name,
+              name: validName,
               joinCode: await _uniqueJoinCode(
                 session,
                 transaction: transaction,
@@ -164,10 +166,11 @@ abstract final class ListService {
     String name,
   ) async {
     final list = await ListAccess.requireOwner(session, listId, userId);
+    final validName = requireValid(domain.ShoppingList.validateName(name));
 
     final updated = await ShoppingList.db.updateRow(
       session,
-      list.copyWith(name: name),
+      list.copyWith(name: validName),
     );
     await _announce(session, listId);
     return _withMembers(session, updated);

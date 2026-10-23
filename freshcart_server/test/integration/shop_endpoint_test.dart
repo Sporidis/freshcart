@@ -259,5 +259,36 @@ void main() {
         throwsA(isA<ShopNotFoundException>()),
       );
     });
+
+    group('names follow the domain rule', () {
+      test('create refuses a blank name and trims a good one', () async {
+        final list = await aSharedList();
+        await expectLater(
+          endpoints.shop.create(as(aliceId), list.id!, '  ', 0xFF4CAF50),
+          throwsA(isA<ValidationException>()),
+        );
+        final shop = await endpoints.shop.create(
+          as(aliceId),
+          list.id!,
+          ' Aldi ',
+          0xFF4CAF50,
+        );
+        expect(shop.name, 'Aldi');
+      });
+
+      test('save refuses a blank name', () async {
+        final list = await aSharedList();
+        final shop = await endpoints.shop.create(
+          as(aliceId),
+          list.id!,
+          'Aldi',
+          0xFF4CAF50,
+        );
+        await expectLater(
+          endpoints.shop.save(as(aliceId), shop.copyWith(name: '  ')),
+          throwsA(isA<ValidationException>()),
+        );
+      });
+    });
   });
 }

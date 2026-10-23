@@ -488,5 +488,46 @@ void main() {
         expect(second, isNot(first));
       });
     });
+
+    group('names follow the domain rules', () {
+      test('create refuses a blank name and trims a good one', () async {
+        await expectLater(
+          endpoints.list.create(as(aliceId), '   '),
+          throwsA(isA<ValidationException>()),
+        );
+        final list = await endpoints.list.create(as(aliceId), ' Groceries ');
+        expect(list.name, 'Groceries');
+      });
+
+      test('rename refuses a blank name', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await expectLater(
+          endpoints.list.rename(as(aliceId), list.id!, '  '),
+          throwsA(isA<ValidationException>()),
+        );
+      });
+
+      test('a display name is refused when blank and stored trimmed', () async {
+        // A profile row needs a real auth user (see the members group).
+        final userId = (await AuthServices.instance.authUsers.create(
+          sessionBuilder.build(),
+        )).id.uuid;
+        await expectLater(
+          endpoints.profile.setDisplayName(as(userId), '   '),
+          throwsA(
+            isA<ValidationException>().having(
+              (e) => e.field,
+              'field',
+              'displayName',
+            ),
+          ),
+        );
+        final profile = await endpoints.profile.setDisplayName(
+          as(userId),
+          ' Alice ',
+        );
+        expect(profile.displayName, 'Alice');
+      });
+    });
   });
 }

@@ -247,6 +247,14 @@ abstract final class ItemService {
       // Same for who checked it: the app only says IF it's checked. The
       // server fills in WHO and WHEN from the session. Otherwise someone
       // could fake "checked off by" someone else.
+      final validName = requireValid(
+        domain.ShoppingItem.validateName(incoming.name),
+      );
+      final validQuantity = requireValid(
+        domain.ShoppingItem.validateQuantity(incoming.quantity),
+      );
+      final cleanNote = domain.ShoppingItem.cleanNoteText(incoming.note?.text);
+
       final now = DateTime.now().toUtc();
       final becameChecked = incoming.isChecked && !stored.isChecked;
       final becameUnchecked = !incoming.isChecked && stored.isChecked;
@@ -254,6 +262,11 @@ abstract final class ItemService {
       final saved = await ShoppingItem.db.updateRow(
         session,
         incoming.copyWith(
+          name: validName,
+          quantity: validQuantity,
+          note: cleanNote == null
+              ? null
+              : incoming.note!.copyWith(text: cleanNote),
           listId: stored.listId,
           addedBy: stored.addedBy,
           createdAt: stored.createdAt,

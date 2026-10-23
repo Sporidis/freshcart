@@ -731,5 +731,38 @@ void main() {
         );
       });
     });
+
+    group('save enforces the domain rules', () {
+      test('a blank name or a quantity below 1 is refused', () async {
+        final list = await aSharedList();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        await expectLater(
+          endpoints.item.save(as(aliceId), milk.copyWith(name: '  ')),
+          throwsA(isA<ValidationException>()),
+        );
+        await expectLater(
+          endpoints.item.save(as(aliceId), milk.copyWith(quantity: 0)),
+          throwsA(isA<ValidationException>()),
+        );
+      });
+
+      test('the name and note are stored cleaned', () async {
+        final list = await aSharedList();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final saved = await endpoints.item.save(
+          as(aliceId),
+          milk.copyWith(
+            name: '  Oat milk ',
+            note: Note(
+              text: '   ',
+              authorId: UuidValue.withValidation(aliceId),
+              updatedAt: DateTime.now().toUtc(),
+            ),
+          ),
+        );
+        expect(saved.name, 'Oat milk');
+        expect(saved.note, isNull);
+      });
+    });
   });
 }

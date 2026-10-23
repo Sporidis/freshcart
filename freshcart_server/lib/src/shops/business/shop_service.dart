@@ -1,3 +1,5 @@
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
+import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:serverpod/serverpod.dart';
@@ -23,9 +25,10 @@ abstract final class ShopService {
     required int colorArgb,
   }) async {
     await ListAccess.requireMember(session, listId, userId);
+    final validName = requireValid(domain.Shop.validateName(name));
     return Shop.db.insertRow(
       session,
-      Shop(listId: listId, name: name, colorArgb: colorArgb),
+      Shop(listId: listId, name: validName, colorArgb: colorArgb),
     );
   }
 
@@ -41,11 +44,12 @@ abstract final class ShopService {
       userId,
     );
 
+    final validName = requireValid(domain.Shop.validateName(incoming.name));
     // listId is set by the server only (like items), so a shop can't be
     // moved to another list.
     return Shop.db.updateRow(
       session,
-      incoming.copyWith(listId: stored.listId),
+      incoming.copyWith(listId: stored.listId, name: validName),
     );
   }
 
