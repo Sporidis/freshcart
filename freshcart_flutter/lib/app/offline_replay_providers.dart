@@ -5,7 +5,7 @@ import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -15,7 +15,7 @@ part 'offline_replay_providers.g.dart';
 @Riverpod(keepAlive: true)
 QueueDrainer queueDrainer(Ref ref) => QueueDrainer(
   ref.watch(pendingOperationsQueueProvider),
-  ref.watch(itemRepositoryForReplayProvider),
+  ref.watch(remoteItemRepositoryProvider),
   ref.watch(listRepositoryForReplayProvider),
 );
 
