@@ -51,9 +51,10 @@ void main() {
   Future<ProviderContainer> pump(
     WidgetTester tester, {
     required ShoppingList list,
+    List<ShoppingList> otherLists = const [],
     String? currentUserId,
   }) async {
-    repository.myListsResult = Ok([list]);
+    repository.myListsResult = Ok([list, ...otherLists]);
     repository.byIdResult = Ok(list);
     final container = ProviderContainer(
       overrides: [
@@ -107,6 +108,35 @@ void main() {
     expect(
       tester.widget<TextField>(nameField()).controller?.text,
       'Groceries',
+    );
+  });
+
+  testWidgets('switching lists shows the other list\'s name, not the old '
+      'text', (tester) async {
+    final groceries = buildList(
+      id: '00000000-0000-4000-8000-000000000001',
+      name: 'Groceries',
+      members: [buildMember()],
+    );
+    final party = buildList(
+      id: '00000000-0000-4000-8000-000000000002',
+      name: 'Party',
+      members: [buildMember()],
+    );
+    await pump(tester, list: groceries, otherLists: [party]);
+
+    // An unsaved edit, so a field that survived the switch would show it.
+    // go_router keys each page by its path, so a new list id builds a new
+    // screen; this guards that from turning into an in-place update.
+    await tester.enterText(nameField(), 'Weekly Groceries');
+    repository.byIdResult = Ok(party);
+    await tester.tap(find.text('MANAGING'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Party'));
+    await tester.pumpAndSettle();
+    expect(
+      tester.widget<TextField>(nameField()).controller?.text,
+      'Party',
     );
   });
 
