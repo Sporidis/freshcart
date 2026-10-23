@@ -9,7 +9,7 @@ import 'package:freshcart_flutter/features/shops/application/shop_color_preview/
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/presentation/screens/manage_shops_screen.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/dashed_add_row.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 import '../../../../fakes/fake_shop_repository.dart';
@@ -63,7 +63,7 @@ void main() {
       await tester.tap(find.text('Add shop'));
       await tester.pumpAndSettle();
 
-      final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+      final sheet = tester.widget<ShopSheet>(find.byType(ShopSheet));
       expect(sheet.shop, isNull, reason: 'create mode, not editing anything');
       expect(find.text('Add shop'), findsWidgets);
     });
@@ -78,7 +78,7 @@ void main() {
       await tester.tap(find.byType(DashedAddRow));
       await tester.pumpAndSettle();
 
-      final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+      final sheet = tester.widget<ShopSheet>(find.byType(ShopSheet));
       expect(sheet.shop, isNull);
       // The existing shop is still a sibling, for the clash warning.
       expect(sheet.siblings, hasLength(1));
@@ -99,7 +99,7 @@ void main() {
       // button, so target the button specifically.
       await tester.tap(
         find.descendant(
-          of: find.byType(EditShopSheet),
+          of: find.byType(ShopSheet),
           matching: find.widgetWithText(ElevatedButton, 'Add shop'),
         ),
       );
@@ -107,7 +107,7 @@ void main() {
 
       expect(shops.createCalls.single.name, 'Aldi');
       expect(shops.createCalls.single.listId, listId);
-      expect(find.byType(EditShopSheet), findsNothing);
+      expect(find.byType(ShopSheet), findsNothing);
       expect(
         shops.byListCallCount,
         greaterThan(callsBefore),
@@ -126,13 +126,13 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(
         find.descendant(
-          of: find.byType(EditShopSheet),
+          of: find.byType(ShopSheet),
           matching: find.widgetWithText(ElevatedButton, 'Add shop'),
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.byType(EditShopSheet), findsOneWidget);
+      expect(find.byType(ShopSheet), findsOneWidget);
       expect(find.text('Give the shop a name'), findsOneWidget);
     });
   });
@@ -159,7 +159,7 @@ void main() {
 
     await tester.tap(find.text('Albert Heijn'));
     await tester.pumpAndSettle();
-    expect(find.byType(EditShopSheet), findsOneWidget);
+    expect(find.byType(ShopSheet), findsOneWidget);
 
     await tester.tap(find.byKey(const ValueKey('swatch-$orange')));
     await tester.pumpAndSettle();
@@ -234,7 +234,7 @@ void main() {
     expect(container.read(shopColorPreviewControllerProvider), isNotNull);
 
     // Dismiss without saving.
-    Navigator.of(tester.element(find.byType(EditShopSheet))).pop();
+    Navigator.of(tester.element(find.byType(ShopSheet))).pop();
     await tester.pumpAndSettle();
 
     expect(

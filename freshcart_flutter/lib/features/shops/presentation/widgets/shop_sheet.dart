@@ -18,10 +18,10 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// When editing, tapping a colour changes the shop's colour behind the
 /// sheet right away, so the user sees how it really looks. When creating,
 /// there's nothing behind the sheet to recolour yet, so no preview.
-class EditShopSheet extends ConsumerStatefulWidget {
+class ShopSheet extends ConsumerStatefulWidget {
   /// Creates the sheet. Pass `shop: null` to create a new shop instead of
   /// editing an existing one.
-  const EditShopSheet({
+  const ShopSheet({
     required this.shop,
     required this.siblings,
     required this.onSave,
@@ -42,10 +42,10 @@ class EditShopSheet extends ConsumerStatefulWidget {
   onSave;
 
   @override
-  ConsumerState<EditShopSheet> createState() => _EditShopSheetState();
+  ConsumerState<ShopSheet> createState() => _ShopSheetState();
 }
 
-class _EditShopSheetState extends ConsumerState<EditShopSheet> {
+class _ShopSheetState extends ConsumerState<ShopSheet> {
   late final TextEditingController _name = TextEditingController(
     text: widget.shop?.name ?? '',
   );

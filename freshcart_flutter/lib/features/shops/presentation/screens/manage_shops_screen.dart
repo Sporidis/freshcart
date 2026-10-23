@@ -19,7 +19,7 @@ import 'package:freshcart_flutter/features/shops/application/shop/shop_providers
 import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/dashed_add_row.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The screen to manage one list's shops.
@@ -191,7 +191,7 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
   Future<void> _edit(Translations t) async {
     await showAppSheet<void>(
       context: context,
-      builder: (_) => EditShopSheet(
+      builder: (_) => ShopSheet(
         shop: shop,
         siblings: widget.siblings,
         onSave: ({required name, required color}) async =>

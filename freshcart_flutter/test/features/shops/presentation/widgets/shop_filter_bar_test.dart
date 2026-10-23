@@ -117,7 +117,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // The sheet itself, not just the tooltip -- "Shop name" only exists
-      // once EditShopSheet is actually open.
+      // once ShopSheet is actually open.
       expect(
         find.text(container.read(translationsProvider).shops.nameLabel),
         findsOneWidget,

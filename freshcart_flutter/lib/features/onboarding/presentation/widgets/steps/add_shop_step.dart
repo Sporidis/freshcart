@@ -12,8 +12,8 @@ import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_step_header.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_sheet.dart';
 
 /// Step 3: pick your shops (design v3).
 ///
@@ -64,7 +64,7 @@ class AddShopStep extends ConsumerWidget {
                     // Drafts aren't saved shops yet, so there's nothing to
                     // clash with; the name follows the same rule as a real
                     // shop's.
-                    builder: (_) => EditShopSheet(
+                    builder: (_) => ShopSheet(
                       shop: null,
                       siblings: const [],
                       onSave: ({required name, required color}) async {

@@ -16,7 +16,7 @@ import 'package:freshcart_flutter/features/lists/data/repositories/list_reposito
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/error_screen.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/edit_shop_sheet.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -236,7 +236,7 @@ void main() {
     await tester.tap(addShop);
     await tester.pumpAndSettle();
 
-    final sheet = tester.widget<EditShopSheet>(find.byType(EditShopSheet));
+    final sheet = tester.widget<ShopSheet>(find.byType(ShopSheet));
     expect(sheet.shop, isNull, reason: 'create mode, not editing anything');
     expect(sheet.siblings, [colruyt], reason: 'for the clash warning');
   });
