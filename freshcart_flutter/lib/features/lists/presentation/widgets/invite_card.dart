@@ -1,22 +1,18 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
+import 'package:freshcart_flutter/core/ui/copy_to_clipboard.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The list's join code, with a copy button.
 ///
 /// After copying, the button shows a checkmark for 1.6 s. No snackbar,
 /// because it would cover the code.
-class InviteCard extends ConsumerStatefulWidget {
+class InviteCard extends StatelessWidget {
   /// Creates the card for [joinCode].
   const InviteCard({required this.joinCode, required this.t, super.key});
 
@@ -25,33 +21,6 @@ class InviteCard extends ConsumerStatefulWidget {
 
   /// Translations for the active locale.
   final Translations t;
-
-  @override
-  ConsumerState<InviteCard> createState() => _InviteCardState();
-}
-
-class _InviteCardState extends ConsumerState<InviteCard> {
-  static const Duration _held = Duration(milliseconds: 1600);
-
-  bool _copied = false;
-  Timer? _reset;
-
-  @override
-  void dispose() {
-    _reset?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.joinCode));
-    ref.haptic(HapticFeedback.lightImpact);
-    if (!mounted) return;
-    setState(() => _copied = true);
-    _reset?.cancel();
-    _reset = Timer(_held, () {
-      if (mounted) setState(() => _copied = false);
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,26 +42,29 @@ class _InviteCardState extends ConsumerState<InviteCard> {
         children: [
           Expanded(
             child: SelectableText(
-              widget.joinCode,
+              joinCode,
               style: AppTextStyles.codeLarge.copyWith(
                 color: theme.colorScheme.onSurface,
               ),
             ),
           ),
-          IconButton(
-            onPressed: _copy,
-            tooltip: widget.t.household.copyCode,
-            icon: AnimatedSwitcher(
-              duration: AppMotion.durationFor(context, AppMotion.quick),
-              child: _copied
-                  ? const Icon(
-                      Icons.check_circle,
-                      key: ValueKey('copied'),
-                      // Our own success green. Not `tertiary`: in our theme
-                      // that's a random colour, not green.
-                      color: AppColors.success,
-                    )
-                  : const Icon(Icons.copy_outlined, key: ValueKey('copy')),
+          CopyToClipboard(
+            text: joinCode,
+            builder: (context, copied, copy) => IconButton(
+              onPressed: copy,
+              tooltip: t.household.copyCode,
+              icon: AnimatedSwitcher(
+                duration: AppMotion.durationFor(context, AppMotion.quick),
+                child: copied
+                    ? const Icon(
+                        Icons.check_circle,
+                        key: ValueKey('copied'),
+                        // Our own success green. Not `tertiary`: in our theme
+                        // that's a random colour, not green.
+                        color: AppColors.success,
+                      )
+                    : const Icon(Icons.copy_outlined, key: ValueKey('copy')),
+              ),
             ),
           ),
         ],

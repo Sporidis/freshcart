@@ -1,9 +1,5 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
@@ -11,6 +7,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
+import 'package:freshcart_flutter/core/ui/copy_to_clipboard.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';
@@ -108,73 +105,48 @@ class _CodeBoxes extends StatelessWidget {
 
 /// A 44px outlined pill: "Copy code", then "Copied" with a tick for a
 /// moment. No toast, so nothing covers the code (same as `InviteCard`).
-class _CopyCodePill extends ConsumerStatefulWidget {
+class _CopyCodePill extends StatelessWidget {
   const _CopyCodePill({required this.code, required this.t});
 
   final String code;
   final Translations t;
 
   @override
-  ConsumerState<_CopyCodePill> createState() => _CopyCodePillState();
-}
-
-class _CopyCodePillState extends ConsumerState<_CopyCodePill> {
-  static const Duration _held = Duration(milliseconds: 1600);
-
-  bool _copied = false;
-  Timer? _reset;
-
-  @override
-  void dispose() {
-    _reset?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.code));
-    ref.haptic(HapticFeedback.lightImpact);
-    if (!mounted) return;
-    setState(() => _copied = true);
-    _reset?.cancel();
-    _reset = Timer(_held, () {
-      if (mounted) setState(() => _copied = false);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final t = widget.t;
-    return Semantics(
-      button: true,
-      child: TapTarget(
-        onTap: _copy,
-        child: Container(
-          height: AppSpacing.minTapTarget,
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.pill),
-            border: Border.all(color: scheme.outlineVariant),
-          ),
-          child: AnimatedSwitcher(
-            duration: AppMotion.durationFor(context, AppMotion.quick),
-            child: Row(
-              key: ValueKey(_copied),
-              mainAxisSize: MainAxisSize.min,
-              spacing: AppSpacing.sm,
-              children: [
-                Icon(
-                  _copied ? Icons.check_rounded : Icons.copy_rounded,
-                  size: 16,
-                  color: _copied ? AppColors.success : scheme.onSurface,
-                ),
-                Text(
-                  _copied ? t.household.copied : t.onboarding.copyCode,
-                  style: AppTextStyles.labelStrong.copyWith(
-                    color: scheme.onSurface,
+    return CopyToClipboard(
+      text: code,
+      builder: (context, copied, copy) => Semantics(
+        button: true,
+        child: TapTarget(
+          onTap: copy,
+          child: Container(
+            height: AppSpacing.minTapTarget,
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadii.pill),
+              border: Border.all(color: scheme.outlineVariant),
+            ),
+            child: AnimatedSwitcher(
+              duration: AppMotion.durationFor(context, AppMotion.quick),
+              child: Row(
+                key: ValueKey(copied),
+                mainAxisSize: MainAxisSize.min,
+                spacing: AppSpacing.sm,
+                children: [
+                  Icon(
+                    copied ? Icons.check_rounded : Icons.copy_rounded,
+                    size: 16,
+                    color: copied ? AppColors.success : scheme.onSurface,
                   ),
-                ),
-              ],
+                  Text(
+                    copied ? t.household.copied : t.onboarding.copyCode,
+                    style: AppTextStyles.labelStrong.copyWith(
+                      color: scheme.onSurface,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),

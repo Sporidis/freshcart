@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
@@ -18,6 +16,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
+import 'package:freshcart_flutter/core/ui/copy_to_clipboard.dart';
 import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_chevron.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_option.dart';
@@ -578,70 +577,45 @@ class _MemberRow extends StatelessWidget {
 /// "Invite code   K7M2Q" in mono. Tapping copies the code; the code is
 /// swapped for "Copied" for a moment, so the user sees it worked without a
 /// toast covering the screen (same idea as `InviteCard`).
-class _InviteCodeRow extends ConsumerStatefulWidget {
+class _InviteCodeRow extends StatelessWidget {
   const _InviteCodeRow({required this.code, required this.t});
 
   final String code;
   final Translations t;
 
   @override
-  ConsumerState<_InviteCodeRow> createState() => _InviteCodeRowState();
-}
-
-class _InviteCodeRowState extends ConsumerState<_InviteCodeRow> {
-  static const Duration _held = Duration(milliseconds: 1600);
-
-  bool _copied = false;
-  Timer? _reset;
-
-  @override
-  void dispose() {
-    _reset?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _copy() async {
-    await Clipboard.setData(ClipboardData(text: widget.code));
-    ref.haptic(HapticFeedback.lightImpact);
-    if (!mounted) return;
-    setState(() => _copied = true);
-    _reset?.cancel();
-    _reset = Timer(_held, () {
-      if (mounted) setState(() => _copied = false);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final t = widget.t;
-    return Semantics(
-      hint: t.household.copyCode,
-      child: SettingRow(
-        title: t.household.inviteCode,
-        titleStyle: AppTextStyles.body.copyWith(
-          color: scheme.onSurfaceVariant,
-        ),
-        onTap: _copy,
-        trailing: AnimatedSwitcher(
-          duration: AppMotion.durationFor(context, AppMotion.quick),
-          child: _copied
-              ? Text(
-                  t.household.copied,
-                  key: const ValueKey('copied'),
-                  style: AppTextStyles.labelStrong.copyWith(
-                    color: AppColors.success,
+    return CopyToClipboard(
+      text: code,
+      builder: (context, copied, copy) => Semantics(
+        hint: t.household.copyCode,
+        child: SettingRow(
+          title: t.household.inviteCode,
+          titleStyle: AppTextStyles.body.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+          onTap: copy,
+          trailing: AnimatedSwitcher(
+            duration: AppMotion.durationFor(context, AppMotion.quick),
+            child: copied
+                ? Text(
+                    t.household.copied,
+                    key: const ValueKey('copied'),
+                    style: AppTextStyles.labelStrong.copyWith(
+                      color: AppColors.success,
+                    ),
+                  )
+                : Text(
+                    code,
+                    key: const ValueKey('code'),
+                    style: AppTextStyles.code.copyWith(
+                      color: scheme.onSurface,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 2,
+                    ),
                   ),
-                )
-              : Text(
-                  widget.code,
-                  key: const ValueKey('code'),
-                  style: AppTextStyles.code.copyWith(
-                    color: scheme.onSurface,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 2,
-                  ),
-                ),
+          ),
         ),
       ),
     );
