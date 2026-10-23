@@ -32,8 +32,14 @@ class SplashScreen extends ConsumerWidget {
     // Runs once, when sign-in is done, and goes to the next screen.
     // (main() already started sign-in.)
     ref.listen(isNewIdentityProvider, (previous, next) {
+      // A failed sign-in still opens the app, like being offline on first
+      // launch: the lists screen then shows what's wrong.
+      if (next.hasError) {
+        context.go(Routes.lists);
+        return;
+      }
       final isNew = next.value;
-      if (isNew == null) return; // still loading, or (rare) errored.
+      if (isNew == null) return; // still loading
       context.go(isNew ? Routes.welcome : Routes.lists);
     });
 
@@ -157,8 +163,18 @@ class _PulsingDotsState extends State<_PulsingDots>
 double _sine(double phase) => math.sin(phase * 2 * math.pi);
 
 @Preview(group: 'Onboarding', name: 'Splash', size: previewPhone)
-Widget splashScreenPreview() => previewApp(const SplashScreen());
+Widget splashScreenPreview() => _signingIn(previewApp(const SplashScreen()));
 
 @Preview(group: 'Onboarding', name: 'Splash (dark)', size: previewPhone)
-Widget splashScreenDarkPreview() =>
-    previewApp(const SplashScreen(), brightness: Brightness.dark);
+Widget splashScreenDarkPreview() => _signingIn(
+  previewApp(const SplashScreen(), brightness: Brightness.dark),
+);
+
+/// Keeps sign-in loading forever: the state the splash exists to show.
+/// A preview has no server, so sign-in would fail and navigate away.
+Widget _signingIn(Widget preview) => ProviderScope(
+  overrides: [
+    isNewIdentityProvider.overrideWith((ref) => Completer<bool>().future),
+  ],
+  child: preview,
+);

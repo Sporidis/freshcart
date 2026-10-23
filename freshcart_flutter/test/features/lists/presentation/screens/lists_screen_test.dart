@@ -48,6 +48,8 @@ void main() {
     // null and gets the default "assume membership until it resolves"
     // behavior the menu itself documents.
     String? currentUserId,
+    // Set to make sign-in itself throw.
+    Error? signInError,
   }) async {
     final container = ProviderContainer(
       overrides: [
@@ -60,7 +62,9 @@ void main() {
         // These tests are about ListsScreen itself, not the onboarding gate —
         // a restored (non-new) identity so the router starts on /lists.
         authBootstrapProvider.overrideWith(
-          (ref) async => (authenticated: true, isNewIdentity: false),
+          (ref) async => signInError == null
+              ? (authenticated: true, isNewIdentity: false)
+              : throw signInError,
         ),
         if (currentUserId != null)
           currentUserIdProvider.overrideWith(
@@ -94,6 +98,11 @@ void main() {
       );
       // The empty state carries both exits, so the FAB would be a duplicate.
       expect(find.byType(FloatingActionButton), findsNothing);
+    });
+
+    testWidgets('a sign-in that throws still opens the app', (tester) async {
+      await pump(tester, signInError: StateError('secure storage broke'));
+      expect(find.text('No lists yet'), findsOneWidget);
     });
 
     testWidgets(
