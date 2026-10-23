@@ -6,7 +6,6 @@ import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/app/offline_replay_providers.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
-import 'package:freshcart_flutter/core/theme/reveal/tint_wave.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
@@ -15,6 +14,7 @@ import 'package:freshcart_flutter/features/items/data/repositories/item_reposito
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/tint_wave.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';

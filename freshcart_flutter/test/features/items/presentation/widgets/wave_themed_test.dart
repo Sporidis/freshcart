@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
-import 'package:freshcart_flutter/core/theme/reveal/wave_themed.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/wave_themed.dart';
 
 /// A minimal harness: owns the [AnimationController] a [RevealWaveScope]
 /// under test needs, hands it back via [onController] so a test can drive

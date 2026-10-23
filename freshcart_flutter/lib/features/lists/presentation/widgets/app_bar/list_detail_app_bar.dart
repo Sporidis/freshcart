@@ -4,13 +4,10 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/theme/reveal/tint_wave.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
-import 'package:freshcart_flutter/core/ui/member_avatar_stack.dart';
-import 'package:freshcart_flutter/core/ui/mode_bar.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/core/ui/undo_toast.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
@@ -20,6 +17,9 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/move_to_sh
 import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/member_avatar_stack.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/mode_bar.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/tint_wave.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 

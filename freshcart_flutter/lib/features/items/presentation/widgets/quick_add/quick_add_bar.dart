@@ -4,13 +4,13 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/theme/reveal/wave_themed.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_button.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_field.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/suggestion_row.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/wave_themed.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The floating "+" button that opens into a text field to add items.
