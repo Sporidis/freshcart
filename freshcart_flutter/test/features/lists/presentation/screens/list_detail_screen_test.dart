@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_section/items_section.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/tint_wave.dart';
