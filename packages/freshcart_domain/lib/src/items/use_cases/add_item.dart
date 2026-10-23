@@ -29,7 +29,6 @@ class AddItem {
       ).map((validQuantity) => (name: validName, quantity: validQuantity)),
     );
 
-    final trimmedNote = noteText?.trim();
     return switch (validated) {
       Err(:final failure) => Err(failure),
       Ok(:final value) => await _items.add(
@@ -37,9 +36,7 @@ class AddItem {
         name: value.name,
         quantity: value.quantity,
         shopId: shopId,
-        noteText: (trimmedNote == null || trimmedNote.isEmpty)
-            ? null
-            : trimmedNote,
+        noteText: ShoppingItem.cleanNoteText(noteText),
       ),
     };
   }

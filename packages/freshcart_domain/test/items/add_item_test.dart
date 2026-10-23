@@ -29,6 +29,13 @@ void main() {
       expect(items.addCalls.single.name, 'Milk');
     });
 
+    test('trims the note, and sends a blank one as no note', () async {
+      await addItem(listId: testList, name: 'Milk', noteText: '  oat  ');
+      await addItem(listId: testList, name: 'Bread', noteText: '   ');
+
+      expect(items.addCalls.map((call) => call.noteText), ['oat', null]);
+    });
+
     test('rejects a blank name before calling the repository', () async {
       final result = await addItem(listId: testList, name: '   ');
 

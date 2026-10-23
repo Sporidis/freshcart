@@ -70,6 +70,13 @@ abstract class ShoppingItem with _$ShoppingItem {
     return Ok(trimmed);
   }
 
+  /// [text] without spaces at the ends, or null if nothing is left: a
+  /// blank note is no note.
+  static String? cleanNoteText(String? text) {
+    final trimmed = text?.trim();
+    return (trimmed == null || trimmed.isEmpty) ? null : trimmed;
+  }
+
   /// Checks a quantity: at least 1. No maximum, because there's no sensible
   /// limit on how many of something people buy.
   static Result<int> validateQuantity(int quantity) {
@@ -167,15 +174,14 @@ abstract class ShoppingItem with _$ShoppingItem {
     ShopId? shopId,
     String? noteText,
   }) {
-    final trimmedNote = noteText?.trim();
-    final hasNote = trimmedNote != null && trimmedNote.isNotEmpty;
+    final text = cleanNoteText(noteText);
     return copyWith(
       name: name,
       quantity: quantity,
       shopId: shopId,
-      note: hasNote
+      note: text != null
           ? Note(
-              text: trimmedNote,
+              text: text,
               authorId: note?.authorId ?? addedBy,
               updatedAt: at,
             )
