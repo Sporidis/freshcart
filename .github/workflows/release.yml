@@ -1,0 +1,61 @@
+name: Release
+
+# Pushing a version tag (`git tag v0.1.0 && git push origin v0.1.0`) publishes
+# a GitHub Release with the web demo attached as freshcart-demo-web.zip. The
+# portfolio site pins one of these releases and embeds that demo. The Android
+# APK can be attached to the same release later.
+on:
+  push:
+    tags: ['v*']
+
+# Creating the release and uploading its assets.
+permissions:
+  contents: write
+
+env:
+  # Keep in step with ci.yml.
+  FLUTTER_VERSION: '3.47.2'
+
+jobs:
+  web-demo:
+    name: Web demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+
+      # Same generated code as ci.yml: none of it is committed.
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
+      - name: Generate translations
+        working-directory: packages/freshcart_l10n
+        run: dart run slang
+      - name: Generate app code
+        working-directory: freshcart_flutter
+        run: dart run build_runner build
+
+      # build_demo.sh copies its trimmed output into a portfolio checkout's
+      # web/ folder. An empty stand-in folder gives the same result here.
+      - name: Build demo
+        working-directory: freshcart_flutter
+        env:
+          PORTFOLIO: ${{ runner.temp }}/site
+        run: |
+          mkdir -p "$PORTFOLIO/web"
+          ./tool/build_demo.sh
+
+      - name: Package demo
+        working-directory: ${{ runner.temp }}/site/web/demo/freshcart
+        run: zip -qr "$GITHUB_WORKSPACE/freshcart-demo-web.zip" .
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" freshcart-demo-web.zip \
+            --title "$GITHUB_REF_NAME" --generate-notes
