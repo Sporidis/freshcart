@@ -55,6 +55,8 @@ void main() {
         itemRepositoryProvider.overrideWithValue(itemRepository),
         shopRepositoryProvider.overrideWithValue(shopRepository),
         syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
+        // Screen tests, not sync tests: nothing replays the offline queue.
+        queueDrainCoordinatorProvider.overrideWith((ref) {}),
         // These tests are about ListsScreen itself, not the onboarding gate —
         // a restored (non-new) identity so the router starts on /lists.
         authBootstrapProvider.overrideWith(

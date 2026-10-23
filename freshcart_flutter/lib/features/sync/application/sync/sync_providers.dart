@@ -56,8 +56,8 @@ SyncBanner syncBanner(Ref ref) {
 @Riverpod(keepAlive: true)
 QueueDrainer queueDrainer(Ref ref) => QueueDrainer(
   ref.watch(pendingOperationsQueueProvider),
-  ref.watch(itemRepositoryProvider),
-  ref.watch(listRepositoryProvider),
+  ref.watch(itemRepositoryForReplayProvider),
+  ref.watch(listRepositoryForReplayProvider),
 );
 
 /// Sends saved offline changes to the server when we become online.

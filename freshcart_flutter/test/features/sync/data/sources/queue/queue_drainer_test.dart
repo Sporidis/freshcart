@@ -1,12 +1,20 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_lists_store.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/queue_drainer.dart';
 import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
 
+import '../../../../../fakes/dto_builders.dart';
+import '../../../../../fakes/fake_client.dart';
+import '../../../../../fakes/fake_connectivity_adapter.dart';
 import '../../../../../fakes/fake_item_repository.dart';
 import '../../../../../fakes/fake_list_repository.dart';
 
@@ -132,6 +140,84 @@ void main() {
 
         expect(conflicted, isEmpty);
         expect(await queue.getAll(), hasLength(1));
+      },
+    );
+  });
+
+  // The fakes above can't catch this: the re-queuing happens inside the
+  // real repositories' offline fallback, so this group drains through them.
+  group('QueueDrainer.drain with the real repositories', () {
+    late AppDatabase db;
+    late PendingOperationsQueue queue;
+    late FakeClient client;
+    late QueueDrainer drainer;
+
+    setUp(() {
+      db = AppDatabase(NativeDatabase.memory());
+      queue = PendingOperationsQueue(db);
+      client = FakeClient();
+      final connectivity = FakeConnectivityAdapter(const Stream.empty());
+      UserId currentUserId() => UserId(userUuid.uuid);
+      final items = ItemRepositoryImpl(
+        client,
+        queue,
+        connectivity,
+        currentUserId,
+        CachedItemsStore(db),
+        queueWhenUnreachable: false,
+      );
+      final lists = ListRepositoryImpl(
+        client,
+        queue,
+        connectivity,
+        currentUserId,
+        CachedListsStore(db),
+        queueWhenUnreachable: false,
+      );
+      drainer = QueueDrainer(queue, items, lists);
+    });
+
+    tearDown(() => db.close());
+
+    test(
+      'a list op sent while the server is still unreachable stays queued '
+      'as the original, not as a copy',
+      () async {
+        await queue.enqueue(
+          entityType: PendingEntityType.list,
+          opType: PendingOpType.leave,
+          payload: {'id': listUuid.uuid},
+        );
+        final original = (await queue.getAll()).single;
+        client.handler = (_, _, _) =>
+            throw const dto.ServerpodClientException('down', -1);
+
+        await drainer.drain();
+
+        final after = await queue.getAll();
+        expect(after, hasLength(1));
+        expect(after.single.id, original.id);
+      },
+    );
+
+    test(
+      'a server that is still unreachable leaves the original op queued, '
+      'without queuing a copy of it',
+      () async {
+        await queue.enqueue(
+          entityType: PendingEntityType.item,
+          opType: PendingOpType.remove,
+          payload: {'itemId': listUuid.uuid},
+        );
+        final original = (await queue.getAll()).single;
+        client.handler = (_, _, _) =>
+            throw const dto.ServerpodClientException('down', -1);
+
+        await drainer.drain();
+
+        final after = await queue.getAll();
+        expect(after, hasLength(1));
+        expect(after.single.id, original.id);
       },
     );
   });

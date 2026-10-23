@@ -28,13 +28,18 @@ class ListRepositoryImpl implements ListRepository {
     this.queue,
     this._connectivityAdapter,
     this.currentUserId,
-    this._cache,
-  );
+    this._cache, {
+    this.queueWhenUnreachable = true,
+  });
 
   final dto.Client _client;
   final PendingOperationsQueue queue;
   final ConnectivityAdapter _connectivityAdapter;
   final CachedListsStore _cache;
+
+  /// False for the copy that replays the queue: queuing its own failed
+  /// sends would replace the original op with a copy.
+  final bool queueWhenUnreachable;
 
   final UserId Function() currentUserId;
 
@@ -263,14 +268,16 @@ class ListRepositoryImpl implements ListRepository {
   ///
   /// If the server couldn't be reached and [onUnreachable] is given, that
   /// runs instead (for example, to queue the change for later).
-  static Future<Result<T>> _guard<T>(
+  Future<Result<T>> _guard<T>(
     Future<T> Function() body, {
     Future<T> Function()? onUnreachable,
   }) async {
     try {
       return Ok(await retryOnUnreachable(body, maxAttempts: 2));
     } on Object catch (error) {
-      if (isUnreachable(error) && onUnreachable != null) {
+      if (isUnreachable(error) &&
+          onUnreachable != null &&
+          queueWhenUnreachable) {
         return Ok(await onUnreachable());
       }
       return Err(mapExceptionToFailure(error));
@@ -285,7 +292,19 @@ class ListRepositoryImpl implements ListRepository {
 /// Its type is the interface ([ListRepository]), not this class. So the
 /// rest of the app only knows the interface, and tests can swap in a fake.
 @Riverpod(keepAlive: true)
-ListRepository listRepository(Ref ref) => ListRepositoryImpl(
+ListRepository listRepository(Ref ref) =>
+    _buildListRepository(ref, queueWhenUnreachable: true);
+
+/// Supplies the [ListRepository] the queue is replayed through: an
+/// unreachable server comes back as an error instead of being queued.
+@Riverpod(keepAlive: true)
+ListRepository listRepositoryForReplay(Ref ref) =>
+    _buildListRepository(ref, queueWhenUnreachable: false);
+
+ListRepositoryImpl _buildListRepository(
+  Ref ref, {
+  required bool queueWhenUnreachable,
+}) => ListRepositoryImpl(
   ref.watch(serverpodClientProvider),
   ref.watch(pendingOperationsQueueProvider),
   ref.watch(connectivityAdapterProvider),
@@ -295,4 +314,5 @@ ListRepository listRepository(Ref ref) => ListRepositoryImpl(
         'currentUserId not resolved — cannot queue an offline add without a known user',
       )),
   ref.watch(cachedListsStoreProvider),
+  queueWhenUnreachable: queueWhenUnreachable,
 );

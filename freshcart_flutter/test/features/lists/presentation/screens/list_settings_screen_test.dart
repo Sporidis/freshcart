@@ -60,6 +60,8 @@ void main() {
         itemRepositoryProvider.overrideWithValue(itemRepository),
         shopRepositoryProvider.overrideWithValue(shopRepository),
         syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
+        // Screen tests, not sync tests: nothing replays the offline queue.
+        queueDrainCoordinatorProvider.overrideWith((ref) {}),
         authBootstrapProvider.overrideWith(
           (ref) async => (authenticated: true, isNewIdentity: false),
         ),

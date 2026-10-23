@@ -57,6 +57,8 @@ void main() {
         // Real connectivity_plus has no platform to answer in a widget test
         // and never resolves — pumpAndSettle hangs forever without this.
         syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
+        // Screen tests, not sync tests: nothing replays the offline queue.
+        queueDrainCoordinatorProvider.overrideWith((ref) {}),
         authBootstrapProvider.overrideWith(
           (ref) async => (authenticated: true, isNewIdentity: false),
         ),

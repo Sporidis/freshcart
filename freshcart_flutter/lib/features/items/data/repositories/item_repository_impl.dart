@@ -27,12 +27,17 @@ class ItemRepositoryImpl implements ItemRepository {
     this.queue,
     this._connectivityAdapter,
     this.currentUserId,
-    this._cache,
-  );
+    this._cache, {
+    this.queueWhenUnreachable = true,
+  });
 
   final dto.Client _client;
   final PendingOperationsQueue queue;
   final CachedItemsStore _cache;
+
+  /// False for the copy that replays the queue: queuing its own failed
+  /// sends would replace the original op with a copy.
+  final bool queueWhenUnreachable;
 
   /// The signed-in user's id. Read each time it's needed (not once when
   /// the repository is created), so it's always the current one.
@@ -281,14 +286,16 @@ class ItemRepositoryImpl implements ItemRepository {
   static dto.UuidValue _uuid(String value) =>
       dto.UuidValue.withValidation(value);
 
-  static Future<Result<T>> _guard<T>(
+  Future<Result<T>> _guard<T>(
     Future<T> Function() body, {
     Future<T> Function()? onUnreachable,
   }) async {
     try {
       return Ok(await retryOnUnreachable(body, maxAttempts: 2));
     } on Object catch (error) {
-      if (isUnreachable(error) && onUnreachable != null) {
+      if (isUnreachable(error) &&
+          onUnreachable != null &&
+          queueWhenUnreachable) {
         return Ok(await onUnreachable());
       }
       return Err(mapExceptionToFailure(error));
@@ -300,7 +307,19 @@ class ItemRepositoryImpl implements ItemRepository {
 
 /// Supplies the [ItemRepository].
 @Riverpod(keepAlive: true)
-ItemRepository itemRepository(Ref ref) => ItemRepositoryImpl(
+ItemRepository itemRepository(Ref ref) =>
+    _buildItemRepository(ref, queueWhenUnreachable: true);
+
+/// Supplies the [ItemRepository] the queue is replayed through: an
+/// unreachable server comes back as an error instead of being queued.
+@Riverpod(keepAlive: true)
+ItemRepository itemRepositoryForReplay(Ref ref) =>
+    _buildItemRepository(ref, queueWhenUnreachable: false);
+
+ItemRepositoryImpl _buildItemRepository(
+  Ref ref, {
+  required bool queueWhenUnreachable,
+}) => ItemRepositoryImpl(
   ref.watch(serverpodClientProvider),
   ref.watch(pendingOperationsQueueProvider),
   ref.watch(connectivityAdapterProvider),
@@ -310,4 +329,5 @@ ItemRepository itemRepository(Ref ref) => ItemRepositoryImpl(
         'currentUserId not resolved — cannot queue an offline add without a known user',
       )),
   ref.watch(cachedItemsStoreProvider),
+  queueWhenUnreachable: queueWhenUnreachable,
 );
