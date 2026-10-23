@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/clock/clock_provider.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'item_history_providers.g.dart';

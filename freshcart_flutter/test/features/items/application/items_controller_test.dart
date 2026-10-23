@@ -5,7 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 
 import '../../../fakes/fake_item_repository.dart';
 

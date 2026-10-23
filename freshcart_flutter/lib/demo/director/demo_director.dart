@@ -9,7 +9,7 @@ import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_text_controller.dart';
 import 'package:freshcart_flutter/demo/demo_persona.dart';
 import 'package:freshcart_flutter/demo/demo_stage.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_step.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';

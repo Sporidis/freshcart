@@ -5,13 +5,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
-import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
+import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
 
 import '../../../../fakes/dto_builders.dart';
 import '../../../../fakes/fake_client.dart';
@@ -20,12 +22,12 @@ import '../../../../fakes/fake_connectivity_adapter.dart';
 void main() {
   late FakeClient client;
   late AppDatabase db;
-  late ItemRepositoryImpl repository;
+  late ItemRepository repository;
 
   setUp(() {
     client = FakeClient();
     db = AppDatabase(NativeDatabase.memory());
-    repository = ItemRepositoryImpl(
+    repository = offlineOverRemote(
       client,
       PendingOperationsQueue(db),
       // Only the reconnect-specific tests below need a controllable
@@ -38,7 +40,7 @@ void main() {
 
   tearDown(() => db.close());
 
-  group('ItemRepositoryImpl', () {
+  group('offline over remote', () {
     test('byList maps every item to the domain', () async {
       client.handler = (_, _, _) => [
         buildItemDto(),
@@ -132,7 +134,7 @@ void main() {
     );
   });
 
-  group('ItemRepositoryImpl — offline retry/queue (Phase C)', () {
+  group('offline over remote — offline retry/queue (Phase C)', () {
     test(
       'a single transient failure retries and succeeds, without queuing',
       () async {
@@ -185,13 +187,13 @@ void main() {
     );
   });
 
-  group('ItemRepositoryImpl real-time — reconnect (Phase F)', () {
+  group('offline over remote: real-time — reconnect (Phase F)', () {
     test(
       'a WebSocketClosedException mid-stream keeps the last good list and '
       'only re-fetches once reconnected',
       () async {
         final onlineController = StreamController<bool>.broadcast();
-        final repo = ItemRepositoryImpl(
+        final repo = offlineOverRemote(
           client,
           PendingOperationsQueue(db),
           FakeConnectivityAdapter(onlineController.stream),
@@ -257,7 +259,7 @@ void main() {
       'a NotAMemberException mid-stream still ends with one Err, not '
       'treated as recoverable',
       () async {
-        final repo = ItemRepositoryImpl(
+        final repo = offlineOverRemote(
           client,
           PendingOperationsQueue(db),
           FakeConnectivityAdapter(const Stream.empty()),
@@ -286,7 +288,7 @@ void main() {
     );
   });
 
-  group('ItemRepositoryImpl.watchByList — queued changes (Phase E)', () {
+  group('offline over remote: watchByList — queued changes (Phase E)', () {
     test(
       'a change waiting in the queue shows as pending, and clears once it '
       'leaves the queue',
@@ -336,7 +338,7 @@ void main() {
     );
   });
 
-  group('ItemRepositoryImpl.watchByList — after an offline change syncs', () {
+  group('offline over remote: watchByList — after an offline change syncs', () {
     test(
       'the list re-fetches, so a tick whose live update was missed still '
       'shows (the device trace: back online, tick 1 replayed while the '
@@ -383,4 +385,22 @@ void main() {
       },
     );
   });
+}
+
+/// The item repository the app uses: [OfflineItemRepository] over
+/// [RemoteItemRepository], wired like `itemRepositoryProvider`.
+ItemRepository offlineOverRemote(
+  dto.Client client,
+  PendingOperationsQueue queue,
+  ConnectivityAdapter connectivity,
+  UserId Function() me,
+  CachedItemsStore cache,
+) {
+  final remote = RemoteItemRepository(client, connectivity, cache);
+  return OfflineItemRepository(
+    remote,
+    queue,
+    me,
+    watchServer: remote.watchServer,
+  );
 }
