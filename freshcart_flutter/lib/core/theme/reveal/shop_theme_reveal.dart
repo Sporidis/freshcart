@@ -72,7 +72,7 @@ class ShopThemeRevealState extends State<ShopThemeReveal>
     super.initState();
     _revealController = AnimationController(
       vsync: this,
-      duration: AppMotion.reveal,
+      duration: AppMotion.colorWave,
     )..addStatusListener(_onRevealStatusChanged);
     _fallbackController = AnimationController(
       vsync: this,

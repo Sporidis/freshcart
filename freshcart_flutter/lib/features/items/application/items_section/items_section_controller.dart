@@ -190,10 +190,7 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   // ── Rearrange ───────────────────────────────────────────────────────────
 
-  /// Starts rearrange mode, if [ItemsSectionState.canRearrange] allows it.
-  void startRearrange() {
-    if (state.canRearrange) _ui.startRearrange();
-  }
+  void startRearrange() => _ui.startRearrange();
 
   void stopRearrange() => _ui.stopRearrange();
 

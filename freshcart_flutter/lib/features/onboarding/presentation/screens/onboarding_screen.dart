@@ -29,8 +29,7 @@ import 'package:go_router/go_router.dart';
 /// to. Without this, a user who tapped "Get started" by mistake would be
 /// stuck.) The phone's back gesture does the same, through [PopScope].
 class OnboardingScreen extends ConsumerWidget {
-  final bool isInvited;
-  const OnboardingScreen({super.key, this.isInvited = false});
+  const OnboardingScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -16,7 +16,7 @@ class TintWave extends StatefulWidget {
   const TintWave({
     required this.color,
     required this.originOf,
-    this.duration = AppMotion.reveal,
+    this.duration = AppMotion.colorWave,
     super.key,
   });
 

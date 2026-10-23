@@ -7,24 +7,11 @@ class AppMotion {
   static const Duration quick = Duration(milliseconds: 180);
   static const Duration standard = Duration(milliseconds: 260);
   static const Duration bouncy = Duration(milliseconds: 340);
-  static const Duration sheetIn = Duration(milliseconds: 380);
   static const Duration sheetOut = Duration(milliseconds: 220);
   static const Duration celebrate = Duration(milliseconds: 900);
-  // The colour wave when switching shops. Was 700ms, slow enough to watch
-  // cross the screen (decisions.md #85, #89); design v3 makes it 400ms and
-  // restartable, so a tab switch feels like a tap, not a show (#106).
-  static const Duration reveal = colorWave;
-
-  // Moving between onboarding steps. The old page leaves quickly, then the
-  // new one comes in a bit later, so they never overlap.
-  static const Duration stepOut = Duration(milliseconds: 200);
-  static const Duration stepIn = Duration(milliseconds: 320);
-  static const Duration stepInDelay = Duration(milliseconds: 60);
 
   static const Curve enter = Curves.easeOutCubic;
-  static const Curve exit = Curves.easeInCubic;
   static const Curve pop = Curves.easeOutBack;
-  static const Curve sheet = Curves.easeOutQuint;
   static const Curve press = Curves.easeOut;
 
   // ---- Design v3 interaction tokens (the main prototype) ----
@@ -44,7 +31,11 @@ class AppMotion {
   static const Duration listSlide = Duration(
     milliseconds: 220,
   ); // +24ms stagger, 28px travel
-  static const Duration colorWave = Duration(milliseconds: 400); // restartable
+
+  /// The colour wave when switching shops. Was 700ms, slow enough to watch
+  /// cross the screen (decisions.md #85, #89); design v3 makes it 400ms and
+  /// restartable, so a tab switch feels like a tap, not a show (#106).
+  static const Duration colorWave = Duration(milliseconds: 400);
   static const Duration sharedTitle = Duration(milliseconds: 380);
 
   /// The new list fading in when you switch lists from the drawer (v3's
@@ -52,13 +43,8 @@ class AppMotion {
   static const Duration listSwitch = Duration(milliseconds: 280);
   static const Duration sheetOpen = Duration(milliseconds: 440);
   static const Duration sheetClose = Duration(milliseconds: 300);
-  static const Duration drawerOpen = Duration(milliseconds: 360);
-  static const Duration drawerClose = Duration(milliseconds: 260);
-  static const Duration push = Duration(milliseconds: 350);
   static const Duration fabRollOpen = Duration(milliseconds: 380);
   static const Duration fabRollClose = Duration(milliseconds: 280);
-  static const Duration holdDelay = Duration(milliseconds: 450);
-  static const Duration holdMenuIn = Duration(milliseconds: 340);
 
   /// The ink mode bar replacing the header (Select, Rearrange).
   static const Duration modeBar = Duration(milliseconds: 340);
@@ -71,7 +57,6 @@ class AppMotion {
   static const Duration batchMove = Duration(milliseconds: 480);
   static const Duration batchStagger = Duration(milliseconds: 45);
   static const Duration reflow = Duration(milliseconds: 380);
-  static const Duration toastIn = Duration(milliseconds: 380);
   static const Duration toastHold = Duration(milliseconds: 3400);
   static const Duration onboardingStep = Duration(
     milliseconds: 340,

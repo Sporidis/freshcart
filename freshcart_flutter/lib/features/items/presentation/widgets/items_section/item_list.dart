@@ -129,9 +129,7 @@ class ItemList extends StatelessWidget {
                     ? () => vm.toggleSelection(item.id)
                     : null,
                 // Only open rows (not checked ones) can start rearranging.
-                onRearrange: selectable && state.canRearrange
-                    ? vm.startRearrange
-                    : null,
+                onRearrange: selectable ? vm.startRearrange : null,
                 dragHandle: index == null
                     ? null
                     : ReorderableDragStartListener(

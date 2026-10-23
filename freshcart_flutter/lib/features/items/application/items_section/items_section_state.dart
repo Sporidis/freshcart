@@ -99,9 +99,6 @@ class ItemsSectionState {
 
   bool get isEmpty => _visible.isEmpty;
 
-  /// Whether rearranging is allowed. Always true right now (on every tab).
-  bool get canRearrange => true;
-
   /// True for a brand-new empty list (on "All"). The add button then pulses
   /// to get attention.
   bool get firstRun => shopFilter == null && allItems.isEmpty;
