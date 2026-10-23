@@ -9,7 +9,6 @@ import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
@@ -19,15 +18,16 @@ import 'package:freshcart_flutter/features/shops/data/repositories/shop_reposito
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../../fakes/fake_item_repository.dart';
-import '../../../../fakes/fake_list_repository.dart';
-import '../../../../fakes/fake_shop_repository.dart';
-
 /// Covers the scoping Priority 0 item #2 of `docs/upgrade-design-guide.md`
 /// asks for: a shop's colour reaches the list-detail subtree it belongs to,
 /// and nothing outside it -- not the drawer, not the app bar's own chrome.
 /// `app_shell_test.dart`'s "theming" group used to cover the *old*,
 /// app-wide mechanism this replaced; this file is its replacement.
+import '../../../../fakes/fake_auth_repository.dart';
+import '../../../../fakes/fake_item_repository.dart';
+import '../../../../fakes/fake_list_repository.dart';
+import '../../../../fakes/fake_shop_repository.dart';
+
 void main() {
   setUpAll(configurePluralResolvers);
 
@@ -60,9 +60,7 @@ void main() {
         syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
         // Screen tests, not sync tests: nothing replays the offline queue.
         queueDrainCoordinatorProvider.overrideWith((ref) {}),
-        authBootstrapProvider.overrideWith(
-          (ref) async => (authenticated: true, isNewIdentity: false),
-        ),
+        signInResultProvider.overrideWith((ref) async => Ok(aSignIn())),
         currentUserIdProvider.overrideWith(
           (ref) async => Ok(UserId('user-1')),
         ),

@@ -1,9 +1,5 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
-import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
-
-part 'anonymous_session_bootstrap.g.dart';
 
 // `client.auth` comes from an extension in the import above.
 
@@ -44,14 +40,3 @@ abstract final class AnonymousSessionBootstrap {
     }
   }
 }
-
-/// Signs the user in, and says whether they're a brand-new user.
-///
-/// `SplashScreen` watches this and stays visible until it's done.
-/// `main()` starts it early so it begins one frame sooner.
-@Riverpod(keepAlive: true)
-Future<({bool authenticated, bool isNewIdentity})> authBootstrap(
-  Ref ref,
-) => AnonymousSessionBootstrap.ensureSignedIn(
-  ref.watch(serverpodClientProvider),
-);

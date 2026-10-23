@@ -23,10 +23,11 @@ class FakeAuth implements AuthPort {
   Stream<AuthUser?> authStateChanges() => _db.watch(() => currentUser);
 
   @override
-  Future<Result<AuthUser>> signInAnonymously() async {
+  Future<Result<SignIn>> ensureSignedIn() async {
     await _db.latency();
     return switch (currentUser) {
-      final user? => Ok(user),
+      // A persona without a name hasn't been through onboarding yet.
+      final user? => Ok((user: user, isNewAccount: user.displayName.isEmpty)),
       null => const Err(Failure.unauthorized()),
     };
   }
@@ -57,7 +58,10 @@ class FakeAuth implements AuthPort {
   Future<Result<AuthUser>> clearAvatarPhoto() async {
     await _db.latency();
     // The demo never has a photo, so there is nothing to clear.
-    return signInAnonymously();
+    return switch (currentUser) {
+      final user? => Ok(user),
+      null => const Err(Failure.unauthorized()),
+    };
   }
 
   @override

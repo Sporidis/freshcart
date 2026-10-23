@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
+import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'auth_providers.g.dart';
@@ -19,11 +19,17 @@ Future<Result<UserId>> currentUserId(Ref ref) async =>
 @riverpod
 UserId? signedInUserId(Ref ref) => ref.watch(currentUserIdProvider).dataOrNull;
 
+/// Signs in, once: the only place the app does. `main()` starts it, the
+/// splash screen waits for it, and [ProfileController] reads its user.
+/// After a sign-out it's invalidated, which signs in again.
+@Riverpod(keepAlive: true)
+Future<Result<SignIn>> signInResult(Ref ref) =>
+    ref.watch(authRepositoryProvider).ensureSignedIn();
+
 /// Finishes when sign-in is done. `true` means a brand-new user (show
-/// onboarding), `false` means a returning user.
-///
-/// The splash screen uses this, so it doesn't need to know about the data
-/// layer.
+/// onboarding), `false` a returning one, or a sign-in that failed (the
+/// lists screen then shows what's wrong).
 @riverpod
 Future<bool> isNewIdentity(Ref ref) async =>
-    (await ref.watch(authBootstrapProvider.future)).isNewIdentity;
+    (await ref.watch(signInResultProvider.future)).valueOrNull?.isNewAccount ??
+    false;

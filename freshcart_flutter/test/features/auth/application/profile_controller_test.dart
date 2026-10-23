@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 
@@ -19,10 +20,10 @@ class _PublishingAuth extends FakeAuthRepository {
   Stream<AuthUser?> authStateChanges() => _published.stream;
 
   @override
-  Future<Result<AuthUser>> signInAnonymously() async {
+  Future<Result<SignIn>> ensureSignedIn() async {
     signIns++;
     _published.add(user.valueOrNull);
-    return user;
+    return user.map((u) => (user: u, isNewAccount: false));
   }
 }
 
@@ -47,6 +48,16 @@ void main() {
 
     expect(auth.signIns, 1);
   });
+
+  test(
+    'the app\'s sign-in and the profile sign in once between them',
+    () async {
+      await container.read(signInResultProvider.future);
+      await container.read(profileControllerProvider.future);
+
+      expect(auth.signIns, 1);
+    },
+  );
 
   test(
     'a successful write updates the profile without re-signing in',

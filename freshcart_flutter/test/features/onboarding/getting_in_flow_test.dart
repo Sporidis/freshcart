@@ -5,8 +5,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
@@ -54,8 +54,8 @@ void main() {
         listRepositoryProvider.overrideWithValue(lists),
         itemRepositoryProvider.overrideWithValue(items),
         shopRepositoryProvider.overrideWithValue(shops),
-        authBootstrapProvider.overrideWith(
-          (ref) async => (authenticated: true, isNewIdentity: isNewIdentity),
+        signInResultProvider.overrideWith(
+          (ref) async => Ok(aSignIn(isNewAccount: isNewIdentity)),
         ),
       ],
     );

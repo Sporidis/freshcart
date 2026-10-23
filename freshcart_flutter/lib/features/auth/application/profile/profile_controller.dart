@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -15,24 +16,24 @@ part 'profile_controller.g.dart';
 class ProfileController extends _$ProfileController {
   AuthPort get _auth => ref.read(authRepositoryProvider);
 
-  /// Signs in (with the saved session, or a new anonymous one), then keeps
-  /// listening for changes to the user.
+  /// The signed-in user (from [signInResultProvider]; this never signs in
+  /// itself), kept up to date with every change.
   @override
   Future<Result<AuthUser>> build() async {
     final auth = ref.watch(authRepositoryProvider);
-    // When a new user arrives, just put it in the state. Don't call
-    // `invalidateSelf()`: that re-runs build(), which signs in, which sends
-    // a new user, which re-runs build()... an endless loop. Only a sign-out
-    // (null) needs a full reload.
+    // When a new user arrives, just put it in the state. Only a sign-out
+    // (null) needs a fresh sign-in, which rebuilds this.
     final subscription = auth.authStateChanges().listen((user) {
       if (user == null) {
-        ref.invalidateSelf();
+        ref.invalidate(signInResultProvider);
       } else {
         state = AsyncData(Ok(user));
       }
     });
     ref.onDispose(subscription.cancel);
-    return auth.signInAnonymously();
+    return (await ref.watch(signInResultProvider.future)).map(
+      (signIn) => signIn.user,
+    );
   }
 
   /// Changes the user's name.
@@ -60,7 +61,8 @@ class ProfileController extends _$ProfileController {
   Future<Failure?> signOut() async {
     switch (await _auth.signOut()) {
       case Ok():
-        ref.invalidateSelf();
+        // A fresh anonymous account, the same as a first launch.
+        ref.invalidate(signInResultProvider);
         return null;
       case Err(:final failure):
         return failure;

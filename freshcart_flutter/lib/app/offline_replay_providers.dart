@@ -4,7 +4,7 @@ import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.da
 import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -35,8 +35,8 @@ void queueDrainCoordinator(Ref ref) {
     try {
       // At app start we can be online before sign-in is done. Draining
       // then would fail with "unauthorized", so wait for it.
-      final session = await ref.read(authBootstrapProvider.future);
-      if (!session.authenticated) return;
+      final signIn = await ref.read(signInResultProvider.future);
+      if (!signIn.isOk) return;
       // Changes the server turned down (someone changed the same thing
       // first) are dropped from the queue; tell the user.
       final conflicted = await ref.read(queueDrainerProvider).drain();

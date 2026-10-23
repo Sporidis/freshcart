@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
+import 'package:freshcart_domain/src/auth/entities/sign_in.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
@@ -17,11 +18,11 @@ abstract interface class AuthPort {
   /// email, sign-out.
   Stream<AuthUser?> authStateChanges();
 
-  /// Creates (or restores) an anonymous account.
-  ///
-  /// Called at first launch, so there's no signup form. The [UserId] never
-  /// changes, also not after [linkGoogle] or [linkEmail].
-  Future<Result<AuthUser>> signInAnonymously();
+  /// Makes sure someone is signed in: restores the saved session, or
+  /// creates an anonymous account (so there's no signup form), and says
+  /// which. The [UserId] never changes, also not after [linkGoogle] or
+  /// [linkEmail].
+  Future<Result<SignIn>> ensureSignedIn();
 
   /// Sets the name others see next to this user's changes.
   ///

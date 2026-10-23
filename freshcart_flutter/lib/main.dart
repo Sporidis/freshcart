@@ -9,7 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_client/freshcart_client.dart';
 import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/data/sources/firebase_messaging_token_source.dart';
 import 'package:freshcart_flutter/features/notifications/data/sources/push_token_source.dart';
@@ -69,11 +69,11 @@ Future<void> main() async {
   // sign-in is running. Starting it here, instead of letting the splash
   // screen start it, just saves one frame.
   unawaited(
-    container.read(authBootstrapProvider.future).then((session) {
+    container.read(signInResultProvider.future).then((signIn) {
       // Registering for push needs a signed-in user, so it waits for sign-in.
       // We don't wait for it to finish: if it fails, the app still works,
       // the user just won't get push notifications.
-      if (session.authenticated) {
+      if (signIn.isOk) {
         unawaited(container.read(pushRepositoryProvider).registerDevice());
       }
     }),

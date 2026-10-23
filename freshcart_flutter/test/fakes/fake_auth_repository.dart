@@ -5,7 +5,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 
 /// An in-memory [AuthPort] for presentation tests.
 class FakeAuthRepository implements AuthPort {
-  /// The identity [signInAnonymously] and the link calls resolve to.
+  /// The identity [ensureSignedIn] and the link calls resolve to.
   Result<AuthUser> user = Ok(
     AuthUser(id: UserId('user-1'), displayName: 'Nikolaos', isAnonymous: true),
   );
@@ -35,8 +35,12 @@ class FakeAuthRepository implements AuthPort {
     _changes.add(next);
   }
 
+  /// Whether [ensureSignedIn] reports a brand-new account.
+  bool isNewAccount = false;
+
   @override
-  Future<Result<AuthUser>> signInAnonymously() async => user;
+  Future<Result<SignIn>> ensureSignedIn() async =>
+      user.map((u) => (user: u, isNewAccount: isNewAccount));
 
   /// Names passed to [setDisplayName], in order.
   final List<String> setDisplayNameCalls = [];
@@ -128,3 +132,14 @@ class FakeAuthRepository implements AuthPort {
   /// Closes the change stream. Call from a test teardown.
   Future<void> dispose() => _changes.close();
 }
+
+/// A successful [AuthPort.ensureSignedIn], for overriding
+/// `signInResultProvider` in tests that don't need a whole fake auth.
+SignIn aSignIn({bool isNewAccount = false}) => (
+  user: AuthUser(
+    id: UserId('user-1'),
+    displayName: 'Nikolaos',
+    isAnonymous: true,
+  ),
+  isNewAccount: isNewAccount,
+);

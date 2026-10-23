@@ -7,7 +7,6 @@ import 'package:freshcart_flutter/app/offline_replay_providers.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
@@ -21,6 +20,7 @@ import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picke
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../../../fakes/fake_auth_repository.dart';
 import '../../../../fakes/fake_item_repository.dart';
 import '../../../../fakes/fake_list_repository.dart';
 import '../../../../fakes/fake_shop_repository.dart';
@@ -62,10 +62,9 @@ void main() {
         queueDrainCoordinatorProvider.overrideWith((ref) {}),
         // These tests are about ListsScreen itself, not the onboarding gate —
         // a restored (non-new) identity so the router starts on /lists.
-        authBootstrapProvider.overrideWith(
-          (ref) async => signInError == null
-              ? (authenticated: true, isNewIdentity: false)
-              : throw signInError,
+        signInResultProvider.overrideWith(
+          (ref) async =>
+              signInError == null ? Ok(aSignIn()) : throw signInError,
         ),
         if (currentUserId != null)
           currentUserIdProvider.overrideWith(

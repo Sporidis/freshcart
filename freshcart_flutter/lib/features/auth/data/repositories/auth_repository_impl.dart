@@ -34,10 +34,21 @@ class AuthRepositoryImpl implements AuthPort {
   Stream<AuthUser?> authStateChanges() => _changes.stream;
 
   @override
-  Future<Result<AuthUser>> signInAnonymously() => _guard(() async {
-    await AnonymousSessionBootstrap.ensureSignedIn(_client);
-    return _refresh();
-  });
+  Future<Result<SignIn>> ensureSignedIn() async {
+    final session = await _guard(
+      () => AnonymousSessionBootstrap.ensureSignedIn(_client),
+    );
+    return switch (session) {
+      Err(:final failure) => Err(failure),
+      // Usually: no internet on first launch.
+      Ok(value: (authenticated: false, isNewIdentity: _)) => const Err(
+        Failure.network(),
+      ),
+      Ok(:final value) => _guard(
+        () async => (user: await _refresh(), isNewAccount: value.isNewIdentity),
+      ),
+    };
+  }
 
   @override
   Future<Result<AuthUser>> setDisplayName(String displayName) =>

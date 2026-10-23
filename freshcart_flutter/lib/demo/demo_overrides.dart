@@ -15,7 +15,6 @@ import 'package:freshcart_flutter/demo/fakes/fake_shop_repository.dart';
 import 'package:freshcart_flutter/demo/fakes/in_memory_preferences_store.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/avatar_photo_source.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
@@ -51,10 +50,6 @@ ProviderContainer createPhoneContainer(DemoBackend db, DemoPersona persona) {
       authRepositoryProvider.overrideWithValue(FakeAuth(db, me)),
       pushRepositoryProvider.overrideWithValue(FakePush()),
       currentUserIdProvider.overrideWith((ref) async => Ok(me)),
-      // A brand-new identity, so the splash screen goes to Welcome.
-      authBootstrapProvider.overrideWith(
-        (ref) async => (authenticated: true, isNewIdentity: true),
-      ),
       // Always online with nothing queued: no connectivity_plus, no drift.
       syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
       pendingWriteCountProvider.overrideWith((ref) => Stream.value(0)),

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/offline_replay_providers.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
@@ -9,7 +10,9 @@ import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
+
+import '../fakes/fake_auth_repository.dart';
 
 /// Counts how often [drain] is called. Set [gate] to keep a drain "running"
 /// until the test completes it.
@@ -40,8 +43,9 @@ void main() {
       overrides: [
         syncProvider.overrideWith((ref) => status.stream),
         queueDrainerProvider.overrideWithValue(drainer),
-        authBootstrapProvider.overrideWith(
-          (ref) async => (authenticated: signedIn, isNewIdentity: false),
+        signInResultProvider.overrideWith(
+          (ref) async =>
+              signedIn ? Ok(aSignIn()) : const Err(Failure.network()),
         ),
       ],
     );

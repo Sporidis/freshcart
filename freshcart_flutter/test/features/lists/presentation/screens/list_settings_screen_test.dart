@@ -10,7 +10,6 @@ import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
-import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
@@ -19,10 +18,6 @@ import 'package:freshcart_flutter/features/shops/data/repositories/shop_reposito
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import '../../../../fakes/fake_item_repository.dart';
-import '../../../../fakes/fake_list_repository.dart';
-import '../../../../fakes/fake_shop_repository.dart';
 
 /// Reached only through the real journey (drawer -> Settings -> tapping the
 /// list's own row under "Your lists"), not by constructing the screen
@@ -34,6 +29,11 @@ import '../../../../fakes/fake_shop_repository.dart';
 /// each opening straight into that list's own settings ("Shops and
 /// household belong to a list. Pick one to manage it.") -- so the door this
 /// suite exercises is a specific list's row, by name.
+import '../../../../fakes/fake_auth_repository.dart';
+import '../../../../fakes/fake_item_repository.dart';
+import '../../../../fakes/fake_list_repository.dart';
+import '../../../../fakes/fake_shop_repository.dart';
+
 void main() {
   setUpAll(configurePluralResolvers);
 
@@ -63,9 +63,7 @@ void main() {
         syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
         // Screen tests, not sync tests: nothing replays the offline queue.
         queueDrainCoordinatorProvider.overrideWith((ref) {}),
-        authBootstrapProvider.overrideWith(
-          (ref) async => (authenticated: true, isNewIdentity: false),
-        ),
+        signInResultProvider.overrideWith((ref) async => Ok(aSignIn())),
         if (currentUserId != null)
           currentUserIdProvider.overrideWith(
             (ref) async => Ok(UserId(currentUserId)),

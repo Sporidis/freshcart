@@ -298,7 +298,7 @@ class FakeAuthPort implements AuthPort {
   Stream<AuthUser?> authStateChanges() => throw UnimplementedError();
 
   @override
-  Future<Result<AuthUser>> signInAnonymously() => throw UnimplementedError();
+  Future<Result<SignIn>> ensureSignedIn() => throw UnimplementedError();
 
   @override
   Future<Result<AuthUser>> linkGoogle() => throw UnimplementedError();
