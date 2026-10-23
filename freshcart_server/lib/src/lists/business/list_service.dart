@@ -24,13 +24,14 @@ abstract final class ListService {
   /// Sends the list (with members) to everyone watching it.
   ///
   /// Sends the whole list (not just what changed, like for items), because
-  /// a list is one small row. Not awaited: if sending fails, the save that
-  /// caused it must still succeed.
+  /// a list is one small row. Callers await it after their save, so if
+  /// sending fails the request reports an error even though the save went
+  /// through.
   static Future<void> _announce(Session session, UuidValue listId) async {
     final list = await ShoppingList.db.findById(session, listId);
     if (list == null) return;
-    final withMembers = await _withMembers(session, list);
-    await session.messages.postMessage(channelFor(listId), withMembers);
+    final withProfiles = await _withMemberProfiles(session, list);
+    await session.messages.postMessage(channelFor(listId), withProfiles);
   }
 
   /// All lists [userId] is on, newest first.
@@ -51,7 +52,7 @@ abstract final class ListService {
       orderBy: (t) => t.createdAt,
       orderDescending: true,
     );
-    return Future.wait(lists.map((l) => _withMembers(session, l)));
+    return Future.wait(lists.map((l) => _withMemberProfiles(session, l)));
   }
 
   /// One list by id, if [userId] belongs to it.
@@ -67,7 +68,7 @@ abstract final class ListService {
     final list = await ShoppingList.db.findById(session, listId);
     if (list == null) throw ListNotFoundException();
     await ListAccess.requireMember(session, listId, userId);
-    return _withMembers(session, list);
+    return _withMemberProfiles(session, list);
   }
 
   /// Creates a list owned by [userId], with [userId] as its first member.
@@ -104,7 +105,7 @@ abstract final class ListService {
           );
           return list;
         })
-        .then((list) => _withMembers(session, list));
+        .then((list) => _withMemberProfiles(session, list));
   }
 
   /// Adds [userId] to the list with code [rawCode].
@@ -155,7 +156,7 @@ abstract final class ListService {
         listName: list.name,
       );
     }
-    return _withMembers(session, list);
+    return _withMemberProfiles(session, list);
   }
 
   /// Renames a list. Owner only.
@@ -173,7 +174,7 @@ abstract final class ListService {
       list.copyWith(name: validName),
     );
     await _announce(session, listId);
-    return _withMembers(session, updated);
+    return _withMemberProfiles(session, updated);
   }
 
   /// Sets whether [listId] removes checked items automatically when
@@ -196,7 +197,7 @@ abstract final class ListService {
       list.copyWith(clearCheckedAfterShopping: value),
     );
     await _announce(session, listId);
-    return _withMembers(session, updated);
+    return _withMemberProfiles(session, updated);
   }
 
   /// Removes [userId] from [listId].
@@ -275,7 +276,7 @@ abstract final class ListService {
       newOwnerId,
     );
     final outgoing = await ListAccess.requireMember(session, listId, actorId);
-    if (newOwnerId == actorId) return _withMembers(session, list);
+    if (newOwnerId == actorId) return _withMemberProfiles(session, list);
 
     final updated = await session.db.transaction((transaction) async {
       await ListMember.db.updateRow(
@@ -296,7 +297,7 @@ abstract final class ListService {
     });
 
     await _announce(session, listId);
-    return _withMembers(session, updated);
+    return _withMemberProfiles(session, updated);
   }
 
   /// Item counts for the lists in [listIds] that [userId] is on. For the
@@ -345,7 +346,7 @@ abstract final class ListService {
   /// Every list read and broadcast goes through here, so people always show
   /// with their current profile (decisions.md #98). Two queries per list,
   /// not one per member.
-  static Future<ShoppingList> _withMembers(
+  static Future<ShoppingList> _withMemberProfiles(
     Session session,
     ShoppingList list,
   ) async {
@@ -377,8 +378,9 @@ abstract final class ListService {
   /// Sends every list [userId] is on again, after they changed their name,
   /// colour or photo. So others see the change right away.
   ///
-  /// Not awaited, like [_announce]: the profile is already saved. If sending
-  /// fails, others just see it on their next reload.
+  /// Awaited, like [_announce]: the profile is already saved, so if sending
+  /// fails the request reports an error even though the change went
+  /// through.
   static Future<void> announceMemberChanged(
     Session session,
     UuidValue userId,
