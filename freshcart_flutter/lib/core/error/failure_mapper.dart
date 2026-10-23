@@ -11,7 +11,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 Failure mapExceptionToFailure(Object error) => switch (error) {
   // Our own exceptions, thrown on purpose by the server.
   dto.ListNotFoundException() ||
-  dto.ItemNotFoundException() => const Failure.notFound(),
+  dto.ItemNotFoundException() ||
+  dto.ShopNotFoundException() => const Failure.notFound(),
   dto.NotAMemberException() => const Failure.unauthorized(),
   dto.EditConflictException() => const Failure.conflict(),
   // TODO: this message is hard-coded English, and `toMessage` shows a

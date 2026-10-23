@@ -15,6 +15,10 @@ void main() {
         const Failure.notFound(),
       );
       expect(
+        mapExceptionToFailure(dto.ShopNotFoundException()),
+        const Failure.notFound(),
+      );
+      expect(
         mapExceptionToFailure(dto.NotAMemberException()),
         const Failure.unauthorized(),
       );
