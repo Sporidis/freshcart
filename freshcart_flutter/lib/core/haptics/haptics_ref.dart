@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/haptics/haptics_controller.dart';
+import 'package:freshcart_flutter/core/preferences/haptics_controller.dart';
 
 /// Lets widgets vibrate with `ref.haptic(...)`, respecting the user's setting.
 extension HapticsRef on WidgetRef {
