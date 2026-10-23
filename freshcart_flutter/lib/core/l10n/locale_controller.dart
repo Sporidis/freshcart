@@ -27,11 +27,3 @@ class LocaleController extends _$LocaleController {
     return AppLocale.nl;
   }
 }
-
-/// All the app's texts in the current language.
-///
-/// Uses `translationsFor` (not `buildSync`) so our own plural rules for
-/// Dutch and Tagalog are included. See decisions.md #25.
-@Riverpod(keepAlive: true)
-Translations translations(Ref ref) =>
-    translationsFor(ref.watch(localeControllerProvider));

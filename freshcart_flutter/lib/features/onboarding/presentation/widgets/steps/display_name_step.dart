@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
-import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/name_with_avatar_field.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_entrance.dart';

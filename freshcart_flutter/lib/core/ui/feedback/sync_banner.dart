@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_banner_state.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';

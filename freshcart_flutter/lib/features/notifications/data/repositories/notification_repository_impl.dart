@@ -117,7 +117,8 @@ PushTokenSource pushTokenSource(Ref ref) =>
 
 /// Supplies the [NotificationRepository] (the push repository).
 @Riverpod(keepAlive: true)
-NotificationRepository notificationRepository(Ref ref) => NotificationRepositoryImpl(
-  ref.watch(serverpodClientProvider),
-  ref.watch(pushTokenSourceProvider),
-);
+NotificationRepository notificationRepository(Ref ref) =>
+    NotificationRepositoryImpl(
+      ref.watch(serverpodClientProvider),
+      ref.watch(pushTokenSourceProvider),
+    );

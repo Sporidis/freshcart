@@ -8,8 +8,8 @@ import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 /// A full-width row with a dashed border, like "+ Add another", shown at
 /// the end of a list of cards.
 ///
-/// In the design, a dashed border always means "add something". Used by
-/// onboarding and Manage shops.
+/// In the design, a dashed border always means "add something". Used by Manage
+/// shops.
 class DashedAddRow extends StatelessWidget {
   /// Creates the row.
   const DashedAddRow({required this.label, required this.onTap, super.key});
