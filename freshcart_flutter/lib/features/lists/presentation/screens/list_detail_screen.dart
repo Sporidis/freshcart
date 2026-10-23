@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
-import 'package:freshcart_flutter/core/ui/feedback/offline_banner.dart';
+import 'package:freshcart_flutter/core/ui/feedback/sync_banner.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section.dart';
 import 'package:freshcart_flutter/features/lists/application/list_detail_screen/list_detail_screen_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/list_detail_app_bar.dart';
@@ -145,7 +145,7 @@ class _Body extends StatelessWidget {
     return Column(
       children: [
         // v3 Flow 07: between the header and the tabs.
-        const OfflineSyncingBanner(),
+        const SyncBanner(),
         // The tabs slide away while searching, because search looks in
         // all shops anyway.
         AnimatedSize(

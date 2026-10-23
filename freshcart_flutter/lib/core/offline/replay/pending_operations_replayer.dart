@@ -29,8 +29,12 @@ _ReplayOutcome _outcomeOf(Result<Object?> result) => switch (result) {
 };
 
 /// Sends the changes made offline to the server, once we're back online.
-class QueueDrainer {
-  const QueueDrainer(this._queue, this._itemRepository, this._listRepository);
+class PendingOperationsReplayer {
+  const PendingOperationsReplayer(
+    this._queue,
+    this._itemRepository,
+    this._listRepository,
+  );
 
   final PendingOperationsQueue _queue;
   final ItemRepository _itemRepository;
@@ -41,7 +45,7 @@ class QueueDrainer {
   /// Returns the changes that were dropped because of a conflict, so the
   /// app can tell the user. Changes that failed for other reasons stay in
   /// the queue.
-  Future<List<PendingOperation>> drain() async {
+  Future<List<PendingOperation>> replayAll() async {
     final ops = await _queue.getAll();
     // Temporary id -> real id from the server, filled in as "create"
     // operations succeed. Later changes to the same item use it.

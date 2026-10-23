@@ -328,7 +328,7 @@ void main() {
         final eggs = events.last.singleWhere((i) => i.name == 'Eggs');
         expect(eggs.pending, isTrue);
 
-        // Back online: the drainer sent it and took it off the queue.
+        // Back online: the replayer sent it and took it off the queue.
         for (final op in await queue.getAll()) {
           await queue.remove(op.id);
         }
@@ -371,7 +371,7 @@ void main() {
         await pumpEventQueue();
         expect(events.last.single.isChecked, isTrue);
 
-        // Back online: the drainer sends it (the server now has it ticked)
+        // Back online: the replayer sends it (the server now has it ticked)
         // and takes it off the queue. No live update arrives.
         checked = true;
         for (final op in await queue.getAll()) {

@@ -20,7 +20,7 @@ import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload
 /// after a restart), and it clears at the moment the change leaves the
 /// queue, never earlier or later.
 ///
-/// The changes are replayed in the order they were made, as the drainer
+/// The changes are replayed in the order they were made, as the replayer
 /// will send them. A change for another list, or for a row that isn't
 /// here, is skipped.
 ///

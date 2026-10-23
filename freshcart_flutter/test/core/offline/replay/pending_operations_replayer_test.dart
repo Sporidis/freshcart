@@ -9,7 +9,7 @@ import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
-import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
+import 'package:freshcart_flutter/core/offline/replay/pending_operations_replayer.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
 
@@ -20,19 +20,19 @@ import '../../../fakes/fake_item_repository.dart';
 import '../../../fakes/fake_list_repository.dart';
 
 void main() {
-  group('QueueDrainer.drain', () {
+  group('PendingOperationsReplayer.replayAll', () {
     late AppDatabase db;
     late PendingOperationsQueue queue;
     late FakeItemRepository items;
     late FakeListRepository lists;
-    late QueueDrainer drainer;
+    late PendingOperationsReplayer replayer;
 
     setUp(() {
       db = AppDatabase(NativeDatabase.memory());
       queue = PendingOperationsQueue(db);
       items = FakeItemRepository();
       lists = FakeListRepository();
-      drainer = QueueDrainer(queue, items, lists);
+      replayer = PendingOperationsReplayer(queue, items, lists);
     });
 
     tearDown(() => db.close());
@@ -64,7 +64,7 @@ void main() {
           payload: editedItem.toQueuePayload(),
         );
 
-        final conflicted = await drainer.drain();
+        final conflicted = await replayer.replayAll();
 
         expect(conflicted, isEmpty);
         expect(items.addCalls, hasLength(1));
@@ -76,7 +76,7 @@ void main() {
 
     test(
       'rewrites a listId that points at a list created earlier in the '
-      'same drain',
+      'same replay',
       () async {
         lists.createResult = Ok(buildList(id: 'real-list-id'));
         items.addResult = Ok(buildItem(id: 'real-item-id'));
@@ -100,7 +100,7 @@ void main() {
           },
         );
 
-        final conflicted = await drainer.drain();
+        final conflicted = await replayer.replayAll();
 
         expect(conflicted, isEmpty);
         expect(items.addCalls.single.listId, ListId('real-list-id'));
@@ -119,7 +119,7 @@ void main() {
           payload: const {'itemId': 'item-1'},
         );
 
-        final conflicted = await drainer.drain();
+        final conflicted = await replayer.replayAll();
 
         expect(conflicted, hasLength(1));
         expect(conflicted.single.opType, PendingOpType.remove);
@@ -137,7 +137,7 @@ void main() {
           payload: const {'itemId': 'item-1'},
         );
 
-        final conflicted = await drainer.drain();
+        final conflicted = await replayer.replayAll();
 
         expect(conflicted, isEmpty);
         expect(await queue.getAll(), hasLength(1));
@@ -146,12 +146,12 @@ void main() {
   });
 
   // The fakes above can't catch this: the re-queuing happens inside the
-  // real repositories' offline fallback, so this group drains through them.
-  group('QueueDrainer.drain with the real repositories', () {
+  // real repositories' offline fallback, so this group replays through them.
+  group('PendingOperationsReplayer.replayAll with the real repositories', () {
     late AppDatabase db;
     late PendingOperationsQueue queue;
     late FakeClient client;
-    late QueueDrainer drainer;
+    late PendingOperationsReplayer replayer;
 
     setUp(() {
       db = AppDatabase(NativeDatabase.memory());
@@ -168,7 +168,7 @@ void main() {
         connectivity,
         CachedListsStore(db),
       );
-      drainer = QueueDrainer(queue, items, lists);
+      replayer = PendingOperationsReplayer(queue, items, lists);
     });
 
     tearDown(() => db.close());
@@ -186,7 +186,7 @@ void main() {
         client.handler = (_, _, _) =>
             throw const dto.ServerpodClientException('down', -1);
 
-        await drainer.drain();
+        await replayer.replayAll();
 
         final after = await queue.getAll();
         expect(after, hasLength(1));
@@ -207,7 +207,7 @@ void main() {
         client.handler = (_, _, _) =>
             throw const dto.ServerpodClientException('down', -1);
 
-        await drainer.drain();
+        await replayer.replayAll();
 
         final after = await queue.getAll();
         expect(after, hasLength(1));

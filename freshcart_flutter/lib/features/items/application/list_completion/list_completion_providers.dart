@@ -13,7 +13,7 @@ bool allChecked(List<ShoppingItem> items) =>
     items.isNotEmpty && items.every((i) => i.isChecked);
 
 /// Reacts when [list] becomes done, or stops being done. Returns nothing,
-/// it only does things (like `queueDrainCoordinator`).
+/// it only does things (like `replayQueueWhenOnline`).
 ///
 /// - No longer done: forget "Keep list", so the "all done" card shows
 ///   again next time.

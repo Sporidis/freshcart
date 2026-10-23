@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/offline/status/sync_banner.dart';
+import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_banner_state.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
-import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
@@ -20,7 +20,7 @@ import 'package:freshcart_flutter/core/ui/feedback/undo_toast.dart';
 /// - Back online, sending: "Syncing 2 changes…" over a 2px moving line.
 /// - Done: "Up to date" for 1.6s, then the bar folds away.
 ///
-/// [syncBannerProvider] decides offline/syncing/hidden; the short "Up to
+/// [syncBannerStateProvider] decides offline/syncing/hidden; the short "Up to
 /// date" moment is only this widget's, because it's about what the user
 /// just saw (it only shows after syncing, never on a quiet launch).
 ///
@@ -28,18 +28,17 @@ import 'package:freshcart_flutter/core/ui/feedback/undo_toast.dart';
 /// changed the same thing first ([SyncConflictsController]): a toast, the
 /// snackbar tier of decision #42, since the app is fine and the list
 /// already shows what's really there.
-class OfflineSyncingBanner extends ConsumerStatefulWidget {
-  const OfflineSyncingBanner({super.key});
+class SyncBanner extends ConsumerStatefulWidget {
+  const SyncBanner({super.key});
 
   /// How long "Up to date" stays (v3).
   static const Duration upToDateHold = Duration(milliseconds: 1600);
 
   @override
-  ConsumerState<OfflineSyncingBanner> createState() =>
-      _OfflineSyncingBannerState();
+  ConsumerState<SyncBanner> createState() => _OfflineSyncingBannerState();
 }
 
-class _OfflineSyncingBannerState extends ConsumerState<OfflineSyncingBanner> {
+class _OfflineSyncingBannerState extends ConsumerState<SyncBanner> {
   bool _upToDate = false;
   Timer? _hold;
 
@@ -52,7 +51,7 @@ class _OfflineSyncingBannerState extends ConsumerState<OfflineSyncingBanner> {
   void _showUpToDate() {
     _hold?.cancel();
     setState(() => _upToDate = true);
-    _hold = Timer(OfflineSyncingBanner.upToDateHold, () {
+    _hold = Timer(SyncBanner.upToDateHold, () {
       if (mounted) setState(() => _upToDate = false);
     });
   }
@@ -62,7 +61,7 @@ class _OfflineSyncingBannerState extends ConsumerState<OfflineSyncingBanner> {
     final t = ref.watch(translationsProvider);
     // Syncing just finished: say so briefly. Anything else coming in (a
     // new drop, more to send) replaces it straight away.
-    ref.listen(syncBannerProvider, (previous, next) {
+    ref.listen(syncBannerStateProvider, (previous, next) {
       if (previous is SyncBannerSyncing && next is SyncBannerHidden) {
         _showUpToDate();
       } else if (next is! SyncBannerHidden && _upToDate) {
@@ -81,7 +80,7 @@ class _OfflineSyncingBannerState extends ConsumerState<OfflineSyncingBanner> {
       );
     });
 
-    final banner = ref.watch(syncBannerProvider);
+    final banner = ref.watch(syncBannerStateProvider);
     final content = switch (banner) {
       SyncBannerOffline(:final pending) => _Bar(
         key: const ValueKey('offline'),

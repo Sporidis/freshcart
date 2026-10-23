@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
@@ -62,7 +62,9 @@ void main() {
     final container = ProviderContainer(
       overrides: [
         listRepositoryProvider.overrideWithValue(lists),
-        syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
+        connectivityStatusProvider.overrideWith(
+          (ref) => Stream.value(ConnectivityStatus.online),
+        ),
         itemRepositoryProvider.overrideWithValue(items),
         shopRepositoryProvider.overrideWithValue(shops),
         currentUserIdProvider.overrideWith((ref) async => Ok(me)),

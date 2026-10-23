@@ -5,7 +5,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/app/offline_replay_providers.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
@@ -57,9 +57,11 @@ void main() {
         shopRepositoryProvider.overrideWithValue(shopRepository),
         // Real connectivity_plus has no platform to answer in a widget test
         // and never resolves — pumpAndSettle hangs forever without this.
-        syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
+        connectivityStatusProvider.overrideWith(
+          (ref) => Stream.value(ConnectivityStatus.online),
+        ),
         // Screen tests, not sync tests: nothing replays the offline queue.
-        queueDrainCoordinatorProvider.overrideWith((ref) {}),
+        replayQueueWhenOnlineProvider.overrideWith((ref) {}),
         signInResultProvider.overrideWith((ref) async => Ok(aSignIn())),
         currentUserIdProvider.overrideWith(
           (ref) async => Ok(UserId('user-1')),

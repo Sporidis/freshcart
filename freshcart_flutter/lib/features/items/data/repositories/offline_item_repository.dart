@@ -150,7 +150,7 @@ class OfflineItemRepository implements ItemRepository {
   /// The list's items, live, with the changes still waiting in the queue
   /// applied on top (see [applyQueuedItemChanges]). Re-sent whenever
   /// either side changes: a server update, or the queue growing or
-  /// draining.
+  /// replaying.
   @override
   Stream<Result<List<ShoppingItem>>> watchByList(ListId listId) {
     // When a queued change leaves the queue it has reached the server, but

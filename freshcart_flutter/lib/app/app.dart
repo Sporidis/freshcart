@@ -40,7 +40,7 @@ class FreshCartApp extends ConsumerWidget {
 
     // Watching this starts the coordinator that sends queued offline changes
     // to the server when we're back online.
-    ref.watch(queueDrainCoordinatorProvider);
+    ref.watch(replayQueueWhenOnlineProvider);
 
     return SessionResumeObserver(
       child: MaterialApp.router(

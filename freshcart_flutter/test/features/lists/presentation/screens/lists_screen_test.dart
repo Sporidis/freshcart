@@ -5,7 +5,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/app/offline_replay_providers.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
@@ -57,9 +57,11 @@ void main() {
         listRepositoryProvider.overrideWithValue(repository),
         itemRepositoryProvider.overrideWithValue(itemRepository),
         shopRepositoryProvider.overrideWithValue(shopRepository),
-        syncProvider.overrideWith((ref) => Stream.value(SyncStatus.online)),
+        connectivityStatusProvider.overrideWith(
+          (ref) => Stream.value(ConnectivityStatus.online),
+        ),
         // Screen tests, not sync tests: nothing replays the offline queue.
-        queueDrainCoordinatorProvider.overrideWith((ref) {}),
+        replayQueueWhenOnlineProvider.overrideWith((ref) {}),
         // These tests are about ListsScreen itself, not the onboarding gate —
         // a restored (non-new) identity so the router starts on /lists.
         signInResultProvider.overrideWith(

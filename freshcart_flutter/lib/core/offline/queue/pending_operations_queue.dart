@@ -12,7 +12,7 @@ part 'pending_operations_queue.g.dart';
 /// The offline queue: changes that couldn't be sent to the server.
 ///
 /// Saved in the database, so they're not lost if the app is closed.
-/// [QueueDrainer] sends them later. Only this class touches the
+/// [PendingOperationsReplayer] sends them later. Only this class touches the
 /// `pendingOperations` table directly.
 class PendingOperationsQueue {
   const PendingOperationsQueue(this._db);
