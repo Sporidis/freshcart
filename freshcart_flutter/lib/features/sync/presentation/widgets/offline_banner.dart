@@ -1,17 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/undo_toast.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
-import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The quiet bar under the list header that says the list is offline or
 /// catching up (design v3, Flow 07). No colour alarm: being offline is
@@ -190,19 +187,3 @@ class _Bar extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Sync', name: 'Offline bar', size: Size(393, 160))
-Widget offlineBarPreview() => previewPiece(
-  Column(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 12,
-    children: [
-      _Bar(icon: Icons.wifi_off_rounded, message: _t.sync.offline),
-      _Bar(message: _t.sync.syncing(n: 2), progress: true),
-      _Bar(icon: Icons.check_rounded, message: _t.sync.upToDate),
-    ],
-  ),
-  padding: EdgeInsets.zero,
-);
-
-Translations get _t => previewTranslations;

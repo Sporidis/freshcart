@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
@@ -192,25 +190,3 @@ class ModeBarColors {
   /// ink, where the full red would be too dark to read.
   final Color danger;
 }
-
-@Preview(group: 'Core', name: 'Mode bar', size: Size(393, 140))
-Widget modeBarPreview() => previewPiece(
-  Column(
-    children: [
-      ModeBar(
-        title: const Text('3 selected'),
-        onClose: () {},
-        actions: [
-          ModeBarPill(label: 'Move', onTap: () {}),
-          ModeBarPill(label: 'Delete', onTap: () {}, destructive: true),
-        ],
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      ModeBar(
-        title: const Text('Drag to reorder'),
-        subtitle: 'Order for Colruyt',
-        actions: [ModeBarPill(label: 'Done', onTap: () {}, emphasized: true)],
-      ),
-    ],
-  ),
-);

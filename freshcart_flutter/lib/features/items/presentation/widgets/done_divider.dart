@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
@@ -112,25 +110,3 @@ class DoneDivider extends StatelessWidget {
     );
   }
 }
-
-@Preview(
-  group: 'Items',
-  name: 'Done divider · both states',
-  size: Size(393, 160),
-)
-Widget doneDividerPreview() => previewPiece(
-  Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      DoneDivider(
-        label: 'Done · 3',
-        collapsed: false,
-        onToggle: () {},
-        clearLabel: 'Clear',
-        onClear: () {},
-      ),
-      const SizedBox(height: 24),
-      DoneDivider(label: 'Done · 3', collapsed: true, onToggle: () {}),
-    ],
-  ),
-);

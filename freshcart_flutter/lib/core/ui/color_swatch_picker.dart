@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
@@ -168,13 +165,3 @@ class _Swatch extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Core', name: 'Colour swatch picker', size: Size(393, 140))
-Widget colorSwatchPickerPreview() => previewPiece(
-  ColorSwatchPicker(
-    colors: AppColors.presetShopColors,
-    selected: AppColors.swatchPurple,
-    marked: {AppColors.swatchBlue.toARGB32(): 'Used by Albert Heijn'},
-    onSelected: (_) {},
-  ),
-);

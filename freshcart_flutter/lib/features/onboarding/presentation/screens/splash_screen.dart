@@ -2,10 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
@@ -161,20 +159,3 @@ class _PulsingDotsState extends State<_PulsingDots>
 
 /// A smooth up-and-down wave. [phase] 0 to 1 is one full wave.
 double _sine(double phase) => math.sin(phase * 2 * math.pi);
-
-@Preview(group: 'Onboarding', name: 'Splash', size: previewPhone)
-Widget splashScreenPreview() => _signingIn(previewApp(const SplashScreen()));
-
-@Preview(group: 'Onboarding', name: 'Splash (dark)', size: previewPhone)
-Widget splashScreenDarkPreview() => _signingIn(
-  previewApp(const SplashScreen(), brightness: Brightness.dark),
-);
-
-/// Keeps sign-in loading forever: the state the splash exists to show.
-/// A preview has no server, so sign-in would fail and navigate away.
-Widget _signingIn(Widget preview) => ProviderScope(
-  overrides: [
-    isNewIdentityProvider.overrideWith((ref) => Completer<bool>().future),
-  ],
-  child: preview,
-);

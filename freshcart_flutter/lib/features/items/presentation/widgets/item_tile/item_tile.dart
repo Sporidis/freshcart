@@ -1,9 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/checked_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu.dart';
@@ -453,98 +451,3 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     );
   }
 }
-
-void _noop() {}
-void _noopInt(int _) {}
-
-@Preview(group: 'Items', name: 'Item row — list', size: previewPhone)
-Widget itemTilePreview() => previewPiece(
-  ListView(
-    children: [
-      ItemTile(
-        item: _sampleItem(name: 'Pasta', quantity: 2),
-        shopColor: Colors.red,
-        onToggle: _noop,
-        onEdit: _noop,
-        onDelete: _noop,
-        onQuantityChanged: _noopInt,
-        t: previewTranslations,
-      ),
-      ItemTile(
-        item: _sampleItem(
-          name: 'Olive oil',
-          quantity: 1,
-          note: 'Extra virgin, tall bottle',
-        ),
-        shopColor: Colors.green,
-        onToggle: _noop,
-        onEdit: _noop,
-        onDelete: _noop,
-        onQuantityChanged: _noopInt,
-        t: previewTranslations,
-      ),
-      ItemTile(
-        item: _sampleItem(name: 'Bananas', quantity: 6),
-        shopColor: null,
-        onToggle: _noop,
-        onEdit: _noop,
-        onDelete: _noop,
-        onQuantityChanged: _noopInt,
-        t: previewTranslations,
-      ),
-      ItemTile(
-        item: _sampleItem(name: 'Yoghurt', quantity: 4),
-        shopColor: Colors.blue,
-        onToggle: _noop,
-        onEdit: _noop,
-        onDelete: _noop,
-        onQuantityChanged: _noopInt,
-        t: previewTranslations,
-      ),
-      ItemTile(
-        item: _sampleItem(
-          name: 'Ground beef',
-          quantity: 1,
-          note: 'Lean, 500g',
-        ),
-        shopColor: Colors.brown,
-        onToggle: _noop,
-        onEdit: _noop,
-        onDelete: _noop,
-        onQuantityChanged: _noopInt,
-        t: previewTranslations,
-      ),
-      ItemTile(
-        item: _sampleItem(name: 'Chocolate spread', quantity: 1),
-        shopColor: Colors.purple,
-        onToggle: _noop,
-        onEdit: _noop,
-        onDelete: _noop,
-        onQuantityChanged: _noopInt,
-        t: previewTranslations,
-      ),
-    ],
-  ),
-  padding: EdgeInsets.zero,
-);
-
-ShoppingItem _sampleItem({
-  required String name,
-  required int quantity,
-  String? note,
-}) => ShoppingItem(
-  id: ItemId('sample_${name.toLowerCase().replaceAll(' ', '_')}'),
-  listId: ListId('sample_list'),
-  addedBy: UserId('sample_author'),
-  createdAt: DateTime.now(),
-  updatedAt: DateTime.now(),
-  name: name,
-  quantity: quantity,
-  note: note == null
-      ? null
-      : Note(
-          text: note,
-          authorId: UserId('sample_author'),
-          updatedAt: DateTime.now(),
-        ),
-);

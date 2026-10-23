@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
@@ -17,9 +15,6 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/display_name_step.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/steps/invite_step.dart';
 import 'package:go_router/go_router.dart';
-
-@Preview(group: 'Onboarding', name: 'Wizard shell', size: previewPhone)
-Widget onboardingScreenPreview() => previewApp(const OnboardingScreen());
 
 /// The onboarding wizard: your name, list name, shops, then an optional
 /// invite.

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
@@ -145,30 +143,3 @@ class _Dot extends StatelessWidget {
     ),
   );
 }
-
-@Preview(group: 'Shops', name: 'Shop picker pill', size: Size(393, 120))
-Widget shopPickerPillPreview() => previewPiece(
-  Wrap(
-    spacing: AppSpacing.sm,
-    children: [
-      ShopPickerPill(
-        label: 'No shop',
-        color: null,
-        selected: false,
-        onTap: () {},
-      ),
-      ShopPickerPill(
-        label: 'Colruyt',
-        color: AppColors.swatchOrange,
-        selected: true,
-        onTap: () {},
-      ),
-      ShopPickerPill(
-        label: 'Aldi',
-        color: AppColors.swatchBlue,
-        selected: false,
-        onTap: () {},
-      ),
-    ],
-  ),
-);

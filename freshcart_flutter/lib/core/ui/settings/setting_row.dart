@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// The basic settings row: title, optional subtitle, optional things on the
@@ -115,25 +113,3 @@ class SettingChevron extends StatelessWidget {
   Widget build(BuildContext context) =>
       Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outline);
 }
-
-@Preview(group: 'Settings', name: 'Setting row', size: Size(393, 220))
-Widget settingRowPreview() => previewPiece(
-  Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      SettingRow(
-        title: 'Appearance',
-        trailing: const Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [SettingValueText('System'), SettingChevron()],
-        ),
-        onTap: () {},
-      ),
-      const Divider(),
-      const SettingRow(
-        title: 'Larger list text',
-        subtitle: "Easier to read at arm's length in the aisle",
-      ),
-    ],
-  ),
-);

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
@@ -198,10 +196,3 @@ class _SuggestionPill extends StatelessWidget {
     );
   }
 }
-
-@Preview(
-  group: 'Onboarding',
-  name: 'Step 2 · Name the list',
-  size: previewPhone,
-)
-Widget createListStepPreview() => previewPage(const CreateListStep());

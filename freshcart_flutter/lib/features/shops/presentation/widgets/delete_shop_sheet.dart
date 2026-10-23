@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
@@ -218,47 +216,3 @@ class _Dot extends StatelessWidget {
     decoration: BoxDecoration(color: color, shape: BoxShape.circle),
   );
 }
-
-@Preview(
-  group: 'Shops',
-  name: 'Delete shop · holds products',
-  size: Size(393, 560),
-)
-Widget deleteShopSheetPreview() {
-  Shop shop(String id, String name, int argb) => Shop(
-    id: ShopId(id),
-    listId: ListId('list-1'),
-    name: name,
-    color: HexColor.fromArgb(argb),
-  );
-
-  return previewApp(
-    Scaffold(
-      body: DeleteShopSheet(
-        shop: shop('s1', 'Colruyt', 0xFFE8791A),
-        itemCount: 6,
-        siblings: [
-          shop('s1', 'Colruyt', 0xFFE8791A),
-          shop('s2', 'Albert Heijn', 0xFF2456A6),
-        ],
-      ),
-    ),
-  );
-}
-
-/// For an empty shop: there are no items, so there's nothing to decide.
-@Preview(group: 'Shops', name: 'Delete shop · empty', size: Size(393, 360))
-Widget deleteShopSheetEmptyPreview() => previewApp(
-  Scaffold(
-    body: DeleteShopSheet(
-      shop: Shop(
-        id: ShopId('s1'),
-        listId: ListId('list-1'),
-        name: 'Colruyt',
-        color: HexColor.fromArgb(0xFFE8791A),
-      ),
-      itemCount: 0,
-      siblings: const [],
-    ),
-  ),
-);

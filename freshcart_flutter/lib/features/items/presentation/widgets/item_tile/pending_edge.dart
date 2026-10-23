@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 
 /// The "not confirmed yet" mark on a row changed offline (design v3, Flow
@@ -124,20 +122,3 @@ class _DashedLine extends CustomPainter {
   @override
   bool shouldRepaint(_DashedLine oldDelegate) => color != oldDelegate.color;
 }
-
-@Preview(group: 'Items', name: 'Pending edge', size: Size(393, 140))
-Widget pendingEdgePreview() => previewPiece(
-  const Column(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      PendingEdge(
-        pending: true,
-        child: SizedBox(height: 58, child: Center(child: Text('Olive oil'))),
-      ),
-      PendingEdge(
-        pending: false,
-        child: SizedBox(height: 58, child: Center(child: Text('Bananas'))),
-      ),
-    ],
-  ),
-);

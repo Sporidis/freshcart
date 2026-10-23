@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 
 /// A group of settings rows (design v3): a small mono title, an optional
 /// explanation, then [children] on one rounded card with a thin line
@@ -73,21 +70,3 @@ class SettingsSection extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Settings', name: 'Settings section', size: Size(393, 260))
-Widget settingsSectionPreview() => previewPiece(
-  Padding(
-    padding: const EdgeInsets.all(AppSpacing.screen),
-    child: SettingsSection(
-      label: 'Behaviour',
-      subtitle: 'How this list behaves for everyone.',
-      children: [
-        SettingRow(title: 'Rename shops & colours', onTap: () {}),
-        const SettingRow(
-          title: 'Clear checked items automatically',
-          subtitle: 'Once the whole list is checked off.',
-        ),
-      ],
-    ),
-  ),
-);

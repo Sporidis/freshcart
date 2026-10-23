@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
@@ -87,7 +85,3 @@ class _AddShopSheetState extends ConsumerState<AddShopSheet> {
     );
   }
 }
-
-@Preview(group: 'Onboarding', name: 'Add-a-shop sheet', size: Size(393, 520))
-Widget addShopSheetPreview() =>
-    previewApp(Scaffold(body: AddShopSheet(onAdd: (_, _) {})));

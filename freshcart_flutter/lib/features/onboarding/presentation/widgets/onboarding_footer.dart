@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
@@ -80,10 +78,3 @@ class OnboardingFooter extends ConsumerWidget {
     );
   }
 }
-
-@Preview(group: 'Onboarding', name: 'Footer', size: Size(393, 200))
-Widget onboardingFooterPreview() => previewApp(
-  const Scaffold(
-    body: Align(alignment: Alignment.bottomCenter, child: OnboardingFooter()),
-  ),
-);

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/confetti_burst.dart';
@@ -167,30 +165,3 @@ class _CompletionCelebrationCardState extends State<CompletionCelebrationCard>
     );
   }
 }
-
-@Preview(
-  group: 'Items',
-  name: 'Completion celebration',
-  size: Size(393, 220),
-)
-Widget completionCelebrationCardPreview() => previewPiece(
-  CompletionCelebrationCard(
-    list: buildPreviewList(),
-    itemCount: 6,
-    shopColors: const [Colors.orange, Colors.teal, Colors.purple],
-    t: previewTranslations,
-    report: (_) {},
-    onKeep: () {},
-    onClear: () async => null,
-  ),
-  padding: EdgeInsets.zero,
-);
-
-/// A fake [ShoppingList], only for the preview above.
-ShoppingList buildPreviewList() => ShoppingList(
-  id: ListId('00000000-0000-4000-8000-000000000001'),
-  name: 'Weekly Groceries',
-  joinCode: JoinCode.parse('ABC23').valueOrNull!,
-  ownerId: UserId('user-1'),
-  createdAt: DateTime.utc(2026, 9, 9),
-);

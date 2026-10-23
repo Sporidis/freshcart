@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
@@ -285,14 +283,3 @@ class _ActionPill extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Items', name: 'Empty list (v3)', size: Size(393, 520))
-Widget itemsEmptyStatePreview() => previewPiece(
-  ItemsEmptyState(
-    title: 'Your list is empty',
-    body:
-        'Add the first product. Everyone in the household sees it straight away.',
-    actionLabel: 'Add a product',
-    onAction: () {},
-  ),
-);

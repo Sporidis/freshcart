@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_tile.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -36,7 +35,7 @@ void main() {
               onDelete: () {},
               onQuantityChanged: (_) {},
               onMove: (_) {},
-              t: previewTranslations,
+              t: translationsFor(AppLocale.en),
             ),
           ),
         ),

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/failure_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -50,30 +48,3 @@ class ErrorScreen extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'States', name: 'Error · list deleted', size: previewPhone)
-Widget errorScreenDeletedPreview() => previewApp(
-  ErrorScreen(
-    failure: const Failure.notFound(),
-    t: previewTranslations,
-    onExit: () {},
-  ),
-);
-
-@Preview(group: 'States', name: 'Error · no access', size: previewPhone)
-Widget errorScreenNoAccessPreview() => previewApp(
-  ErrorScreen(
-    failure: const Failure.unauthorized(),
-    t: previewTranslations,
-    onExit: () {},
-  ),
-);
-
-@Preview(group: 'States', name: 'Error · unexpected', size: previewPhone)
-Widget errorScreenUnexpectedPreview() => previewApp(
-  ErrorScreen(
-    failure: const Failure.unexpected(),
-    t: previewTranslations,
-    onExit: () {},
-  ),
-);

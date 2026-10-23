@@ -22,9 +22,6 @@ import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-// No @Preview here: the drawer gets its data from the real ListRepository,
-// and previews can't override providers (see preview_harness.dart).
-
 /// The side drawer to switch between lists (design v3). It's the only place
 /// that shows all your lists (decisions.md #68).
 ///

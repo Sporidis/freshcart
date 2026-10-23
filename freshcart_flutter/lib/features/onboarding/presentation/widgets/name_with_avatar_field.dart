@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
@@ -148,26 +146,3 @@ class _NameAvatar extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Onboarding', name: 'Name with avatar', size: Size(393, 200))
-Widget nameWithAvatarFieldPreview() => previewPiece(
-  Column(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 24,
-    children: [
-      NameWithAvatarField(
-        initialValue: 'Alex Janssens',
-        hintText: 'e.g. Alex Janssens',
-        onChanged: (_) {},
-        autofocus: false,
-      ),
-      NameWithAvatarField(
-        initialValue: '',
-        hintText: 'e.g. Alex Janssens',
-        onChanged: (_) {},
-        errorText: 'Please enter your name to continue',
-        autofocus: false,
-      ),
-    ],
-  ),
-);

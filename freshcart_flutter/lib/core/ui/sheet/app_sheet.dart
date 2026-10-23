@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/cascade_in.dart';
@@ -182,16 +180,3 @@ class SheetCloseButton extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Core', name: 'Sheet scaffold', size: Size(393, 320))
-Widget appSheetScaffoldPreview() => previewPiece(
-  const AppSheetScaffold(
-    title: 'Add shop',
-    subtitle: 'Each shop becomes a tab.',
-    children: [
-      TextField(decoration: InputDecoration(hintText: 'e.g. Lidl')),
-      SizedBox(height: AppSpacing.xl),
-      ElevatedButton(onPressed: null, child: Text('Add shop')),
-    ],
-  ),
-);

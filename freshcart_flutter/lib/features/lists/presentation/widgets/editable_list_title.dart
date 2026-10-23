@@ -1,8 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
@@ -156,16 +154,3 @@ class EditableListTitleState extends State<EditableListTitle> {
     );
   }
 }
-
-@Preview(group: 'Lists', name: 'Editable title', size: Size(393, 200))
-Widget editableListTitlePreview() => previewApp(
-  Scaffold(
-    appBar: AppBar(
-      title: EditableListTitle(
-        name: 'Weekly Groceries',
-        onRename: (_) async => null,
-      ),
-    ),
-    body: const Center(child: Text('Tap the title to rename it in place')),
-  ),
-);

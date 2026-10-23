@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 
@@ -56,19 +54,3 @@ class OnboardingStepIndicator extends ConsumerWidget {
     );
   }
 }
-
-@Preview(
-  group: 'Onboarding',
-  name: 'Step dots · all four',
-  size: Size(393, 160),
-)
-Widget onboardingStepIndicatorPreview() => previewPiece(
-  Column(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 24,
-    children: [
-      for (final step in OnboardingStep.values)
-        OnboardingStepIndicator(step: step),
-    ],
-  ),
-);

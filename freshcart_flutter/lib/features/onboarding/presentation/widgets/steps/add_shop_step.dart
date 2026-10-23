@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
@@ -113,6 +111,3 @@ class _AddShopPill extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Onboarding', name: 'Step 3 · Your shops', size: previewPhone)
-Widget addShopStepPreview() => previewPage(const AddShopStep());

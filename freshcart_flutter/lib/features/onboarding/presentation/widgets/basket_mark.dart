@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 
 /// The app logo: a basket, drawn in code (not an image file), so it can be
 /// any colour.
@@ -96,15 +93,3 @@ class _BasketMarkPainter extends CustomPainter {
   bool shouldRepaint(covariant _BasketMarkPainter oldDelegate) =>
       oldDelegate.color != color;
 }
-
-@Preview(group: 'Onboarding', name: 'Basket mark', size: Size(200, 100))
-Widget basketMarkPreview() => previewPiece(
-  const Row(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 24,
-    children: [
-      BasketMark(size: 44, color: AppColors.ink),
-      BasketMark(size: 24, color: AppColors.ink),
-    ],
-  ),
-);

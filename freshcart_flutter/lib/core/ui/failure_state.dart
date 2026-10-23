@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/ui/empty_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
@@ -56,14 +54,3 @@ class FailureState extends StatelessWidget {
     return EmptyState(icon: icon, title: title, body: body, action: action);
   }
 }
-
-@Preview(group: 'States', name: 'Failure · retry', size: previewPhone)
-Widget failureStateRetryPreview() => previewApp(
-  Scaffold(
-    body: FailureState(
-      failure: const Failure.network(),
-      t: previewTranslations,
-      action: ElevatedButton(onPressed: () {}, child: const Text('Retry')),
-    ),
-  ),
-);

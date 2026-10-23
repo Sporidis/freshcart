@@ -1,9 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
@@ -177,36 +174,3 @@ class _ShopTabPillState extends State<ShopTabPill>
     );
   }
 }
-
-@Preview(group: 'Shops', name: 'ShopTabPill · All', size: Size(200, 60))
-Widget shopTabPillAllActivePreview() => previewPiece(
-  const Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      ShopTabPill(label: 'All', active: true, count: 3),
-      SizedBox(width: 8),
-      ShopTabPill(label: 'All', active: false, count: 3),
-    ],
-  ),
-);
-
-@Preview(group: 'Shops', name: 'ShopTabPill · shop', size: Size(240, 60))
-Widget shopTabPillShopPreview() => previewPiece(
-  const Row(
-    mainAxisSize: MainAxisSize.min,
-    children: [
-      ShopTabPill(
-        label: 'Colruyt',
-        active: true,
-        color: AppColors.swatchOrange,
-        count: 4,
-      ),
-      SizedBox(width: 8),
-      ShopTabPill(
-        label: 'Colruyt',
-        active: false,
-        color: AppColors.swatchOrange,
-      ),
-    ],
-  ),
-);

@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_picker_pill.dart';
@@ -59,30 +57,4 @@ class ShopPicker extends StatelessWidget {
       ],
     );
   }
-}
-
-@Preview(group: 'Shops', name: 'Shop picker', size: Size(393, 120))
-Widget shopPickerPreview() {
-  final shops = [
-    Shop(
-      id: ShopId('s1'),
-      listId: ListId('list-1'),
-      name: 'Albert Heijn',
-      color: HexColor.fromArgb(0xFF2456A6),
-    ),
-    Shop(
-      id: ShopId('s2'),
-      listId: ListId('list-1'),
-      name: 'Colruyt',
-      color: HexColor.fromArgb(0xFFE8791A),
-    ),
-  ];
-  return previewPiece(
-    ShopPicker(
-      shops: shops,
-      onSelected: (_) {},
-      t: previewTranslations,
-      isSelected: (id) => id == shops.last.id,
-    ),
-  );
 }

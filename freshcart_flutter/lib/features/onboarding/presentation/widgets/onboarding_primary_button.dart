@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 
 /// The main button on the welcome, onboarding and join screens ("Get
 /// started", "Continue", "Join list", "Start my list").
@@ -45,19 +43,3 @@ class OnboardingPrimaryButton extends StatelessWidget {
     );
   }
 }
-
-@Preview(group: 'Onboarding', name: 'Primary button', size: Size(393, 160))
-Widget onboardingPrimaryButtonPreview() => previewPiece(
-  Column(
-    mainAxisSize: MainAxisSize.min,
-    spacing: 12,
-    children: [
-      OnboardingPrimaryButton(label: 'Continue', onPressed: () {}),
-      OnboardingPrimaryButton(
-        label: 'Continue',
-        onPressed: () {},
-        isLoading: true,
-      ),
-    ],
-  ),
-);

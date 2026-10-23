@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
-import 'package:freshcart_flutter/core/preview/preview_harness.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
@@ -144,68 +142,3 @@ class _FadeAndRiseState extends State<_FadeAndRise>
     );
   }
 }
-
-@Preview(group: 'States', name: 'Empty · new list', size: Size(393, 420))
-Widget emptyNewListPreview() => previewApp(
-  const Scaffold(
-    body: EmptyState(
-      icon: Icons.shopping_basket_outlined,
-      title: 'Nothing on the list yet',
-      body: 'Add your first product below.',
-    ),
-  ),
-);
-
-@Preview(group: 'States', name: 'Empty · shop tab', size: Size(393, 420))
-Widget emptyShopTabPreview() => previewApp(
-  Scaffold(
-    body: EmptyState(
-      icon: Icons.shopping_basket_outlined,
-      title: 'Nothing for Colruyt',
-      body: 'Items you add here will show on this tab.',
-      tint: const Color(0xFFE8791A),
-      action: FilledButton(
-        onPressed: () {},
-        style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFFE8791A),
-          foregroundColor: Colors.white,
-          shape: const StadiumBorder(),
-        ),
-        child: const Text('Add a product'),
-      ),
-    ),
-  ),
-);
-
-@Preview(group: 'States', name: 'Empty · no lists', size: Size(393, 460))
-Widget emptyNoListsPreview() => previewApp(
-  Scaffold(
-    body: EmptyState(
-      icon: Icons.checklist_outlined,
-      title: 'No lists yet',
-      body:
-          'Start one for your household, or join a list someone shared '
-          'with you.',
-      footer: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {},
-              child: const Text('New list'),
-            ),
-          ),
-          const SizedBox(height: 9),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {},
-              child: const Text('Join a list'),
-            ),
-          ),
-        ],
-      ),
-    ),
-  ),
-);
