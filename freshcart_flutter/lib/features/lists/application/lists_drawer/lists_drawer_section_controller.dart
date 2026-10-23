@@ -8,7 +8,7 @@ import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'lists_drawer_controller.g.dart';
+part 'lists_drawer_section_controller.g.dart';
 
 /// The controller for `ListsDrawer`: one row per list, and remembering
 /// which list was opened.
@@ -16,7 +16,7 @@ part 'lists_drawer_controller.g.dart';
 /// Null while loading, and also if loading failed. Then the drawer just
 /// shows no lists. The open list keeps working.
 @riverpod
-class ListsDrawerController extends _$ListsDrawerController {
+class ListsDrawerSectionController extends _$ListsDrawerSectionController {
   @override
   List<ListsDrawerRow>? build() {
     final lists = ref.watch(listsControllerProvider).dataOrNull;

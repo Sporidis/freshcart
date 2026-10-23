@@ -16,7 +16,7 @@ import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_state.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/dashed_add_row.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/delete_shop_sheet.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_sheet.dart';

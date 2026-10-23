@@ -17,8 +17,8 @@ import 'package:freshcart_flutter/features/auth/application/profile/profile_cont
 import 'package:freshcart_flutter/features/auth/presentation/widgets/edit_profile_sheet.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_row.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_section_controller.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/lists_screen.dart'
     show showCreateListDialog, showJoinListDialog;
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -41,7 +41,7 @@ class ListsDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = ref.watch(translationsProvider);
-    final rows = ref.watch(listsDrawerControllerProvider);
+    final rows = ref.watch(listsDrawerSectionControllerProvider);
 
     // [titleAt] is where the tapped name sits, so it can fly into the new
     // list's header (design v3). Not under reduced motion.
@@ -53,7 +53,9 @@ class ListsDrawer extends ConsumerWidget {
       if (id != currentListId) {
         context.go(Routes.listDetail(id), extra: flight);
       }
-      await ref.read(listsDrawerControllerProvider.notifier).openList(id);
+      await ref
+          .read(listsDrawerSectionControllerProvider.notifier)
+          .openList(id);
     }
 
     return Drawer(

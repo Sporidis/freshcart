@@ -13,8 +13,8 @@ import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/name_prompt_dialog.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/new_list_sheet.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/text_prompt_dialog.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
@@ -211,7 +211,7 @@ Future<void> showJoinListDialog(
   ShoppingList? joined;
   await showDialog<bool>(
     context: context,
-    builder: (context) => NamePromptDialog(
+    builder: (context) => TextPromptDialog(
       title: t.lists.join,
       label: t.lists.joinCodeLabel,
       submitLabel: t.common.save,

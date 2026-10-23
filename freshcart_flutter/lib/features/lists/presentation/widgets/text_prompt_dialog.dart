@@ -6,14 +6,13 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/ui/feedback/shake_on_error.dart';
 
-/// A dialog with one text field and one button, whose action can fail.
-///
-/// Used for "New list" and "Join a list". If the action fails, the error
+/// A dialog with one text field and one button, whose action can fail
+/// (today: "Join a list"). If the action fails, the error
 /// shows under the text field (not in a snackbar), so the user sees what to
 /// fix.
-class NamePromptDialog extends ConsumerStatefulWidget {
+class TextPromptDialog extends ConsumerStatefulWidget {
   /// Creates the dialog.
-  const NamePromptDialog({
+  const TextPromptDialog({
     required this.title,
     required this.label,
     required this.submitLabel,
@@ -43,10 +42,10 @@ class NamePromptDialog extends ConsumerStatefulWidget {
   final TextCapitalization capitalization;
 
   @override
-  ConsumerState<NamePromptDialog> createState() => _NamePromptDialogState();
+  ConsumerState<TextPromptDialog> createState() => _TextPromptDialogState();
 }
 
-class _NamePromptDialogState extends ConsumerState<NamePromptDialog> {
+class _TextPromptDialogState extends ConsumerState<TextPromptDialog> {
   final TextEditingController _controller = TextEditingController();
   String? _errorText;
   bool _busy = false;

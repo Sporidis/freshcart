@@ -24,9 +24,9 @@ import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/features/lists/application/list_settings_screen/list_settings_screen_controller.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/confirm_list_removal.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/error_screen.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/list_danger_zone_actions.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 

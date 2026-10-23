@@ -12,7 +12,7 @@ import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_tabs/shop_tabs_controller.dart';
-import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop_flow.dart';
+import 'package:freshcart_flutter/features/shops/presentation/widgets/add_shop.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_tab_pill.dart';
 
 /// The row of shop tabs: "All", one [ShopTabPill] per shop, and a dashed
