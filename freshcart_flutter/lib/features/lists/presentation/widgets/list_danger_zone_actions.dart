@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
-import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 

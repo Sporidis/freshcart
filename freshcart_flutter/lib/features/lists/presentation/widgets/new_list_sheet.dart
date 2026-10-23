@@ -5,7 +5,7 @@ import 'package:freshcart_flutter/core/error/error_tier.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
+import 'package:freshcart_flutter/core/ui/feedback/shake_on_error.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 

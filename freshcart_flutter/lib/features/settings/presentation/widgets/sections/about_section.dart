@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
-import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
 import 'package:freshcart_flutter/core/ui/settings/settings_section.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/cascade_in.dart';
+import 'package:freshcart_flutter/core/ui/motion/cascade_in.dart';
 
 /// Opens a v3 bottom sheet: edge-to-edge, radius 24 on top (from the theme),
 /// opening in [AppMotion.sheetOpen] on the iOS curve and closing in

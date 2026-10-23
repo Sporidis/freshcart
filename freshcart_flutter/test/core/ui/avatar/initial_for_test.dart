@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/core/ui/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 
 void main() {
   test('the first letter, uppercased, ignoring surrounding space', () {

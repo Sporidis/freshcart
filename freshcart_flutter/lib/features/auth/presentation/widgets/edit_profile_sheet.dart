@@ -5,10 +5,10 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
-import 'package:freshcart_flutter/core/ui/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
-import 'package:freshcart_flutter/core/ui/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/application/edit_profile_screen/edit_profile_screen_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/ui/empty_state.dart';
+import 'package:freshcart_flutter/core/ui/feedback/empty_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// An error message shown where content failed to load.

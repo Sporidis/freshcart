@@ -4,9 +4,9 @@ import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
-import 'package:freshcart_flutter/core/ui/initial_for.dart';
-import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
+import 'package:freshcart_flutter/core/ui/feedback/shake_on_error.dart';
 
 /// The "What should we call you?" field, with an avatar next to it that
 /// shows the first letter as you type.

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/ui/failure_state.dart';
+import 'package:freshcart_flutter/core/ui/feedback/failure_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// A full-screen error, for when loading failed and there's nothing to show.

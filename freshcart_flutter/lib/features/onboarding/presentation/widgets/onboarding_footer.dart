@@ -6,7 +6,7 @@ import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/failure_snack_bar.dart';
+import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';

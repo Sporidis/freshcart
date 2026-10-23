@@ -4,8 +4,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/initial_for.dart';
-import 'package:freshcart_flutter/core/ui/user_avatar.dart';
+import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/features/auth/presentation/widgets/edit_profile_sheet.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

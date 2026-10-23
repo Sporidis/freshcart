@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/ui/undo_toast.dart';
+import 'package:freshcart_flutter/core/ui/feedback/undo_toast.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

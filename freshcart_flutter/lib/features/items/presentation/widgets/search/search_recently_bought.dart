@@ -7,7 +7,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/haptics/haptics_ref.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/cascade_in.dart';
+import 'package:freshcart_flutter/core/ui/motion/cascade_in.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/item_history_providers.dart';
 import 'package:freshcart_flutter/features/items/application/item_history/recency_buckets.dart';

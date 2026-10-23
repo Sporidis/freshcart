@@ -12,7 +12,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/shake_on_error.dart';
+import 'package:freshcart_flutter/core/ui/feedback/shake_on_error.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_state.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/fill_or_scroll.dart';

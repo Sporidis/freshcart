@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/ui/failure_state.dart';
+import 'package:freshcart_flutter/core/ui/feedback/failure_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 void main() {

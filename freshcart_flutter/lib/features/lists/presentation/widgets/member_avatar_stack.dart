@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/core/ui/initial_for.dart';
-import 'package:freshcart_flutter/core/ui/user_avatar.dart';
+import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
+import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 
 /// Small overlapping avatars of who's on a list. Shows at most three, then
 /// "+N" for the rest. The full list is on the Household screen.
