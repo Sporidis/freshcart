@@ -3,7 +3,7 @@ import 'dart:ui_web' as ui_web;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:freshcart_flutter/app.dart';
+import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/demo/demo_overrides.dart';
 import 'package:freshcart_flutter/demo/demo_persona.dart';
 import 'package:freshcart_flutter/demo/demo_session.dart';
