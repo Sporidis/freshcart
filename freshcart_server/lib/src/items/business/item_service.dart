@@ -108,6 +108,7 @@ abstract final class ItemService {
     final validatedQuantity = requireValid(
       domain.ShoppingItem.validateQuantity(quantity),
     );
+    final cleanNote = domain.ShoppingItem.cleanNoteText(noteText);
     await ListAccess.requireShopOnList(session, listId, shopId);
     final now = DateTime.now().toUtc();
 
@@ -117,7 +118,7 @@ abstract final class ItemService {
         listId,
         shopId: shopId,
         name: validatedName,
-        noteText: noteText,
+        noteText: cleanNote,
         transaction: transaction,
       );
       if (existing != null) {
@@ -144,9 +145,9 @@ abstract final class ItemService {
             transaction: transaction,
           ),
           shopId: shopId,
-          note: noteText == null
+          note: cleanNote == null
               ? null
-              : Note(text: noteText, authorId: userId, updatedAt: now),
+              : Note(text: cleanNote, authorId: userId, updatedAt: now),
           addedBy: userId,
           createdAt: now,
           updatedAt: now,

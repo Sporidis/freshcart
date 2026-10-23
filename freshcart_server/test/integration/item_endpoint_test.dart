@@ -74,6 +74,24 @@ void main() {
         expect(item.name, 'Milk');
       });
 
+      test('a blank note is no note, and a note is stored trimmed', () async {
+        final list = await aSharedList();
+        final blank = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          noteText: '   ',
+        );
+        final noted = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Bread',
+          noteText: '  sliced ',
+        );
+        expect(blank.note, isNull);
+        expect(noted.note?.text, 'sliced');
+      });
+
       test('the name is remembered trimmed, once, for suggestions', () async {
         final list = await aSharedList();
         await endpoints.item.add(as(aliceId), list.id!, 'Milk');
