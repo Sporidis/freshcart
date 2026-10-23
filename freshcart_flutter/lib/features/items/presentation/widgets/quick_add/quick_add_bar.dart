@@ -216,13 +216,21 @@ class _QuickAddBarState extends State<QuickAddBar>
     }
   }
 
-  Future<void> _openDetails() async {
-    if (_busy) return;
+  /// Runs [action] with the bar disabled, one at a time. Returns true only
+  /// if it ran and succeeded and the bar still exists; the caller then
+  /// updates the field.
+  Future<bool> _whileBusy(Future<bool> Function() action) async {
+    if (_busy) return false;
     setState(() => _busy = true);
-    final added = await widget.onOpenDetails(_controller.text.trim());
-    if (!mounted) return;
+    final result = await action();
+    if (!mounted) return false;
     setState(() => _busy = false);
-    if (added) {
+    return result;
+  }
+
+  Future<void> _openDetails() async {
+    final name = _controller.text.trim();
+    if (await _whileBusy(() => widget.onOpenDetails(name))) {
       _controller.clear();
       _collapse();
     }
@@ -240,29 +248,21 @@ class _QuickAddBarState extends State<QuickAddBar>
   }
 
   Future<void> _bump(ShoppingItem item) async {
-    if (_busy) return;
-    setState(() => _busy = true);
-    final bumped = await widget.onBumpDuplicate(item);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (bumped) {
-      _controller.clear();
-      _focus.requestFocus();
+    if (await _whileBusy(() => widget.onBumpDuplicate(item))) {
+      _clearForNext();
     }
   }
 
   Future<void> _quickAdd() async {
     final name = _controller.text.trim();
-    if (name.isEmpty || _busy) return;
-    setState(() => _busy = true);
-    final added = await widget.onQuickAdd(name);
-    if (!mounted) return;
-    setState(() => _busy = false);
-    if (added) {
-      _controller.clear();
-      // Stay open with the keyboard, so the user can add the next item.
-      _focus.requestFocus();
-    }
+    if (name.isEmpty) return;
+    if (await _whileBusy(() => widget.onQuickAdd(name))) _clearForNext();
+  }
+
+  /// Stays open with the keyboard, so the user can add the next item.
+  void _clearForNext() {
+    _controller.clear();
+    _focus.requestFocus();
   }
 
   @override
