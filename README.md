@@ -4,8 +4,8 @@ A collaborative shopping-list app, built as three surfaces from one Dart monorep
 a Flutter app (iOS, Android, installable web PWA), a Jaspr marketing site, and a
 Serverpod backend.
 
-Deliberately over-engineered as a portfolio piece — every non-obvious choice has a
-written justification in [`docs/decisions.md`](docs/decisions.md).
+Deliberately over-engineered as a portfolio piece — every non-obvious choice is made
+for a reason that can be defended.
 
 ## Layout
 
@@ -17,11 +17,6 @@ written justification in [`docs/decisions.md`](docs/decisions.md).
 | `freshcart_client`          | Serverpod-generated client. **Never hand-edit.**                            |
 | `freshcart_flutter`         | The Flutter app. Feature-first; `data/` maps client DTOs → domain.          |
 | `freshcart_web`             | Jaspr marketing site (SSG). Resolves independently — see below.             |
-
-Read [`docs/architecture.md`](docs/architecture.md) before touching `packages/` or any
-feature's `data/` layer, [`docs/build-plan.md`](docs/build-plan.md) for build order, and
-[`docs/dev-guide.md`](docs/dev-guide.md) for day-to-day commands, testing conventions, and
-how to open the widget preview gallery.
 
 ## First-time setup
 
@@ -43,7 +38,7 @@ dart bin/main.dart --apply-migrations
 
 > **Why two `pub get`s?** `freshcart_web` is not a pub workspace member. `jaspr_builder`
 > pins `analyzer ^12` while `freezed` 4.x and `riverpod_generator` 4.x need `analyzer >=13`,
-> and a workspace has a single resolution. Full reasoning: `docs/decisions.md` #13.
+> and a workspace has a single resolution.
 
 ## Checks
 
@@ -67,7 +62,7 @@ cd freshcart_flutter && flutter test
 | `build-web`   | The marketing site builds, and its `<title>`, description, Open Graph, canonical and JSON-LD survived the build.                                                                                       |
 
 Every job regenerates `build_runner` and slang output first, because that output
-is deliberately not committed (`docs/decisions.md` #14).
+is deliberately not committed.
 
 ## Conventions
 
