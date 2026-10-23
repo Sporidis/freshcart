@@ -102,6 +102,7 @@ abstract final class ItemService {
     String? noteText,
   }) async {
     await ListService.requireMembership(session, listId, userId);
+    await _requireShopOnList(session, listId, shopId);
     final now = DateTime.now().toUtc();
 
     final result = await session.db.transaction((transaction) async {
@@ -276,6 +277,14 @@ abstract final class ItemService {
       if (!stored.updatedAt.isAtSameMomentAs(incoming.updatedAt)) {
         throw EditConflictException();
       }
+      if (incoming.shopId != stored.shopId) {
+        await _requireShopOnList(
+          session,
+          stored.listId,
+          incoming.shopId,
+          transaction: transaction,
+        );
+      }
 
       // listId, addedBy and createdAt are set by the server only. The app
       // can't move an item to another list or change who added it.
@@ -307,27 +316,30 @@ abstract final class ItemService {
         ),
         transaction: transaction,
       );
-      await _announce(
-        session,
-        stored.listId,
-        ItemChange(
-          kind: ItemChangeKind.upserted,
-          itemId: saved.id!,
-          item: saved,
-          actorId: userId,
-        ),
-      );
       return (saved: saved, becameChecked: becameChecked);
     });
 
-    // After the transaction, and errors are ignored: the "list finished"
-    // notification must never make the save fail.
-    if (result.becameChecked) {
-      await NotificationService.maybeNotifyListFinished(
-        session,
-        result.saved.listId,
+    await _announce(
+      session,
+      result.saved.listId,
+      ItemChange(
+        kind: ItemChangeKind.upserted,
+        itemId: result.saved.id!,
+        item: result.saved,
         actorId: userId,
-      );
+      ),
+    );
+    // The "list finished" notification must never make the save fail.
+    if (result.becameChecked) {
+      try {
+        await NotificationService.maybeNotifyListFinished(
+          session,
+          result.saved.listId,
+          actorId: userId,
+        );
+      } on Object catch (_) {
+        // Ignored on purpose: the item was already saved.
+      }
     }
     return result.saved;
   }
@@ -363,25 +375,15 @@ abstract final class ItemService {
     UuidValue userId,
   ) async {
     await ListService.requireMembership(session, listId, userId);
-    return session.db.transaction((transaction) async {
-      final removed = await ShoppingItem.db.deleteWhere(
+    final removed = await session.db.transaction(
+      (transaction) => ShoppingItem.db.deleteWhere(
         session,
         where: (t) => t.listId.equals(listId) & t.isChecked.equals(true),
         transaction: transaction,
-      );
-      for (final item in removed) {
-        await _announce(
-          session,
-          listId,
-          ItemChange(
-            kind: ItemChangeKind.removed,
-            itemId: item.id!,
-            actorId: userId,
-          ),
-        );
-      }
-      return removed.length;
-    });
+      ),
+    );
+    await _announceRemoved(session, listId, removed, actorId: userId);
+    return removed.length;
   }
 
   /// Deletes the items in [itemIds] that are on [listId]. Returns how many.
@@ -397,25 +399,15 @@ abstract final class ItemService {
   ) async {
     await ListService.requireMembership(session, listId, userId);
     if (itemIds.isEmpty) return 0;
-    return session.db.transaction((transaction) async {
-      final removed = await ShoppingItem.db.deleteWhere(
+    final removed = await session.db.transaction(
+      (transaction) => ShoppingItem.db.deleteWhere(
         session,
         where: (t) => t.listId.equals(listId) & t.id.inSet(itemIds.toSet()),
         transaction: transaction,
-      );
-      for (final item in removed) {
-        await _announce(
-          session,
-          listId,
-          ItemChange(
-            kind: ItemChangeKind.removed,
-            itemId: item.id!,
-            actorId: userId,
-          ),
-        );
-      }
-      return removed.length;
-    });
+      ),
+    );
+    await _announceRemoved(session, listId, removed, actorId: userId);
+    return removed.length;
   }
 
   /// Moves the items in [itemIds] (on [listId]) to [shopId] (null = no
@@ -431,31 +423,77 @@ abstract final class ItemService {
     UuidValue? shopId,
   ) async {
     await ListService.requireMembership(session, listId, userId);
+    await _requireShopOnList(session, listId, shopId);
     if (itemIds.isEmpty) return 0;
-    return session.db.transaction((transaction) async {
+    final now = DateTime.now().toUtc();
+    final moved = await session.db.transaction((transaction) async {
       final existing = await ShoppingItem.db.find(
         session,
         where: (t) => t.listId.equals(listId) & t.id.inSet(itemIds.toSet()),
         transaction: transaction,
       );
-      final moved = await ShoppingItem.db.update(
+      // A new updatedAt, so an edit based on the pre-move copy conflicts
+      // instead of silently moving the item back.
+      return ShoppingItem.db.update(
         session,
-        [for (final item in existing) item.copyWith(shopId: shopId)],
+        [
+          for (final item in existing)
+            item.copyWith(shopId: shopId, updatedAt: now),
+        ],
         transaction: transaction,
       );
-      for (final item in moved) {
-        await _announce(
-          session,
-          listId,
-          ItemChange(
-            kind: ItemChangeKind.upserted,
-            itemId: item.id!,
-            item: item,
-            actorId: userId,
-          ),
-        );
-      }
-      return moved.length;
     });
+    for (final item in moved) {
+      await _announce(
+        session,
+        listId,
+        ItemChange(
+          kind: ItemChangeKind.upserted,
+          itemId: item.id!,
+          item: item,
+          actorId: userId,
+        ),
+      );
+    }
+    return moved.length;
+  }
+
+  /// Throws [ShopNotFoundException] unless [shopId] is null or a shop on
+  /// [listId]: an item can't be tagged with another list's shop.
+  static Future<void> _requireShopOnList(
+    Session session,
+    UuidValue listId,
+    UuidValue? shopId, {
+    Transaction? transaction,
+  }) async {
+    if (shopId == null) return;
+    final shop = await Shop.db.findById(
+      session,
+      shopId,
+      transaction: transaction,
+    );
+    if (shop == null || shop.listId != listId) throw ShopNotFoundException();
+  }
+
+  /// Tells everyone watching [listId] that [removed] are gone. Called after
+  /// the transaction commits, so nobody hears about a delete that rolled
+  /// back.
+  static Future<void> _announceRemoved(
+    Session session,
+    UuidValue listId,
+    List<ShoppingItem> removed, {
+    required UuidValue actorId,
+  }) async {
+    for (final item in removed) {
+      await _announce(
+        session,
+        listId,
+        ItemChange(
+          kind: ItemChangeKind.removed,
+          itemId: item.id!,
+          actorId: actorId,
+        ),
+      );
+    }
   }
 }

@@ -387,6 +387,105 @@ void main() {
       expect(await endpoints.item.byList(as(aliceId), list.id!), hasLength(1));
     });
 
+    group('moveMany', () {
+      test('moves exactly the selected items to the shop', () async {
+        final list = await aSharedList();
+        final colruyt = await endpoints.shop.create(
+          as(aliceId),
+          list.id!,
+          'Colruyt',
+          0xFF4CAF50,
+        );
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+        final bread = await endpoints.item.add(as(aliceId), list.id!, 'Bread');
+
+        final moved = await endpoints.item.moveMany(as(bobId), list.id!, [
+          milk.id!,
+        ], colruyt.id);
+
+        expect(moved, 1);
+        final items = await endpoints.item.byList(as(aliceId), list.id!);
+        expect(items.firstWhere((i) => i.id == milk.id).shopId, colruyt.id);
+        expect(items.firstWhere((i) => i.id == bread.id).shopId, isNull);
+      });
+
+      test('makes an edit based on the pre-move copy a conflict', () async {
+        final list = await aSharedList();
+        final colruyt = await endpoints.shop.create(
+          as(aliceId),
+          list.id!,
+          'Colruyt',
+          0xFF4CAF50,
+        );
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        await endpoints.item.moveMany(as(bobId), list.id!, [
+          milk.id!,
+        ], colruyt.id);
+
+        // Alice still holds Milk from before Bob moved it.
+        await expectLater(
+          endpoints.item.save(as(aliceId), milk.copyWith(name: 'Oat milk')),
+          throwsA(isA<EditConflictException>()),
+        );
+      });
+
+      test('refuses a non-member', () async {
+        final list = await aSharedList();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        await expectLater(
+          endpoints.item.moveMany(as(strangerId), list.id!, [milk.id!], null),
+          throwsA(isA<NotAMemberException>()),
+        );
+      });
+    });
+
+    group('a shop from another list is refused', () {
+      // Alice's other list, with a shop on it.
+      Future<Shop> aForeignShop() async {
+        final other = await endpoints.list.create(as(aliceId), 'Hardware');
+        return endpoints.shop.create(
+          as(aliceId),
+          other.id!,
+          'Brico',
+          0xFF2196F3,
+        );
+      }
+
+      test('by add', () async {
+        final list = await aSharedList();
+        final brico = await aForeignShop();
+
+        await expectLater(
+          endpoints.item.add(as(aliceId), list.id!, 'Milk', shopId: brico.id),
+          throwsA(isA<ShopNotFoundException>()),
+        );
+      });
+
+      test('by save', () async {
+        final list = await aSharedList();
+        final brico = await aForeignShop();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        await expectLater(
+          endpoints.item.save(as(aliceId), milk.copyWith(shopId: brico.id)),
+          throwsA(isA<ShopNotFoundException>()),
+        );
+      });
+
+      test('by moveMany', () async {
+        final list = await aSharedList();
+        final brico = await aForeignShop();
+        final milk = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        await expectLater(
+          endpoints.item.moveMany(as(aliceId), list.id!, [milk.id!], brico.id),
+          throwsA(isA<ShopNotFoundException>()),
+        );
+      });
+    });
+
     test('remove deletes the item, and refuses a non-member', () async {
       final list = await aSharedList();
       final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
