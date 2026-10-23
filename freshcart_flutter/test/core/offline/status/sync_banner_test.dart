@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_banner.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 
 void main() {
   /// [syncBannerProvider] once both of its streams have delivered.

@@ -3,12 +3,12 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_banner.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/undo_toast.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
 /// The quiet bar under the list header that says the list is offline or
 /// catching up (design v3, Flow 07). No colour alarm: being offline is

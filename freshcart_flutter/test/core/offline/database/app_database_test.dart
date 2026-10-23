@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
 
-import '../../../../../helpers/date_time_precision.dart';
+import '../../../helpers/date_time_precision.dart';
 
 void main() {
   group('AppDatabase — PendingOperations durability', () {

@@ -1,9 +1,9 @@
 import 'dart:convert';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
+import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 
 /// Shows [items] (what the server or the offline cache has for [listId])
 /// as they will be once the queued offline changes in [ops] are sent.

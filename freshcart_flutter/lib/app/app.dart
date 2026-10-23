@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/app/session/session_resume_observer.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/core/theme/preferences/appearance_controller.dart';
 import 'package:freshcart_flutter/core/theme/preferences/large_text_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
 /// How much bigger text gets when "Larger list text" is on.
 ///

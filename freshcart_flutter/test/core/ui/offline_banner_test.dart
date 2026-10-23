@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
-import 'package:freshcart_flutter/features/sync/presentation/widgets/offline_banner.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
+import 'package:freshcart_flutter/core/ui/offline_banner.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

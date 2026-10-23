@@ -1,17 +1,18 @@
 import 'dart:async';
 import 'dart:math';
+
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
+import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/list_summary_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/sources/list_realtime_source.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_lists_store.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_repository_impl.g.dart';

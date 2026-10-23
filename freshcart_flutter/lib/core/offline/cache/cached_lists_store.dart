@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/cache/shopping_list_cache_payload.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/database/app_database_provider.dart';
+import 'package:freshcart_flutter/core/offline/cache/shopping_list_cache_payload.dart';
+import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/database/app_database_provider.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'cached_lists_store.g.dart';

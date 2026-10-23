@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/core/preferences/shared_preferences_store.dart';
 import 'package:freshcart_flutter/demo/demo_backend.dart';
 import 'package:freshcart_flutter/demo/demo_persona.dart';
@@ -19,7 +20,6 @@ import 'package:freshcart_flutter/features/items/data/repositories/item_reposito
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
 
 /// Builds one demo phone: the real app's providers, with everything that
 /// would reach a server, a database or the network swapped for the fakes

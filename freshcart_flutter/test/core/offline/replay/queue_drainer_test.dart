@@ -2,21 +2,21 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/offline/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
+import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
+import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_store.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_lists_store.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/queue_drainer.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/shopping_item_queue_payload.dart';
 
-import '../../../../../fakes/dto_builders.dart';
-import '../../../../../fakes/fake_client.dart';
-import '../../../../../fakes/fake_connectivity_adapter.dart';
-import '../../../../../fakes/fake_item_repository.dart';
-import '../../../../../fakes/fake_list_repository.dart';
+import '../../../fakes/dto_builders.dart';
+import '../../../fakes/fake_client.dart';
+import '../../../fakes/fake_connectivity_adapter.dart';
+import '../../../fakes/fake_item_repository.dart';
+import '../../../fakes/fake_list_repository.dart';
 
 void main() {
   group('QueueDrainer.drain', () {

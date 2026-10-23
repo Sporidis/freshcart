@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/offline/cache/cached_items_store.dart';
+import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/core/streaming/resilient_watch.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/cache/cached_items_store.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
 
 /// Gives a live list of items for one list.
 ///

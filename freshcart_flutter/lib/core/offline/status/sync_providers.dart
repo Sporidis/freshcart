@@ -1,14 +1,13 @@
 import 'dart:async';
 
+import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_banner.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/item_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_banner.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
-
-import 'package:freshcart_flutter/features/sync/data/sources/connectivity/connectivity_adapter.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/queue_drainer.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'sync_providers.g.dart';

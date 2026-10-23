@@ -2,12 +2,12 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
+import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_conflicts_controller.dart';
-import 'package:freshcart_flutter/features/sync/application/sync/sync_providers.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/database/app_database.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/pending_operations_table.dart';
-import 'package:freshcart_flutter/features/sync/data/sources/queue/queue_drainer.dart';
 
 /// Counts how often [drain] is called. Set [gate] to keep a drain "running"
 /// until the test completes it.
