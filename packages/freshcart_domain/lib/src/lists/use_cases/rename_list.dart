@@ -17,7 +17,7 @@ class RenameList {
   final ListRepository _lists;
 
   /// Checks [name] and renames list [id].
-  Future<Result<ShoppingList>> call(ListId id, String name) async =>
+  Future<Result<void>> call(ListId id, String name) async =>
       switch (ShoppingList.validateName(name)) {
         Err(:final failure) => Err(failure),
         Ok(:final value) => await _lists.rename(id, value),

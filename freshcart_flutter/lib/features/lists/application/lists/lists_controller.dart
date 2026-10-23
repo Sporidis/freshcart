@@ -32,7 +32,7 @@ class ListsController extends _$ListsController {
   ///
   /// Returns the [Result] like [create], so the error shows next to the
   /// name being edited.
-  Future<Result<ShoppingList>> rename(ListId id, String name) async {
+  Future<Result<void>> rename(ListId id, String name) async {
     final result = await RenameList(ref.read(listRepositoryProvider))(id, name);
     if (result.isOk) _refreshIfAlive();
     return result;
@@ -43,7 +43,7 @@ class ListsController extends _$ListsController {
   ///
   /// Calls the repository directly (no use case), because a true/false
   /// has nothing to validate.
-  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+  Future<Result<void>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
   ) async {
@@ -81,7 +81,7 @@ class ListsController extends _$ListsController {
   }
 
   /// Makes another member the owner.
-  Future<Result<ShoppingList>> transferOwnership(
+  Future<Result<void>> transferOwnership(
     ListId id,
     UserId userId,
   ) async {

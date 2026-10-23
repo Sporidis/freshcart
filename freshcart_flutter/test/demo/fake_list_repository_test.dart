@@ -45,10 +45,8 @@ void main() {
       (await world.b.lists.rename(list.id, 'Mine')).failureOrNull,
       isA<UnauthorizedFailure>(),
     );
-    expect(
-      (await world.a.lists.rename(list.id, 'Ours')).valueOrNull?.name,
-      'Ours',
-    );
+    expect((await world.a.lists.rename(list.id, 'Ours')).isOk, isTrue);
+    expect((await world.a.lists.byId(list.id)).valueOrNull?.name, 'Ours');
   });
 
   test('deleting a list deletes its items and shops', () async {
@@ -67,10 +65,8 @@ void main() {
 
   test('transferOwnership swaps the roles', () async {
     final list = await world.sharedList();
-    final moved = (await world.a.lists.transferOwnership(
-      list.id,
-      DemoWorld.bId,
-    )).valueOrNull!;
+    await world.a.lists.transferOwnership(list.id, DemoWorld.bId);
+    final moved = (await world.a.lists.byId(list.id)).valueOrNull!;
     expect(moved.ownerId, DemoWorld.bId);
     expect(moved.memberFor(DemoWorld.aId)?.role, MemberRole.member);
     expect(moved.memberFor(DemoWorld.bId)?.role, MemberRole.owner);

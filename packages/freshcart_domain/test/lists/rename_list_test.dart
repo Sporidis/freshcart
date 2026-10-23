@@ -75,7 +75,7 @@ void main() {
     });
 
     test('surfaces a repository failure unchanged', () async {
-      lists.renameResult = const Err<ShoppingList>(Failure.notFound());
+      lists.renameResult = const Err<void>(Failure.notFound());
 
       final result = await renameList(testList, 'Camping Trip');
 

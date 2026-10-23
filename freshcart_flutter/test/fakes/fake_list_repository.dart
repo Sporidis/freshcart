@@ -31,13 +31,13 @@ class FakeListRepository implements ListRepository {
   final List<String> createCalls = [];
 
   /// What [rename] will return. Defaults to echoing the new name back.
-  Result<ShoppingList>? renameResult;
+  Result<void>? renameResult;
 
   /// Every argument list [rename] was called with, in order.
   final List<({ListId id, String name})> renameCalls = [];
 
   /// What [setClearCheckedAfterShopping] will return.
-  Result<ShoppingList>? setClearCheckedAfterShoppingResult;
+  Result<void>? setClearCheckedAfterShoppingResult;
 
   /// Every argument list [setClearCheckedAfterShopping] was called with, in
   /// order.
@@ -90,19 +90,18 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
-  Future<Result<ShoppingList>> rename(ListId id, String name) async {
+  Future<Result<void>> rename(ListId id, String name) async {
     renameCalls.add((id: id, name: name));
-    return renameResult ?? Ok(buildList(name: name));
+    return renameResult ?? const Ok(null);
   }
 
   @override
-  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+  Future<Result<void>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
   ) async {
     setClearCheckedAfterShoppingCalls.add((id: id, value: value));
-    return setClearCheckedAfterShoppingResult ??
-        Ok(buildList(clearCheckedAfterShopping: value));
+    return setClearCheckedAfterShoppingResult ?? const Ok(null);
   }
 
   @override
@@ -124,12 +123,12 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
-  Future<Result<ShoppingList>> transferOwnership(
+  Future<Result<void>> transferOwnership(
     ListId id,
     UserId userId,
   ) async {
     transferCalls.add((id: id, userId: userId));
-    return Ok(buildList());
+    return const Ok(null);
   }
 
   /// Feeds [watch]. Tests push updates through this to simulate another

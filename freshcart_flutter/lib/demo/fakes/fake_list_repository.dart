@@ -75,28 +75,24 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
-  Future<Result<ShoppingList>> rename(ListId id, String name) async {
+  Future<Result<void>> rename(ListId id, String name) async {
     await _db.latency();
     return _owned(id).map((list) {
-      final updated = list.copyWith(name: name);
-      _db.lists[id] = updated;
+      _db.lists[id] = list.copyWith(name: name);
       _db.notify();
-      return updated;
     });
   }
 
   @override
-  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+  Future<Result<void>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
   ) async {
     await _db.latency();
     // Any member may change this, not only the owner.
     return _visible(id).map((list) {
-      final updated = list.copyWith(clearCheckedAfterShopping: value);
-      _db.lists[id] = updated;
+      _db.lists[id] = list.copyWith(clearCheckedAfterShopping: value);
       _db.notify();
-      return updated;
     });
   }
 
@@ -139,7 +135,7 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
-  Future<Result<ShoppingList>> transferOwnership(
+  Future<Result<void>> transferOwnership(
     ListId id,
     UserId userId,
   ) async {
@@ -160,7 +156,7 @@ class FakeListRepository implements ListRepository {
       );
       _db.lists[id] = updated;
       _db.notify();
-      return Ok(updated);
+      return const Ok(null);
     });
   }
 

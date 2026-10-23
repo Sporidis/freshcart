@@ -110,7 +110,7 @@ class FakeListRepository implements ListRepository {
   final List<String> createCalls = [];
 
   /// What [rename] will return. Defaults to echoing the new name back.
-  Result<ShoppingList>? renameResult;
+  Result<void>? renameResult;
 
   /// Every argument list [rename] was called with, in order.
   final List<({ListId id, String name})> renameCalls = [];
@@ -145,20 +145,20 @@ class FakeListRepository implements ListRepository {
       throw UnimplementedError();
 
   @override
-  Future<Result<ShoppingList>> transferOwnership(ListId id, UserId userId) =>
+  Future<Result<void>> transferOwnership(ListId id, UserId userId) =>
       throw UnimplementedError();
 
   @override
   Future<Result<List<ShoppingList>>> myLists() => throw UnimplementedError();
 
   @override
-  Future<Result<ShoppingList>> rename(ListId id, String name) async {
+  Future<Result<void>> rename(ListId id, String name) async {
     renameCalls.add((id: id, name: name));
-    return renameResult ?? Ok(buildList(name: name));
+    return renameResult ?? const Ok(null);
   }
 
   @override
-  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+  Future<Result<void>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
   ) => throw UnimplementedError();

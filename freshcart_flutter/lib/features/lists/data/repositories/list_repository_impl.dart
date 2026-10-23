@@ -117,8 +117,8 @@ class ListRepositoryImpl implements ListRepository {
       _guard(() async => (await _client.list.join(code.value)).toDomain());
 
   @override
-  Future<Result<ShoppingList>> rename(ListId id, String name) => _guard(
-    () async => (await _client.list.rename(_uuid(id.value), name)).toDomain(),
+  Future<Result<void>> rename(ListId id, String name) => _guard(
+    () => _client.list.rename(_uuid(id.value), name),
     onUnreachable: () async {
       final tempId = _mintTempId();
       await queue.enqueue(
@@ -130,28 +130,15 @@ class ListRepositoryImpl implements ListRepository {
           'name': name,
         },
       );
-      return ShoppingList(
-        id: ListId(tempId),
-        name: name,
-        createdAt: DateTime.now().toUtc(),
-        joinCode: JoinCode.parse(
-          'TEMP',
-        ).valueOrNull!,
-        ownerId: currentUserId(),
-        pending: true,
-      );
     },
   );
 
   @override
-  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+  Future<Result<void>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
   ) => _guard(
-    () async => (await _client.list.setClearCheckedAfterShopping(
-      _uuid(id.value),
-      value,
-    )).toDomain(),
+    () => _client.list.setClearCheckedAfterShopping(_uuid(id.value), value),
     onUnreachable: () async {
       final tempId = _mintTempId();
       await queue.enqueue(
@@ -162,16 +149,6 @@ class ListRepositoryImpl implements ListRepository {
           'id': id.value,
           'value': value,
         },
-      );
-      return ShoppingList(
-        id: ListId(tempId),
-        name: 'TEMP',
-        createdAt: DateTime.now().toUtc(),
-        joinCode: JoinCode.parse(
-          'TEMP',
-        ).valueOrNull!,
-        ownerId: currentUserId(),
-        pending: true,
       );
     },
   );
@@ -226,14 +203,11 @@ class ListRepositoryImpl implements ListRepository {
   );
 
   @override
-  Future<Result<ShoppingList>> transferOwnership(
+  Future<Result<void>> transferOwnership(
     ListId id,
     UserId userId,
   ) => _guard(
-    () async => (await _client.list.transferOwnership(
-      _uuid(id.value),
-      _uuid(userId.value),
-    )).toDomain(),
+    () => _client.list.transferOwnership(_uuid(id.value), _uuid(userId.value)),
     onUnreachable: () async {
       final tempId = _mintTempId();
       await queue.enqueue(
@@ -244,17 +218,6 @@ class ListRepositoryImpl implements ListRepository {
           'id': id.value,
           'userId': userId.value,
         },
-      );
-
-      return ShoppingList(
-        id: ListId(tempId),
-        name: 'TEMP',
-        createdAt: DateTime.now().toUtc(),
-        joinCode: JoinCode.parse(
-          'TEMP',
-        ).valueOrNull!,
-        ownerId: currentUserId(),
-        pending: true,
       );
     },
   );

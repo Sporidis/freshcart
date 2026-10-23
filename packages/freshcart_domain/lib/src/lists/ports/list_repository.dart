@@ -30,14 +30,14 @@ abstract interface class ListRepository {
   Future<Result<ShoppingList>> joinByCode(JoinCode code);
 
   /// Renames list [id] to [name]. Owner only.
-  Future<Result<ShoppingList>> rename(ListId id, String name);
+  Future<Result<void>> rename(ListId id, String name);
 
   /// Sets whether list [id] removes checked items automatically when
   /// everything is checked (decisions.md #79).
   ///
   /// Any member can change this (not only the owner), like turning a shop
   /// tab on or off. It's a shared preference, not a dangerous action.
-  Future<Result<ShoppingList>> setClearCheckedAfterShopping(
+  Future<Result<void>> setClearCheckedAfterShopping(
     ListId id,
     bool value,
   );
@@ -63,7 +63,7 @@ abstract interface class ListRepository {
   ///
   /// This lets an owner leave without leaving a list that nobody can rename
   /// or delete.
-  Future<Result<ShoppingList>> transferOwnership(ListId id, UserId userId);
+  Future<Result<void>> transferOwnership(ListId id, UserId userId);
 
   /// List [id], updated live whenever anyone changes it.
   ///

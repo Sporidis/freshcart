@@ -112,7 +112,7 @@ void main() {
 
   testWidgets('saving a new name calls through to rename', (tester) async {
     final list = buildList(name: 'Groceries', members: [buildMember()]);
-    repository.renameResult = Ok(list.copyWith(name: 'Weekly Groceries'));
+    repository.renameResult = const Ok(null);
     await pump(tester, list: list);
 
     // There's no Save button — the field saves on submit.
@@ -143,9 +143,7 @@ void main() {
     'the Clear checked after shopping toggle calls through',
     (tester) async {
       final list = buildList(name: 'Groceries', members: [buildMember()]);
-      repository.setClearCheckedAfterShoppingResult = Ok(
-        list.copyWith(clearCheckedAfterShopping: true),
-      );
+      repository.setClearCheckedAfterShoppingResult = const Ok(null);
       await pump(tester, list: list);
 
       final tile = find.widgetWithText(
@@ -319,7 +317,7 @@ void main() {
     tester,
   ) async {
     final list = buildList(name: 'Groceries', members: [buildMember()]);
-    repository.renameResult = Ok(list.copyWith(name: 'Weekly'));
+    repository.renameResult = const Ok(null);
     await pump(tester, list: list);
 
     await tester.enterText(nameField(), 'Weekly');
