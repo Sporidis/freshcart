@@ -5,9 +5,9 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_mode.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
-import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_state.dart';
-import 'package:freshcart_flutter/features/items/application/list_completion/list_completion_providers.dart';
+import 'package:freshcart_flutter/features/items/application/items_section_ui/items_section_ui_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section_ui/items_section_ui_state.dart';
+import 'package:freshcart_flutter/features/items/application/list_completion/list_completion_effects.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_filter/shop_filter_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
@@ -17,7 +17,7 @@ part 'items_section_controller.g.dart';
 
 /// The controller for the items on the list screen.
 ///
-/// It combines the items, shops, shop filter and [ItemsUiController] into
+/// It combines the items, shops, shop filter and [ItemsSectionUiController] into
 /// one [ItemsSectionState]. It also runs actions with several steps (for
 /// example "delete, then leave select mode, but only if it worked").
 ///
@@ -31,7 +31,7 @@ part 'items_section_controller.g.dart';
 ///
 /// It takes the whole [ShoppingList] (not just its id), because the header
 /// needs the name and members. If the list changes, a new controller is
-/// made. That's fine, because the mode state lives in [ItemsUiController].
+/// made. That's fine, because the mode state lives in [ItemsSectionUiController].
 @riverpod
 class ItemsSectionController extends _$ItemsSectionController {
   ListId get _listId => list.id;
@@ -39,8 +39,8 @@ class ItemsSectionController extends _$ItemsSectionController {
   ItemsController get _items =>
       ref.read(itemsControllerProvider(_listId).notifier);
 
-  ItemsUiController get _ui =>
-      ref.read(itemsUiControllerProvider(_listId).notifier);
+  ItemsSectionUiController get _ui =>
+      ref.read(itemsSectionUiControllerProvider(_listId).notifier);
 
   @override
   ItemsSectionState build(ShoppingList list) {
@@ -50,11 +50,11 @@ class ItemsSectionController extends _$ItemsSectionController {
     final shops =
         ref.watch(shopsControllerProvider(listId)).dataOrNull ?? const <Shop>[];
     final shopFilter = ref.watch(shopFilterControllerProvider(listId));
-    final ui = ref.watch(itemsUiControllerProvider(listId));
+    final ui = ref.watch(itemsSectionUiControllerProvider(listId));
 
     // What happens when the list becomes complete (or not) is in its own
-    // provider. See [listCompletion] for why it can't be done here.
-    ref.watch(listCompletionProvider(list));
+    // provider. See [listCompletionEffects] for why it can't be done here.
+    ref.watch(listCompletionEffectsProvider(list));
 
     return ItemsSectionState(
       list: list,
@@ -83,7 +83,7 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   /// Turns the mode flags into one [ItemsMode]. If several are on, this
   /// decides which wins.
-  static ItemsMode _modeFor(ItemsUiState ui) {
+  static ItemsMode _modeFor(ItemsSectionUiState ui) {
     if (ui.rearranging) return ItemsMode.rearrange;
     if (ui.selection.isNotEmpty) return ItemsMode.select;
     if (ui.searchActive) return ItemsMode.search;
@@ -112,7 +112,7 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   /// Undo for a settled batch: unchecks those of [ids] that are still
   /// checked.
-  Future<Failure?> uncheck(List<ItemId> ids) async {
+  Future<Failure?> undoSettledBatch(List<ItemId> ids) async {
     Failure? first;
     for (final item in state.allItems) {
       if (ids.contains(item.id) && item.isChecked) {
@@ -148,7 +148,8 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   /// Hides the row now and returns an undo function. The real delete
   /// happens a few seconds later.
-  void Function() swipeDelete(ShoppingItem item) => _items.swipeDelete(item);
+  void Function() removeWithUndo(ShoppingItem item) =>
+      _items.removeWithUndo(item);
 
   Future<Failure?> clearChecked() => _items.clearChecked();
 
@@ -229,7 +230,7 @@ class ItemsSectionController extends _$ItemsSectionController {
 
   /// Moves one item to [shopId] (null = no shop), from the hold menu.
   Future<Failure?> moveItem(ShoppingItem item, ShopId? shopId) =>
-      _items.moveSelected({item.id}, shopId);
+      _items.moveMany({item.id}, shopId);
 
   /// Where each selected item is now, so a Move can be undone.
   Map<ItemId, ShopId?> shopsOfSelection() => {
@@ -245,7 +246,7 @@ class ItemsSectionController extends _$ItemsSectionController {
     }
     Failure? first;
     for (final MapEntry(key: shop, value: ids) in byShop.entries) {
-      first ??= await _items.moveSelected(ids, shop);
+      first ??= await _items.moveMany(ids, shop);
     }
     return first;
   }
@@ -253,7 +254,7 @@ class ItemsSectionController extends _$ItemsSectionController {
   /// Moves the selected items to [shopId] (null = no shop). Like
   /// [deleteSelected], only leaves select mode if it worked.
   Future<Failure?> moveSelected(ShopId? shopId) async {
-    final failure = await _items.moveSelected(state.selection, shopId);
+    final failure = await _items.moveMany(state.selection, shopId);
     if (failure == null) clearSelection();
     return failure;
   }

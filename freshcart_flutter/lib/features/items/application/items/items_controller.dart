@@ -24,7 +24,7 @@ class ItemsController extends _$ItemsController {
   /// Changes shown on screen that the server hasn't confirmed yet, by id.
   final Map<ItemId, ShoppingItem> _pending = {};
 
-  /// Rows hidden by [swipeDelete], not deleted on the server yet (the user
+  /// Rows hidden by [removeWithUndo], not deleted on the server yet (the user
   /// can still undo). Stores the whole item, so undo puts back exactly the
   /// same row.
   final Map<ItemId, ShoppingItem> _pendingRemoval = {};
@@ -272,10 +272,10 @@ class ItemsController extends _$ItemsController {
   /// Doesn't return an error like [remove] does: the delete happens 4
   /// seconds later, when the user is already doing something else. An
   /// error then would be confusing.
-  void Function() swipeDelete(ShoppingItem item) =>
+  void Function() removeWithUndo(ShoppingItem item) =>
       _hideWithUndo([item], (repo) => repo.remove(item.id));
 
-  /// [swipeDelete] for several items at once (Clear, or Delete in select
+  /// [removeWithUndo] for several items at once (Clear, or Delete in select
   /// mode): all hidden now, deleted together in one call after
   /// [swipeUndoWindow], unless the returned undo puts them all back first.
   ///
@@ -301,7 +301,7 @@ class ItemsController extends _$ItemsController {
   /// it fails.
   ///
   /// Hidden through [_pendingRemoval], so a live update during the save
-  /// can't bring them back (see [moveSelected]).
+  /// can't bring them back (see [moveMany]).
   Future<Failure?> _removeOptimistically(
     bool Function(ShoppingItem) gone,
     Future<Result<Object?>> Function() write,
@@ -387,7 +387,7 @@ class ItemsController extends _$ItemsController {
 
   /// Moves the items in [ids] to shop [shopId] (null = no shop). For
   /// "Move" in select mode. All at once, like [clearChecked].
-  Future<Failure?> moveSelected(Set<ItemId> ids, ShopId? shopId) async {
+  Future<Failure?> moveMany(Set<ItemId> ids, ShopId? shopId) async {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
     if (ids.isEmpty) return null;

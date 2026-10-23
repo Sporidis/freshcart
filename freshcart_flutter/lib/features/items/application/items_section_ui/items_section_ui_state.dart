@@ -1,9 +1,9 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// The state of [ItemsUiController]. Just the raw values.
+/// The state of [ItemsSectionUiController]. Just the raw values.
 /// `ItemsSectionController` turns them into one `ItemsMode`.
-class ItemsUiState {
-  const ItemsUiState({
+class ItemsSectionUiState {
+  const ItemsSectionUiState({
     this.selection = const {},
     this.searchActive = false,
     this.searchQuery = '',
@@ -32,7 +32,7 @@ class ItemsUiState {
   /// can tell "a new batch just landed" from any other rebuild.
   final int settleCount;
 
-  ItemsUiState copyWith({
+  ItemsSectionUiState copyWith({
     Set<ItemId>? selection,
     bool? searchActive,
     String? searchQuery,
@@ -42,7 +42,7 @@ class ItemsUiState {
     Set<ItemId>? settling,
     List<ItemId>? lastSettled,
     int? settleCount,
-  }) => ItemsUiState(
+  }) => ItemsSectionUiState(
     selection: selection ?? this.selection,
     searchActive: searchActive ?? this.searchActive,
     searchQuery: searchQuery ?? this.searchQuery,

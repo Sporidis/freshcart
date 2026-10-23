@@ -11,7 +11,7 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 /// tapped.
 ///
 /// Every way of deleting an item uses this (swipe, hold menu, search).
-/// [delete] is the controller's `swipeDelete`, which returns the undo
+/// [delete] is the controller's `removeWithUndo`, which returns the undo
 /// function.
 void deleteItemWithUndo(
   BuildContext context, {

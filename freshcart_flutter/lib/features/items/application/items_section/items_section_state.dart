@@ -41,7 +41,7 @@ class ItemsSectionState {
   final String searchQuery;
 
   /// Just checked, held in the open section until the burst of ticks
-  /// settles (design v3). See `ItemsUiController.startSettling`.
+  /// settles (design v3). See `ItemsSectionUiController.startSettling`.
   final Set<ItemId> settling;
 
   /// The last batch that moved to Done, in tap order, and how many batches

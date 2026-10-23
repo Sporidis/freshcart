@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_controller.dart';
-import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section_ui/items_section_ui_controller.dart';
+import 'package:freshcart_flutter/features/items/application/items_section_ui/items_section_ui_state.dart';
 
 void main() {
   final listId = ListId('00000000-0000-4000-8000-000000000001');
@@ -17,12 +17,16 @@ void main() {
     addTearDown(container.dispose);
   });
 
-  ItemsUiController ui(ListId id) =>
-      container.read(itemsUiControllerProvider(id).notifier);
-  ItemsUiState read(ListId id) => container.read(itemsUiControllerProvider(id));
+  ItemsSectionUiController ui(ListId id) =>
+      container.read(itemsSectionUiControllerProvider(id).notifier);
+  ItemsSectionUiState read(ListId id) =>
+      container.read(itemsSectionUiControllerProvider(id));
 
   test('selection toggles in and out; emptying it is leaving the mode', () {
-    final sub = container.listen(itemsUiControllerProvider(listId), (_, _) {});
+    final sub = container.listen(
+      itemsSectionUiControllerProvider(listId),
+      (_, _) {},
+    );
     addTearDown(sub.close);
 
     ui(listId)
@@ -36,7 +40,10 @@ void main() {
   });
 
   test('search stays open with an empty query until closed', () {
-    final sub = container.listen(itemsUiControllerProvider(listId), (_, _) {});
+    final sub = container.listen(
+      itemsSectionUiControllerProvider(listId),
+      (_, _) {},
+    );
     addTearDown(sub.close);
 
     ui(listId).openSearch();
@@ -50,7 +57,10 @@ void main() {
   });
 
   test('a celebration dismissal is undone by reset', () {
-    final sub = container.listen(itemsUiControllerProvider(listId), (_, _) {});
+    final sub = container.listen(
+      itemsSectionUiControllerProvider(listId),
+      (_, _) {},
+    );
     addTearDown(sub.close);
 
     ui(listId).dismissCelebration();
@@ -60,9 +70,12 @@ void main() {
   });
 
   test('state is per list', () {
-    final s1 = container.listen(itemsUiControllerProvider(listId), (_, _) {});
+    final s1 = container.listen(
+      itemsSectionUiControllerProvider(listId),
+      (_, _) {},
+    );
     final s2 = container.listen(
-      itemsUiControllerProvider(otherList),
+      itemsSectionUiControllerProvider(otherList),
       (_, _) {},
     );
     addTearDown(s1.close);

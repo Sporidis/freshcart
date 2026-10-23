@@ -313,7 +313,7 @@ class _ItemList extends StatelessWidget {
     void deleteWithUndo(ShoppingItem item) => deleteItemWithUndo(
       context,
       item: item,
-      delete: vm.swipeDelete,
+      delete: vm.removeWithUndo,
       t: t,
     );
 
@@ -728,7 +728,7 @@ void _showSettledToast(
     message: message,
     t: t,
     tick: true,
-    onUndo: () => unawaited(vm.uncheck(ids)),
+    onUndo: () => unawaited(vm.undoSettledBatch(ids)),
   );
 }
 

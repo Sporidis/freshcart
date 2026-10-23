@@ -85,7 +85,7 @@ class SearchResults extends StatelessWidget {
             onDismissed: () => deleteItemWithUndo(
               context,
               item: item,
-              delete: vm.swipeDelete,
+              delete: vm.removeWithUndo,
               t: t,
             ),
             child: ItemTile(
@@ -101,7 +101,7 @@ class SearchResults extends StatelessWidget {
               onDelete: () => deleteItemWithUndo(
                 context,
                 item: item,
-                delete: vm.swipeDelete,
+                delete: vm.removeWithUndo,
                 t: t,
               ),
               onQuantityChanged: (quantity) async => report(

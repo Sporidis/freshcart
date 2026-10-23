@@ -287,7 +287,7 @@ void main() {
     });
   });
 
-  group('moveSelected', () {
+  group('moveMany', () {
     final bakery = ShopId('shop-bakery');
 
     test('re-tags exactly the selected rows immediately', () async {
@@ -301,7 +301,7 @@ void main() {
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .moveSelected({milk.id, bread.id}, bakery);
+          .moveMany({milk.id, bread.id}, bakery);
 
       expect(failure, isNull);
       final items = await itemsOf(container);
@@ -328,9 +328,9 @@ void main() {
       final container = makeContainer();
       await itemsOf(container);
 
-      await container
-          .read(itemsControllerProvider(listId).notifier)
-          .moveSelected({milk.id}, null);
+      await container.read(itemsControllerProvider(listId).notifier).moveMany({
+        milk.id,
+      }, null);
 
       expect((await itemsOf(container)).single.shopId, isNull);
     });
@@ -346,7 +346,7 @@ void main() {
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .moveSelected({milk.id}, bakery);
+          .moveMany({milk.id}, bakery);
 
       expect(failure, isA<NetworkFailure>());
       expect((await itemsOf(container)).single.shopId, isNull);
@@ -361,7 +361,7 @@ void main() {
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .moveSelected(const {}, bakery);
+          .moveMany(const {}, bakery);
 
       expect(failure, isNull);
       expect(repository.moveManyCalls, isEmpty);
@@ -418,7 +418,7 @@ void main() {
     });
   });
 
-  group('swipeDelete', () {
+  group('removeWithUndo', () {
     test('hides the row immediately, before the undo window ends', () async {
       final item = buildItem();
       repository.byListResult = Ok([item]);
@@ -428,7 +428,7 @@ void main() {
 
       final undo = container
           .read(itemsControllerProvider(listId).notifier)
-          .swipeDelete(item);
+          .removeWithUndo(item);
 
       expect(currentItems(container), isEmpty);
       expect(
@@ -459,7 +459,7 @@ void main() {
 
         final undo = container
             .read(itemsControllerProvider(listId).notifier)
-            .swipeDelete(item);
+            .removeWithUndo(item);
         expect(currentItems(container), isEmpty);
 
         undo();
@@ -481,7 +481,7 @@ void main() {
 
       final undo = container
           .read(itemsControllerProvider(listId).notifier)
-          .swipeDelete(item);
+          .removeWithUndo(item);
       undo();
       undo();
 
@@ -632,7 +632,7 @@ void main() {
           itemsControllerProvider(listId).notifier,
         );
 
-        final moving = notifier.moveSelected({milk.id}, bakery);
+        final moving = notifier.moveMany({milk.id}, bakery);
         // A snapshot from before the server applied the move.
         repository.live.add(Ok([milk]));
         await pumpEventQueue();

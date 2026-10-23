@@ -1,10 +1,10 @@
 import 'dart:async';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_ui/items_ui_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section_ui/items_section_ui_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'items_ui_controller.g.dart';
+part 'items_section_ui_controller.g.dart';
 
 /// UI state for the items area of one list: the mode (select, search,
 /// rearrange) and small things like "is Done folded".
@@ -16,14 +16,14 @@ part 'items_ui_controller.g.dart';
 /// Why a provider and not widget state? So rotating the phone or going back
 /// and forth doesn't lose the selection (decisions.md #47).
 @riverpod
-class ItemsUiController extends _$ItemsUiController {
+class ItemsSectionUiController extends _$ItemsSectionUiController {
   /// Fires [settleNow] once the ticks have stopped for a moment.
   Timer? _settleTimer;
 
   @override
-  ItemsUiState build(ListId listId) {
+  ItemsSectionUiState build(ListId listId) {
     ref.onDispose(() => _settleTimer?.cancel());
-    return const ItemsUiState();
+    return const ItemsSectionUiState();
   }
 
   // ── Selection ──────────────────────────────────────────────────────────
@@ -86,7 +86,7 @@ class ItemsUiController extends _$ItemsUiController {
     if (rest.isEmpty) _settleTimer?.cancel();
   }
 
-  /// Releases the held rows to Done now. [ItemsUiState.settleCount] goes up,
+  /// Releases the held rows to Done now. [ItemsSectionUiState.settleCount] goes up,
   /// which is what the screen listens to for the toast.
   void settleNow() {
     _settleTimer?.cancel();
