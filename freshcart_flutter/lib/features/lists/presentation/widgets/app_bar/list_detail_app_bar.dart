@@ -44,7 +44,6 @@ import 'package:go_router/go_router.dart';
 class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   const ListDetailAppBar({
     required this.list,
-    required this.searchField,
     required this.waveOrigin,
     super.key,
   });
@@ -53,10 +52,6 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
   final Offset? Function() waveOrigin;
 
   final ShoppingList? list;
-
-  /// The search text controller (owned by the screen). Cleared when search
-  /// opens or closes, so old text never shows.
-  final TextEditingController searchField;
 
   static const double _rowHeight = ModeBar.height;
   static const double _progressHeight = 22;
@@ -134,20 +129,13 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
           key: const ValueKey('browse'),
           list: list,
           t: t,
-          onSearch: () {
-            searchField.clear();
-            vm.openSearch();
-          },
+          onSearch: vm.openSearch,
         ),
         ItemsMode.search => _SearchRow(
           key: const ValueKey('search'),
-          controller: searchField,
           t: t,
           onChanged: vm.updateQuery,
-          onCancel: () {
-            searchField.clear();
-            vm.closeSearch();
-          },
+          onCancel: vm.closeSearch,
         ),
         ItemsMode.select => ModeBar(
           key: const ValueKey('select'),
@@ -360,22 +348,37 @@ class _MembersButton extends StatelessWidget {
 }
 
 /// The search field with Cancel.
-class _SearchRow extends StatelessWidget {
+///
+/// Owns its text: each time search opens, the mode switcher builds a new
+/// row, so the field starts empty (closing search also clears the query).
+class _SearchRow extends StatefulWidget {
   const _SearchRow({
-    required this.controller,
     required this.t,
     required this.onChanged,
     required this.onCancel,
     super.key,
   });
 
-  final TextEditingController controller;
   final Translations t;
   final ValueChanged<String> onChanged;
   final VoidCallback onCancel;
 
   @override
+  State<_SearchRow> createState() => _SearchRowState();
+}
+
+class _SearchRowState extends State<_SearchRow> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final t = widget.t;
     final theme = Theme.of(context);
     final border = OutlineInputBorder(
       borderRadius: BorderRadius.circular(AppRadii.input),
@@ -388,7 +391,7 @@ class _SearchRow extends StatelessWidget {
           const SizedBox(width: AppSpacing.screen),
           Expanded(
             child: TextField(
-              controller: controller,
+              controller: _controller,
               autofocus: true,
               textInputAction: TextInputAction.search,
               style: theme.textTheme.bodyLarge,
@@ -413,10 +416,10 @@ class _SearchRow extends StatelessWidget {
                   ),
                 ),
               ),
-              onChanged: onChanged,
+              onChanged: widget.onChanged,
             ),
           ),
-          TextButton(onPressed: onCancel, child: Text(t.common.cancel)),
+          TextButton(onPressed: widget.onCancel, child: Text(t.common.cancel)),
           const SizedBox(width: AppSpacing.sm),
         ],
       ),

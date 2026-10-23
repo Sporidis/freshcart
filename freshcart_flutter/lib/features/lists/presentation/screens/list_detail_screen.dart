@@ -46,20 +46,10 @@ class ListDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
-  /// The search field's text controller. Kept here, not recreated on every
-  /// build, otherwise the cursor would jump while typing.
-  final TextEditingController _searchField = TextEditingController();
-
   /// Lets [ShopFilterBar] start the colour wave in the items area. It needs
   /// a key because the bar isn't inside the wave widget.
   final GlobalKey<ShopThemeRevealState> _revealKey =
       GlobalKey<ShopThemeRevealState>();
-
-  @override
-  void dispose() {
-    _searchField.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +91,6 @@ class _ListDetailScreenState extends ConsumerState<ListDetailScreen> {
             : null,
         appBar: ListDetailAppBar(
           list: list,
-          searchField: _searchField,
           // The header's tint grows from wherever the items' wave did.
           waveOrigin: () => _revealKey.currentState?.lastGlobalOrigin,
         ),

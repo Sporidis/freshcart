@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_recently_bought.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/editable_list_title.dart';
@@ -980,6 +981,26 @@ void main() {
       expect(find.byKey(const ValueKey('search')), findsNothing);
       expect(find.text('Milk'), findsOneWidget);
       expect(find.text('Bread'), findsOneWidget);
+    });
+
+    testWidgets('reopening search starts with an empty field', (tester) async {
+      await openGroceries(tester);
+
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(const ValueKey('search')), 'mil');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.search));
+      await tester.pumpAndSettle();
+
+      final field = find.descendant(
+        of: find.byKey(const ValueKey('search')),
+        matching: find.byType(TextField),
+      );
+      expect(tester.widget<TextField>(field).controller?.text, isEmpty);
+      // Nothing typed shows history, not results for the old 'mil'.
+      expect(find.byType(SearchRecentlyBought), findsOneWidget);
     });
   });
 }
