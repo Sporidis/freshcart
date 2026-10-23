@@ -17,6 +17,22 @@ abstract final class NotificationPreferencesService {
     return existing ?? NotificationPreferences(userId: userId);
   }
 
+  /// [forUser] for each of [userIds], in one query.
+  static Future<Map<UuidValue, NotificationPreferences>> forUsers(
+    Session session,
+    Set<UuidValue> userIds,
+  ) async {
+    final saved = await NotificationPreferences.db.find(
+      session,
+      where: (t) => t.userId.inSet(userIds),
+    );
+    final byUser = {for (final p in saved) p.userId: p};
+    return {
+      for (final id in userIds)
+        id: byUser[id] ?? NotificationPreferences(userId: id),
+    };
+  }
+
   static Future<NotificationPreferences> setItemAdded(
     Session session,
     UuidValue userId,

@@ -113,22 +113,21 @@ abstract final class NotificationService {
     );
     final mutedIds = muted.map((m) => m.userId).toSet();
 
-    final candidates = <UuidValue>[
+    final candidates = <UuidValue>{
       for (final member in members)
         if (!actorIds.contains(member.userId) &&
             !mutedIds.contains(member.userId))
           member.userId,
-    ];
+    };
     if (candidates.isEmpty) return [];
 
-    final preferences = await Future.wait(
-      candidates.map(
-        (id) => NotificationPreferencesService.forUser(session, id),
-      ),
+    final preferences = await NotificationPreferencesService.forUsers(
+      session,
+      candidates,
     );
     final recipients = <UuidValue>{
-      for (var i = 0; i < candidates.length; i++)
-        if (isEnabled(preferences[i])) candidates[i],
+      for (final id in candidates)
+        if (isEnabled(preferences[id]!)) id,
     };
     if (recipients.isEmpty) return [];
 
