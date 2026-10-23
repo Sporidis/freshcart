@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/checked_fa
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu/item_menu.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu/item_menu_motion.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/press_and_hold.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// One item row on the list.
@@ -119,8 +120,6 @@ class ItemTile extends StatefulWidget {
 }
 
 class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
-  static const _longPressThreshold = Duration(milliseconds: 450);
-
   /// How long the menu's stepper waits after the last tap before saving.
   /// "+ + +" becomes one save of 4, not three racing saves: the server
   /// rejects an edit whose `updatedAt` isn't the one it holds, and the
@@ -132,10 +131,7 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
   late final AnimationController _menuClose;
   late final AnimationController _strikeController;
   late final AnimationController _checkFillController;
-  late final AnimationController _pressScaleController;
   OverlayEntry? _menuEntry;
-  Timer? _longPressTimer;
-  Timer? _pressTellTimer;
   late bool _isChecked;
   bool _isMenuOpen = false;
 
@@ -175,11 +171,6 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
       duration: AppMotion.bouncy,
       value: (_isChecked || widget.selected) ? 1 : 0,
     );
-    _pressScaleController = AnimationController(
-      vsync: this,
-      duration: AppMotion.quick,
-      value: 1,
-    );
   }
 
   @override
@@ -194,9 +185,6 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     _menuClose.dispose();
     _strikeController.dispose();
     _checkFillController.dispose();
-    _pressScaleController.dispose();
-    _longPressTimer?.cancel();
-    _pressTellTimer?.cancel();
     _commitQuantity();
     super.dispose();
   }
@@ -270,48 +258,8 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     widget.onToggle();
   }
 
-  // ── Press and hold ──────────────────────────────────────────────────────
-  // A tap checks the row. Holding longer than [_longPressThreshold] opens
-  // the menu instead. Done with timers (not a long-press recognizer), so
-  // tap and hold are one gesture and we can show a hint halfway.
-
-  void _onPressStart() {
-    _longPressTimer?.cancel();
-    _longPressTimer = Timer(_longPressThreshold, () {
-      _pressTellTimer?.cancel();
-      _pressScaleController.animateTo(1, curve: AppMotion.pop);
-      _openMenu();
-    });
-    // After 300 ms of holding, the row shrinks a little as a hint to keep
-    // holding.
-    // Not under reduced motion: the hint is a scale, and the menu opening
-    // is hint enough.
-    _pressTellTimer?.cancel();
-    if (AppMotion.reduced(context)) return;
-    _pressTellTimer = Timer(const Duration(milliseconds: 300), () {
-      _pressScaleController.animateTo(AppMotion.pressScale);
-    });
-  }
-
-  void _onPressCancel() {
-    _longPressTimer?.cancel();
-    _pressTellTimer?.cancel();
-    _pressScaleController.animateTo(1, curve: AppMotion.pop);
-  }
-
-  void _onPressEnd() {
-    _pressTellTimer?.cancel();
-    _pressScaleController.animateTo(1, curve: AppMotion.pop);
-    // If the hold timer is still running, the finger was lifted early: it's
-    // a tap, so check the item. If the timer already fired, the menu is
-    // open and the tap is ignored here.
-    if (_longPressTimer?.isActive ?? false) {
-      _longPressTimer!.cancel();
-      _setChecked(!_isChecked);
-    }
-  }
-
   // ── Menu overlay ────────────────────────────────────────────────────────
+  // Opened by a hold (see [PressAndHold]).
 
   void _openMenu() {
     if (_menuEntry != null) return;
@@ -376,7 +324,6 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
     if (entry == null || _menuClose.isAnimating) return;
     // Don't make the user wait out the delay: closing saves.
     _commitQuantity();
-    _pressScaleController.animateTo(1, curve: AppMotion.pop);
     if (mounted) setState(() => _isMenuOpen = false);
 
     void remove() {
@@ -414,37 +361,30 @@ class _ItemTileState extends State<ItemTile> with TickerProviderStateMixin {
         ),
       );
     }
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => _onPressStart(),
-      onTapCancel: _onPressCancel,
-      onTapUp: (_) => _onPressEnd(),
+    return PressAndHold(
+      onTap: () => _setChecked(!_isChecked),
+      onHold: _openMenu,
       // While the menu is open, the row is only hidden, not removed. So the
       // list doesn't jump or lose its scroll position.
-      child: AnimatedBuilder(
-        animation: _pressScaleController,
-        builder: (context, child) =>
-            Transform.scale(scale: _pressScaleController.value, child: child),
-        child: Opacity(
-          opacity: _isMenuOpen ? 0 : 1,
-          child: CheckedFade(
-            progress: _strikeController,
-            child: ItemRowContent(
-              item: widget.item,
-              isChecked: _isChecked,
-              onChanged: _setChecked,
-              strikeProgress: _strikeController,
-              fillProgress: _checkFillController,
-              isMenuClosed: !_isMenuOpen,
-              shopColor: widget.shopColor,
-              shopName: widget.shopName,
-              faded: widget.inDone,
-              onQuantityChanged: widget.onQuantityChanged,
-              dragHandle: widget.dragHandle,
-              t: widget.t,
-              checkedByMember: widget.checkedByMember,
-              highlightQuery: widget.highlightQuery,
-            ),
+      child: Opacity(
+        opacity: _isMenuOpen ? 0 : 1,
+        child: CheckedFade(
+          progress: _strikeController,
+          child: ItemRowContent(
+            item: widget.item,
+            isChecked: _isChecked,
+            onChanged: _setChecked,
+            strikeProgress: _strikeController,
+            fillProgress: _checkFillController,
+            isMenuClosed: !_isMenuOpen,
+            shopColor: widget.shopColor,
+            shopName: widget.shopName,
+            faded: widget.inDone,
+            onQuantityChanged: widget.onQuantityChanged,
+            dragHandle: widget.dragHandle,
+            t: widget.t,
+            checkedByMember: widget.checkedByMember,
+            highlightQuery: widget.highlightQuery,
           ),
         ),
       ),
