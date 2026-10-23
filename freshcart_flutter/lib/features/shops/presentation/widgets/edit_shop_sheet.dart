@@ -7,6 +7,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_sizes.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/shops/application/shop_color_preview/shop_color_preview_controller.dart';
@@ -149,7 +150,7 @@ class _EditShopSheetState extends ConsumerState<EditShopSheet> {
         const SizedBox(height: AppSpacing.gapSmall),
         ColorSwatchPicker(
           colors: AppColors.presetShopColors,
-          selected: Color(_color.argb),
+          selected: _color.toColor(),
           semanticLabel: t.shops.colorLabel,
           marked: _takenSwatches(t),
           onSelected: (color) => _pick(HexColor.fromArgb(color.toARGB32())),

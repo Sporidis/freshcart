@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
+import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
@@ -283,7 +284,7 @@ class _ColorRow extends StatelessWidget {
       children: [
         ColorSwatchPicker(
           colors: AppColors.presetShopColors,
-          selected: current == null ? null : Color(current.argb),
+          selected: current?.toColor(),
           alignment: WrapAlignment.spaceBetween,
           keyPrefix: 'avatar-swatch-',
           semanticLabel: t.profile.colorLabel,
