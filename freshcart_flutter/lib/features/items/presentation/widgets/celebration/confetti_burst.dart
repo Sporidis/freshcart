@@ -8,13 +8,13 @@ import 'package:flutter/scheduler.dart';
 /// Only knows where it is and how it moves. Drawing is done by
 /// [_ConfettiPainter]. That keeps [tick] simple maths, easy to test without
 /// a [Canvas].
-class ConfettiParticle {
+class _ConfettiParticle {
   /// Creates one piece at a random spot near the top of [bounds], with a
   /// random sideways and falling speed.
   ///
   /// [random] is passed in (not created per piece), so a whole burst could
   /// be made repeatable with a fixed seed.
-  ConfettiParticle({
+  _ConfettiParticle({
     required this.color,
     required Size bounds,
     required Random random,
@@ -87,7 +87,7 @@ abstract final class ConfettiBurst {
     final random = Random();
     final particles = List.generate(
       24 + random.nextInt(13),
-      (_) => ConfettiParticle(
+      (_) => _ConfettiParticle(
         color: colors[random.nextInt(colors.length)],
         bounds: bounds,
         random: random,
@@ -158,7 +158,7 @@ class ConfettiBurstHandle {
 class _ConfettiPainter extends CustomPainter {
   _ConfettiPainter(this.particles);
 
-  final List<ConfettiParticle> particles;
+  final List<_ConfettiParticle> particles;
 
   @override
   void paint(Canvas canvas, Size size) {

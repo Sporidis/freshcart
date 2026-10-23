@@ -60,24 +60,23 @@ class UpgradeNudge extends ConsumerWidget {
   }
 }
 
-/// Opens [LinkEmailDialog]. Both [UpgradeNudge] and Settings use this.
+/// Opens [_LinkEmailDialog]. Both [UpgradeNudge] and Settings use this.
 Future<void> showLinkEmailDialog(BuildContext context) => showDialog<void>(
   context: context,
-  builder: (context) => const LinkEmailDialog(),
+  builder: (context) => const _LinkEmailDialog(),
 );
 
 /// The form to add an email and password to an anonymous account.
 ///
 /// Public because Settings opens it too.
-class LinkEmailDialog extends ConsumerStatefulWidget {
-  /// Creates the dialog.
-  const LinkEmailDialog({super.key});
+class _LinkEmailDialog extends ConsumerStatefulWidget {
+  const _LinkEmailDialog();
 
   @override
-  ConsumerState<LinkEmailDialog> createState() => LinkEmailDialogState();
+  ConsumerState<_LinkEmailDialog> createState() => _LinkEmailDialogState();
 }
 
-class LinkEmailDialogState extends ConsumerState<LinkEmailDialog> {
+class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
   Failure? _failure;

@@ -119,7 +119,7 @@ class _JoinCodeInputState extends State<JoinCodeInput> {
                 maxLength: JoinCode.length,
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp('[A-Za-z0-9]')),
-                  UpperCaseTextFormatter(),
+                  _UpperCaseTextFormatter(),
                 ],
                 decoration: const InputDecoration(
                   counterText: '',
@@ -189,7 +189,7 @@ class _CodeBox extends StatelessWidget {
 
 /// Turns letters into uppercase while typing. Join codes are always
 /// uppercase.
-class UpperCaseTextFormatter extends TextInputFormatter {
+class _UpperCaseTextFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
     TextEditingValue oldValue,
