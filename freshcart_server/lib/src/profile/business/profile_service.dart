@@ -89,20 +89,11 @@ abstract final class ProfileService {
     UuidValue authUserId,
     String displayName,
   ) async {
-    final existing = await _profileFor(session, authUserId);
-    if (existing == null) {
-      return MemberProfile.db.insertRow(
-        session,
-        MemberProfile(
-          authUserId: authUserId,
-          displayName: displayName,
-          createdAt: DateTime.now().toUtc(),
-        ),
-      );
-    }
-    return MemberProfile.db.updateRow(
+    return _upsert(
       session,
-      existing.copyWith(displayName: displayName),
+      authUserId,
+      await _profileFor(session, authUserId),
+      (p) => p.copyWith(displayName: displayName),
     );
   }
 
@@ -113,21 +104,11 @@ abstract final class ProfileService {
     UuidValue authUserId,
     int avatarColorArgb,
   ) async {
-    final existing = await _profileFor(session, authUserId);
-    if (existing == null) {
-      return MemberProfile.db.insertRow(
-        session,
-        MemberProfile(
-          authUserId: authUserId,
-          displayName: fallbackDisplayName,
-          avatarColorArgb: avatarColorArgb,
-          createdAt: DateTime.now().toUtc(),
-        ),
-      );
-    }
-    return MemberProfile.db.updateRow(
+    return _upsert(
       session,
-      existing.copyWith(avatarColorArgb: avatarColorArgb),
+      authUserId,
+      await _profileFor(session, authUserId),
+      (p) => p.copyWith(avatarColorArgb: avatarColorArgb),
     );
   }
 
@@ -155,20 +136,12 @@ abstract final class ProfileService {
 
     final existing = await _profileFor(session, authUserId);
     final previousPath = existing?.avatarPhotoPath;
-    final saved = existing == null
-        ? await MemberProfile.db.insertRow(
-            session,
-            MemberProfile(
-              authUserId: authUserId,
-              displayName: fallbackDisplayName,
-              avatarPhotoPath: path,
-              createdAt: DateTime.now().toUtc(),
-            ),
-          )
-        : await MemberProfile.db.updateRow(
-            session,
-            existing.copyWith(avatarPhotoPath: path),
-          );
+    final saved = await _upsert(
+      session,
+      authUserId,
+      existing,
+      (p) => p.copyWith(avatarPhotoPath: path),
+    );
     // Delete the old file only now, after the profile points to the new one.
     // If something failed before this, the old photo still works.
     if (previousPath != null && previousPath != path) {
@@ -196,6 +169,29 @@ abstract final class ProfileService {
     return MemberProfile.db.updateRow(
       session,
       existing!.copyWith(avatarPhotoPath: null),
+    );
+  }
+
+  /// Applies [change] to [existing], or to a new profile (named
+  /// [fallbackDisplayName]) when the user has none yet, and saves it.
+  static Future<MemberProfile> _upsert(
+    Session session,
+    UuidValue authUserId,
+    MemberProfile? existing,
+    MemberProfile Function(MemberProfile) change,
+  ) {
+    if (existing != null) {
+      return MemberProfile.db.updateRow(session, change(existing));
+    }
+    return MemberProfile.db.insertRow(
+      session,
+      change(
+        MemberProfile(
+          authUserId: authUserId,
+          displayName: fallbackDisplayName,
+          createdAt: DateTime.now().toUtc(),
+        ),
+      ),
     );
   }
 }
