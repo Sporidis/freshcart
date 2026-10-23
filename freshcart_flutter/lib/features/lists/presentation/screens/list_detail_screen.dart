@@ -16,7 +16,7 @@ import 'package:freshcart_flutter/features/lists/application/list_detail_screen/
 import 'package:freshcart_flutter/features/lists/presentation/widgets/app_bar/list_detail_app_bar.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/error_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/list_title_flight.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/lists_drawer/lists_drawer.dart';
 import 'package:freshcart_flutter/features/shops/presentation/widgets/shop_filter_bar.dart';
 import 'package:go_router/go_router.dart';
 
