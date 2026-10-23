@@ -1,5 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'notification_preferences_controller.g.dart';
@@ -14,26 +14,30 @@ class NotificationPreferencesController
   /// and flipping one could save the opposite of what they wanted.
   @override
   Future<Result<NotificationPreferences>> build() =>
-      ref.watch(pushRepositoryProvider).notificationPreferences();
+      ref.watch(notificationRepositoryProvider).notificationPreferences();
 
   /// Sets whether "Someone adds an item" notifies.
   Future<Failure?> setItemAdded(bool value) => _set(
     value,
-    (v) => ref.read(pushRepositoryProvider).setItemAddedNotificationsEnabled(v),
+    (v) => ref
+        .read(notificationRepositoryProvider)
+        .setItemAddedNotificationsEnabled(v),
   );
 
   /// Sets whether "Someone joins a list" notifies.
   Future<Failure?> setMemberJoined(bool value) => _set(
     value,
-    (v) =>
-        ref.read(pushRepositoryProvider).setMemberJoinedNotificationsEnabled(v),
+    (v) => ref
+        .read(notificationRepositoryProvider)
+        .setMemberJoinedNotificationsEnabled(v),
   );
 
   /// Sets whether "A list is finished" notifies.
   Future<Failure?> setListFinished(bool value) => _set(
     value,
-    (v) =>
-        ref.read(pushRepositoryProvider).setListFinishedNotificationsEnabled(v),
+    (v) => ref
+        .read(notificationRepositoryProvider)
+        .setListFinishedNotificationsEnabled(v),
   );
 
   Future<Failure?> _set(

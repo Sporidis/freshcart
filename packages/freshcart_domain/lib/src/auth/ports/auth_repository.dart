@@ -10,7 +10,7 @@ import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 /// Doesn't mention Serverpod, Google or email details. Adding a new login
 /// method later only changes the implementation, not this interface
 /// (decisions.md #6).
-abstract interface class AuthPort {
+abstract interface class AuthRepository {
   /// The current user, or `null` before the first sign-in completes.
   AuthUser? get currentUser;
 

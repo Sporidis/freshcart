@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/demo/demo_backend.dart';
-import 'package:freshcart_flutter/demo/fakes/fake_auth.dart';
+import 'package:freshcart_flutter/demo/fakes/fake_auth_repository.dart';
 import 'package:freshcart_flutter/demo/fakes/fake_item_repository.dart';
 import 'package:freshcart_flutter/demo/fakes/fake_list_repository.dart';
 import 'package:freshcart_flutter/demo/fakes/fake_shop_repository.dart';
@@ -13,13 +13,13 @@ class DemoPhoneFakes {
     : lists = FakeListRepository(db, id),
       items = FakeItemRepository(db, id),
       shops = FakeShopRepository(db, id),
-      auth = FakeAuth(db, id);
+      auth = FakeAuthRepository(db, id);
 
   final UserId id;
   final FakeListRepository lists;
   final FakeItemRepository items;
   final FakeShopRepository shops;
-  final FakeAuth auth;
+  final FakeAuthRepository auth;
 }
 
 /// A backend with two seeded users, [a] and [b], and no latency.

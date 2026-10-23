@@ -1,5 +1,5 @@
 import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
-import 'package:freshcart_domain/src/auth/ports/auth_port.dart';
+import 'package:freshcart_domain/src/auth/ports/auth_repository.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
@@ -10,10 +10,10 @@ import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 /// The caller picks [shownColor] (colours are a UI choice); the domain
 /// owns the rule of when it's saved.
 class SetUpProfile {
-  /// Creates the use case against an [AuthPort].
+  /// Creates the use case against an [AuthRepository].
   const SetUpProfile(this._auth);
 
-  final AuthPort _auth;
+  final AuthRepository _auth;
 
   /// Sets [displayName] (checked by [AuthUser.validateDisplayName]), then
   /// saves [shownColor] if the user has no avatar colour yet.

@@ -10,7 +10,7 @@ import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
-import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:freshcart_flutter/features/settings/presentation/screens/settings_screen.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
@@ -20,7 +20,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../fakes/fake_auth_repository.dart';
 import '../../../../fakes/fake_item_repository.dart';
 import '../../../../fakes/fake_list_repository.dart';
-import '../../../../fakes/fake_push_repository.dart';
+import '../../../../fakes/fake_notification_repository.dart';
 import '../../../../fakes/fake_shop_repository.dart';
 
 void main() {
@@ -297,7 +297,9 @@ void main() {
             listRepositoryProvider.overrideWithValue(notifLists),
             itemRepositoryProvider.overrideWithValue(notifItems),
             shopRepositoryProvider.overrideWithValue(FakeShopRepository()),
-            pushRepositoryProvider.overrideWithValue(FakePushRepository()),
+            notificationRepositoryProvider.overrideWithValue(
+              FakeNotificationRepository(),
+            ),
             signInResultProvider.overrideWith((ref) async => Ok(aSignIn())),
           ],
         );

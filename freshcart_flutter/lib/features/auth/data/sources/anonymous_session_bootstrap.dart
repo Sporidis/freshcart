@@ -16,14 +16,14 @@ abstract final class AnonymousSessionBootstrap {
   /// without internet). The app still opens, and server calls just return
   /// "unauthorized". Much better than crashing.
   ///
-  /// `isNewIdentity` is true only if a new account was just created. That's
+  /// `isNewAccount` is true only if a new account was just created. That's
   /// how we know to show onboarding, without saving a separate flag.
-  static Future<({bool authenticated, bool isNewIdentity})> ensureSignedIn(
+  static Future<({bool authenticated, bool isNewAccount})> ensureSignedIn(
     dto.Client client,
   ) async {
     await client.auth.initialize();
     if (client.auth.isAuthenticated) {
-      return (authenticated: true, isNewIdentity: false);
+      return (authenticated: true, isNewAccount: false);
     }
 
     try {
@@ -32,11 +32,11 @@ abstract final class AnonymousSessionBootstrap {
       final session = await client.anonymousIdp.login();
       await client.auth.updateSignedInUser(session);
       final authenticated = client.auth.isAuthenticated;
-      return (authenticated: authenticated, isNewIdentity: authenticated);
+      return (authenticated: authenticated, isNewAccount: authenticated);
     } on Exception catch (_) {
       // Usually: no internet on first launch. Catch it so the app still
       // opens and can show its own error, instead of crashing.
-      return (authenticated: false, isNewIdentity: false);
+      return (authenticated: false, isNewAccount: false);
     }
   }
 }

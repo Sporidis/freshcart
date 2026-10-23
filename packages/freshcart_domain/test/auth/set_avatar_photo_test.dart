@@ -7,11 +7,11 @@ import '../fakes/fake_repositories.dart';
 
 void main() {
   group('SetAvatarPhoto', () {
-    late FakeAuthPort auth;
+    late FakeAuthRepository auth;
     late SetAvatarPhoto setAvatarPhoto;
 
     setUp(() {
-      auth = FakeAuthPort();
+      auth = FakeAuthRepository();
       setAvatarPhoto = SetAvatarPhoto(auth);
     });
 

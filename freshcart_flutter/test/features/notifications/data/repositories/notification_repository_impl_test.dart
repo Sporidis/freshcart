@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/data/sources/push_token_source.dart';
 import 'package:freshcart_flutter/features/notifications/data/sources/unconfigured_push_token_source.dart';
 
@@ -28,12 +28,12 @@ class FakePushTokenSource implements PushTokenSource {
 void main() {
   late FakeClient client;
   late FakePushTokenSource tokens;
-  late PushRepositoryImpl repository;
+  late NotificationRepositoryImpl repository;
 
   setUp(() {
     client = FakeClient();
     tokens = FakePushTokenSource();
-    repository = PushRepositoryImpl(client, tokens);
+    repository = NotificationRepositoryImpl(client, tokens);
   });
 
   group('isSupported', () {

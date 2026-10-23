@@ -5,11 +5,11 @@ import '../fakes/fake_repositories.dart';
 
 void main() {
   group('SetDisplayName', () {
-    late FakeAuthPort auth;
+    late FakeAuthRepository auth;
     late SetDisplayName setDisplayName;
 
     setUp(() {
-      auth = FakeAuthPort();
+      auth = FakeAuthRepository();
       setDisplayName = SetDisplayName(auth);
     });
 

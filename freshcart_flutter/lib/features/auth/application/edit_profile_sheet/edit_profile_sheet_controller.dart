@@ -1,24 +1,24 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
-import 'package:freshcart_flutter/features/auth/application/edit_profile_screen/edit_profile_screen_state.dart';
+import 'package:freshcart_flutter/features/auth/application/edit_profile_sheet/edit_profile_sheet_state.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/avatar_photo_source.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'edit_profile_screen_controller.g.dart';
+part 'edit_profile_sheet_controller.g.dart';
 
 /// The controller for `EditProfileSheet`: the profile to show, and all
 /// the changes the sheet can make.
 ///
 /// It exists mainly for [choosePhoto], which has two steps (pick, then
 /// upload). Saving flags and errors stay in the sheet itself, see
-/// [EditProfileScreenState] for why.
+/// [EditProfileSheetState] for why.
 @riverpod
-class EditProfileScreenController extends _$EditProfileScreenController {
+class EditProfileSheetController extends _$EditProfileSheetController {
   @override
-  EditProfileScreenState build() {
+  EditProfileSheetState build() {
     final profile = ref.watch(profileControllerProvider);
-    return EditProfileScreenState(
+    return EditProfileSheetState(
       user: profile.dataOrNull,
       loadFailure: profile.loadFailure,
     );

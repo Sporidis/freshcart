@@ -11,7 +11,7 @@ import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
-import 'package:freshcart_flutter/features/auth/application/edit_profile_screen/edit_profile_screen_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/edit_profile_sheet/edit_profile_sheet_controller.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Opens [EditProfileSheet]. Used by the drawer header and by Settings.
@@ -37,13 +37,13 @@ class EditProfileSheet extends ConsumerStatefulWidget {
 }
 
 class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
-  EditProfileScreenController get _vm =>
-      ref.read(editProfileScreenControllerProvider.notifier);
+  EditProfileSheetController get _vm =>
+      ref.read(editProfileSheetControllerProvider.notifier);
 
   late final TextEditingController _nameController;
 
   // "Saving..." flags and errors are kept here, not in the controller (see
-  // EditProfileScreenState for why). Errors are stored as Failure and only
+  // EditProfileSheetState for why). Errors are stored as Failure and only
   // turned into text in build(), so they update if the language changes.
   Failure? _nameFailure;
   bool _savingName = false;
@@ -109,7 +109,7 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
-    final s = ref.watch(editProfileScreenControllerProvider);
+    final s = ref.watch(editProfileSheetControllerProvider);
     final theme = Theme.of(context);
 
     // Copied into a local variable, so Dart knows it's not null after the

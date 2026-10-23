@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/auth/application/edit_profile_screen/edit_profile_screen_controller.dart';
+import 'package:freshcart_flutter/features/auth/application/edit_profile_sheet/edit_profile_sheet_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/avatar_photo_source.dart';
@@ -33,7 +33,7 @@ void main() {
 
   /// A container whose photo source answers with [picked], with the
   /// profile already loaded and the (auto-dispose) VM kept alive.
-  Future<EditProfileScreenController> vmPicking(
+  Future<EditProfileSheetController> vmPicking(
     Result<Uint8List?> picked,
   ) async {
     final container = ProviderContainer(
@@ -44,12 +44,12 @@ void main() {
     );
     addTearDown(container.dispose);
     final sub = container.listen(
-      editProfileScreenControllerProvider,
+      editProfileSheetControllerProvider,
       (_, _) {},
     );
     addTearDown(sub.close);
     await container.read(profileControllerProvider.future);
-    return container.read(editProfileScreenControllerProvider.notifier);
+    return container.read(editProfileSheetControllerProvider.notifier);
   }
 
   group('choosePhoto', () {
@@ -91,14 +91,14 @@ void main() {
     );
     addTearDown(container.dispose);
     final sub = container.listen(
-      editProfileScreenControllerProvider,
+      editProfileSheetControllerProvider,
       (_, _) {},
     );
     addTearDown(sub.close);
 
     await container.read(profileControllerProvider.future);
 
-    final s = container.read(editProfileScreenControllerProvider);
+    final s = container.read(editProfileSheetControllerProvider);
     expect(s.user?.displayName, 'Nikolaos');
     expect(s.loadFailure, isNull);
   });

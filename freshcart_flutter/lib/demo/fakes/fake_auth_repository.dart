@@ -3,13 +3,13 @@ import 'dart:typed_data';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/demo/demo_backend.dart';
 
-/// [AuthPort] for one demo phone. The user lives in `db.users[me]`, which
+/// [AuthRepository] for one demo phone. The user lives in `db.users[me]`, which
 /// the demo seeds before the phone starts.
 ///
 /// Anything that needs a real account (linking, photos, signing out) fails
 /// with a clear message instead of pretending to work.
-class FakeAuth implements AuthPort {
-  FakeAuth(this._db, this._me);
+class FakeAuthRepository implements AuthRepository {
+  FakeAuthRepository(this._db, this._me);
 
   final DemoBackend _db;
   final UserId _me;

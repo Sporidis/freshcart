@@ -6,8 +6,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 /// rebuilt every time the profile changes, and saving changes the profile.
 /// So a flag stored here would be reset in the middle of saving. The
 /// sheet keeps those flags itself instead (same as `ListSettingsScreenState`).
-class EditProfileScreenState {
-  const EditProfileScreenState({this.user, this.loadFailure});
+class EditProfileSheetState {
+  const EditProfileSheetState({this.user, this.loadFailure});
 
   /// The signed-in user; null until the profile has loaded.
   final AuthUser? user;

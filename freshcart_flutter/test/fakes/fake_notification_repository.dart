@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// An in-memory [PushPort] for application/widget tests.
-class FakePushRepository implements PushPort {
+/// An in-memory [NotificationRepository] for application/widget tests.
+class FakeNotificationRepository implements NotificationRepository {
   /// What [isSupported] returns.
   bool supported = true;
 

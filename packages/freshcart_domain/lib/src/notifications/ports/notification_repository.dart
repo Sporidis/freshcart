@@ -15,7 +15,7 @@ import 'package:freshcart_domain/src/notifications/entities/notification_prefere
 /// Live updates inside the app still work. Real iOS push needs the native
 /// app and a paid Apple Developer account. So a failed registration there
 /// is expected, not a bug.
-abstract interface class PushPort {
+abstract interface class NotificationRepository {
   /// Whether push can work on this device. False on web (including EU
   /// iPhone PWAs). Used to hide settings that wouldn't work.
   Future<bool> isSupported();

@@ -30,6 +30,6 @@ Future<Result<SignIn>> signInResult(Ref ref) =>
 /// onboarding), `false` a returning one, or a sign-in that failed (the
 /// lists screen then shows what's wrong).
 @riverpod
-Future<bool> isNewIdentity(Ref ref) async =>
+Future<bool> isNewAccount(Ref ref) async =>
     (await ref.watch(signInResultProvider.future)).valueOrNull?.isNewAccount ??
     false;

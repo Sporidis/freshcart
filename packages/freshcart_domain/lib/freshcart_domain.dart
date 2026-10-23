@@ -13,7 +13,7 @@ library;
 // Auth
 export 'src/auth/entities/auth_user.dart';
 export 'src/auth/entities/sign_in.dart';
-export 'src/auth/ports/auth_port.dart';
+export 'src/auth/ports/auth_repository.dart';
 export 'src/auth/use_cases/set_avatar_photo.dart';
 export 'src/auth/use_cases/set_display_name.dart';
 export 'src/auth/use_cases/set_up_profile.dart';
@@ -47,7 +47,7 @@ export 'src/lists/value_objects/join_code.dart';
 export 'src/lists/value_objects/list_id.dart';
 // Notifications
 export 'src/notifications/entities/notification_preferences.dart';
-export 'src/notifications/ports/push_port.dart';
+export 'src/notifications/ports/notification_repository.dart';
 // Shops
 export 'src/shops/entities/shop.dart';
 export 'src/shops/entities/shop_item_disposition.dart';

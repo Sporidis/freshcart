@@ -10,9 +10,9 @@ import 'package:freshcart_flutter/features/notifications/data/sources/push_token
 import 'package:freshcart_flutter/features/notifications/data/sources/unconfigured_push_token_source.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
-part 'push_repository_impl.g.dart';
+part 'notification_repository_impl.g.dart';
 
-/// The real [PushPort], talking to the Serverpod server.
+/// The real [NotificationRepository], talking to the Serverpod server.
 ///
 /// ## Known limitation
 ///
@@ -21,9 +21,9 @@ part 'push_repository_impl.g.dart';
 /// from here). Real iOS push needs the native app and a paid Apple
 /// Developer account (decisions.md #8). [isSupported] says when push isn't
 /// possible, so the UI doesn't show settings that won't work.
-class PushRepositoryImpl implements PushPort {
+class NotificationRepositoryImpl implements NotificationRepository {
   /// Creates the repository against a client and a token source.
-  const PushRepositoryImpl(this._client, this._tokens);
+  const NotificationRepositoryImpl(this._client, this._tokens);
 
   final dto.Client _client;
   final PushTokenSource _tokens;
@@ -115,9 +115,9 @@ dto.DevicePlatform devicePlatform(Ref ref) {
 PushTokenSource pushTokenSource(Ref ref) =>
     UnconfiguredPushTokenSource(ref.watch(devicePlatformProvider));
 
-/// Supplies the [PushPort] (the push repository).
+/// Supplies the [NotificationRepository] (the push repository).
 @Riverpod(keepAlive: true)
-PushPort pushRepository(Ref ref) => PushRepositoryImpl(
+NotificationRepository notificationRepository(Ref ref) => NotificationRepositoryImpl(
   ref.watch(serverpodClientProvider),
   ref.watch(pushTokenSourceProvider),
 );

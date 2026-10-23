@@ -9,12 +9,12 @@ part 'profile_controller.g.dart';
 
 /// The signed-in user's profile, and all the changes that can be made to it.
 ///
-/// Screens don't call [AuthPort] directly, they call this. Each method
+/// Screens don't call [AuthRepository] directly, they call this. Each method
 /// returns a [Failure], or null if it worked. The screen only decides how
 /// to show the result.
 @Riverpod(keepAlive: true)
 class ProfileController extends _$ProfileController {
-  AuthPort get _auth => ref.read(authRepositoryProvider);
+  AuthRepository get _auth => ref.read(authRepositoryProvider);
 
   /// The signed-in user (from [signInResultProvider]; this never signs in
   /// itself), kept up to date with every change.

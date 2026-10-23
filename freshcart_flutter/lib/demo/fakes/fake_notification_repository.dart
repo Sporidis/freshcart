@@ -1,8 +1,8 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// [PushPort] for one demo phone. Push is never supported (it's the web),
+/// [NotificationRepository] for one demo phone. Push is never supported (it's the web),
 /// but settings are kept in memory so toggles stay where the user put them.
-class FakePush implements PushPort {
+class FakeNotificationRepository implements NotificationRepository {
   NotificationPreferences _preferences = const NotificationPreferences();
   final _mutedLists = <ListId>{};
 

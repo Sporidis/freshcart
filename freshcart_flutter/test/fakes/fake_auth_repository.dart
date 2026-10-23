@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 
-/// An in-memory [AuthPort] for presentation tests.
-class FakeAuthRepository implements AuthPort {
+/// An in-memory [AuthRepository] for presentation tests.
+class FakeAuthRepository implements AuthRepository {
   /// The identity [ensureSignedIn] and the link calls resolve to.
   Result<AuthUser> user = Ok(
     AuthUser(id: UserId('user-1'), displayName: 'Nikolaos', isAnonymous: true),
@@ -133,7 +133,7 @@ class FakeAuthRepository implements AuthPort {
   Future<void> dispose() => _changes.close();
 }
 
-/// A successful [AuthPort.ensureSignedIn], for overriding
+/// A successful [AuthRepository.ensureSignedIn], for overriding
 /// `signInResultProvider` in tests that don't need a whole fake auth.
 SignIn aSignIn({bool isNewAccount = false}) => (
   user: AuthUser(

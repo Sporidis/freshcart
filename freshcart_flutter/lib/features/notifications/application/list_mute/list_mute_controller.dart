@@ -1,5 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_mute_controller.g.dart';
@@ -11,7 +11,7 @@ class ListMuteController extends _$ListMuteController {
   @override
   Future<bool> build(ListId listId) async {
     final result = await ref
-        .watch(pushRepositoryProvider)
+        .watch(notificationRepositoryProvider)
         .isListMuted(
           listId,
         );
@@ -27,7 +27,7 @@ class ListMuteController extends _$ListMuteController {
   /// Mutes or unmutes the list, and saves it on the server.
   Future<Failure?> setMuted(bool value) async {
     final result = await ref
-        .read(pushRepositoryProvider)
+        .read(notificationRepositoryProvider)
         .setListMuted(listId, muted: value);
     switch (result) {
       case Ok<void>():

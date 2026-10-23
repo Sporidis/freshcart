@@ -213,9 +213,9 @@ class FakeShopRepository implements ShopRepository {
   }) => throw UnimplementedError();
 }
 
-/// An [AuthPort] that records its calls and answers with whatever a test
+/// An [AuthRepository] that records its calls and answers with whatever a test
 /// configures.
-class FakeAuthPort implements AuthPort {
+class FakeAuthRepository implements AuthRepository {
   /// What [setDisplayName] will return. Defaults to echoing the name back.
   Result<AuthUser>? setDisplayNameResult;
 

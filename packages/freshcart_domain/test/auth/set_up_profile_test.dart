@@ -6,12 +6,12 @@ import '../fakes/fake_repositories.dart';
 
 void main() {
   group('SetUpProfile', () {
-    late FakeAuthPort auth;
+    late FakeAuthRepository auth;
     late SetUpProfile setUpProfile;
     final shown = HexColor.fromArgb(0xFF2456A6);
 
     setUp(() {
-      auth = FakeAuthPort();
+      auth = FakeAuthRepository();
       setUpProfile = SetUpProfile(auth);
     });
 

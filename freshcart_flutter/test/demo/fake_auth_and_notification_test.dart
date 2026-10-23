@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/demo/fakes/fake_push.dart';
+import 'package:freshcart_flutter/demo/fakes/fake_notification_repository.dart';
 
 import 'demo_world.dart';
 
@@ -9,7 +9,7 @@ void main() {
 
   setUp(() => world = DemoWorld());
 
-  group('FakeAuth', () {
+  group('FakeAuthRepository', () {
     test("a renamed display name shows in the list's members", () async {
       final list = await world.sharedList();
 
@@ -46,9 +46,9 @@ void main() {
     });
   });
 
-  group('FakePush', () {
+  group('FakeNotificationRepository', () {
     test('is never supported, but settings stick', () async {
-      final push = FakePush();
+      final push = FakeNotificationRepository();
       final listId = ListId('list-1');
 
       expect(await push.isSupported(), isFalse);

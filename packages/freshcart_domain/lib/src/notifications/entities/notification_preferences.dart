@@ -5,7 +5,7 @@ part 'notification_preferences.freezed.dart';
 /// Which kinds of push notifications the user wants, for all lists
 /// (decisions.md #80).
 ///
-/// Muting one list is separate ([PushPort.setListMuted]). This is "which
+/// Muting one list is separate ([NotificationRepository.setListMuted]). This is "which
 /// kinds do I want"; muting is "nothing from this list".
 @freezed
 abstract class NotificationPreferences with _$NotificationPreferences {

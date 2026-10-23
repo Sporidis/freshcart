@@ -14,10 +14,10 @@ part 'auth_repository_impl.g.dart';
 // The import above is only for `client.auth`. Serverpod's auth package has
 // its own `AuthUser` class, which would clash with our domain `AuthUser`.
 
-/// The real [AuthPort], talking to the Serverpod server.
+/// The real [AuthRepository], talking to the Serverpod server.
 ///
 /// The server creates and decides the user's id. The app only reads it.
-class AuthRepositoryImpl implements AuthPort {
+class AuthRepositoryImpl implements AuthRepository {
   /// Creates the repository against a generated Serverpod [dto.Client].
   AuthRepositoryImpl(this._client);
 
@@ -41,11 +41,11 @@ class AuthRepositoryImpl implements AuthPort {
     return switch (session) {
       Err(:final failure) => Err(failure),
       // Usually: no internet on first launch.
-      Ok(value: (authenticated: false, isNewIdentity: _)) => const Err(
+      Ok(value: (authenticated: false, isNewAccount: _)) => const Err(
         Failure.network(),
       ),
       Ok(:final value) => _guard(
-        () async => (user: await _refresh(), isNewAccount: value.isNewIdentity),
+        () async => (user: await _refresh(), isNewAccount: value.isNewAccount),
       ),
     };
   }
@@ -128,7 +128,7 @@ class AuthRepositoryImpl implements AuthPort {
   }
 }
 
-/// Supplies the [AuthPort].
+/// Supplies the [AuthRepository].
 @Riverpod(keepAlive: true)
-AuthPort authRepository(Ref ref) =>
+AuthRepository authRepository(Ref ref) =>
     AuthRepositoryImpl(ref.watch(serverpodClientProvider));
