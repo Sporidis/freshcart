@@ -24,14 +24,23 @@ abstract final class ListService {
   /// Sends the list (with members) to everyone watching it.
   ///
   /// Sends the whole list (not just what changed, like for items), because
-  /// a list is one small row. Callers await it after their save, so if
-  /// sending fails the request reports an error even though the save went
-  /// through.
+  /// a list is one small row. It runs after the save, so a failure here is
+  /// logged, not thrown: the change went through, and other phones catch up
+  /// when they next load or reconnect.
   static Future<void> _announce(Session session, UuidValue listId) async {
-    final list = await ShoppingList.db.findById(session, listId);
-    if (list == null) return;
-    final withProfiles = await _withMemberProfiles(session, list);
-    await session.messages.postMessage(channelFor(listId), withProfiles);
+    try {
+      final list = await ShoppingList.db.findById(session, listId);
+      if (list == null) return;
+      final withProfiles = await _withMemberProfiles(session, list);
+      await session.messages.postMessage(channelFor(listId), withProfiles);
+    } on Object catch (error, stackTrace) {
+      session.log(
+        'Broadcasting list $listId failed',
+        level: LogLevel.warning,
+        exception: error,
+        stackTrace: stackTrace,
+      );
+    }
   }
 
   /// All lists [userId] is on, newest first.
@@ -378,9 +387,8 @@ abstract final class ListService {
   /// Sends every list [userId] is on again, after they changed their name,
   /// colour or photo. So others see the change right away.
   ///
-  /// Awaited, like [_announce]: the profile is already saved, so if sending
-  /// fails the request reports an error even though the change went
-  /// through.
+  /// Like [_announce], a failure is logged, not thrown: the profile is
+  /// already saved.
   static Future<void> announceMemberChanged(
     Session session,
     UuidValue userId,
