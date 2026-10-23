@@ -111,21 +111,15 @@ class OnboardingController extends _$OnboardingController {
   Future<Result<void>> submit() async {
     state = state.copyWith(isSubmitting: true, clearError: true);
 
-    // Pass the name as typed. The use case trims and validates it.
-    final result = await SetDisplayName(ref.read(authRepositoryProvider))(
+    // Pass the name as typed: the use case trims and checks it, and keeps
+    // the colour the avatar showed while it was typed.
+    final result = await SetUpProfile(ref.read(authRepositoryProvider))(
       state.displayName,
+      shownColor: AppColors.avatarHexColorFor(state.displayName),
     );
     if (result case Err(:final failure)) {
       state = state.copyWith(isSubmitting: false, error: failure);
       return Err(failure);
-    }
-
-    // Keep the colour the avatar showed while the name was typed, so lists
-    // show the same one (decisions.md #111). Not if the user already chose
-    // a colour. Cosmetic: if saving fails, the automatic colour is used.
-    final auth = ref.read(authRepositoryProvider);
-    if (auth.currentUser?.avatarColor == null) {
-      await auth.setAvatarColor(AppColors.avatarHexColorFor(state.displayName));
     }
 
     final listResult = await CreateList(ref.read(listRepositoryProvider))(

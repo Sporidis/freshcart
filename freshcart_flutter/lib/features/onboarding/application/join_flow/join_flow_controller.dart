@@ -64,20 +64,13 @@ class JoinFlowController extends _$JoinFlowController {
     }
     state = state.copyWith(isSubmitting: true, clearError: true);
 
-    final nameResult = await SetDisplayName(ref.read(authRepositoryProvider))(
+    final nameResult = await SetUpProfile(ref.read(authRepositoryProvider))(
       state.displayName,
+      shownColor: AppColors.avatarHexColorFor(state.displayName),
     );
     if (nameResult case Err(:final failure)) {
       state = state.copyWith(isSubmitting: false, error: failure);
       return Err(failure);
-    }
-
-    // Keep the colour the avatar showed while the name was typed, so lists
-    // show the same one (decisions.md #111). Not if the user already chose
-    // a colour. Cosmetic: if saving fails, the automatic colour is used.
-    final auth = ref.read(authRepositoryProvider);
-    if (auth.currentUser?.avatarColor == null) {
-      await auth.setAvatarColor(AppColors.avatarHexColorFor(state.displayName));
     }
 
     final joinResult = await JoinList(ref.read(listRepositoryProvider))(
