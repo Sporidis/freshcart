@@ -235,10 +235,10 @@ void main() {
     });
   });
 
-  group('removeSelected', () {
-    test('takes exactly the selected rows off screen immediately', () async {
-      final milk = buildItem(id: 'a', name: 'Milk');
-      final bread = buildItem(id: 'b', name: 'Bread');
+  group('clearChecked', () {
+    test('takes exactly the checked rows off screen immediately', () async {
+      final milk = buildItem(id: 'a', name: 'Milk', isChecked: true);
+      final bread = buildItem(id: 'b', name: 'Bread', isChecked: true);
       final eggs = buildItem(id: 'c', name: 'Eggs');
       repository.byListResult = Ok([milk, bread, eggs]);
 
@@ -247,34 +247,31 @@ void main() {
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .removeSelected({milk.id, bread.id});
+          .clearChecked();
 
       expect(failure, isNull);
       expect((await itemsOf(container)).single.id, eggs.id);
-      expect(
-        repository.removeManyCalls.single,
-        unorderedEquals([milk.id, bread.id]),
-      );
+      expect(repository.clearCheckedCallCount, 1);
     });
 
-    test('puts every selected row back when the server refuses', () async {
-      final milk = buildItem(id: 'a', name: 'Milk');
-      final bread = buildItem(id: 'b', name: 'Bread');
+    test('puts every checked row back when the server refuses', () async {
+      final milk = buildItem(id: 'a', name: 'Milk', isChecked: true);
+      final bread = buildItem(id: 'b', name: 'Bread', isChecked: true);
       repository.byListResult = Ok([milk, bread]);
-      repository.removeManyResult = const Err(Failure.network('offline'));
+      repository.clearCheckedResult = const Err(Failure.network('offline'));
 
       final container = makeContainer();
       await itemsOf(container);
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .removeSelected({milk.id, bread.id});
+          .clearChecked();
 
       expect(failure, isA<NetworkFailure>());
       expect((await itemsOf(container)).map((i) => i.id), [milk.id, bread.id]);
     });
 
-    test('does nothing given an empty selection', () async {
+    test('does nothing when nothing is checked', () async {
       final item = buildItem();
       repository.byListResult = Ok([item]);
 
@@ -283,10 +280,10 @@ void main() {
 
       final failure = await container
           .read(itemsControllerProvider(listId).notifier)
-          .removeSelected(const {});
+          .clearChecked();
 
       expect(failure, isNull);
-      expect(repository.removeManyCalls, isEmpty);
+      expect(repository.clearCheckedCallCount, 0);
     });
   });
 

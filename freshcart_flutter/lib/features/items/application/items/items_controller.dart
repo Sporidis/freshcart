@@ -251,28 +251,20 @@ class ItemsController extends _$ItemsController {
 
   /// Deletes [item]. It disappears right away, and comes back if the server
   /// says no.
-  Future<Failure?> remove(ShoppingItem item) async {
-    final before = _current;
-    if (before == null) return const Failure.unexpected('No items loaded');
+  Future<Failure?> remove(ShoppingItem item) => _removeOptimistically(
+    (i) => i.id == item.id,
+    () => ref.read(itemRepositoryProvider).remove(item.id),
+  );
 
-    // Hidden through [_pendingRemoval], like [clearChecked].
-    _pendingRemoval[item.id] = item;
-    _show([
-      for (final existing in before)
-        if (existing.id != item.id) existing,
-    ]);
-
-    final result = await ref.read(itemRepositoryProvider).remove(item.id);
-    _pendingRemoval.remove(item.id);
-
-    switch (result) {
-      case Ok<void>():
-        return null;
-      case Err<void>(:final failure):
-        _show(before);
-        return failure;
-    }
-  }
+  /// Deletes all checked items. They disappear right away, and all come
+  /// back if the server says no.
+  ///
+  /// One change for all items (not [remove] in a loop): the server does it
+  /// all at once (all or nothing), so the screen does too.
+  Future<Failure?> clearChecked() => _removeOptimistically(
+    (i) => i.isChecked,
+    () => ref.read(itemRepositoryProvider).clearChecked(listId),
+  );
 
   /// Hides [item] right away, and deletes it after [swipeUndoWindow] unless
   /// the user taps Undo. Returns the undo function (for the snackbar).
@@ -280,40 +272,8 @@ class ItemsController extends _$ItemsController {
   /// Doesn't return an error like [remove] does: the delete happens 4
   /// seconds later, when the user is already doing something else. An
   /// error then would be confusing.
-  ///
-  /// The repository is read now (into `repo`), not inside the timer. If the
-  /// user leaves the screen, this controller is disposed and `ref` stops
-  /// working, but `repo` still works, so the delete still happens. That's
-  /// what we want: the user did swipe it away.
-  void Function() swipeDelete(ShoppingItem item) {
-    final before = _current;
-    if (before != null) {
-      _pendingRemoval[item.id] = item;
-      _show([
-        for (final existing in before)
-          if (existing.id != item.id) existing,
-      ]);
-    }
-
-    final repo = ref.read(itemRepositoryProvider);
-    final timer = Timer(swipeUndoWindow, () {
-      _pendingRemoval.remove(item.id);
-      unawaited(repo.remove(item.id));
-    });
-
-    var settled = false;
-    return () {
-      if (settled) return;
-      settled = true;
-      timer.cancel();
-      if (_pendingRemoval.remove(item.id) == null) return;
-      if (!ref.mounted) return;
-      final current = _current;
-      if (current != null && !current.any((i) => i.id == item.id)) {
-        _show([...current, item]);
-      }
-    };
-  }
+  void Function() swipeDelete(ShoppingItem item) =>
+      _hideWithUndo([item], (repo) => repo.remove(item.id));
 
   /// [swipeDelete] for several items at once (Clear, or Delete in select
   /// mode): all hidden now, deleted together in one call after
@@ -322,30 +282,86 @@ class ItemsController extends _$ItemsController {
   /// Uses `removeMany` with these ids, not `clearChecked`: an item checked
   /// during the undo window wasn't part of what the user cleared.
   void Function() removeManyWithUndo(Iterable<ItemId> ids) {
-    final before = _current;
     final wanted = ids.toSet();
-    if (before == null || wanted.isEmpty) return () {};
-
     final removed = [
-      for (final item in before)
+      for (final item in _current ?? const <ShoppingItem>[])
         if (wanted.contains(item.id)) item,
     ];
+    if (removed.isEmpty) return () {};
+    final list = listId;
+    return _hideWithUndo(
+      removed,
+      (repo) => repo.removeMany(list, [for (final item in removed) item.id]),
+    );
+  }
+
+  // ── Removal helpers ──────────────────────────────────────────────────
+
+  /// Hides the items matching [gone], runs [write], and puts them back if
+  /// it fails.
+  ///
+  /// Hidden through [_pendingRemoval], so a live update during the save
+  /// can't bring them back (see [moveSelected]).
+  Future<Failure?> _removeOptimistically(
+    bool Function(ShoppingItem) gone,
+    Future<Result<Object?>> Function() write,
+  ) async {
+    final before = _current;
+    if (before == null) return const Failure.unexpected('No items loaded');
+    final removed = before.where(gone).toList();
+    if (removed.isEmpty) return null;
+
     for (final item in removed) {
       _pendingRemoval[item.id] = item;
     }
     _show([
       for (final item in before)
-        if (!wanted.contains(item.id)) item,
+        if (!gone(item)) item,
     ]);
 
-    // Read now, not in the timer: see [swipeDelete].
+    final result = await write();
+    for (final item in removed) {
+      _pendingRemoval.remove(item.id);
+    }
+
+    switch (result) {
+      case Ok():
+        return null;
+      case Err(:final failure):
+        _show(before);
+        return failure;
+    }
+  }
+
+  /// Hides [removed] now, and calls [delete] after [swipeUndoWindow] unless
+  /// the returned undo puts them back first.
+  ///
+  /// The repository is read now, not inside the timer. If the user leaves
+  /// the screen, this controller is disposed and `ref` stops working, but
+  /// the repository still does, so the delete still happens. That's what we
+  /// want: the user did remove them.
+  void Function() _hideWithUndo(
+    List<ShoppingItem> removed,
+    Future<Object?> Function(ItemRepository repo) delete,
+  ) {
+    final ids = {for (final item in removed) item.id};
+    final before = _current;
+    if (before != null) {
+      for (final item in removed) {
+        _pendingRemoval[item.id] = item;
+      }
+      _show([
+        for (final item in before)
+          if (!ids.contains(item.id)) item,
+      ]);
+    }
+
     final repo = ref.read(itemRepositoryProvider);
-    final list = listId;
     final timer = Timer(swipeUndoWindow, () {
       for (final item in removed) {
         _pendingRemoval.remove(item.id);
       }
-      unawaited(repo.removeMany(list, [for (final item in removed) item.id]));
+      unawaited(delete(repo));
     });
 
     var settled = false;
@@ -369,83 +385,8 @@ class ItemsController extends _$ItemsController {
     };
   }
 
-  /// Deletes all checked items. They disappear right away, and all come
-  /// back if the server says no.
-  ///
-  /// One change for all items (not [remove] in a loop): the server does it
-  /// all at once (all or nothing), so the screen does too.
-  Future<Failure?> clearChecked() async {
-    final before = _current;
-    if (before == null) return const Failure.unexpected('No items loaded');
-
-    final checked = [
-      for (final item in before)
-        if (item.isChecked) item,
-    ];
-    if (checked.isEmpty) return null;
-
-    // Hidden through [_pendingRemoval], so a live update during the save
-    // can't bring them back (see [moveSelected]).
-    for (final item in checked) {
-      _pendingRemoval[item.id] = item;
-    }
-    _show([
-      for (final item in before)
-        if (!item.isChecked) item,
-    ]);
-
-    final result = await ref.read(itemRepositoryProvider).clearChecked(listId);
-    for (final item in checked) {
-      _pendingRemoval.remove(item.id);
-    }
-
-    switch (result) {
-      case Ok<int>():
-        return null;
-      case Err<int>(:final failure):
-        _show(before);
-        return failure;
-    }
-  }
-
-  /// Deletes the selected items. They disappear right away, and all come
-  /// back if the server says no. All at once, like [clearChecked].
-  Future<Failure?> removeSelected(Set<ItemId> ids) async {
-    final before = _current;
-    if (before == null) return const Failure.unexpected('No items loaded');
-    if (ids.isEmpty) return null;
-
-    final selected = [
-      for (final item in before)
-        if (ids.contains(item.id)) item,
-    ];
-    // Hidden through [_pendingRemoval], like [clearChecked].
-    for (final item in selected) {
-      _pendingRemoval[item.id] = item;
-    }
-    _show([
-      for (final item in before)
-        if (!ids.contains(item.id)) item,
-    ]);
-
-    final result = await ref.read(itemRepositoryProvider).removeMany(listId, [
-      for (final item in selected) item.id,
-    ]);
-    for (final item in selected) {
-      _pendingRemoval.remove(item.id);
-    }
-
-    switch (result) {
-      case Ok<int>():
-        return null;
-      case Err<int>(:final failure):
-        _show(before);
-        return failure;
-    }
-  }
-
   /// Moves the items in [ids] to shop [shopId] (null = no shop). For
-  /// "Move" in select mode. All at once, like [removeSelected].
+  /// "Move" in select mode. All at once, like [clearChecked].
   Future<Failure?> moveSelected(Set<ItemId> ids, ShopId? shopId) async {
     final before = _current;
     if (before == null) return const Failure.unexpected('No items loaded');
