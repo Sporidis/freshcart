@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
+import 'package:freshcart_flutter/core/ui/motion/cascade_in.dart';
 
 /// What a screen shows when there's nothing in it ("No items yet").
 ///
@@ -50,7 +50,8 @@ class EmptyState extends StatelessWidget {
     );
     final glyph = (tint ?? ink).withValues(alpha: tint == null ? 0.22 : 0.5);
 
-    return _FadeAndRise(
+    return CascadeIn(
+      index: 0,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 46),
@@ -90,55 +91,6 @@ class EmptyState extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// Fades the child in and slides it up a little, once, when first shown.
-///
-/// Uses [AppMotion.standard], the closest existing duration to the design's
-/// 300 ms.
-class _FadeAndRise extends StatefulWidget {
-  const _FadeAndRise({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_FadeAndRise> createState() => _FadeAndRiseState();
-}
-
-class _FadeAndRiseState extends State<_FadeAndRise>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: AppMotion.standard,
-  )..forward();
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final animation = CurvedAnimation(
-      parent: _controller,
-      curve: AppMotion.enter,
-    );
-    return FadeTransition(
-      opacity: animation,
-      child: AppMotion.reduced(context)
-          ? widget.child
-          : SlideTransition(
-              // SlideTransition moves by a fraction of the child's height,
-              // so this works out to about 12 px.
-              position: Tween<Offset>(
-                begin: const Offset(0, 0.04),
-                end: Offset.zero,
-              ).animate(animation),
-              child: widget.child,
-            ),
     );
   }
 }
