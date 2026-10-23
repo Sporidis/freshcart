@@ -7,7 +7,7 @@ import 'package:freshcart_server/src/notifications/business/fcm_push_sender.dart
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/notifications/future_calls/flush_notifications_call.dart';
 import 'package:freshcart_server/src/web/routes/app_config_route.dart';
-import 'package:freshcart_server/src/web/routes/root.dart';
+import 'package:freshcart_server/src/web/routes/app_redirect_route.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 
@@ -41,13 +41,11 @@ void run(List<String> args) async {
     NotificationService.sender = fcmSender;
   }
 
-  // Setup a default page at the web root.
-  // These are used by the default page.
-  pod.webServer.addRoute(RootRoute(), '/');
-  pod.webServer.addRoute(RootRoute(), '/index.html');
+  pod.webServer.addRoute(AppRedirectRoute(), '/');
+  pod.webServer.addRoute(AppRedirectRoute(), '/index.html');
 
   // Serve all files in the web/static relative directory under /.
-  // These are used by the default web page.
+  // The "build the Flutter app" page below uses its stylesheet and logo.
   final root = Directory(Uri(path: 'web/static').toFilePath());
   pod.webServer.addRoute(StaticRoute.directory(root));
 
