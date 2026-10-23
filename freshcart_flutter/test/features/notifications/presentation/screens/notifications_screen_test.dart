@@ -78,6 +78,19 @@ void main() {
     expect(push.setListMutedCalls.single, (listId: weekly.id, muted: true));
   });
 
+  testWidgets('a failed mute says so, and the row stays On', (tester) async {
+    final weekly = buildList(name: 'Weekly Groceries');
+    lists.myListsResult = Ok([weekly]);
+    push.setListMutedResult = const Err(Failure.network());
+    await pump(tester);
+
+    await tester.tap(find.text('Weekly Groceries'));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(find.text('On'), findsOneWidget);
+  });
+
   testWidgets('tapping an already-muted row unmutes it', (tester) async {
     final weekly = buildList(name: 'Weekly Groceries');
     lists.myListsResult = Ok([weekly]);

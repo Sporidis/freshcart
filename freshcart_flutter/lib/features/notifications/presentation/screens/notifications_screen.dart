@@ -114,9 +114,13 @@ class _ListMuteRow extends ConsumerWidget {
     return Semantics(
       toggled: !muted,
       child: SettingRow(
-        onTap: () => ref
-            .read(listMuteControllerProvider(list.id).notifier)
-            .setMuted(!muted),
+        onTap: () async {
+          final failure = await ref
+              .read(listMuteControllerProvider(list.id).notifier)
+              .setMuted(!muted);
+          if (failure == null || !context.mounted) return;
+          showFailureSnackBar(context, failure: failure, t: t);
+        },
         leading: Container(
           width: AppSizes.tabDot,
           height: AppSizes.tabDot,
