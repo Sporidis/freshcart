@@ -19,16 +19,16 @@ import '../auth/jwt_refresh_endpoint.dart' as _i5;
 import '../items/item_endpoint.dart' as _i6;
 import '../lists/list_endpoint.dart' as _i7;
 import '../notifications/notification_endpoint.dart' as _i8;
-import '../shops/shop_endpoint.dart' as _i9;
-import '../users/profile_endpoint.dart' as _i10;
+import '../profile/profile_endpoint.dart' as _i9;
+import '../shops/shop_endpoint.dart' as _i10;
 import 'package:freshcart_server/src/generated/items/models/shopping_item.dart'
     as _i11;
 import 'package:freshcart_server/src/generated/notifications/models/device_platform.dart'
     as _i12;
-import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i13;
+import 'dart:typed_data' as _i13;
+import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i14;
 import 'package:freshcart_server/src/generated/shops/models/shop_item_disposition.dart'
-    as _i14;
-import 'dart:typed_data' as _i15;
+    as _i15;
 import 'package:serverpod_auth_idp_server/serverpod_auth_idp_server.dart'
     as _i16;
 import 'package:serverpod_auth_core_server/serverpod_auth_core_server.dart'
@@ -80,16 +80,16 @@ class Endpoints extends _i1.EndpointDispatch {
           'notification',
           null,
         ),
-      'shop': _i9.ShopEndpoint()
-        ..initialize(
-          server,
-          'shop',
-          null,
-        ),
-      'profile': _i10.ProfileEndpoint()
+      'profile': _i9.ProfileEndpoint()
         ..initialize(
           server,
           'profile',
+          null,
+        ),
+      'shop': _i10.ShopEndpoint()
+        ..initialize(
+          server,
+          'shop',
           null,
         ),
     };
@@ -1004,6 +1004,99 @@ class Endpoints extends _i1.EndpointDispatch {
         ),
       },
     );
+    connectors['profile'] = _i1.EndpointConnector(
+      name: 'profile',
+      endpoint: endpoints['profile']!,
+      methodConnectors: {
+        'me': _i1.MethodConnector(
+          name: 'me',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i9.ProfileEndpoint).me(session),
+        ),
+        'displayName': _i1.MethodConnector(
+          name: 'displayName',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i9.ProfileEndpoint)
+                  .displayName(session),
+        ),
+        'setDisplayName': _i1.MethodConnector(
+          name: 'setDisplayName',
+          params: {
+            'displayName': _i1.ParameterDescription(
+              name: 'displayName',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i9.ProfileEndpoint).setDisplayName(
+                    session,
+                    params['displayName'],
+                  ),
+        ),
+        'setAvatarColor': _i1.MethodConnector(
+          name: 'setAvatarColor',
+          params: {
+            'avatarColorArgb': _i1.ParameterDescription(
+              name: 'avatarColorArgb',
+              type: _i1.getType<int>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i9.ProfileEndpoint).setAvatarColor(
+                    session,
+                    params['avatarColorArgb'],
+                  ),
+        ),
+        'setAvatarPhoto': _i1.MethodConnector(
+          name: 'setAvatarPhoto',
+          params: {
+            'bytes': _i1.ParameterDescription(
+              name: 'bytes',
+              type: _i1.getType<_i13.ByteData>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async =>
+                  (endpoints['profile'] as _i9.ProfileEndpoint).setAvatarPhoto(
+                    session,
+                    params['bytes'],
+                  ),
+        ),
+        'clearAvatarPhoto': _i1.MethodConnector(
+          name: 'clearAvatarPhoto',
+          params: {},
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['profile'] as _i9.ProfileEndpoint)
+                  .clearAvatarPhoto(session),
+        ),
+      },
+    );
     connectors['shop'] = _i1.EndpointConnector(
       name: 'shop',
       endpoint: endpoints['shop']!,
@@ -1021,7 +1114,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i9.ShopEndpoint).byList(
+              ) async => (endpoints['shop'] as _i10.ShopEndpoint).byList(
                 session,
                 params['listId'],
               ),
@@ -1049,7 +1142,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i9.ShopEndpoint).create(
+              ) async => (endpoints['shop'] as _i10.ShopEndpoint).create(
                 session,
                 params['listId'],
                 params['name'],
@@ -1061,7 +1154,7 @@ class Endpoints extends _i1.EndpointDispatch {
           params: {
             'shop': _i1.ParameterDescription(
               name: 'shop',
-              type: _i1.getType<_i13.Shop>(),
+              type: _i1.getType<_i14.Shop>(),
               nullable: false,
             ),
           },
@@ -1069,7 +1162,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i9.ShopEndpoint).save(
+              ) async => (endpoints['shop'] as _i10.ShopEndpoint).save(
                 session,
                 params['shop'],
               ),
@@ -1087,7 +1180,7 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i9.ShopEndpoint).itemCount(
+              ) async => (endpoints['shop'] as _i10.ShopEndpoint).itemCount(
                 session,
                 params['shopId'],
               ),
@@ -1102,7 +1195,7 @@ class Endpoints extends _i1.EndpointDispatch {
             ),
             'disposition': _i1.ParameterDescription(
               name: 'disposition',
-              type: _i1.getType<_i14.ShopItemDisposition>(),
+              type: _i1.getType<_i15.ShopItemDisposition>(),
               nullable: false,
             ),
             'moveToShopId': _i1.ParameterDescription(
@@ -1115,105 +1208,12 @@ class Endpoints extends _i1.EndpointDispatch {
               (
                 _i1.Session session,
                 Map<String, dynamic> params,
-              ) async => (endpoints['shop'] as _i9.ShopEndpoint).remove(
+              ) async => (endpoints['shop'] as _i10.ShopEndpoint).remove(
                 session,
                 params['shopId'],
                 params['disposition'],
                 params['moveToShopId'],
               ),
-        ),
-      },
-    );
-    connectors['profile'] = _i1.EndpointConnector(
-      name: 'profile',
-      endpoint: endpoints['profile']!,
-      methodConnectors: {
-        'me': _i1.MethodConnector(
-          name: 'me',
-          params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['profile'] as _i10.ProfileEndpoint).me(session),
-        ),
-        'displayName': _i1.MethodConnector(
-          name: 'displayName',
-          params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['profile'] as _i10.ProfileEndpoint)
-                  .displayName(session),
-        ),
-        'setDisplayName': _i1.MethodConnector(
-          name: 'setDisplayName',
-          params: {
-            'displayName': _i1.ParameterDescription(
-              name: 'displayName',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['profile'] as _i10.ProfileEndpoint).setDisplayName(
-                    session,
-                    params['displayName'],
-                  ),
-        ),
-        'setAvatarColor': _i1.MethodConnector(
-          name: 'setAvatarColor',
-          params: {
-            'avatarColorArgb': _i1.ParameterDescription(
-              name: 'avatarColorArgb',
-              type: _i1.getType<int>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['profile'] as _i10.ProfileEndpoint).setAvatarColor(
-                    session,
-                    params['avatarColorArgb'],
-                  ),
-        ),
-        'setAvatarPhoto': _i1.MethodConnector(
-          name: 'setAvatarPhoto',
-          params: {
-            'bytes': _i1.ParameterDescription(
-              name: 'bytes',
-              type: _i1.getType<_i15.ByteData>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async =>
-                  (endpoints['profile'] as _i10.ProfileEndpoint).setAvatarPhoto(
-                    session,
-                    params['bytes'],
-                  ),
-        ),
-        'clearAvatarPhoto': _i1.MethodConnector(
-          name: 'clearAvatarPhoto',
-          params: {},
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['profile'] as _i10.ProfileEndpoint)
-                  .clearAvatarPhoto(session),
         ),
       },
     );

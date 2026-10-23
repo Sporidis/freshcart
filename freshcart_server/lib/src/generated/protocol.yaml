@@ -47,12 +47,6 @@ notification:
   - setItemAddedEnabled:
   - setMemberJoinedEnabled:
   - setListFinishedEnabled:
-shop:
-  - byList:
-  - create:
-  - save:
-  - itemCount:
-  - remove:
 profile:
   - me:
   - displayName:
@@ -60,3 +54,9 @@ profile:
   - setAvatarColor:
   - setAvatarPhoto:
   - clearAvatarPhoto:
+shop:
+  - byList:
+  - create:
+  - save:
+  - itemCount:
+  - remove:

@@ -6,7 +6,7 @@ import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
-import 'package:freshcart_server/src/users/business/profile_service.dart';
+import 'package:freshcart_server/src/profile/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// The logic for items on a list.

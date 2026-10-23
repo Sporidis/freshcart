@@ -4,7 +4,7 @@ import 'package:freshcart_server/src/auth/business/account_link_service.dart';
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
-import 'package:freshcart_server/src/users/business/profile_service.dart';
+import 'package:freshcart_server/src/profile/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Endpoint for the user's own profile.

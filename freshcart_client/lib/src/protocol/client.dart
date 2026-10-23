@@ -35,14 +35,14 @@ import 'package:freshcart_client/src/protocol/notifications/models/device_platfo
     as _i12;
 import 'package:freshcart_client/src/protocol/notifications/models/notification_preferences.dart'
     as _i13;
-import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i14;
-import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition.dart'
+import 'package:freshcart_client/src/protocol/profile/models/current_user.dart'
+    as _i14;
+import 'package:freshcart_client/src/protocol/profile/models/member_profile.dart'
     as _i15;
-import 'package:freshcart_client/src/protocol/users/models/current_user.dart'
-    as _i16;
-import 'package:freshcart_client/src/protocol/users/models/member_profile.dart'
-    as _i17;
-import 'dart:typed_data' as _i18;
+import 'dart:typed_data' as _i16;
+import 'package:freshcart_client/src/protocol/shops/models/shop.dart' as _i17;
+import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition.dart'
+    as _i18;
 import 'protocol.dart' as _i19;
 
 /// Endpoint to upgrade an anonymous account by adding a login (email).
@@ -678,6 +678,65 @@ class EndpointNotification extends _i1.EndpointRef {
       );
 }
 
+/// Endpoint for the user's own profile.
+/// {@category Endpoint}
+class EndpointProfile extends _i1.EndpointRef {
+  EndpointProfile(_i1.EndpointCaller caller) : super(caller);
+
+  @override
+  String get name => 'profile';
+
+  /// Who the caller is.
+  ///
+  /// The app can't know its own user id otherwise (the server creates it).
+  /// It needs it to show "you checked this" before the server answers.
+  _i2.Future<_i14.CurrentUser> me() =>
+      caller.callServerEndpoint<_i14.CurrentUser>(
+        'profile',
+        'me',
+        {},
+      );
+
+  /// The caller's name, or a placeholder if not set.
+  _i2.Future<String> displayName() => caller.callServerEndpoint<String>(
+    'profile',
+    'displayName',
+    {},
+  );
+
+  /// Sets the caller's display name.
+  _i2.Future<_i15.MemberProfile> setDisplayName(String displayName) =>
+      caller.callServerEndpoint<_i15.MemberProfile>(
+        'profile',
+        'setDisplayName',
+        {'displayName': displayName},
+      );
+
+  /// Sets the caller's avatar colour.
+  _i2.Future<_i15.MemberProfile> setAvatarColor(int avatarColorArgb) =>
+      caller.callServerEndpoint<_i15.MemberProfile>(
+        'profile',
+        'setAvatarColor',
+        {'avatarColorArgb': avatarColorArgb},
+      );
+
+  /// Uploads the caller's avatar photo.
+  _i2.Future<_i15.MemberProfile> setAvatarPhoto(_i16.ByteData bytes) =>
+      caller.callServerEndpoint<_i15.MemberProfile>(
+        'profile',
+        'setAvatarPhoto',
+        {'bytes': bytes},
+      );
+
+  /// Removes the caller's avatar photo.
+  _i2.Future<_i15.MemberProfile?> clearAvatarPhoto() =>
+      caller.callServerEndpoint<_i15.MemberProfile?>(
+        'profile',
+        'clearAvatarPhoto',
+        {},
+      );
+}
+
 /// Endpoint for a list's shops.
 /// {@category Endpoint}
 class EndpointShop extends _i1.EndpointRef {
@@ -687,19 +746,19 @@ class EndpointShop extends _i1.EndpointRef {
   String get name => 'shop';
 
   /// All shops on a list (the caller must be a member).
-  _i2.Future<List<_i14.Shop>> byList(_i1.UuidValue listId) =>
-      caller.callServerEndpoint<List<_i14.Shop>>(
+  _i2.Future<List<_i17.Shop>> byList(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<List<_i17.Shop>>(
         'shop',
         'byList',
         {'listId': listId},
       );
 
   /// Creates a shop on a list (the caller must be a member).
-  _i2.Future<_i14.Shop> create(
+  _i2.Future<_i17.Shop> create(
     _i1.UuidValue listId,
     String name,
     int colorArgb,
-  ) => caller.callServerEndpoint<_i14.Shop>(
+  ) => caller.callServerEndpoint<_i17.Shop>(
     'shop',
     'create',
     {
@@ -710,8 +769,8 @@ class EndpointShop extends _i1.EndpointRef {
   );
 
   /// Saves changes to a shop.
-  _i2.Future<_i14.Shop> save(_i14.Shop shop) =>
-      caller.callServerEndpoint<_i14.Shop>(
+  _i2.Future<_i17.Shop> save(_i17.Shop shop) =>
+      caller.callServerEndpoint<_i17.Shop>(
         'shop',
         'save',
         {'shop': shop},
@@ -731,7 +790,7 @@ class EndpointShop extends _i1.EndpointRef {
   /// happens to the items.
   _i2.Future<void> remove(
     _i1.UuidValue shopId,
-    _i15.ShopItemDisposition disposition,
+    _i18.ShopItemDisposition disposition,
     _i1.UuidValue? moveToShopId,
   ) => caller.callServerEndpoint<void>(
     'shop',
@@ -742,65 +801,6 @@ class EndpointShop extends _i1.EndpointRef {
       'moveToShopId': moveToShopId,
     },
   );
-}
-
-/// Endpoint for the user's own profile.
-/// {@category Endpoint}
-class EndpointProfile extends _i1.EndpointRef {
-  EndpointProfile(_i1.EndpointCaller caller) : super(caller);
-
-  @override
-  String get name => 'profile';
-
-  /// Who the caller is.
-  ///
-  /// The app can't know its own user id otherwise (the server creates it).
-  /// It needs it to show "you checked this" before the server answers.
-  _i2.Future<_i16.CurrentUser> me() =>
-      caller.callServerEndpoint<_i16.CurrentUser>(
-        'profile',
-        'me',
-        {},
-      );
-
-  /// The caller's name, or a placeholder if not set.
-  _i2.Future<String> displayName() => caller.callServerEndpoint<String>(
-    'profile',
-    'displayName',
-    {},
-  );
-
-  /// Sets the caller's display name.
-  _i2.Future<_i17.MemberProfile> setDisplayName(String displayName) =>
-      caller.callServerEndpoint<_i17.MemberProfile>(
-        'profile',
-        'setDisplayName',
-        {'displayName': displayName},
-      );
-
-  /// Sets the caller's avatar colour.
-  _i2.Future<_i17.MemberProfile> setAvatarColor(int avatarColorArgb) =>
-      caller.callServerEndpoint<_i17.MemberProfile>(
-        'profile',
-        'setAvatarColor',
-        {'avatarColorArgb': avatarColorArgb},
-      );
-
-  /// Uploads the caller's avatar photo.
-  _i2.Future<_i17.MemberProfile> setAvatarPhoto(_i18.ByteData bytes) =>
-      caller.callServerEndpoint<_i17.MemberProfile>(
-        'profile',
-        'setAvatarPhoto',
-        {'bytes': bytes},
-      );
-
-  /// Removes the caller's avatar photo.
-  _i2.Future<_i17.MemberProfile?> clearAvatarPhoto() =>
-      caller.callServerEndpoint<_i17.MemberProfile?>(
-        'profile',
-        'clearAvatarPhoto',
-        {},
-      );
 }
 
 class Modules {
@@ -850,8 +850,8 @@ class Client extends _i1.ServerpodClientShared {
     item = EndpointItem(this);
     list = EndpointList(this);
     notification = EndpointNotification(this);
-    shop = EndpointShop(this);
     profile = EndpointProfile(this);
+    shop = EndpointShop(this);
     modules = Modules(this);
   }
 
@@ -869,9 +869,9 @@ class Client extends _i1.ServerpodClientShared {
 
   late final EndpointNotification notification;
 
-  late final EndpointShop shop;
-
   late final EndpointProfile profile;
+
+  late final EndpointShop shop;
 
   late final Modules modules;
 
@@ -884,8 +884,8 @@ class Client extends _i1.ServerpodClientShared {
     'item': item,
     'list': list,
     'notification': notification,
-    'shop': shop,
     'profile': profile,
+    'shop': shop,
   };
 
   @override
