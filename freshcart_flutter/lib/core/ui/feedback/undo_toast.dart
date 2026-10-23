@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Shows the v3 toast: a 48px ink bar sitting just above the add button,

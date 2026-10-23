@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
 /// The row of suggestion chips above the field (like "Olive oil",

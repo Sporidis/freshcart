@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_sizes.dart';
 
 /// The round checkbox from the design (v3): a neutral 2px ring, filled with
 /// [color] and a tick when checked.

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_value_text.dart';
 
 /// A settings row that only reports a value — no switch, no tap target.
 ///

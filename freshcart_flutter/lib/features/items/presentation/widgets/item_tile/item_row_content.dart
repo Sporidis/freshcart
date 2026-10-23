@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/check_circle.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/checked_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/strike_through.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// What an item row looks like (design v3): check ring, name with an

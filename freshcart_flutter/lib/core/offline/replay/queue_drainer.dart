@@ -2,8 +2,9 @@ import 'dart:convert';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
 import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 
 /// What happened when we tried to send one queued change.

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/preferences/appearance.dart';
 import 'package:freshcart_flutter/core/preferences/appearance_controller.dart';
 import 'package:freshcart_flutter/core/preferences/haptics_controller.dart';
 import 'package:freshcart_flutter/core/preferences/large_text_controller.dart';

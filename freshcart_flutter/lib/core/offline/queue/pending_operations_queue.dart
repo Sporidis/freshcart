@@ -1,8 +1,10 @@
 import 'dart:convert';
+
 import 'package:drift/drift.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database_provider.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_operations_table.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'pending_operations_queue.g.dart';

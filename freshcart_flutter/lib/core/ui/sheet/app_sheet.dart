@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/ui/motion/cascade_in.dart';
+import 'package:freshcart_flutter/core/ui/sheet/sheet_close_button.dart';
 
 /// Opens a v3 bottom sheet: edge-to-edge, radius 24 on top (from the theme),
 /// opening in [AppMotion.sheetOpen] on the iOS curve and closing in
@@ -139,44 +140,4 @@ class _SheetHandle extends StatelessWidget {
       ),
     ),
   );
-}
-
-/// A 30px round × on the fill colour, inside a 44px target. Pops the sheet.
-///
-/// Public because sheets with their own header (the product sheet) put it
-/// in their own row.
-class SheetCloseButton extends StatelessWidget {
-  const SheetCloseButton({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Semantics(
-      button: true,
-      label: MaterialLocalizations.of(context).closeButtonLabel,
-      excludeSemantics: true,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => Navigator.of(context).maybePop(),
-        child: SizedBox.square(
-          dimension: AppSpacing.minTapTarget,
-          child: Center(
-            child: Container(
-              width: 30,
-              height: 30,
-              decoration: BoxDecoration(
-                color: scheme.fill,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.close_rounded,
-                size: 15,
-                color: scheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }

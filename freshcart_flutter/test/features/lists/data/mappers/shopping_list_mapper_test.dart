@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/list_member_mapper.dart';
+import 'package:freshcart_flutter/features/lists/data/mappers/member_role_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
 
 import '../../../../fakes/dto_builders.dart';

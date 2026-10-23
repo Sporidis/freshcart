@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 
 /// Makes a small button easier to tap (at least 44 x 44), without making it
 /// look bigger.

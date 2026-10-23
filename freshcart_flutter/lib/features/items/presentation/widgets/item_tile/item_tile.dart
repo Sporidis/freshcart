@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/features/items/presentation/widgets/checked_state.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/checked_fade.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_menu_motion.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/item_row_content.dart';

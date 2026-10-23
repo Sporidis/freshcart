@@ -1,11 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-
-/// What the items area is doing right now. Only one at a time.
-///
-/// One value instead of three booleans (rearranging, selecting, searching).
-/// With booleans, every widget would need to decide which one wins.
-/// `ItemsSectionController` decides that once.
-enum ItemsMode { browse, search, select, rearrange }
+import 'package:freshcart_flutter/features/items/application/items_section/items_mode.dart';
 
 /// The data `ItemsSection` shows.
 ///

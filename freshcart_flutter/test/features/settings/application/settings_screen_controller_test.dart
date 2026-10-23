@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_list_row.dart';
 import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_controller.dart';
-import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_state.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

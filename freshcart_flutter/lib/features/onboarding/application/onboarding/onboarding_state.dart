@@ -1,14 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-
-/// The steps of the onboarding wizard, in order.
-enum OnboardingStep { displayName, createList, addShop, invite }
-
-class OnboardingShopDraft {
-  const OnboardingShopDraft({required this.name, required this.color});
-
-  final String name;
-  final HexColor color;
-}
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_shop_draft.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_step.dart';
 
 /// The shops offered on the "Where do you shop?" step.
 ///

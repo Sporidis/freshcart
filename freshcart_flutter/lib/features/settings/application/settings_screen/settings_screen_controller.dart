@@ -2,6 +2,7 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
+import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_list_row.dart';
 import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_state.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

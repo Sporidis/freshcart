@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_list_row.dart';
 
 /// The data `SettingsScreen` shows.
 class SettingsScreenState {
@@ -11,21 +12,4 @@ class SettingsScreenState {
 
   /// One row per list for "Lists & shops"; empty until the lists load.
   final List<SettingsListRow> lists;
-}
-
-/// One list in the Settings screen's "Lists & shops" group.
-class SettingsListRow {
-  const SettingsListRow({
-    required this.list,
-    required this.shopCount,
-    required this.isOpen,
-  });
-
-  final ShoppingList list;
-
-  /// How many shops [list] has; null until they load.
-  final int? shopCount;
-
-  /// Whether this is the list the app opens to (shown as "Open now").
-  final bool isOpen;
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_sizes.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/ui/dashed_outline_painter.dart';
 
 /// A full-width row with a dashed border, like "+ Add another", shown at

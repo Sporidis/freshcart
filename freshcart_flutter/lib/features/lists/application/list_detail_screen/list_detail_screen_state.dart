@@ -1,5 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
+import 'package:freshcart_flutter/features/items/application/items_section/items_mode.dart';
 import 'package:meta/meta.dart';
 
 /// The data for `ListDetailScreen` itself: the list and its colours. The

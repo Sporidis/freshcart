@@ -4,7 +4,8 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_field.dart';
 import 'package:freshcart_flutter/core/demo_hooks/scripted_text_listener.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 
 /// The input for a [JoinCode]: looks like five boxes, but it's really one
 /// invisible text field.

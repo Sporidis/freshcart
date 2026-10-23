@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 
 /// A group of settings rows (design v3): a small mono title, an optional
 /// explanation, then [children] on one rounded card with a thin line

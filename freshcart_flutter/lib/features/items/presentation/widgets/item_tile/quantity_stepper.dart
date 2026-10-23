@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 
 /// A pill with "−  2  +" to change the quantity.
 ///

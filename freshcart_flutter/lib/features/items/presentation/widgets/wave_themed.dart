@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/core/theme/reveal/reveal_wave_geometry.dart';
+import 'package:freshcart_flutter/core/theme/reveal/reveal_wave_scope.dart';
 import 'package:freshcart_flutter/core/theme/reveal/shop_theme_reveal.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';

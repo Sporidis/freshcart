@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 
 /// The basic settings row: title, optional subtitle, optional things on the
 /// left and right, optional tap.
@@ -86,30 +86,4 @@ class SettingRow extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The muted value a row shows on its right: "System", "On", "English".
-class SettingValueText extends StatelessWidget {
-  /// Shows [text].
-  const SettingValueText(this.text, {super.key});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Text(
-    text,
-    style: AppTextStyles.label.copyWith(
-      color: Theme.of(context).colorScheme.onSurfaceVariant,
-    ),
-  );
-}
-
-/// The ">" arrow that means "tap to open".
-class SettingChevron extends StatelessWidget {
-  /// Creates the chevron.
-  const SettingChevron({super.key});
-
-  @override
-  Widget build(BuildContext context) =>
-      Icon(Icons.chevron_right, color: Theme.of(context).colorScheme.outline);
 }

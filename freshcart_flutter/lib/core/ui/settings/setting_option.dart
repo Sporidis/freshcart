@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_chevron.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
+import 'package:freshcart_flutter/core/ui/settings/setting_value_text.dart';
 
 /// A settings row that opens something: title, optional subtitle and
 /// current value, and a chevron.

@@ -1,10 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
-
-/// The steps of the "join with a code" flow, in order.
-///
-/// Shorter than onboarding: the user joins an existing list, so there's no
-/// list, shops or invite step.
-enum JoinFlowStep { name, code, confirmation }
+import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_step.dart';
 
 /// The user's answers in the join flow, before they're saved.
 ///

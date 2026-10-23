@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/core/preferences/appearance.dart';
 import 'package:freshcart_flutter/core/preferences/shared_preferences_store.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'appearance_controller.g.dart';
-
-enum Appearance { system, light, dark }
 
 /// Whether the user wants light mode, dark mode, or to follow the phone.
 ///
@@ -31,12 +29,4 @@ class AppearanceController extends _$AppearanceController {
     await prefs.setString(_prefsKey, appearance.name);
     if (ref.mounted) state = AsyncData(appearance);
   }
-}
-
-extension AppearanceThemeMode on Appearance {
-  ThemeMode get themeMode => switch (this) {
-    Appearance.system => ThemeMode.system,
-    Appearance.light => ThemeMode.light,
-    Appearance.dark => ThemeMode.dark,
-  };
 }

@@ -6,8 +6,10 @@ import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_banner.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/ui/feedback/undo_toast.dart';
 
 /// The quiet bar under the list header that says the list is offline or

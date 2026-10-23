@@ -5,6 +5,8 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:freshcart_flutter/core/theme/reveal/reveal_wave_geometry.dart';
+import 'package:freshcart_flutter/core/theme/reveal/reveal_wave_scope.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
@@ -268,72 +270,4 @@ class _RevealPunchPainter extends CustomPainter {
       oldDelegate.image != image ||
       oldDelegate.origin != origin ||
       oldDelegate.progress != progress;
-}
-
-/// Where the current wave started and how big it gets, in screen
-/// coordinates.
-///
-/// Most widgets don't need this, the screenshot trick handles them. But
-/// widgets that animate their own colour (like the FAB) would change colour
-/// immediately, before the wave reaches them. They use this to wait until the
-/// wave actually touches them. See [WaveThemed] and decisions.md #89.
-@immutable
-class RevealWaveGeometry {
-  const RevealWaveGeometry({
-    required this.globalOrigin,
-    required this.maxRadius,
-    required this.oldSeed,
-    required this.newSeed,
-  });
-
-  /// Where the wave started (a tap, or a screen edge for a swipe).
-  final Offset globalOrigin;
-
-  /// How big the circle gets when it covers the whole area.
-  final double maxRadius;
-
-  /// The colour before the wave reaches a widget.
-  final Color oldSeed;
-
-  /// The colour after the wave reaches a widget.
-  final Color newSeed;
-}
-
-/// Shares the current wave with all widgets below it.
-///
-/// It's an [InheritedNotifier], so widgets that read it rebuild on every
-/// animation frame, not only when a new wave starts.
-class RevealWaveScope extends InheritedNotifier<AnimationController> {
-  /// Creates the scope. [controller] is the same one that drives the
-  /// screenshot hole, so everything moves in sync.
-  const RevealWaveScope({
-    required this.geometry,
-    required AnimationController controller,
-    required this.curve,
-    required super.child,
-    super.key,
-  }) : super(notifier: controller);
-
-  /// The current wave, or null if no wave is playing. When null, widgets
-  /// just use the normal theme.
-  final RevealWaveGeometry? geometry;
-
-  /// The animation curve, same as the screenshot hole uses.
-  final Curve curve;
-
-  /// The animation. Put `.value` through [curve] to get the progress
-  /// (0 to a bit past 1).
-  AnimationController get controller => notifier!;
-
-  static RevealWaveScope? of(BuildContext context) =>
-      context.dependOnInheritedWidgetOfExactType<RevealWaveScope>();
-
-  // Also rebuild dependents when a new wave starts. By default it only
-  // checks the controller, which never changes, so widgets would react one
-  // frame late.
-  @override
-  bool updateShouldNotify(covariant RevealWaveScope oldWidget) =>
-      super.updateShouldNotify(oldWidget) ||
-      oldWidget.geometry != geometry ||
-      oldWidget.curve != curve;
 }

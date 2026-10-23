@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_sizes.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 
 /// A row of colour circles to pick one from: a shop's tab colour, or a
 /// person's avatar colour.

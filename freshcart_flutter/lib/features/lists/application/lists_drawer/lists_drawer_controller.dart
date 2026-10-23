@@ -4,6 +4,7 @@ import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/list/list_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
+import 'package:freshcart_flutter/features/lists/application/lists_drawer/lists_drawer_row.dart';
 import 'package:freshcart_flutter/features/shops/application/shops/shops_controller.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -53,25 +54,4 @@ class ListsDrawerController extends _$ListsDrawerController {
   /// Remembers [id] as the list to reopen next time.
   Future<void> openList(ListId id) =>
       ref.read(lastOpenedListControllerProvider.notifier).select(id);
-}
-
-/// One row of the drawer.
-class ListsDrawerRow {
-  const ListsDrawerRow({
-    required this.list,
-    required this.summary,
-    required this.othersInList,
-    this.shopColors = const [],
-  });
-
-  final ShoppingList list;
-
-  /// Item counts ("6 left" / "All done"), or null until loaded.
-  final ListSummary? summary;
-
-  /// Everyone on [list] except you. Shown as avatars.
-  final List<ListMember> othersInList;
-
-  /// The colours of the list's shops, in tab order.
-  final List<HexColor> shopColors;
 }

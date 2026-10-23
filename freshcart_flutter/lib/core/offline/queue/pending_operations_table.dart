@@ -1,31 +1,6 @@
 import 'package:drift/drift.dart';
-
-/// What kind of change a queued row is.
-///
-/// Together with [PendingEntityType] (item or list), this tells
-/// [QueueDrainer] which repository method to call.
-///
-/// - `create` is used for both new items and new lists.
-/// - `edit` covers every item change (check, rename, reorder...), because
-///   they all go through the same `save()` method.
-/// - Joining a list isn't here: it can't be done offline.
-enum PendingOpType {
-  create,
-  edit,
-  remove,
-  clearChecked,
-  removeMany,
-  moveMany,
-  rename,
-  setClearCheckedAfterShopping,
-  transferOwnership,
-  leave,
-  delete,
-  removeMember,
-}
-
-/// Whether a queued change is about an item or a list.
-enum PendingEntityType { item, list }
+import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 
 /// Database table: changes made offline, waiting to be sent to the server.
 ///

@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/celebration/confetti_burst.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 

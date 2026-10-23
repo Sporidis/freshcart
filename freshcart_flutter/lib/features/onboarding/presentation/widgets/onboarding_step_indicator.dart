@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_state.dart';
+import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_step.dart';
 
 /// Where you are in onboarding (design v3): one dot per step, centred in
 /// the top bar. The current dot widens to 22px; dots up to and including

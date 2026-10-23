@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/features/settings/application/settings_screen/settings_screen_controller.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/about_section.dart';
 import 'package:freshcart_flutter/features/settings/presentation/widgets/sections/account_card.dart';
