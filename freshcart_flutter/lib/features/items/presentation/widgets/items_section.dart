@@ -162,10 +162,8 @@ class _ItemFlows {
 
   /// Shows a failed save as a snackbar (with Retry). The screen is still
   /// fine, so no full error screen.
-  void report(Failure? failure, {VoidCallback? onRetry}) {
-    if (failure == null || !context.mounted) return;
-    showFailureSnackBar(context, failure: failure, t: t, onRetry: onRetry);
-  }
+  void report(Failure? failure, {VoidCallback? onRetry}) =>
+      showFailureSnackBar(context, failure: failure, t: t, onRetry: onRetry);
 
   Future<void> edit(ShoppingItem item) async {
     final outcome = await showAppSheet<ItemSheetOutcome>(

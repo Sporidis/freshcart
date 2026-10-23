@@ -135,10 +135,8 @@ class _ListSettingsScreenState extends ConsumerState<ListSettingsScreen> {
     final s = ref.watch(listSettingsScreenControllerProvider(widget.listId));
     final theme = Theme.of(context);
 
-    void report(Failure? failure) {
-      if (failure == null || !mounted) return;
-      showFailureSnackBar(context, failure: failure, t: t);
-    }
+    void report(Failure? failure) =>
+        showFailureSnackBar(context, failure: failure, t: t);
 
     // If the list couldn't load, show an error screen. Without the list
     // there's no form to show.

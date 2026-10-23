@@ -209,7 +209,7 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
       case Ok(:final value):
         count = value;
       case Err(:final failure):
-        if (mounted) showFailureSnackBar(context, failure: failure, t: t);
+        showFailureSnackBar(context, failure: failure, t: t);
         return;
     }
     if (!mounted) return;
@@ -229,8 +229,7 @@ class _ShopRowState extends ConsumerState<_ShopRow> {
       disposition: choice.disposition,
       moveTo: choice.moveTo,
     );
-    if (failure != null && mounted) {
-      showFailureSnackBar(context, failure: failure, t: t);
-    }
+    if (!mounted) return;
+    showFailureSnackBar(context, failure: failure, t: t);
   }
 }

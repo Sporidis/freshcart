@@ -33,10 +33,8 @@ class NotificationsScreen extends ConsumerWidget {
     final vm = ref.read(notificationsScreenControllerProvider.notifier);
     final preferences = s.preferences;
 
-    void report(Failure? failure) {
-      if (failure == null || !context.mounted) return;
-      showFailureSnackBar(context, failure: failure, t: t);
-    }
+    void report(Failure? failure) =>
+        showFailureSnackBar(context, failure: failure, t: t);
 
     return Scaffold(
       appBar: AppBar(
@@ -121,7 +119,7 @@ class _ListMuteRow extends ConsumerWidget {
           final failure = await ref
               .read(listMuteControllerProvider(list.id).notifier)
               .setMuted(!muted);
-          if (failure == null || !context.mounted) return;
+          if (!context.mounted) return;
           showFailureSnackBar(context, failure: failure, t: t);
         },
         leading: Container(

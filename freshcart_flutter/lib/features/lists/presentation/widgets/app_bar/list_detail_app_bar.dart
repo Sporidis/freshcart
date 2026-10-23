@@ -77,10 +77,8 @@ class ListDetailAppBar extends ConsumerWidget implements PreferredSizeWidget {
         : ref.read(itemsSectionControllerProvider(list).notifier);
     final mode = items?.mode ?? ItemsMode.browse;
 
-    void report(Failure? failure) {
-      if (failure == null || !context.mounted) return;
-      showFailureSnackBar(context, failure: failure, t: t);
-    }
+    void report(Failure? failure) =>
+        showFailureSnackBar(context, failure: failure, t: t);
 
     Future<void> moveSelected() async {
       // Cancelled (null): keep the selection as it was.

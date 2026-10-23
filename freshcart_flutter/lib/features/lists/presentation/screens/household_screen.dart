@@ -185,7 +185,7 @@ class _MemberRow extends StatelessWidget {
     );
     if (!ok || !context.mounted) return;
     final failure = await vm.removeMember(member);
-    if (failure == null || !context.mounted) return;
+    if (!context.mounted) return;
     showFailureSnackBar(context, failure: failure, t: t);
   }
 
@@ -201,7 +201,7 @@ class _MemberRow extends StatelessWidget {
     );
     if (!ok || !context.mounted) return;
     final failure = await vm.transferOwnership(member);
-    if (failure == null || !context.mounted) return;
+    if (!context.mounted) return;
     showFailureSnackBar(context, failure: failure, t: t);
   }
 

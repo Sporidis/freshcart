@@ -10,13 +10,17 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 ///
 /// Stays 4 seconds, or 5 if there's a button. Long enough to read, short
 /// enough not to block the add-item bar. The look comes from the theme.
+///
+/// Does nothing when [failure] is null (the action worked) or the widget is
+/// gone, so callers can pass an action's result straight in.
 void showFailureSnackBar(
   BuildContext context, {
-  required Failure failure,
+  required Failure? failure,
   required Translations t,
   String? message,
   VoidCallback? onRetry,
 }) {
+  if (failure == null || !context.mounted) return;
   final messenger = ScaffoldMessenger.of(context)
     // Remove the old snackbar first, so only the newest error is shown.
     ..hideCurrentSnackBar();
