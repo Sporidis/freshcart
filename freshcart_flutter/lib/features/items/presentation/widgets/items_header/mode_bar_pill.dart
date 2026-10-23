@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/mode_bar.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_header/mode_bar.dart';
 
 /// A 38px pill on the [ModeBar]: Move, Delete, Done.
 class ModeBarPill extends StatelessWidget {

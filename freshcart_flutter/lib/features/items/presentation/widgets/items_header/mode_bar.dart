@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
-import 'package:freshcart_flutter/features/lists/presentation/widgets/mode_bar_pill.dart';
+import 'package:freshcart_flutter/features/items/presentation/widgets/items_header/mode_bar_pill.dart';
 
 /// The ink bar that replaces the list header in Select and Rearrange mode.
 ///
