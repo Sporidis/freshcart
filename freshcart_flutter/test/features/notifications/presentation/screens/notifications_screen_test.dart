@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';

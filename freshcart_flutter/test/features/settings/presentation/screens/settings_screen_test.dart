@@ -9,7 +9,7 @@ import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/presentation/screens/notifications_screen.dart';
 import 'package:freshcart_flutter/features/settings/presentation/screens/settings_screen.dart';

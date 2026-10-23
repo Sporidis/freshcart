@@ -5,12 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
+import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
 
 import '../../../../fakes/dto_builders.dart';
 import '../../../../fakes/fake_client.dart';
@@ -20,13 +22,13 @@ void main() {
   late FakeClient client;
   late AppDatabase db;
   late CachedListsStore cache;
-  late ListRepositoryImpl repository;
+  late ListRepository repository;
 
   setUp(() {
     client = FakeClient();
     db = AppDatabase(NativeDatabase.memory());
     cache = CachedListsStore(db);
-    repository = ListRepositoryImpl(
+    repository = offlineOverRemote(
       client,
       PendingOperationsQueue(db),
       FakeConnectivityAdapter(const Stream.empty()),
@@ -37,7 +39,7 @@ void main() {
 
   tearDown(() => db.close());
 
-  group('ListRepositoryImpl success paths', () {
+  group('offline over remote: success paths', () {
     test('myLists returns domain entities, never DTOs', () {
       client.handler = (_, _, _) => [buildListDto()];
 
@@ -77,7 +79,7 @@ void main() {
     });
   });
 
-  group('ListRepositoryImpl failure translation', () {
+  group('offline over remote: failure translation', () {
     test('a server exception becomes an Err, not a throw', () async {
       client.handler = (_, _, _) => throw dto.NotAMemberException();
 
@@ -116,7 +118,7 @@ void main() {
     });
   });
 
-  group('ListRepositoryImpl real-time', () {
+  group('offline over remote: real-time', () {
     test('watch seeds with the current list', () async {
       // Only the seed is exercised here — .first cancels the subscription as
       // soon as it arrives, before the source ever reaches the streaming
@@ -175,7 +177,7 @@ void main() {
     );
   });
 
-  group('ListRepositoryImpl — offline retry/queue (Phase C)', () {
+  group('offline over remote: — offline retry/queue (Phase C)', () {
     test(
       'a single transient failure retries and succeeds, without queuing',
       () async {
@@ -221,7 +223,7 @@ void main() {
     );
   });
 
-  group('ListRepositoryImpl — cached reads (Phase G)', () {
+  group('offline over remote: — cached reads (Phase G)', () {
     test('myLists writes the result through to the cache', () async {
       client.handler = (_, _, _) => [buildListDto()];
 
@@ -263,13 +265,13 @@ void main() {
     );
   });
 
-  group('ListRepositoryImpl real-time — reconnect (Phase F)', () {
+  group('offline over remote: real-time — reconnect (Phase F)', () {
     test(
       'a WebSocketClosedException mid-stream keeps the last good list and '
       'only re-fetches once reconnected',
       () async {
         final onlineController = StreamController<bool>.broadcast();
-        final repo = ListRepositoryImpl(
+        final repo = offlineOverRemote(
           client,
           PendingOperationsQueue(db),
           FakeConnectivityAdapter(onlineController.stream),
@@ -335,7 +337,7 @@ void main() {
       'a NotAMemberException mid-stream still ends with one Err, not '
       'treated as recoverable',
       () async {
-        final repo = ListRepositoryImpl(
+        final repo = offlineOverRemote(
           client,
           PendingOperationsQueue(db),
           FakeConnectivityAdapter(const Stream.empty()),
@@ -364,3 +366,18 @@ void main() {
     );
   });
 }
+
+/// The list repository the app uses: [OfflineListRepository] over
+/// [RemoteListRepository], wired like `listRepositoryProvider`.
+ListRepository offlineOverRemote(
+  dto.Client client,
+  PendingOperationsQueue queue,
+  ConnectivityAdapter connectivity,
+  UserId Function() me,
+  CachedListsStore cache,
+) => OfflineListRepository(
+  RemoteListRepository(client, connectivity, cache),
+  queue,
+  cache,
+  me,
+);

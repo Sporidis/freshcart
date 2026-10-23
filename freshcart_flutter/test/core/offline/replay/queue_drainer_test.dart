@@ -11,7 +11,7 @@ import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.da
 import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 import 'package:freshcart_flutter/core/offline/replay/queue_drainer.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
 
 import '../../../fakes/dto_builders.dart';
 import '../../../fakes/fake_client.dart';
@@ -158,19 +158,15 @@ void main() {
       queue = PendingOperationsQueue(db);
       client = FakeClient();
       final connectivity = FakeConnectivityAdapter(const Stream.empty());
-      UserId currentUserId() => UserId(userUuid.uuid);
       final items = RemoteItemRepository(
         client,
         connectivity,
         CachedItemsStore(db),
       );
-      final lists = ListRepositoryImpl(
+      final lists = RemoteListRepository(
         client,
-        queue,
         connectivity,
-        currentUserId,
         CachedListsStore(db),
-        queueWhenUnreachable: false,
       );
       drainer = QueueDrainer(queue, items, lists);
     });

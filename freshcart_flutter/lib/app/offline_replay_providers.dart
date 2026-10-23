@@ -6,7 +6,7 @@ import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.
 import 'package:freshcart_flutter/core/offline/status/sync_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'offline_replay_providers.g.dart';
@@ -16,7 +16,7 @@ part 'offline_replay_providers.g.dart';
 QueueDrainer queueDrainer(Ref ref) => QueueDrainer(
   ref.watch(pendingOperationsQueueProvider),
   ref.watch(remoteItemRepositoryProvider),
-  ref.watch(listRepositoryForReplayProvider),
+  ref.watch(remoteListRepositoryProvider),
 );
 
 /// Sends saved offline changes to the server when we become online.

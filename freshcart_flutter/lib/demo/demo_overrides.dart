@@ -18,7 +18,7 @@ import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_b
 import 'package:freshcart_flutter/features/auth/data/sources/avatar_photo_source.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/push_repository_impl.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';
 

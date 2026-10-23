@@ -1,7 +1,7 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_state.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_step.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

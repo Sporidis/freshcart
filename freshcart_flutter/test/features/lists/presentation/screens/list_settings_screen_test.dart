@@ -12,7 +12,7 @@ import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/anonymous_session_bootstrap.dart';
 import 'package:freshcart_flutter/features/auth/data/sources/current_user_provider.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/household_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/error_screen.dart';
 import 'package:freshcart_flutter/features/shops/data/repositories/shop_repository_impl.dart';

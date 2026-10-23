@@ -15,7 +15,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/
 import 'package:freshcart_flutter/features/items/presentation/widgets/item_tile/quantity_stepper.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_empty_state.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/quick_add/quick_add_bar.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:freshcart_flutter/features/lists/presentation/screens/list_detail_screen.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/member_avatar_stack.dart';
 import 'package:freshcart_flutter/features/lists/presentation/widgets/mode_bar.dart';

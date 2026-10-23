@@ -3,7 +3,7 @@ import 'package:freshcart_flutter/core/async/async_outcome.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/last_opened_list/last_opened_list_controller.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
-import 'package:freshcart_flutter/features/lists/data/repositories/list_repository_impl.dart';
+import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'list_providers.g.dart';
