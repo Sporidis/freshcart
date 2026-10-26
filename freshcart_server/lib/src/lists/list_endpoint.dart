@@ -1,6 +1,8 @@
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
+import 'package:freshcart_server/src/lists/business/list_broadcast.dart';
+import 'package:freshcart_server/src/lists/business/list_membership_service.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -32,7 +34,7 @@ class ListEndpoint extends Endpoint {
 
   /// Joins the list matching [joinCode].
   Future<ShoppingList> join(Session session, String joinCode) =>
-      ListService.join(session, session.requireUserId, joinCode);
+      ListMembershipService.join(session, session.requireUserId, joinCode);
 
   /// Renames a list the caller owns.
   Future<ShoppingList> rename(
@@ -56,7 +58,7 @@ class ListEndpoint extends Endpoint {
 
   /// Removes the caller from a list.
   Future<void> leave(Session session, UuidValue listId) =>
-      ListService.leave(session, listId, session.requireUserId);
+      ListMembershipService.leave(session, listId, session.requireUserId);
 
   /// Deletes a list the caller owns, for everyone on it.
   Future<void> delete(Session session, UuidValue listId) =>
@@ -67,7 +69,7 @@ class ListEndpoint extends Endpoint {
     Session session,
     UuidValue listId,
     UuidValue userId,
-  ) => ListService.removeMember(
+  ) => ListMembershipService.removeMember(
     session,
     listId,
     session.requireUserId,
@@ -79,7 +81,7 @@ class ListEndpoint extends Endpoint {
     Session session,
     UuidValue listId,
     UuidValue userId,
-  ) => ListService.transferOwnership(
+  ) => ListMembershipService.transferOwnership(
     session,
     listId,
     session.requireUserId,
@@ -93,7 +95,7 @@ class ListEndpoint extends Endpoint {
   Stream<ShoppingList> watchList(Session session, UuidValue listId) async* {
     await ListAccess.requireMember(session, listId, session.requireUserId);
     yield* session.messages.createStream<ShoppingList>(
-      ListService.channelFor(listId),
+      ListBroadcast.channelFor(listId),
     );
   }
 }

@@ -171,7 +171,7 @@ abstract final class NotificationService {
   }
 
   /// Sends "Someone joins a list" right away when [newMemberId] joins (not
-  /// when an existing member taps the invite again; `ListService.join`
+  /// when an existing member taps the invite again; `ListMembershipService.join`
   /// checks that). Not collected like item changes, because a join is
   /// always one event (decisions.md #80).
   static Future<void> notifyMemberJoined(

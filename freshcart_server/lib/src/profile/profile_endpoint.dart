@@ -3,7 +3,7 @@ import 'dart:typed_data';
 import 'package:freshcart_server/src/auth/business/account_link_service.dart';
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
-import 'package:freshcart_server/src/lists/business/list_service.dart';
+import 'package:freshcart_server/src/lists/business/list_broadcast.dart';
 import 'package:freshcart_server/src/profile/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
 
@@ -77,7 +77,7 @@ class ProfileEndpoint extends Endpoint {
   /// lists.
   Future<T> _thenAnnounce<T>(Session session, Future<T> write) async {
     final result = await write;
-    await ListService.announceMemberChanged(session, session.requireUserId);
+    await ListBroadcast.resendListsOf(session, session.requireUserId);
     return result;
   }
 }

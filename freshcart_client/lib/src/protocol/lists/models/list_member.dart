@@ -67,7 +67,7 @@ abstract class ListMember implements _i1.SerializableModel {
   _i1.UuidValue userId;
 
   /// Filled in live from the member's `MemberProfile` every time a list is
-  /// read (`ListService._withMembers`), never stored on this row: a copy
+  /// read (`MemberProfiles.attachTo`), never stored on this row: a copy
   /// taken at join time went stale the moment someone renamed themselves or
   /// changed their photo (docs/decisions.md #98). Always set by the server
   /// on the way out; nullable only because a row read straight from the
