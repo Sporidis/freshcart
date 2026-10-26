@@ -35,7 +35,26 @@ void main() {
 
     await pump(tester, const Failure.unauthorized());
     expect(find.byIcon(Icons.lock_outline), findsOneWidget);
-    expect(find.text(t.errors.noAccessTitle), findsOneWidget);
+    expect(find.text(t.errors.unauthorized), findsOneWidget);
+  });
+
+  // Core knows nothing about lists: "This list was deleted" is the
+  // caller's wording, not a default.
+  testWidgets('the screen can say what was lost', (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: FailureState(
+            failure: const Failure.notFound(),
+            t: t,
+            notFound: (title: 'Gone', body: 'It was removed.'),
+            action: const SizedBox(),
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Gone'), findsOneWidget);
+    expect(find.text('It was removed.'), findsOneWidget);
   });
 
   testWidgets('never shows the raw cause of an unexpected failure', (

@@ -5,7 +5,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
-import 'package:freshcart_flutter/core/ui/feedback/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/feedback/undo_toast.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_mode.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
@@ -18,6 +17,7 @@ import 'package:freshcart_flutter/features/items/presentation/widgets/items_sect
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section/motion/scale_out.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/items_section/motion/tab_switch_motion.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/search/search_results.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_failure_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// The items area of a list: the rows (or search results, or an empty
@@ -58,7 +58,7 @@ class ItemsSection extends ConsumerWidget {
     Color? dotFor(ShopId? shopId) => s.shopFor(shopId)?.color.toColor();
 
     final body = switch (s) {
-      ItemsSectionState(loadFailure: final failure?) => FailureState(
+      ItemsSectionState(loadFailure: final failure?) => ListFailureState(
         failure: failure,
         t: t,
         action: ElevatedButton(

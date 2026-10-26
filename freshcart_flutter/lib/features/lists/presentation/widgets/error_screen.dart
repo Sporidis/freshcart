@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/ui/feedback/failure_state.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_failure_state.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// A full-screen error, for when loading failed and there's nothing to show.
@@ -35,7 +35,7 @@ class ErrorScreen extends StatelessWidget {
       // Fade in, because it replaces a screen the user was looking at.
       body: AnimatedSwitcher(
         duration: AppMotion.durationFor(context, AppMotion.standard),
-        child: FailureState(
+        child: ListFailureState(
           key: ValueKey(failure.runtimeType),
           failure: failure,
           t: t,

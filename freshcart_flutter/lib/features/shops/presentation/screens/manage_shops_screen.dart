@@ -10,9 +10,9 @@ import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/core/ui/feedback/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
-import 'package:freshcart_flutter/core/ui/feedback/failure_state.dart';
 import 'package:freshcart_flutter/core/ui/motion/swipe_to_delete.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
+import 'package:freshcart_flutter/features/lists/presentation/widgets/list_failure_state.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_controller.dart';
 import 'package:freshcart_flutter/features/shops/application/manage_shops_screen/manage_shops_screen_state.dart';
 import 'package:freshcart_flutter/features/shops/application/shop/shop_providers.dart';
@@ -47,7 +47,7 @@ class ManageShopsScreen extends ConsumerWidget {
       appBar: AppBar(title: Text(t.shops.manage)),
       body: switch (s) {
         // Loading failed: show the error with a Retry button.
-        ManageShopsScreenState(loadFailure: final failure?) => FailureState(
+        ManageShopsScreenState(loadFailure: final failure?) => ListFailureState(
           failure: failure,
           t: t,
           action: ElevatedButton(
