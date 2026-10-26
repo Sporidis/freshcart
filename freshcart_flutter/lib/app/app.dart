@@ -7,8 +7,8 @@ import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/preferences/appearance.dart';
 import 'package:freshcart_flutter/core/preferences/appearance_controller.dart';
 import 'package:freshcart_flutter/core/preferences/large_text_controller.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// How much bigger text gets when "Larger list text" is on.
 ///

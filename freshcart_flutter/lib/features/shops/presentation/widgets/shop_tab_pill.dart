@@ -1,11 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_sizes.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/tap_target.dart';
 
 /// One shop tab: "All" or a single shop (design v3: a plain 36px pill).

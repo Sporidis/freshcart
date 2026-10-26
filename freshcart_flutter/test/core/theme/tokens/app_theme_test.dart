@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 
 /// A component role and the "on" role that has to actually contrast with it
 /// — text/icons drawn in [on] on top of a [role]-coloured background must

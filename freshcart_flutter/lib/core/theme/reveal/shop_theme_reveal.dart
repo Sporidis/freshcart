@@ -5,11 +5,11 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/reveal/reveal_wave_geometry.dart';
 import 'package:freshcart_flutter/core/theme/reveal/reveal_wave_scope.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 
 /// Changes [child]'s colours to a new shop colour with a circular "wave"
 /// that grows out from where the user tapped.

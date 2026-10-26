@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/theme/app_theme.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_color.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_motion.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
-import 'package:freshcart_flutter/core/theme/tokens/app_theme.dart';
 import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/features/items/presentation/widgets/check_circle.dart';
