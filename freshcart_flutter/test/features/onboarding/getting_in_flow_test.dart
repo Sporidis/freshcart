@@ -72,7 +72,9 @@ void main() {
   }
 
   group('Splash', () {
-    testWidgets('no profile yet lands on Welcome, even with a saved session', (tester) async {
+    testWidgets('no profile yet lands on Welcome, even with a saved session', (
+      tester,
+    ) async {
       await pump(tester, hasProfile: false);
       expect(find.text('Get started'), findsOneWidget);
     });
