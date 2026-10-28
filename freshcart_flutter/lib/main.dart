@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_client/freshcart_client.dart';
 import 'package:freshcart_flutter/app/app.dart';
-import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
+import 'package:freshcart_flutter/core/server/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:freshcart_flutter/features/notifications/data/sources/firebase_messaging_token_source.dart';

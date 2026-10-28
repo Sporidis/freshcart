@@ -1,7 +1,7 @@
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:freshcart_flutter/core/server/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/features/shops/data/mappers/shop_item_disposition_mapper.dart';
 import 'package:freshcart_flutter/features/shops/data/mappers/shop_mapper.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';

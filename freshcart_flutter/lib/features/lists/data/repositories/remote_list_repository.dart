@@ -2,10 +2,10 @@ import 'dart:async';
 
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
-import 'package:freshcart_flutter/core/di/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
 import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/core/server/serverpod_client_provider.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/list_summary_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/mappers/shopping_list_mapper.dart';
 import 'package:freshcart_flutter/features/lists/data/sources/list_realtime_source.dart';
