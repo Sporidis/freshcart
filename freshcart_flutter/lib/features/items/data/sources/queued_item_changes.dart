@@ -1,32 +1,22 @@
-import 'dart:convert';
-
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 
-/// Shows [items] (what the server or the offline cache has for [listId])
-/// as they will be once the queued offline changes in [ops] are sent.
+/// Applies the queued offline changes in [ops] to [items], so the list
+/// shows what it will look like once they're sent.
 ///
-/// Every row a queued change touches comes back with `pending: true`, so
-/// the screen can mark it as "not confirmed yet" (offline-sync-plan.md
-/// Phase E).
+/// Every row a change touches gets `pending: true`, so the screen can show
+/// it as "not confirmed yet".
 ///
-/// Why here, from the queue, and not from a flag kept in memory: the
-/// queue is saved on the phone and is exactly what's still waiting. So the
-/// mark survives the app being closed while offline (the cache only ever
-/// holds server data, so without this an offline change wasn't even shown
-/// after a restart), and it clears at the moment the change leaves the
-/// queue, never earlier or later.
+/// We read this from the saved queue, not from memory, so the mark
+/// survives an app restart and disappears exactly when the change is sent.
 ///
-/// The changes are replayed in the order they were made, as the replayer
-/// will send them. A change for another list, or for a row that isn't
-/// here, is skipped.
+/// Changes are applied in the order they were made. Changes for another
+/// list, or for a row that isn't in [items], are skipped.
 ///
-/// [me] gives the signed-in user: everything in this phone's queue was
-/// done by them, so they're who added a queued new item. A function, so
-/// it's only asked when there is such an item.
+/// [me] returns the signed-in user, who made every queued change. It's
+/// only called when a queued change adds a new item.
 List<ShoppingItem> applyQueuedItemChanges(
   List<ShoppingItem> items,
   List<PendingOperation> ops,
@@ -36,53 +26,55 @@ List<ShoppingItem> applyQueuedItemChanges(
   if (ops.isEmpty) return items;
   final rows = [...items];
 
-  int indexOf(String id) => rows.indexWhere((item) => item.id.value == id);
+  int indexOf(ItemId id) => rows.indexWhere((item) => item.id == id);
 
   for (final op in ops) {
-    if (op.entityType != PendingEntityType.item) continue;
-    final payload = jsonDecode(op.payload) as Map<String, dynamic>;
-    final forThisList =
-        payload['listId'] == null || payload['listId'] == listId.value;
-    if (!forThisList) continue;
+    final PendingChange change;
+    try {
+      change = op.toChange();
+    } on FormatException {
+      continue; // The replayer drops this row; nothing to show for it.
+    }
+    // List changes (rename, delete, ...) don't change the items.
+    if (change is! PendingItemChange) continue;
 
-    switch (op.opType) {
-      case PendingOpType.create:
-        final tempId = op.tempId;
-        if (tempId == null || indexOf(tempId) >= 0) break;
-        rows.add(_createdItem(tempId, payload, listId, me(), op.queuedAt));
+    // null: the change doesn't say which list (a remove only has the item's
+    // id), so it's applied whichever list is open.
+    final ListId? changeListId = switch (change) {
+      ItemCreated(:final listId) => listId,
+      ItemEdited(:final item) => item.listId,
+      ItemRemoved() => null,
+      CheckedItemsCleared(:final listId) => listId,
+      ItemsRemoved(:final listId) => listId,
+      ItemsMovedToShop(:final listId) => listId,
+    };
+    if (changeListId != null && changeListId != listId) continue;
 
-      case PendingOpType.edit:
-        final at = indexOf(payload['itemId'] as String);
-        if (at < 0) break;
-        rows[at] = shoppingItemFromQueuePayload(
-          payload,
-        ).copyWith(pending: true);
+    switch (change) {
+      case ItemCreated(:final tempId):
+        if (indexOf(ItemId(tempId)) >= 0) break;
+        rows.add(_createdItem(change, me(), op.queuedAt));
 
-      case PendingOpType.remove:
-        final at = indexOf(payload['itemId'] as String);
-        if (at >= 0) rows.removeAt(at);
+      case ItemsRemoved(:final itemIds):
+        final ids = itemIds.toSet();
+        rows.removeWhere((item) => ids.contains(item.id));
 
-      case PendingOpType.removeMany:
-        final ids = {...(payload['ids'] as List<dynamic>).cast<String>()};
-        rows.removeWhere((item) => ids.contains(item.id.value));
+      case ItemRemoved(:final itemId):
+        rows.removeWhere((item) => item.id == itemId);
+      case ItemEdited(:final item):
+        final at = indexOf(item.id);
+        if (at >= 0) rows[at] = item.copyWith(pending: true);
 
-      case PendingOpType.clearChecked:
+      case CheckedItemsCleared():
         rows.removeWhere((item) => item.isChecked);
 
-      case PendingOpType.moveMany:
-        final ids = {...(payload['ids'] as List<dynamic>).cast<String>()};
-        final shopId = payload['shopId'] as String?;
+      case ItemsMovedToShop(:final itemIds, :final targetShopId):
+        final movedToShopItemIds = itemIds.toSet();
         for (var i = 0; i < rows.length; i++) {
-          if (!ids.contains(rows[i].id.value)) continue;
-          rows[i] = rows[i].copyWith(
-            shopId: shopId == null ? null : ShopId(shopId),
-            pending: true,
-          );
+          if (movedToShopItemIds.contains(rows[i].id)) {
+            rows[i] = rows[i].copyWith(shopId: targetShopId, pending: true);
+          }
         }
-
-      // List changes (rename, delete, ...) don't change the items.
-      default:
-        break;
     }
   }
   return rows;
@@ -91,24 +83,21 @@ List<ShoppingItem> applyQueuedItemChanges(
 /// The row for an item added offline, under its temporary id (the one the
 /// queue and any later queued edits use).
 ShoppingItem _createdItem(
-  String tempId,
-  Map<String, dynamic> payload,
-  ListId listId,
+  ItemCreated change,
   UserId addedBy,
   DateTime queuedAt,
 ) {
   final at = queuedAt.toUtc();
-  final noteText = payload['noteText'] as String?;
-  final shopId = payload['shopId'] as String?;
+  final noteText = change.noteText;
   return ShoppingItem(
-    id: ItemId(tempId),
-    listId: listId,
-    name: payload['name'] as String,
+    id: ItemId(change.tempId),
+    listId: change.listId,
+    name: change.name,
     addedBy: addedBy,
     createdAt: at,
     updatedAt: at,
-    quantity: payload['quantity'] as int? ?? 1,
-    shopId: shopId == null ? null : ShopId(shopId),
+    quantity: change.quantity,
+    shopId: change.shopId,
     note: noteText == null || noteText.trim().isEmpty
         ? null
         : Note(text: noteText, authorId: addedBy, updatedAt: at),
