@@ -98,10 +98,17 @@ class _UserAvatarState extends State<UserAvatar> {
   }
 
   /// Wraps [child] with [border], if one was given.
+  ///
+  /// A foreground decoration, painted over the circle's edge: a plain
+  /// `decoration` pads the child by the border's width, so the avatar would
+  /// be wider than `2 * radius` and get clipped by `MemberAvatarStack`.
   Widget _bordered(Widget child) {
     if (widget.border == null) return child;
     return Container(
-      decoration: BoxDecoration(shape: BoxShape.circle, border: widget.border),
+      foregroundDecoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: widget.border,
+      ),
       child: child,
     );
   }
