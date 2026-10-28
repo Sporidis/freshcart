@@ -66,6 +66,25 @@ class PendingOperationsQueue {
   }
 }
 
+/// Reads a queue row back as the [PendingChange] it was stored from.
+extension PendingOperationChange on PendingOperation {
+  /// The change in this row: the reverse of [PendingOperationsQueue.enqueue].
+  ///
+  /// Throws [FormatException] for a row that can't be read back.
+  PendingChange toChange() {
+    try {
+      return PendingChange.fromQueue(
+        entityType,
+        opType,
+        jsonDecode(payload) as Map<String, Object?>,
+        tempId: tempId,
+      );
+    } catch (e) {
+      throw FormatException('Failed to read queued change: $e');
+    }
+  }
+}
+
 /// Supplies the [PendingOperationsQueue], backed by [appDatabaseProvider].
 @Riverpod(keepAlive: true)
 PendingOperationsQueue pendingOperationsQueue(Ref ref) =>

@@ -170,6 +170,31 @@ void main() {
         expect(await queue.getAll(), isEmpty);
       },
     );
+
+    test(
+      'drops a row whose payload is missing a key and still sends the ones '
+      'after it',
+      () async {
+        // A real combination (item + remove), but without its itemId.
+        await db
+            .into(db.pendingOperations)
+            .insert(
+              PendingOperationsCompanion.insert(
+                entityType: PendingEntityType.item,
+                opType: PendingOpType.remove,
+                payload: '{}',
+                queuedAt: DateTime.utc(2026, 10),
+              ),
+            );
+        await queue.enqueue(ItemRemoved(ItemId('item-1')));
+
+        final conflicted = await replayer.replayAll();
+
+        expect(conflicted, isEmpty);
+        expect(items.removedIds, [ItemId('item-1')]);
+        expect(await queue.getAll(), isEmpty);
+      },
+    );
   });
 
   // The fakes above can't catch this: the re-queuing happens inside the

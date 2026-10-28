@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
@@ -54,12 +52,7 @@ class PendingOperationsReplayer {
     for (final op in ops) {
       final PendingChange change;
       try {
-        change = PendingChange.fromQueue(
-          op.entityType,
-          op.opType,
-          jsonDecode(op.payload) as Map<String, Object?>,
-          tempId: op.tempId,
-        ).withRealIds(tempIdToReal);
+        change = op.toChange().withRealIds(tempIdToReal);
       } on FormatException catch (e) {
         debugPrint('Dropping unreadable queued change ${op.id}: $e');
         await _queue.remove(op.id);
