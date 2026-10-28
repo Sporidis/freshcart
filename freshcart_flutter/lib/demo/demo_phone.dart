@@ -57,9 +57,12 @@ class _DemoPhoneState extends State<DemoPhone> {
     textDirection: TextDirection.ltr,
     child: ValueListenableBuilder<bool>(
       valueListenable: _session!.stage.locked,
-      child: UncontrolledProviderScope(
-        container: _container!,
-        child: const FreshCartApp(),
+      child: MediaQuery(
+        data: _withPhoneInsets(MediaQuery.of(context)),
+        child: UncontrolledProviderScope(
+          container: _container!,
+          child: const FreshCartApp(),
+        ),
       ),
       builder: (context, locked, app) => Stack(
         fit: StackFit.expand,
@@ -82,6 +85,17 @@ class _DemoPhoneState extends State<DemoPhone> {
     ),
   );
 }
+
+/// A browser view has no status bar or home indicator, so its safe-area
+/// insets are zero and the app's header would sit flush against the top of
+/// the phone frame. These stand in for a phone's, so the app's own
+/// SafeArea handling spaces it as it would on a device.
+const _phoneInsets = EdgeInsets.only(top: 28, bottom: 12);
+
+MediaQueryData _withPhoneInsets(MediaQueryData data) => data.copyWith(
+  padding: data.padding + _phoneInsets,
+  viewPadding: data.viewPadding + _phoneInsets,
+);
 
 /// "Skip intro". Plain widgets only: it sits above MaterialApp, so there's
 /// no Material, theme or translations here.
