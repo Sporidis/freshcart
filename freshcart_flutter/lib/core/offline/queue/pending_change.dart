@@ -16,8 +16,9 @@ sealed class PendingChange {
   /// [tempId] comes from the row's own column, not from [json]: only
   /// creates have one.
   ///
-  /// Throws [UnsupportedError] for a combination that can't exist, such as
-  /// renaming an item. Such a row is a bug, not a failure to recover from.
+  /// Throws [FormatException] for a row that can't be a real change: a
+  /// combination that doesn't exist (renaming an item), or a create without
+  /// a tempId. Such a row is a bug; the replayer drops it.
   factory PendingChange.fromQueue(
     PendingEntityType entityType,
     PendingOpType opType,
@@ -69,7 +70,9 @@ sealed class PendingItemChange extends PendingChange {
     String? tempId,
   }) => switch (opType) {
     PendingOpType.create => ItemCreated(
-      tempId: tempId ?? (throw ArgumentError('An item create needs a tempId')),
+      tempId:
+          tempId ??
+          (throw const FormatException('An item create needs a tempId')),
       listId: ListId(json['listId'] as String),
       name: json['name'] as String,
       quantity: json['quantity'] as int,
@@ -90,7 +93,7 @@ sealed class PendingItemChange extends PendingChange {
       [for (final id in json['ids'] as List<Object?>) ItemId(id as String)],
       json['shopId'] != null ? ShopId(json['shopId'] as String) : null,
     ),
-    _ => throw UnsupportedError(
+    _ => throw FormatException(
       'Unsupported operation type: $opType on PendingItemChange',
     ),
   };
@@ -264,7 +267,9 @@ sealed class PendingListChange extends PendingChange {
     String? tempId,
   }) => switch (opType) {
     PendingOpType.create => ListCreated(
-      tempId: tempId ?? (throw ArgumentError('A list create needs a tempId')),
+      tempId:
+          tempId ??
+          (throw const FormatException('A list create needs a tempId')),
       name: json['name'] as String,
     ),
     PendingOpType.rename => ListRenamed(
@@ -285,7 +290,7 @@ sealed class PendingListChange extends PendingChange {
       ListId(json['id'] as String),
       UserId(json['userId'] as String),
     ),
-    _ => throw UnsupportedError(
+    _ => throw FormatException(
       'Unsupported operation type: $opType on PendingListChange',
     ),
   };

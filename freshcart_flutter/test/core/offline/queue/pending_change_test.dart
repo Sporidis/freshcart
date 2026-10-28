@@ -135,7 +135,7 @@ void main() {
           PendingOpType.rename,
           {'id': _itemId, 'name': 'Milk'},
         ),
-        throwsUnsupportedError,
+        throwsFormatException,
       );
     });
 
@@ -146,7 +146,7 @@ void main() {
           PendingOpType.create,
           {'name': 'Groceries'},
         ),
-        throwsArgumentError,
+        throwsFormatException,
       );
     });
   });
