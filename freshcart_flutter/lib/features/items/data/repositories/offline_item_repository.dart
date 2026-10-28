@@ -2,10 +2,8 @@ import 'dart:async';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
 import 'package:freshcart_flutter/features/items/data/sources/queued_item_changes.dart';
@@ -68,13 +66,16 @@ class OfflineItemRepository implements ItemRepository {
     // The queue and the screen share one temporary id, so later offline
     // changes to this item (checking it) point at the right one.
     final tempId = _newTempId();
-    await _enqueue(PendingOpType.create, tempId: tempId, {
-      'listId': listId.value,
-      'name': name,
-      'quantity': quantity,
-      'shopId': shopId?.value,
-      'noteText': noteText,
-    });
+    await _queue.enqueue(
+      ItemCreated(
+        tempId: tempId,
+        listId: listId,
+        name: name,
+        quantity: quantity,
+        shopId: shopId,
+        noteText: noteText,
+      ),
+    );
     return Ok(
       _pendingNewItem(
         ItemId(tempId),
@@ -91,7 +92,7 @@ class OfflineItemRepository implements ItemRepository {
   Future<Result<ShoppingItem>> save(ShoppingItem item) async {
     final result = await _remote.save(item);
     if (!_isOffline(result)) return result;
-    await _enqueue(PendingOpType.edit, item.toQueuePayload());
+    await _queue.enqueue(ItemEdited(item));
     return Ok(item.copyWith(pending: true));
   }
 
@@ -99,7 +100,7 @@ class OfflineItemRepository implements ItemRepository {
   Future<Result<void>> remove(ItemId id) async {
     final result = await _remote.remove(id);
     if (!_isOffline(result)) return result;
-    await _enqueue(PendingOpType.remove, {'itemId': id.value});
+    await _queue.enqueue(ItemRemoved(id));
     return const Ok(null);
   }
 
@@ -110,7 +111,7 @@ class OfflineItemRepository implements ItemRepository {
   Future<Result<int>> clearChecked(ListId listId) async {
     final result = await _remote.clearChecked(listId);
     if (!_isOffline(result)) return result;
-    await _enqueue(PendingOpType.clearChecked, {'listId': listId.value});
+    await _queue.enqueue(CheckedItemsCleared(listId));
     return const Ok(0);
   }
 
@@ -118,10 +119,7 @@ class OfflineItemRepository implements ItemRepository {
   Future<Result<int>> removeMany(ListId listId, List<ItemId> ids) async {
     final result = await _remote.removeMany(listId, ids);
     if (!_isOffline(result)) return result;
-    await _enqueue(PendingOpType.removeMany, {
-      'listId': listId.value,
-      'ids': [for (final id in ids) id.value],
-    });
+    await _queue.enqueue(ItemsRemoved(listId, ids));
     return const Ok(0);
   }
 
@@ -133,11 +131,7 @@ class OfflineItemRepository implements ItemRepository {
   ) async {
     final result = await _remote.moveMany(listId, ids, shopId);
     if (!_isOffline(result)) return result;
-    await _enqueue(PendingOpType.moveMany, {
-      'listId': listId.value,
-      'ids': [for (final id in ids) id.value],
-      'shopId': shopId?.value,
-    });
+    await _queue.enqueue(ItemsMovedToShop(listId, ids, shopId));
     return const Ok(0);
   }
 
@@ -230,18 +224,6 @@ class OfflineItemRepository implements ItemRepository {
     Err(failure: NetworkFailure()) => true,
     _ => false,
   };
-
-  /// Saves an item change to send once the server is reachable again.
-  Future<void> _enqueue(
-    PendingOpType opType,
-    Map<String, Object?> payload, {
-    String? tempId,
-  }) => _queue.enqueue(
-    entityType: PendingEntityType.item,
-    opType: opType,
-    tempId: tempId,
-    payload: payload,
-  );
 
   /// The item to show for an add that's waiting in the queue.
   ShoppingItem _pendingNewItem(

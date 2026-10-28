@@ -3,8 +3,7 @@ import 'dart:math';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
@@ -75,67 +74,60 @@ class OfflineListRepository implements ListRepository {
     // The queue and the screen share one temporary id, so later offline
     // changes to this list (adding items to it) point at the right one.
     final tempId = _newTempId();
-    await _enqueue(PendingOpType.create, tempId: tempId, {'name': name});
+    await _queue.enqueue(ListCreated(tempId: tempId, name: name));
     return Ok(_pendingNewList(ListId(tempId), name));
   }
 
   @override
   Future<Result<void>> rename(ListId id, String name) => _queueWhenOffline(
     _remote.rename(id, name),
-    PendingOpType.rename,
-    {'id': id.value, 'name': name},
+    ListRenamed(id, name),
   );
 
   @override
   Future<Result<void>> setClearCheckedAfterShopping(ListId id, bool value) =>
       _queueWhenOffline(
         _remote.setClearCheckedAfterShopping(id, value),
-        PendingOpType.setClearCheckedAfterShopping,
-        {'id': id.value, 'value': value},
+        ClearCheckedAfterShoppingSet(id, value: value),
       );
 
   @override
   Future<Result<void>> leave(ListId id) => _queueWhenOffline(
     _remote.leave(id),
-    PendingOpType.leave,
-    {'id': id.value},
+    ListLeft(id),
   );
 
   @override
   Future<Result<void>> delete(ListId id) => _queueWhenOffline(
     _remote.delete(id),
-    PendingOpType.delete,
-    {'id': id.value},
+    ListDeleted(id),
   );
 
   @override
   Future<Result<void>> removeMember(ListId id, UserId userId) =>
       _queueWhenOffline(
         _remote.removeMember(id, userId),
-        PendingOpType.removeMember,
-        {'id': id.value, 'userId': userId.value},
+        MemberRemoved(id, userId),
       );
 
   @override
   Future<Result<void>> transferOwnership(ListId id, UserId userId) =>
       _queueWhenOffline(
         _remote.transferOwnership(id, userId),
-        PendingOpType.transferOwnership,
-        {'id': id.value, 'userId': userId.value},
+        OwnershipTransferred(id, userId),
       );
 
   // ── Offline helpers ──────────────────────────────────────────────────
 
-  /// Waits for [write]; if the server couldn't be reached, queues it as
-  /// [opType] with [payload] and answers Ok.
+  /// Waits for [write]; if the server couldn't be reached, queues [change]
+  /// and answers Ok.
   Future<Result<void>> _queueWhenOffline(
     Future<Result<void>> write,
-    PendingOpType opType,
-    Map<String, Object?> payload,
+    PendingListChange change,
   ) async {
     final result = await write;
     if (!_isOffline(result)) return result;
-    await _enqueue(opType, payload);
+    await _queue.enqueue(change);
     return const Ok(null);
   }
 
@@ -144,18 +136,6 @@ class OfflineListRepository implements ListRepository {
     Err(failure: NetworkFailure()) => true,
     _ => false,
   };
-
-  /// Saves a list change to send once the server is reachable again.
-  Future<void> _enqueue(
-    PendingOpType opType,
-    Map<String, Object?> payload, {
-    String? tempId,
-  }) => _queue.enqueue(
-    entityType: PendingEntityType.list,
-    opType: opType,
-    tempId: tempId,
-    payload: payload,
-  );
 
   /// The list to show for a create that's waiting in the queue. Its join
   /// code is a stand-in: the server picks the real one.

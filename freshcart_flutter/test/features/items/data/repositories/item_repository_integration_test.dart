@@ -7,10 +7,10 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_items_store.dart';
 import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 import 'package:freshcart_flutter/features/items/data/mappers/shopping_item_mapper.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
@@ -313,16 +313,12 @@ void main() {
 
         // Offline: an item is added, so it's only in the queue.
         await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.create,
-          tempId: 'temp-1',
-          payload: {
-            'listId': listUuid.uuid,
-            'name': 'Eggs',
-            'quantity': 1,
-            'shopId': null,
-            'noteText': null,
-          },
+          ItemCreated(
+            tempId: 'temp-1',
+            listId: ListId(listUuid.uuid),
+            name: 'Eggs',
+            quantity: 1,
+          ),
         );
         await pumpEventQueue();
         final eggs = events.last.singleWhere((i) => i.name == 'Eggs');
@@ -362,11 +358,9 @@ void main() {
         // Ticked offline: queued.
         final item = events.last.single;
         await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.edit,
-          payload: item
-              .toggleChecked(by: item.addedBy, at: DateTime.utc(2026, 10))
-              .toQueuePayload(),
+          ItemEdited(
+            item.toggleChecked(by: item.addedBy, at: DateTime.utc(2026, 10)),
+          ),
         );
         await pumpEventQueue();
         expect(events.last.single.isChecked, isTrue);

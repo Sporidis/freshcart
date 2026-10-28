@@ -36,16 +36,26 @@ sealed class PendingChange {
     ),
   };
 
-  /// Converts the pending change to a JSON-serializable map.
+  /// The payload stored in the queue row.
+  ///
+  /// The keys must never change: rows written by an older version of the
+  /// app may still be waiting in the queue.
   Map<String, Object?> toJson();
 
+  /// Whether this changes an item or a list. Stored in the queue row.
   PendingEntityType get entityType;
+
+  /// What kind of change this is. Stored in the queue row.
   PendingOpType get opType;
+
+  /// The temporary id the screen shows until the server gives the real one.
+  /// Only creates have one, so it's `null` by default.
   String? get tempId => null;
 }
 
 // ── Items ──────────────────────────────────────────────────────────────
-/// Pending changes related to items.
+
+/// A change to an item.
 sealed class PendingItemChange extends PendingChange {
   const PendingItemChange();
 
@@ -133,9 +143,8 @@ final class ItemRemoved extends PendingItemChange {
 
 /// An item edited.
 final class ItemEdited extends PendingItemChange {
-  const ItemEdited(
-    this.item,
-  );
+  const ItemEdited(this.item);
+
   final ShoppingItem item;
 
   @override
@@ -145,7 +154,7 @@ final class ItemEdited extends PendingItemChange {
   PendingOpType get opType => PendingOpType.edit;
 }
 
-/// Checked items cleared from a list
+/// Checked items cleared from a list.
 final class CheckedItemsCleared extends PendingItemChange {
   const CheckedItemsCleared(this.listId);
 
@@ -175,7 +184,8 @@ final class ItemsRemoved extends PendingItemChange {
   PendingOpType get opType => PendingOpType.removeMany;
 }
 
-/// Move many items to another shop.
+/// Several items in one list moved to another shop. A `null` [targetShopId]
+/// means "no shop".
 final class ItemsMovedToShop extends PendingItemChange {
   const ItemsMovedToShop(
     this.listId,
@@ -199,7 +209,8 @@ final class ItemsMovedToShop extends PendingItemChange {
 }
 
 // ── Lists ──────────────────────────────────────────────────────────────
-/// Pending changes related to lists.
+
+/// A change to a list.
 sealed class PendingListChange extends PendingChange {
   const PendingListChange();
 

@@ -5,10 +5,9 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_items_store.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 import 'package:freshcart_flutter/core/offline/replay/pending_operations_replayer.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/remote_list_repository.dart';
@@ -44,25 +43,17 @@ void main() {
         items.addResult = Ok(buildItem(id: 'real-item-id'));
 
         await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.create,
-          tempId: 'temp-item-1',
-          payload: const {
-            'listId': '00000000-0000-4000-8000-000000000001',
-            'name': 'Milk',
-            'quantity': 1,
-            'shopId': null,
-            'noteText': null,
-          },
+          ItemCreated(
+            tempId: 'temp-item-1',
+            listId: ListId('00000000-0000-4000-8000-000000000001'),
+            name: 'Milk',
+            quantity: 1,
+          ),
         );
         final editedItem = buildItem(
           id: 'temp-item-1',
         ).copyWith(name: 'Oat milk');
-        await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.edit,
-          payload: editedItem.toQueuePayload(),
-        );
+        await queue.enqueue(ItemEdited(editedItem));
 
         final conflicted = await replayer.replayAll();
 
@@ -82,22 +73,15 @@ void main() {
         items.addResult = Ok(buildItem(id: 'real-item-id'));
 
         await queue.enqueue(
-          entityType: PendingEntityType.list,
-          opType: PendingOpType.create,
-          tempId: 'temp-list-1',
-          payload: const {'name': 'Groceries'},
+          const ListCreated(tempId: 'temp-list-1', name: 'Groceries'),
         );
         await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.create,
-          tempId: 'temp-item-1',
-          payload: const {
-            'listId': 'temp-list-1',
-            'name': 'Milk',
-            'quantity': 1,
-            'shopId': null,
-            'noteText': null,
-          },
+          ItemCreated(
+            tempId: 'temp-item-1',
+            listId: ListId('temp-list-1'),
+            name: 'Milk',
+            quantity: 1,
+          ),
         );
 
         final conflicted = await replayer.replayAll();
@@ -113,11 +97,7 @@ void main() {
       'queue (server wins)',
       () async {
         items.removeResult = const Err(Failure.conflict());
-        await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.remove,
-          payload: const {'itemId': 'item-1'},
-        );
+        await queue.enqueue(ItemRemoved(ItemId('item-1')));
 
         final conflicted = await replayer.replayAll();
 
@@ -131,11 +111,7 @@ void main() {
       'leaves a non-conflict failure queued for the next reconnect',
       () async {
         items.removeResult = const Err(Failure.network());
-        await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.remove,
-          payload: const {'itemId': 'item-1'},
-        );
+        await queue.enqueue(ItemRemoved(ItemId('item-1')));
 
         final conflicted = await replayer.replayAll();
 
@@ -177,11 +153,7 @@ void main() {
       'a list op sent while the server is still unreachable stays queued '
       'as the original, not as a copy',
       () async {
-        await queue.enqueue(
-          entityType: PendingEntityType.list,
-          opType: PendingOpType.leave,
-          payload: {'id': listUuid.uuid},
-        );
+        await queue.enqueue(ListLeft(ListId(listUuid.uuid)));
         final original = (await queue.getAll()).single;
         client.handler = (_, _, _) =>
             throw const dto.ServerpodClientException('down', -1);
@@ -198,11 +170,7 @@ void main() {
       'a server that is still unreachable leaves the original op queued, '
       'without queuing a copy of it',
       () async {
-        await queue.enqueue(
-          entityType: PendingEntityType.item,
-          opType: PendingOpType.remove,
-          payload: {'itemId': listUuid.uuid},
-        );
+        await queue.enqueue(ItemRemoved(ItemId(listUuid.uuid)));
         final original = (await queue.getAll()).single;
         client.handler = (_, _, _) =>
             throw const dto.ServerpodClientException('down', -1);

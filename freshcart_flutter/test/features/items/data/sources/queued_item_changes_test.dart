@@ -2,10 +2,8 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 import 'package:freshcart_flutter/features/items/data/sources/queued_item_changes.dart';
 
 import '../../../../fakes/fake_item_repository.dart';
@@ -43,16 +41,12 @@ void main() {
     'an item added offline shows, pending, under its temporary id',
     () async {
       await queue.enqueue(
-        entityType: PendingEntityType.item,
-        opType: PendingOpType.create,
-        tempId: 'temp-1',
-        payload: const {
-          'listId': listIdValue,
-          'name': 'Eggs',
-          'quantity': 6,
-          'shopId': null,
-          'noteText': null,
-        },
+        ItemCreated(
+          tempId: 'temp-1',
+          listId: ListId(listIdValue),
+          name: 'Eggs',
+          quantity: 6,
+        ),
       );
 
       final out = await replay([milk]);
@@ -70,11 +64,7 @@ void main() {
     'an offline tick (an edit) replaces the row and marks it pending',
     () async {
       await queue.enqueue(
-        entityType: PendingEntityType.item,
-        opType: PendingOpType.edit,
-        payload: milk
-            .toggleChecked(by: me(), at: DateTime.utc(2026, 10))
-            .toQueuePayload(),
+        ItemEdited(milk.toggleChecked(by: me(), at: DateTime.utc(2026, 10))),
       );
 
       final row = (await replay([milk, bread])).singleWhere(
@@ -87,25 +77,21 @@ void main() {
 
   test('an edit to an item added offline lands on that new row', () async {
     await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.create,
-      tempId: 'temp-1',
-      payload: const {
-        'listId': listIdValue,
-        'name': 'Eggs',
-        'quantity': 1,
-        'shopId': null,
-        'noteText': null,
-      },
+      ItemCreated(
+        tempId: 'temp-1',
+        listId: ListId(listIdValue),
+        name: 'Eggs',
+        quantity: 1,
+      ),
     );
     await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.edit,
-      payload: buildItem(
-        id: 'temp-1',
-        name: 'Eggs',
-        quantity: 12,
-      ).toQueuePayload(),
+      ItemEdited(
+        buildItem(
+          id: 'temp-1',
+          name: 'Eggs',
+          quantity: 12,
+        ),
+      ),
     );
 
     final eggs = (await replay(const [])).single;
@@ -115,19 +101,8 @@ void main() {
 
   test('offline deletes hide their rows, one or many', () async {
     final cheese = buildItem(id: 'cheese', name: 'Cheese');
-    await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.remove,
-      payload: const {'itemId': 'milk'},
-    );
-    await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.removeMany,
-      payload: const {
-        'listId': listIdValue,
-        'ids': ['bread'],
-      },
-    );
+    await queue.enqueue(ItemRemoved(ItemId('milk')));
+    await queue.enqueue(ItemsRemoved(ListId(listIdValue), [ItemId('bread')]));
 
     final out = await replay([milk, bread, cheese]);
     expect(out.map((i) => i.name), ['Cheese']);
@@ -135,11 +110,7 @@ void main() {
 
   test('clearing checked offline hides the checked rows', () async {
     final done = buildItem(id: 'done', name: 'Done', isChecked: true);
-    await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.clearChecked,
-      payload: const {'listId': listIdValue},
-    );
+    await queue.enqueue(CheckedItemsCleared(ListId(listIdValue)));
 
     final out = await replay([milk, done]);
     expect(out.map((i) => i.name), ['Milk']);
@@ -147,13 +118,11 @@ void main() {
 
   test('moving offline re-tags the rows and marks them pending', () async {
     await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.moveMany,
-      payload: const {
-        'listId': listIdValue,
-        'ids': ['milk'],
-        'shopId': 'shop-1',
-      },
+      ItemsMovedToShop(
+        ListId(listIdValue),
+        [ItemId('milk')],
+        ShopId('shop-1'),
+      ),
     );
 
     final out = await replay([milk, bread]);
@@ -165,16 +134,12 @@ void main() {
 
   test("another list's queued changes are left out", () async {
     await queue.enqueue(
-      entityType: PendingEntityType.item,
-      opType: PendingOpType.create,
-      tempId: 'temp-other',
-      payload: const {
-        'listId': '00000000-0000-4000-8000-000000000099',
-        'name': 'Nails',
-        'quantity': 1,
-        'shopId': null,
-        'noteText': null,
-      },
+      ItemCreated(
+        tempId: 'temp-other',
+        listId: ListId('00000000-0000-4000-8000-000000000099'),
+        name: 'Nails',
+        quantity: 1,
+      ),
     );
 
     final out = await replay([milk]);

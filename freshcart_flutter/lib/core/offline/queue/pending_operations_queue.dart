@@ -3,8 +3,7 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database_provider.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'pending_operations_queue.g.dart';
@@ -19,28 +18,20 @@ class PendingOperationsQueue {
 
   final AppDatabase _db;
 
-  /// Adds a change to the queue.
+  /// Adds [change] to the queue.
   ///
-  /// [payload] holds what the server call needs (for an add: name,
-  /// quantity, shop...). It's turned into JSON here.
-  ///
-  /// [tempId] is only for "create" operations. A new item made offline has
-  /// no real id yet (the server gives it one), so it gets a temporary id.
-  /// See offline-sync-plan.md §2.
-  Future<void> enqueue({
-    required PendingEntityType entityType,
-    required PendingOpType opType,
-    required Map<String, dynamic> payload,
-    String? tempId,
-  }) {
+  /// The row's type columns, payload JSON and temporary id all come from
+  /// [change], so a row can't be stored with a type that doesn't match its
+  /// payload. See offline-sync-plan.md §2 for why creates carry a tempId.
+  Future<void> enqueue(PendingChange change) {
     return _db
         .into(_db.pendingOperations)
         .insert(
           PendingOperationsCompanion.insert(
-            entityType: entityType,
-            opType: opType,
-            payload: jsonEncode(payload),
-            tempId: Value(tempId),
+            entityType: change.entityType,
+            opType: change.opType,
+            payload: jsonEncode(change.toJson()),
+            tempId: Value(change.tempId),
             queuedAt: DateTime.now(),
           ),
         );
