@@ -1,15 +1,34 @@
 # freshcart_web
 
-A new Jaspr project
+FreshCart's marketing site, built with [Jaspr](https://docs.jaspr.site) as a statically
+generated site. It is the SEO surface: real HTML with a title, meta description, Open
+Graph tags, a canonical URL and JSON-LD. CI checks that all of them survive the build.
+Everything behind sign-in is the Flutter app.
 
-## Running the project
+It uses the same translations as the app (`packages/freshcart_l10n`).
 
-Run your project using `jaspr serve`.
+## Not a workspace member
 
-The development server will be available on `http://localhost:8080`.
+This package resolves on its own, with its own lockfile. `jaspr_builder` pins
+`analyzer ^12`, while `freezed` 4 and `riverpod_generator` 4 need `analyzer >=13`, and a
+pub workspace has only one resolution.
 
-## Building the project
+```bash
+dart pub get                       # here, separately from the root `flutter pub get`
+dart pub global activate jaspr_cli # once
+```
 
-Build your project using `jaspr build`.
+## Commands
 
-The output will be located inside the `build/jaspr/` directory.
+```bash
+jaspr serve    # dev server at http://localhost:8080
+jaspr build    # static output in build/jaspr/
+```
+
+## Layout
+
+| Path | What |
+| --- | --- |
+| `lib/pages/` | Pages (`home.dart`) |
+| `lib/components/` | Header, footer, feature cards |
+| `lib/constants/` | Site metadata and theme |
