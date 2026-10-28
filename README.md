@@ -71,7 +71,7 @@ iOS and Android app · marketing site · backend — **one Dart monorepo**
 
 ## Why it is built this way
 
-FreshCart is a portfolio project, and it is **deliberately over-engineered**: the app is simple to use, but the architecture is strict and every non-obvious choice has a written reason. Highlights:
+FreshCart is my personal project, and still a work in progress. I used it to bring together things I already know, like Flutter and Riverpod, and to learn and explore things I didn't yet, like Serverpod, Jaspr and a strict clean architecture. That's why it has **more structure than a shopping list strictly needs**: the app is simple to use, but the architecture is strict and every non-obvious choice has a written reason. Highlights:
 
 | Choice | Why |
 | --- | --- |
