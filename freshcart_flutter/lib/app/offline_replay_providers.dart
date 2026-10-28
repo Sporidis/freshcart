@@ -28,7 +28,7 @@ PendingOperationsReplayer pendingOperationsReplayer(Ref ref) =>
 void replayQueueWhenOnline(Ref ref) {
   // True while a replay is running. Two replays at once would both read the
   // same queue and send the same changes twice (duplicate items).
-  var replaying = false;
+  bool replaying = false;
 
   Future<void> replayOnce() async {
     if (replaying) return;
@@ -50,9 +50,9 @@ void replayQueueWhenOnline(Ref ref) {
   }
 
   ref.listen(connectivityStatusProvider, (previous, next) {
-    // Replay when we BECOME online: coming back from offline, but also the
-    // first status at app start (then `previous` is still loading, not
-    // offline). Staying online (online -> online) doesn't replay again.
+    // Replay only on the switch to online, from anything that isn't online:
+    // offline, or still loading at app start. Staying online doesn't
+    // replay again.
     final wasOnline = previous?.value == ConnectivityStatus.online;
     if (!wasOnline && next.value == ConnectivityStatus.online) {
       unawaited(replayOnce());

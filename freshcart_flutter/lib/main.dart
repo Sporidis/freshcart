@@ -23,23 +23,17 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // slang has no plural rules for Dutch and Tagalog, so we register our own.
-  // Must happen before any text is shown. See decisions.md #25.
+  // Must happen before any text is shown.
   configurePluralResolvers();
 
   // Push notifications only exist on Android and iOS, so the web build skips
-  // Firebase completely. See decisions.md #7 and #8.
+  // Firebase completely.
   if (!kIsWeb) {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
   }
 
-  // Where the server lives. Checked in this order:
-  // 1. --dart-define=SERVER_URL
-  // 2. assets/config.json
-  // 3. http://localhost:8080/
-  // On a real phone, localhost is the phone itself, so pass your computer's
-  // LAN address with --dart-define.
   final serverUrl = await getServerUrl();
 
   final client = Client(serverUrl)
