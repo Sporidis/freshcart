@@ -12,18 +12,15 @@ import 'package:serverpod_auth_idp_flutter/serverpod_auth_idp_flutter.dart';
 abstract final class AnonymousSessionBootstrap {
   /// Uses the saved session, or creates a new anonymous account.
   ///
-  /// `authenticated` is false only if both failed (usually: first launch
-  /// without internet). The app still opens, and server calls just return
+  /// Returns false only if both failed (usually: first launch without
+  /// internet). The app still opens, and server calls just return
   /// "unauthorized". Much better than crashing.
-  ///
-  /// `isNewAccount` is true only if a new account was just created. That's
-  /// how we know to show onboarding, without saving a separate flag.
-  static Future<({bool authenticated, bool isNewAccount})> ensureSignedIn(
+  static Future<bool> ensureSignedIn(
     dto.Client client,
   ) async {
     await client.auth.initialize();
     if (client.auth.isAuthenticated) {
-      return (authenticated: true, isNewAccount: false);
+      return true;
     }
 
     try {
@@ -31,12 +28,11 @@ abstract final class AnonymousSessionBootstrap {
       // how many accounts one IP address can create.
       final session = await client.anonymousIdp.login();
       await client.auth.updateSignedInUser(session);
-      final authenticated = client.auth.isAuthenticated;
-      return (authenticated: authenticated, isNewAccount: authenticated);
+      return client.auth.isAuthenticated;
     } on Exception catch (_) {
       // Usually: no internet on first launch. Catch it so the app still
       // opens and can show its own error, instead of crashing.
-      return (authenticated: false, isNewAccount: false);
+      return false;
     }
   }
 }

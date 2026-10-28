@@ -26,10 +26,15 @@ UserId? signedInUserId(Ref ref) => ref.watch(currentUserIdProvider).dataOrNull;
 Future<Result<SignIn>> signInResult(Ref ref) =>
     ref.watch(authRepositoryProvider).ensureSignedIn();
 
-/// Finishes when sign-in is done. `true` means a brand-new user (show
-/// onboarding), `false` a returning one, or a sign-in that failed (the
-/// lists screen then shows what's wrong).
+/// Finishes when sign-in is done: whether the splash screen should send the
+/// user to onboarding (Welcome) instead of their lists.
 @riverpod
-Future<bool> isNewAccount(Ref ref) async =>
-    (await ref.watch(signInResultProvider.future)).valueOrNull?.isNewAccount ??
-    false;
+Future<bool> needsOnboarding(Ref ref) async {
+  final signIn = await ref.watch(signInResultProvider.future);
+  return signIn.fold(
+    ok: (value) => !value.hasProfile,
+    // Mostly a returning user who is offline: their lists (cached, or a
+    // retry) beat Welcome.
+    err: (_) => false,
+  );
+}

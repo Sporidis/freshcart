@@ -35,12 +35,12 @@ class FakeAuthRepository implements AuthRepository {
     _changes.add(next);
   }
 
-  /// Whether [ensureSignedIn] reports a brand-new account.
-  bool isNewAccount = false;
+  /// Whether [ensureSignedIn] reports a profile (false: onboarding next).
+  bool hasProfile = true;
 
   @override
   Future<Result<SignIn>> ensureSignedIn() async =>
-      user.map((u) => (user: u, isNewAccount: isNewAccount));
+      user.map((u) => (user: u, hasProfile: hasProfile));
 
   /// Names passed to [setDisplayName], in order.
   final List<String> setDisplayNameCalls = [];
@@ -135,11 +135,11 @@ class FakeAuthRepository implements AuthRepository {
 
 /// A successful [AuthRepository.ensureSignedIn], for overriding
 /// `signInResultProvider` in tests that don't need a whole fake auth.
-SignIn aSignIn({bool isNewAccount = false}) => (
+SignIn aSignIn({bool hasProfile = true}) => (
   user: AuthUser(
     id: UserId('user-1'),
     displayName: 'Nikolaos',
     isAnonymous: true,
   ),
-  isNewAccount: isNewAccount,
+  hasProfile: hasProfile,
 );

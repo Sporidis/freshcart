@@ -27,7 +27,7 @@ class FakeAuthRepository implements AuthRepository {
     await _db.latency();
     return switch (currentUser) {
       // A persona without a name hasn't been through onboarding yet.
-      final user? => Ok((user: user, isNewAccount: user.displayName.isEmpty)),
+      final user? => Ok((user: user, hasProfile: user.displayName.isNotEmpty)),
       null => const Err(Failure.unauthorized()),
     };
   }

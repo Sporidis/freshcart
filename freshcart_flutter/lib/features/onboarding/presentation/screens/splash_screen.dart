@@ -14,7 +14,7 @@ import 'package:freshcart_flutter/features/onboarding/presentation/widgets/baske
 import 'package:go_router/go_router.dart';
 
 /// The first screen of the app. Shown only while sign-in
-/// ([isNewAccountProvider]) is running, never longer. If sign-in is fast,
+/// ([needsOnboardingProvider]) is running, never longer. If sign-in is fast,
 /// you barely see it.
 ///
 /// It's a real route (not something shown before `runApp`), so the logo
@@ -30,16 +30,16 @@ class SplashScreen extends ConsumerWidget {
 
     // Runs once, when sign-in is done, and goes to the next screen.
     // (main() already started sign-in.)
-    ref.listen(isNewAccountProvider, (previous, next) {
+    ref.listen(needsOnboardingProvider, (previous, next) {
       // A failed sign-in still opens the app, like being offline on first
       // launch: the lists screen then shows what's wrong.
       if (next.hasError) {
         context.go(Routes.lists);
         return;
       }
-      final isNew = next.value;
-      if (isNew == null) return; // still loading
-      context.go(isNew ? Routes.welcome : Routes.lists);
+      final needsOnboarding = next.value;
+      if (needsOnboarding == null) return; // still loading
+      context.go(needsOnboarding ? Routes.welcome : Routes.lists);
     });
 
     // Looks like the app icon. Dark mode: dark background, light tile.

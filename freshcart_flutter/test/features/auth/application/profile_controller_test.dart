@@ -23,7 +23,7 @@ class _PublishingAuth extends FakeAuthRepository {
   Future<Result<SignIn>> ensureSignedIn() async {
     signIns++;
     _published.add(user.valueOrNull);
-    return user.map((u) => (user: u, isNewAccount: false));
+    return user.map((u) => (user: u, hasProfile: true));
   }
 }
 

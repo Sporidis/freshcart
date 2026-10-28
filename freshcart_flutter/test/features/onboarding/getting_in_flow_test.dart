@@ -46,7 +46,7 @@ void main() {
 
   Future<ProviderContainer> pump(
     WidgetTester tester, {
-    required bool isNewAccount,
+    required bool hasProfile,
   }) async {
     final container = ProviderContainer(
       overrides: [
@@ -55,7 +55,7 @@ void main() {
         itemRepositoryProvider.overrideWithValue(items),
         shopRepositoryProvider.overrideWithValue(shops),
         signInResultProvider.overrideWith(
-          (ref) async => Ok(aSignIn(isNewAccount: isNewAccount)),
+          (ref) async => Ok(aSignIn(hasProfile: hasProfile)),
         ),
       ],
     );
@@ -72,22 +72,22 @@ void main() {
   }
 
   group('Splash', () {
-    testWidgets('a new identity lands on Welcome', (tester) async {
-      await pump(tester, isNewAccount: true);
+    testWidgets('no profile yet lands on Welcome, even with a saved session', (tester) async {
+      await pump(tester, hasProfile: false);
       expect(find.text('Get started'), findsOneWidget);
     });
 
-    testWidgets('a restored identity lands on the lists screen', (
+    testWidgets('a user with a profile lands on the lists screen', (
       tester,
     ) async {
-      await pump(tester, isNewAccount: false);
+      await pump(tester, hasProfile: true);
       expect(find.text('My lists'), findsOneWidget);
     });
   });
 
   group('Welcome', () {
     testWidgets('Get started opens onboarding', (tester) async {
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
 
@@ -95,7 +95,7 @@ void main() {
     });
 
     testWidgets('the invite-code link opens the join flow', (tester) async {
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('I have an invite code'));
       await tester.pumpAndSettle();
 
@@ -117,7 +117,7 @@ void main() {
         lists.createResult = Ok(buildList(name: 'Weekly Groceries'));
         shops.createResult = Ok(buildShop());
 
-        await pump(tester, isNewAccount: true);
+        await pump(tester, hasProfile: false);
         await tester.tap(find.text('Get started'));
         await tester.pumpAndSettle();
 
@@ -168,7 +168,7 @@ void main() {
       lists.createResult = Ok(buildList(name: 'Weekly Groceries'));
       shops.createResult = Ok(buildShop());
 
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Alex');
@@ -208,7 +208,7 @@ void main() {
       lists.createResult = Ok(buildList());
       shops.createResult = Ok(buildShop());
 
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Alex');
@@ -237,7 +237,7 @@ void main() {
 
     testWidgets('Continue is there before anything is typed, and pressing it '
         'says what is missing instead of advancing', (tester) async {
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
 
@@ -255,7 +255,7 @@ void main() {
     });
 
     testWidgets('Back on the first step returns to Welcome', (tester) async {
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
 
@@ -268,7 +268,7 @@ void main() {
     testWidgets('the list step arrives pre-filled, so Continue is one tap', (
       tester,
     ) async {
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Alex');
@@ -289,7 +289,7 @@ void main() {
     testWidgets('picking and unpicking a shop updates the picked count', (
       tester,
     ) async {
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Alex');
@@ -317,7 +317,7 @@ void main() {
       lists.createResult = Ok(buildList());
       shops.createResult = Ok(buildShop());
 
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('Get started'));
       await tester.pumpAndSettle();
 
@@ -345,7 +345,7 @@ void main() {
       (tester) async {
         lists.joinResult = Ok(buildList(name: 'Shared Groceries'));
 
-        await pump(tester, isNewAccount: true);
+        await pump(tester, hasProfile: false);
         await tester.tap(find.text('I have an invite code'));
         await tester.pumpAndSettle();
 
@@ -375,7 +375,7 @@ void main() {
     ) async {
       lists.joinResult = const Err(Failure.notFound());
 
-      await pump(tester, isNewAccount: true);
+      await pump(tester, hasProfile: false);
       await tester.tap(find.text('I have an invite code'));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Alex');

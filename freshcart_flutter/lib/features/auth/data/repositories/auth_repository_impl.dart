@@ -35,18 +35,17 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<Result<SignIn>> ensureSignedIn() async {
-    final session = await _guard(
+    final signedIn = await _guard(
       () => AnonymousSessionBootstrap.ensureSignedIn(_client),
     );
-    return switch (session) {
+    return switch (signedIn) {
       Err(:final failure) => Err(failure),
       // Usually: no internet on first launch.
-      Ok(value: (authenticated: false, isNewAccount: _)) => const Err(
-        Failure.network(),
-      ),
-      Ok(:final value) => _guard(
-        () async => (user: await _refresh(), isNewAccount: value.isNewAccount),
-      ),
+      Ok(value: false) => const Err(Failure.network()),
+      Ok(value: true) => _guard(() async {
+        final me = await _client.profile.me();
+        return (user: _publish(me), hasProfile: me.hasProfile);
+      }),
     };
   }
 
@@ -103,8 +102,10 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   /// Gets the current user from the server again and tells listeners.
-  Future<AuthUser> _refresh() async {
-    final me = await _client.profile.me();
+  Future<AuthUser> _refresh() async => _publish(await _client.profile.me());
+
+  /// Makes [me] the current user and tells listeners.
+  AuthUser _publish(dto.CurrentUser me) {
     final user = AuthUser(
       id: UserId(me.userId.uuid),
       displayName: me.displayName,
