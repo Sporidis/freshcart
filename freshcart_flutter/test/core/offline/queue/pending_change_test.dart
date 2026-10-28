@@ -150,4 +150,80 @@ void main() {
       );
     });
   });
+
+  group('PendingChange.withRealIds', () {
+    const realIds = {
+      'temp-list-1': _listId,
+      'temp-item-1': _itemId,
+    };
+
+    for (final (change, json) in cases) {
+      test('${change.runtimeType} without temporary ids stays the same', () {
+        expect(change.withRealIds(realIds).toJson(), json);
+      });
+    }
+
+    test('ItemsRemoved rewrites the temporary ids inside its list', () {
+      final change = ItemsRemoved(ListId('temp-list-1'), [
+        ItemId('temp-item-1'),
+        ItemId(_otherItemId),
+      ]);
+
+      expect(change.withRealIds(realIds).toJson(), {
+        'listId': _listId,
+        'ids': [_itemId, _otherItemId],
+      });
+    });
+
+    test('ItemsMovedToShop rewrites the temporary ids inside its list', () {
+      final change = ItemsMovedToShop(
+        ListId(_listId),
+        [ItemId('temp-item-1')],
+        ShopId(_shopId),
+      );
+
+      expect(change.withRealIds(realIds).toJson(), {
+        'listId': _listId,
+        'ids': [_itemId],
+        'shopId': _shopId,
+      });
+    });
+
+    test(
+      'ItemCreated in a new list gets the real list id, keeps its tempId',
+      () {
+        final change = ItemCreated(
+          tempId: 'temp-item-2',
+          listId: ListId('temp-list-1'),
+          name: 'Milk',
+          quantity: 1,
+        );
+
+        final rewritten = change.withRealIds(realIds);
+
+        expect(rewritten.tempId, 'temp-item-2');
+        expect(rewritten.toJson()['listId'], _listId);
+      },
+    );
+
+    test('ItemEdited rewrites both the item id and its list id', () {
+      final change = ItemEdited(
+        buildItem(id: 'temp-item-1', listId: 'temp-list-1'),
+      );
+
+      final json = change.withRealIds(realIds).toJson();
+
+      expect(json['itemId'], _itemId);
+      expect(json['listId'], _listId);
+    });
+
+    test('ListRenamed for a new list gets the real list id', () {
+      final change = ListRenamed(ListId('temp-list-1'), 'Weekend');
+
+      expect(change.withRealIds(realIds).toJson(), {
+        'id': _listId,
+        'name': 'Weekend',
+      });
+    });
+  });
 }

@@ -51,6 +51,10 @@ sealed class PendingChange {
   /// The temporary id the screen shows until the server gives the real one.
   /// Only creates have one, so it's `null` by default.
   String? get tempId => null;
+
+  /// This change with every temporary id in [realIds] replaced by the
+  /// server's real id.
+  PendingChange withRealIds(Map<String, String> realIds);
 }
 
 // ── Items ──────────────────────────────────────────────────────────────
@@ -126,6 +130,16 @@ final class ItemCreated extends PendingItemChange {
 
   @override
   PendingOpType get opType => PendingOpType.create;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) => ItemCreated(
+    tempId: tempId,
+    listId: _realListId(listId, realIds),
+    name: name,
+    quantity: quantity,
+    shopId: shopId,
+    noteText: noteText,
+  );
 }
 
 /// An item removed from its list.
@@ -139,6 +153,10 @@ final class ItemRemoved extends PendingItemChange {
 
   @override
   PendingOpType get opType => PendingOpType.remove;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      ItemRemoved(_realItemId(itemId, realIds));
 }
 
 /// An item edited.
@@ -152,6 +170,14 @@ final class ItemEdited extends PendingItemChange {
 
   @override
   PendingOpType get opType => PendingOpType.edit;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) => ItemEdited(
+    item.copyWith(
+      id: _realItemId(item.id, realIds),
+      listId: _realListId(item.listId, realIds),
+    ),
+  );
 }
 
 /// Checked items cleared from a list.
@@ -165,6 +191,10 @@ final class CheckedItemsCleared extends PendingItemChange {
 
   @override
   PendingOpType get opType => PendingOpType.clearChecked;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      CheckedItemsCleared(_realListId(listId, realIds));
 }
 
 /// Several items removed from one list.
@@ -177,11 +207,17 @@ final class ItemsRemoved extends PendingItemChange {
   @override
   Map<String, Object?> toJson() => {
     'listId': listId.value,
-    'ids': itemIds.map((id) => id.value).toList(),
+    'ids': [for (final id in itemIds) id.value],
   };
 
   @override
   PendingOpType get opType => PendingOpType.removeMany;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) => ItemsRemoved(
+    _realListId(listId, realIds),
+    [for (final id in itemIds) _realItemId(id, realIds)],
+  );
 }
 
 /// Several items in one list moved to another shop. A `null` [targetShopId]
@@ -200,12 +236,20 @@ final class ItemsMovedToShop extends PendingItemChange {
   @override
   Map<String, Object?> toJson() => {
     'listId': listId.value,
-    'ids': itemIds.map((id) => id.value).toList(),
+    'ids': [for (final id in itemIds) id.value],
     'shopId': targetShopId?.value,
   };
 
   @override
   PendingOpType get opType => PendingOpType.moveMany;
+
+  // Shops can't be created offline, so targetShopId is never temporary.
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) => ItemsMovedToShop(
+    _realListId(listId, realIds),
+    [for (final id in itemIds) _realItemId(id, realIds)],
+    targetShopId,
+  );
 }
 
 // ── Lists ──────────────────────────────────────────────────────────────
@@ -264,6 +308,9 @@ final class ListCreated extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.create;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) => this;
 }
 
 /// A list given a new name.
@@ -281,6 +328,10 @@ final class ListRenamed extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.rename;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      ListRenamed(_realListId(listId, realIds), name);
 }
 
 /// The list's "clear checked items after shopping" setting changed.
@@ -298,6 +349,10 @@ final class ClearCheckedAfterShoppingSet extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.setClearCheckedAfterShopping;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      ClearCheckedAfterShoppingSet(_realListId(listId, realIds), value: value);
 }
 
 /// The user left a list.
@@ -311,6 +366,10 @@ final class ListLeft extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.leave;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      ListLeft(_realListId(listId, realIds));
 }
 
 /// The owner deleted a list.
@@ -324,6 +383,10 @@ final class ListDeleted extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.delete;
+
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      ListDeleted(_realListId(listId, realIds));
 }
 
 /// The owner removed a member from a list.
@@ -341,6 +404,11 @@ final class MemberRemoved extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.removeMember;
+
+  // Users can't be created offline, so userId is never temporary.
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      MemberRemoved(_realListId(listId, realIds), userId);
 }
 
 /// The owner handed the list to another member.
@@ -358,4 +426,19 @@ final class OwnershipTransferred extends PendingListChange {
 
   @override
   PendingOpType get opType => PendingOpType.transferOwnership;
+
+  // Users can't be created offline, so userId is never temporary.
+  @override
+  PendingChange withRealIds(Map<String, String> realIds) =>
+      OwnershipTransferred(_realListId(listId, realIds), userId);
 }
+
+// ── Helpers ────────────────────────────────────────────────────────────
+
+/// The server's id for [id], or [id] itself if it was never temporary.
+ItemId _realItemId(ItemId id, Map<String, String> realIds) =>
+    ItemId(realIds[id.value] ?? id.value);
+
+/// The server's id for [id], or [id] itself if it was never temporary.
+ListId _realListId(ListId id, Map<String, String> realIds) =>
+    ListId(realIds[id.value] ?? id.value);
