@@ -23,6 +23,7 @@ abstract class CurrentUser implements _i1.SerializableModel {
   CurrentUser._({
     required this.userId,
     required this.displayName,
+    required this.hasProfile,
     this.avatarColorArgb,
     this.avatarPhotoUrl,
     required this.isAnonymous,
@@ -31,6 +32,7 @@ abstract class CurrentUser implements _i1.SerializableModel {
   factory CurrentUser({
     required _i1.UuidValue userId,
     required String displayName,
+    required bool hasProfile,
     int? avatarColorArgb,
     String? avatarPhotoUrl,
     required bool isAnonymous,
@@ -40,6 +42,9 @@ abstract class CurrentUser implements _i1.SerializableModel {
     return CurrentUser(
       userId: _i1.UuidValueJsonExtension.fromJson(jsonSerialization['userId']),
       displayName: jsonSerialization['displayName'] as String,
+      hasProfile: _i1.BoolJsonExtension.fromJson(
+        jsonSerialization['hasProfile'],
+      ),
       avatarColorArgb: jsonSerialization['avatarColorArgb'] as int?,
       avatarPhotoUrl: jsonSerialization['avatarPhotoUrl'] as String?,
       isAnonymous: _i1.BoolJsonExtension.fromJson(
@@ -53,6 +58,10 @@ abstract class CurrentUser implements _i1.SerializableModel {
 
   /// The name collaborators see, or a placeholder if none is set yet.
   String displayName;
+
+  /// Whether the caller has set up a profile (picked a name). False means
+  /// they haven't finished onboarding yet, even if the account exists.
+  bool hasProfile;
 
   /// A colour the caller picked for their own avatar, or `null` if they
   /// have not set one -- the client falls back to its own deterministic
@@ -75,6 +84,7 @@ abstract class CurrentUser implements _i1.SerializableModel {
   CurrentUser copyWith({
     _i1.UuidValue? userId,
     String? displayName,
+    bool? hasProfile,
     int? avatarColorArgb,
     String? avatarPhotoUrl,
     bool? isAnonymous,
@@ -85,6 +95,7 @@ abstract class CurrentUser implements _i1.SerializableModel {
       '__className__': 'CurrentUser',
       'userId': userId.toJson(),
       'displayName': displayName,
+      'hasProfile': hasProfile,
       if (avatarColorArgb != null) 'avatarColorArgb': avatarColorArgb,
       if (avatarPhotoUrl != null) 'avatarPhotoUrl': avatarPhotoUrl,
       'isAnonymous': isAnonymous,
@@ -103,12 +114,14 @@ class _CurrentUserImpl extends CurrentUser {
   _CurrentUserImpl({
     required _i1.UuidValue userId,
     required String displayName,
+    required bool hasProfile,
     int? avatarColorArgb,
     String? avatarPhotoUrl,
     required bool isAnonymous,
   }) : super._(
          userId: userId,
          displayName: displayName,
+         hasProfile: hasProfile,
          avatarColorArgb: avatarColorArgb,
          avatarPhotoUrl: avatarPhotoUrl,
          isAnonymous: isAnonymous,
@@ -121,6 +134,7 @@ class _CurrentUserImpl extends CurrentUser {
   CurrentUser copyWith({
     _i1.UuidValue? userId,
     String? displayName,
+    bool? hasProfile,
     Object? avatarColorArgb = _Undefined,
     Object? avatarPhotoUrl = _Undefined,
     bool? isAnonymous,
@@ -128,6 +142,7 @@ class _CurrentUserImpl extends CurrentUser {
     return CurrentUser(
       userId: userId ?? this.userId,
       displayName: displayName ?? this.displayName,
+      hasProfile: hasProfile ?? this.hasProfile,
       avatarColorArgb: avatarColorArgb is int?
           ? avatarColorArgb
           : this.avatarColorArgb,

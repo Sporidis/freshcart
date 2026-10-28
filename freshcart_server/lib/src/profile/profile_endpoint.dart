@@ -21,6 +21,7 @@ class ProfileEndpoint extends Endpoint {
     return CurrentUser(
       userId: userId,
       displayName: await ProfileService.displayNameFor(session, userId),
+      hasProfile: await ProfileService.hasProfile(session, userId),
       avatarColorArgb: await ProfileService.avatarColorArgbFor(
         session,
         userId,

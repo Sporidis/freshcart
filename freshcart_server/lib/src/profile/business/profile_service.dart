@@ -34,6 +34,13 @@ abstract final class ProfileService {
     where: (t) => t.authUserId.equals(authUserId),
   );
 
+  /// Whether the user has a profile yet. Onboarding creates it, by setting
+  /// the name.
+  static Future<bool> hasProfile(
+    Session session,
+    UuidValue authUserId,
+  ) async => await _profileFor(session, authUserId) != null;
+
   /// The user's name, or [fallbackDisplayName] if they haven't set one.
   static Future<String> displayNameFor(
     Session session,

@@ -12,6 +12,10 @@ fields:
   ### The name collaborators see, or a placeholder if none is set yet.
   displayName: String
 
+  ### Whether the caller has set up a profile (picked a name). False means
+  ### they haven't finished onboarding yet, even if the account exists.
+  hasProfile: bool
+
   ### A colour the caller picked for their own avatar, or `null` if they
   ### have not set one -- the client falls back to its own deterministic
   ### hash colour in that case.
