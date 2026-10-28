@@ -6,6 +6,7 @@ import 'package:freshcart_flutter/core/offline/cache/cached_items_store.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/core/offline/replay/pending_operations_replayer.dart';
@@ -117,6 +118,56 @@ void main() {
 
         expect(conflicted, isEmpty);
         expect(await queue.getAll(), hasLength(1));
+      },
+    );
+
+    test(
+      'a bulk remove of an item created offline sends its real id',
+      () async {
+        items.addResult = Ok(buildItem(id: 'real-item-id'));
+        const listId = '00000000-0000-4000-8000-000000000001';
+
+        await queue.enqueue(
+          ItemCreated(
+            tempId: 'temp-item-1',
+            listId: ListId(listId),
+            name: 'Milk',
+            quantity: 1,
+          ),
+        );
+        await queue.enqueue(
+          ItemsRemoved(ListId(listId), [ItemId('temp-item-1')]),
+        );
+
+        await replayer.replayAll();
+
+        expect(items.removeManyCalls.single, [ItemId('real-item-id')]);
+        expect(await queue.getAll(), isEmpty);
+      },
+    );
+
+    test(
+      'drops a row it cannot read and still sends the ones after it',
+      () async {
+        // Written straight to the table: the queue itself only accepts a
+        // PendingChange, so it could never store this.
+        await db
+            .into(db.pendingOperations)
+            .insert(
+              PendingOperationsCompanion.insert(
+                entityType: PendingEntityType.item,
+                opType: PendingOpType.rename,
+                payload: '{}',
+                queuedAt: DateTime.utc(2026, 10),
+              ),
+            );
+        await queue.enqueue(ItemRemoved(ItemId('item-1')));
+
+        final conflicted = await replayer.replayAll();
+
+        expect(conflicted, isEmpty);
+        expect(items.removedIds, [ItemId('item-1')]);
+        expect(await queue.getAll(), isEmpty);
       },
     );
   });

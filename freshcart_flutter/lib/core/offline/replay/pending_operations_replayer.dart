@@ -1,11 +1,10 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/database/app_database.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
-import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
+import 'package:freshcart_flutter/core/offline/queue/pending_change.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
-import 'package:freshcart_flutter/core/offline/queue/shopping_item_queue_payload.dart';
 
 /// What happened when we tried to send one queued change.
 enum _ReplayOutcome {
@@ -21,7 +20,6 @@ enum _ReplayOutcome {
 }
 
 /// Turns a repository [Result] into a [_ReplayOutcome].
-
 _ReplayOutcome _outcomeOf(Result<Object?> result) => switch (result) {
   Ok() => _ReplayOutcome.succeeded,
   Err(failure: ConflictFailure()) => _ReplayOutcome.conflicted,
@@ -44,32 +42,31 @@ class PendingOperationsReplayer {
   ///
   /// Returns the changes that were dropped because of a conflict, so the
   /// app can tell the user. Changes that failed for other reasons stay in
-  /// the queue.
+  /// the queue. A row that can't be read back is dropped, so it can't
+  /// block the changes queued after it.
   Future<List<PendingOperation>> replayAll() async {
     final ops = await _queue.getAll();
     // Temporary id -> real id from the server, filled in as "create"
-    // operations succeed. Later changes to the same item use it.
+    // operations succeed. Later changes to the same item or list use it.
     final tempIdToReal = <String, String>{};
     final conflicted = <PendingOperation>[];
 
     for (final op in ops) {
-      final payload = jsonDecode(op.payload) as Map<String, dynamic>;
-      _rewriteTempIds(payload, tempIdToReal);
+      final PendingChange change;
+      try {
+        change = PendingChange.fromQueue(
+          op.entityType,
+          op.opType,
+          jsonDecode(op.payload) as Map<String, Object?>,
+          tempId: op.tempId,
+        ).withRealIds(tempIdToReal);
+      } on FormatException catch (e) {
+        debugPrint('Dropping unreadable queued change ${op.id}: $e');
+        await _queue.remove(op.id);
+        continue;
+      }
 
-      final outcome = switch (op.entityType) {
-        PendingEntityType.item => await _replayItem(
-          op,
-          payload,
-          tempIdToReal,
-        ),
-        PendingEntityType.list => await _replayList(
-          op,
-          payload,
-          tempIdToReal,
-        ),
-      };
-
-      switch (outcome) {
+      switch (await _send(change, tempIdToReal)) {
         case _ReplayOutcome.succeeded:
           await _queue.remove(op.id);
         case _ReplayOutcome.conflicted:
@@ -83,174 +80,74 @@ class PendingOperationsReplayer {
     return conflicted;
   }
 
-  /// After a successful create, remembers which real id belongs to the
-  /// temporary id.
-  void _rememberRealId(
-    PendingOperation op,
-    Result<({String id})> result,
+  /// Sends [change] by calling the matching repository method.
+  Future<_ReplayOutcome> _send(
+    PendingChange change,
     Map<String, String> tempIdToReal,
-  ) {
-    if (op.tempId == null) return;
-    switch (result) {
-      case Ok(:final value):
-        tempIdToReal[op.tempId!] = value.id;
-      case Err():
-        break;
-    }
-  }
+  ) async => switch (change) {
+    ItemCreated() => await _createItem(change, tempIdToReal),
+    ItemEdited(:final item) => _outcomeOf(await _itemRepository.save(item)),
+    ItemRemoved(:final itemId) => _outcomeOf(
+      await _itemRepository.remove(itemId),
+    ),
+    CheckedItemsCleared(:final listId) => _outcomeOf(
+      await _itemRepository.clearChecked(listId),
+    ),
+    ItemsRemoved(:final listId, :final itemIds) => _outcomeOf(
+      await _itemRepository.removeMany(listId, itemIds),
+    ),
+    ItemsMovedToShop(:final listId, :final itemIds, :final targetShopId) =>
+      _outcomeOf(
+        await _itemRepository.moveMany(listId, itemIds, targetShopId),
+      ),
+    ListCreated() => await _createList(change, tempIdToReal),
+    ListRenamed(:final listId, :final name) => _outcomeOf(
+      await _listRepository.rename(listId, name),
+    ),
+    ClearCheckedAfterShoppingSet(:final listId, :final value) => _outcomeOf(
+      await _listRepository.setClearCheckedAfterShopping(listId, value),
+    ),
+    ListLeft(:final listId) => _outcomeOf(
+      await _listRepository.leave(listId),
+    ),
+    ListDeleted(:final listId) => _outcomeOf(
+      await _listRepository.delete(listId),
+    ),
+    MemberRemoved(:final listId, :final userId) => _outcomeOf(
+      await _listRepository.removeMember(listId, userId),
+    ),
+    OwnershipTransferred(:final listId, :final userId) => _outcomeOf(
+      await _listRepository.transferOwnership(listId, userId),
+    ),
+  };
 
-  /// Sends one item change by calling the matching [ItemRepository] method.
-  Future<_ReplayOutcome> _replayItem(
-    PendingOperation op,
-    Map<String, dynamic> payload,
-    Map<String, String> tempIdToReal,
-  ) async {
-    switch (op.opType) {
-      case PendingOpType.create:
-        final result = await _itemRepository.add(
-          listId: ListId(payload['listId'] as String),
-          name: payload['name'] as String,
-          quantity: payload['quantity'] as int,
-          shopId: payload['shopId'] == null
-              ? null
-              : ShopId(payload['shopId'] as String),
-          noteText: payload['noteText'] as String?,
-        );
-        _rememberRealId(
-          op,
-          result.map((value) => (id: value.id.value)),
-          tempIdToReal,
-        );
-        return _outcomeOf(result);
-
-      case PendingOpType.remove:
-        return _outcomeOf(
-          await _itemRepository.remove(ItemId(payload['itemId'] as String)),
-        );
-
-      case PendingOpType.edit:
-        return _outcomeOf(
-          await _itemRepository.save(shoppingItemFromQueuePayload(payload)),
-        );
-
-      case PendingOpType.clearChecked:
-        return _outcomeOf(
-          await _itemRepository.clearChecked(
-            ListId(payload['listId'] as String),
-          ),
-        );
-
-      case PendingOpType.moveMany:
-        return _outcomeOf(
-          await _itemRepository.moveMany(
-            ListId(payload['listId'] as String),
-            [
-              for (final id in payload['ids'] as List<dynamic>)
-                ItemId(id as String),
-            ],
-            payload['shopId'] == null
-                ? null
-                : ShopId(payload['shopId'] as String),
-          ),
-        );
-
-      case PendingOpType.removeMany:
-        return _outcomeOf(
-          await _itemRepository.removeMany(
-            ListId(payload['listId'] as String),
-            [
-              for (final id in payload['ids'] as List<dynamic>)
-                ItemId(id as String),
-            ],
-          ),
-        );
-
-      default:
-        return _ReplayOutcome.retryLater;
-    }
-  }
-
-  /// Sends one list change by calling the matching [ListRepository] method.
-  Future<_ReplayOutcome> _replayList(
-    PendingOperation op,
-    Map<String, dynamic> payload,
+  /// Sends an item create; on success, remembers the item's real id.
+  Future<_ReplayOutcome> _createItem(
+    ItemCreated change,
     Map<String, String> tempIdToReal,
   ) async {
-    switch (op.opType) {
-      case PendingOpType.create:
-        final result = await _listRepository.create(
-          name: payload['name'] as String,
-        );
-        _rememberRealId(
-          op,
-          result.map((value) => (id: value.id.value)),
-          tempIdToReal,
-        );
-        return _outcomeOf(result);
-
-      case PendingOpType.rename:
-        return _outcomeOf(
-          await _listRepository.rename(
-            ListId(payload['id'] as String),
-            payload['name'] as String,
-          ),
-        );
-
-      case PendingOpType.setClearCheckedAfterShopping:
-        return _outcomeOf(
-          await _listRepository.setClearCheckedAfterShopping(
-            ListId(payload['id'] as String),
-            payload['value'] as bool,
-          ),
-        );
-
-      case PendingOpType.transferOwnership:
-        return _outcomeOf(
-          await _listRepository.transferOwnership(
-            ListId(payload['id'] as String),
-            UserId(payload['userId'] as String),
-          ),
-        );
-
-      case PendingOpType.leave:
-        return _outcomeOf(
-          await _listRepository.leave(ListId(payload['id'] as String)),
-        );
-
-      case PendingOpType.delete:
-        return _outcomeOf(
-          await _listRepository.delete(ListId(payload['id'] as String)),
-        );
-
-      case PendingOpType.removeMember:
-        return _outcomeOf(
-          await _listRepository.removeMember(
-            ListId(payload['id'] as String),
-            UserId(payload['userId'] as String),
-          ),
-        );
-
-      default:
-        return _ReplayOutcome.retryLater;
+    final result = await _itemRepository.add(
+      listId: change.listId,
+      name: change.name,
+      quantity: change.quantity,
+      shopId: change.shopId,
+      noteText: change.noteText,
+    );
+    if (result case Ok(:final value)) {
+      tempIdToReal[change.tempId] = value.id.value;
     }
+    return _outcomeOf(result);
   }
-}
 
-/// Replaces temporary ids in [payload] with the real ids from the server.
-///
-/// Example: offline you add "Milk" (temp id) and then check it. When we
-/// send the "check", it must use Milk's real id.
-void _rewriteTempIds(
-  Map<String, dynamic> payload,
-  Map<String, String> tempIdToReal,
-) {
-  // 'itemId': the item being changed.
-  // 'listId': the list an item is in (that list may also be new).
-  // 'id':     the list being changed.
-  for (final key in ['itemId', 'listId', 'id']) {
-    final value = payload[key];
-    if (value != null && tempIdToReal.containsKey(value)) {
-      payload[key] = tempIdToReal[value]!;
+  /// Sends a list create; on success, remembers the list's real id.
+  Future<_ReplayOutcome> _createList(
+    ListCreated change,
+    Map<String, String> tempIdToReal,
+  ) async {
+    final result = await _listRepository.create(name: change.name);
+    if (result case Ok(:final value)) {
+      tempIdToReal[change.tempId] = value.id.value;
     }
+    return _outcomeOf(result);
   }
 }
