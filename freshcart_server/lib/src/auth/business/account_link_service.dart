@@ -15,14 +15,25 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 /// `EmailIdpAdmin.createEmailAuthentication` accepts an existing
 /// `authUserId`, so we built linking on top of that (decisions.md #39).
 abstract final class AccountLinkService {
-  /// Adds an email and password to account [authUserId].
+  /// Adds the email proven by [registrationToken] to account [authUserId],
+  /// with [password].
+  ///
+  /// The app gets the token from Serverpod's own `startRegistration` and
+  /// `verifyRegistrationCode`, so the user has proven they read that inbox.
+  /// Those also hide whether an email is already registered (no account
+  /// enumeration), so this never says "email in use" either.
+  ///
+  /// Serverpod 3.4 can only finish a registration as a NEW user, so this
+  /// lets it, then merges that user into [authUserId]: the same steps as
+  /// Serverpod 4.0's `accountMerger.merge` for email (security-plan 2.2).
+  /// On 4.0, replace the merge with that call.
   ///
   /// Throws [AccountAlreadyLinkedException] if the account already has an
   /// email. Two emails on one account would be confusing.
-  static Future<void> linkEmail(
+  static Future<void> finishLinkEmail(
     Session session,
     UuidValue authUserId, {
-    required String email,
+    required String registrationToken,
     required String password,
   }) async {
     final existing = await EmailAccount.db.findFirstRow(
@@ -31,26 +42,58 @@ abstract final class AccountLinkService {
     );
     if (existing != null) throw AccountAlreadyLinkedException();
 
-    // If this email belongs to another account, refuse. Otherwise you could
-    // take over someone else's account.
-    final claimed = await EmailAccount.db.findFirstRow(
-      session,
-      where: (t) => t.email.equals(email.toLowerCase()),
-    );
-    if (claimed != null) throw EmailAlreadyInUseException();
-
-    // The admin call below skips Serverpod's password check, so the domain
-    // rule runs here. It also returns the password normalized, the form
-    // every login compares against.
+    // Returned normalized, the form every login compares against.
     final validPassword = requireValid(
       domain.AuthUser.validatePassword(password),
     );
 
-    await AuthServices.instance.emailIdp.admin.createEmailAuthentication(
+    // One transaction: a failure anywhere leaves no half-linked account
+    // and no stray user.
+    await session.db.transaction((transaction) async {
+      // Checks the token (expiry, attempts, one use) and creates a new user
+      // with the email account. Wrapped like Serverpod's own endpoint, so a
+      // bad token reaches the app without details.
+      final created = await EmailIdpUtils.withReplacedServerEmailException(
+        () => AuthServices.instance.emailIdp.utils.accountCreation
+            .completeAccountCreation(
+              session,
+              completeAccountCreationToken: registrationToken,
+              password: validPassword,
+              transaction: transaction,
+            ),
+      );
+
+      await _merge(
+        session,
+        userToKeepId: authUserId,
+        userToRemoveId: created.authUserId,
+        transaction: transaction,
+      );
+    });
+  }
+
+  /// Moves the email account of [userToRemoveId] to [userToKeepId], then
+  /// deletes [userToRemoveId].
+  ///
+  /// The same steps and names as Serverpod 4.0's `accountMerger.merge` for
+  /// email, so upgrading replaces this with that call. The order matters:
+  /// deleting first would cascade-delete the email account with the user.
+  static Future<void> _merge(
+    Session session, {
+    required UuidValue userToKeepId,
+    required UuidValue userToRemoveId,
+    required Transaction transaction,
+  }) async {
+    await EmailAccount.db.updateWhere(
       session,
-      authUserId: authUserId,
-      email: email,
-      password: validPassword,
+      where: (t) => t.authUserId.equals(userToRemoveId),
+      columnValues: (t) => [t.authUserId(userToKeepId)],
+      transaction: transaction,
+    );
+    await AuthServices.instance.authUsers.delete(
+      session,
+      authUserId: userToRemoveId,
+      transaction: transaction,
     );
   }
 

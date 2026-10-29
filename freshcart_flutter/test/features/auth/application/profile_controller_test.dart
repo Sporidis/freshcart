@@ -64,10 +64,14 @@ void main() {
     () async {
       await container.read(profileControllerProvider.future);
 
-      // The fake's linkEmail succeeds and clears anonymity by default.
-      final failure = await container
-          .read(profileControllerProvider.notifier)
-          .linkEmail(email: 'a@b.c', password: 'secret12');
+      // The fake's link succeeds and clears anonymity by default.
+      final profile = container.read(profileControllerProvider.notifier);
+      await profile.startLinkEmail(email: 'a@b.c', password: 'secret12');
+      final failure = await profile.linkEmail(
+        requestId: 'request-1',
+        code: '12345678',
+        password: 'secret12',
+      );
 
       expect(failure, isNull);
       expect(

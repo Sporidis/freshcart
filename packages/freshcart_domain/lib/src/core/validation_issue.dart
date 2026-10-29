@@ -33,6 +33,9 @@ enum ValidatedInput {
 
   /// A password, when linking an email to an account (or resetting it).
   password,
+
+  /// The code emailed to prove the user owns an address.
+  verificationCode,
 }
 
 /// What's wrong with a [ValidatedInput], as data, not as a sentence: the

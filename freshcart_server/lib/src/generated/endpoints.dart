@@ -107,11 +107,11 @@ class Endpoints extends _i1.EndpointDispatch {
               ) async => (endpoints['account'] as _i2.AccountEndpoint)
                   .linkedProviders(session),
         ),
-        'linkEmail': _i1.MethodConnector(
-          name: 'linkEmail',
+        'finishLinkEmail': _i1.MethodConnector(
+          name: 'finishLinkEmail',
           params: {
-            'email': _i1.ParameterDescription(
-              name: 'email',
+            'registrationToken': _i1.ParameterDescription(
+              name: 'registrationToken',
               type: _i1.getType<String>(),
               nullable: false,
             ),
@@ -126,9 +126,9 @@ class Endpoints extends _i1.EndpointDispatch {
                 _i1.Session session,
                 Map<String, dynamic> params,
               ) async =>
-                  (endpoints['account'] as _i2.AccountEndpoint).linkEmail(
+                  (endpoints['account'] as _i2.AccountEndpoint).finishLinkEmail(
                     session,
-                    params['email'],
+                    params['registrationToken'],
                     params['password'],
                   ),
         ),

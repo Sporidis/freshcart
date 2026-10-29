@@ -8,4 +8,6 @@ bool shakesOn(Failure failure) => switch (failure) {
   ValidationFailure() || NotFoundFailure() => true,
   NetworkFailure() || UnauthorizedFailure() => false,
   ConflictFailure() || UnexpectedFailure() => false,
+  // The user has to wait, not retype.
+  RateLimitedFailure() => false,
 };

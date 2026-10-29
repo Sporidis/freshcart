@@ -18,6 +18,7 @@ export 'src/auth/use_cases/link_email.dart';
 export 'src/auth/use_cases/set_avatar_photo.dart';
 export 'src/auth/use_cases/set_display_name.dart';
 export 'src/auth/use_cases/set_up_profile.dart';
+export 'src/auth/use_cases/start_link_email.dart';
 export 'src/auth/value_objects/user_id.dart';
 // Core
 export 'src/core/clock.dart';

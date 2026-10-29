@@ -10,11 +10,16 @@ class FakeAuthRepository implements AuthRepository {
     AuthUser(id: UserId('user-1'), displayName: 'Nikolaos', isAnonymous: true),
   );
 
-  /// What [linkEmail] returns. Defaults to succeeding and clearing anonymity.
-  Result<AuthUser>? linkResult;
+  /// What [finishLinkEmail] returns. Defaults to succeeding and clearing
+  /// anonymity, with the email from the last [startLinkEmail].
+  Result<AuthUser>? finishLinkResult;
 
-  /// Credentials passed to [linkEmail], in order.
-  final List<({String email, String password})> linkCalls = [];
+  /// Emails passed to [startLinkEmail], in order.
+  final List<String> startLinkCalls = [];
+
+  /// Arguments passed to [finishLinkEmail], in order.
+  final List<({String requestId, String code, String password})>
+  finishLinkCalls = [];
 
   /// How many times [signOut] was called.
   int signOutCalls = 0;
@@ -96,19 +101,26 @@ class FakeAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<Result<AuthUser>> linkEmail({
-    required String email,
+  Future<Result<String>> startLinkEmail(String email) async {
+    startLinkCalls.add(email);
+    return const Ok('request-1');
+  }
+
+  @override
+  Future<Result<AuthUser>> finishLinkEmail({
+    required String requestId,
+    required String code,
     required String password,
   }) async {
-    linkCalls.add((email: email, password: password));
+    finishLinkCalls.add((requestId: requestId, code: code, password: password));
     final result =
-        linkResult ??
+        finishLinkResult ??
         Ok(
           AuthUser(
             id: UserId('user-1'),
             displayName: 'Nikolaos',
             isAnonymous: false,
-            email: email,
+            email: startLinkCalls.last,
           ),
         );
     if (result.isOk) user = result;

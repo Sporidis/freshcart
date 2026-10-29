@@ -29,6 +29,10 @@ sealed class Failure with _$Failure {
   /// as data: the app turns it into text in the user's language.
   const factory Failure.validation(ValidationIssue issue) = ValidationFailure;
 
+  /// Too many tries in a short time; the server refuses more for a while.
+  /// The user should wait, not change what they typed.
+  const factory Failure.rateLimited() = RateLimitedFailure;
+
   /// Anything else (a bug). [cause] is for logging, never shown to users.
   const factory Failure.unexpected([Object? cause]) = UnexpectedFailure;
 }

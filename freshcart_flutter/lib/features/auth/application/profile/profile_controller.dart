@@ -50,13 +50,28 @@ class ProfileController extends _$ProfileController {
 
   Future<Failure?> clearAvatarPhoto() => _write(_auth.clearAvatarPhoto);
 
-  /// Adds an email and password to the anonymous account. Then the user
-  /// doesn't lose their lists if they lose their phone.
-  Future<Failure?> linkEmail({
+  /// The first step of adding an email: checks [password] and emails a
+  /// code to [email]. Returns the request id that [linkEmail] needs.
+  ///
+  /// Doesn't change the profile, so it skips [_write].
+  Future<Result<String>> startLinkEmail({
     required String email,
     required String password,
+  }) => StartLinkEmail(_auth)(email: email, password: password);
+
+  /// Adds the email of [requestId] and [password] to the anonymous account,
+  /// if [code] is the one that was emailed. Then the user doesn't lose
+  /// their lists if they lose their phone.
+  Future<Failure?> linkEmail({
+    required String requestId,
+    required String code,
+    required String password,
   }) => _write(
-    () => LinkEmail(_auth)(email: email, password: password),
+    () => LinkEmail(_auth)(
+      requestId: requestId,
+      code: code,
+      password: password,
+    ),
   );
 
   /// Signs out. If it works, the profile is loaded again from scratch.

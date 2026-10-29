@@ -14,6 +14,7 @@ extension FailureMessage on Failure {
     UnauthorizedFailure() => t.errors.unauthorized,
     ConflictFailure() => t.errors.conflict,
     ValidationFailure(:final issue) => issue.toMessage(t),
+    RateLimitedFailure() => t.errors.rateLimited,
     UnexpectedFailure() => t.errors.unexpected,
   };
 }

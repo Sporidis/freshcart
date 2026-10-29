@@ -30,6 +30,10 @@ extension ValidationIssueMessage on ValidationIssue {
     // The password rule's only format check.
     InvalidFormatInput(input: ValidatedInput.password) =>
       t.validation.passwordSpacesAtEnds,
+    InvalidFormatInput(input: ValidatedInput.email) =>
+      t.validation.emailInvalid,
+    InvalidFormatInput(input: ValidatedInput.verificationCode) =>
+      t.validation.codeInvalid,
     NotFoundInput(input: ValidatedInput.joinCode) =>
       t.validation.joinCodeNotFound,
     AlreadyInUseInput(input: ValidatedInput.email) => t.validation.emailInUse,

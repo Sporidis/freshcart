@@ -76,11 +76,26 @@ class AuthRepositoryImpl implements AuthRepository {
   });
 
   @override
-  Future<Result<AuthUser>> linkEmail({
-    required String email,
+  Future<Result<String>> startLinkEmail(String email) => _guard(() async {
+    // Serverpod's own registration start: it sends the code through the
+    // server's EmailSender and hides whether the address is taken.
+    final requestId = await _client.emailIdp.startRegistration(email: email);
+    return requestId.uuid;
+  });
+
+  @override
+  Future<Result<AuthUser>> finishLinkEmail({
+    required String requestId,
+    required String code,
     required String password,
   }) => _guard(() async {
-    await _client.account.linkEmail(email, password);
+    // Serverpod checks the code and the link in two calls, with a one-time
+    // token in between. That token is a wire detail, so it stays here.
+    final token = await _client.emailIdp.verifyRegistrationCode(
+      accountRequestId: dto.UuidValue.withValidation(requestId),
+      verificationCode: code,
+    );
+    await _client.account.finishLinkEmail(token, password);
     return _refresh();
   });
 

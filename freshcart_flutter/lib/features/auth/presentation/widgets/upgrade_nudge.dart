@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_providers.dart';
+import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// A banner asking an anonymous user to add an email to their account.
 ///
@@ -68,7 +69,8 @@ Future<void> showLinkEmailDialog(BuildContext context) => showDialog<void>(
 
 /// The form to add an email and password to an anonymous account.
 ///
-/// Public because Settings opens it too.
+/// Two steps: email and password, then the code that was emailed. The
+/// password is kept until the second step, where it is actually set.
 class _LinkEmailDialog extends ConsumerStatefulWidget {
   const _LinkEmailDialog();
 
@@ -79,24 +81,54 @@ class _LinkEmailDialog extends ConsumerStatefulWidget {
 class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
   final TextEditingController _email = TextEditingController();
   final TextEditingController _password = TextEditingController();
+  final TextEditingController _code = TextEditingController();
   Failure? _failure;
   bool _busy = false;
+
+  /// Set once a code was sent; then the dialog asks for the code.
+  String? _requestId;
 
   @override
   void dispose() {
     _email.dispose();
     _password.dispose();
+    _code.dispose();
     super.dispose();
   }
 
-  Future<void> _submit() async {
+  Future<void> _sendCode() async {
+    setState(() {
+      _busy = true;
+      _failure = null;
+    });
+    final result = await ref
+        .read(profileControllerProvider.notifier)
+        .startLinkEmail(email: _email.text.trim(), password: _password.text);
+    if (!mounted) return;
+
+    setState(() {
+      _busy = false;
+      switch (result) {
+        case Ok(:final value):
+          _requestId = value;
+        case Err(:final failure):
+          _failure = failure;
+      }
+    });
+  }
+
+  Future<void> _link(String requestId) async {
     setState(() {
       _busy = true;
       _failure = null;
     });
     final failure = await ref
         .read(profileControllerProvider.notifier)
-        .linkEmail(email: _email.text.trim(), password: _password.text);
+        .linkEmail(
+          requestId: requestId,
+          code: _code.text.trim(),
+          password: _password.text,
+        );
     if (!mounted) return;
 
     if (failure == null) {
@@ -113,9 +145,34 @@ class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
     // Translated here (not when the error is saved), so it updates if the
-    // language changes. A password problem goes under the password field,
-    // everything else under the email.
+    // language changes.
     final message = _failure?.toMessage(t);
+    final requestId = _requestId;
+    return AlertDialog(
+      title: Text(t.account.action),
+      content: requestId == null
+          ? _credentialsStep(t, message)
+          : _codeStep(t, message),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: Text(t.common.cancel),
+        ),
+        FilledButton(
+          onPressed: _busy
+              ? null
+              : requestId == null
+              ? _sendCode
+              : () => _link(requestId),
+          child: Text(requestId == null ? t.account.sendCode : t.common.save),
+        ),
+      ],
+    );
+  }
+
+  /// Email and password. A password problem goes under the password
+  /// field, everything else under the email.
+  Widget _credentialsStep(Translations t, String? message) {
     final isPasswordIssue = switch (_failure) {
       ValidationFailure(
         issue: ValidationIssue(input: ValidatedInput.password),
@@ -123,43 +180,52 @@ class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
         true,
       _ => false,
     };
-    return AlertDialog(
-      title: Text(t.account.action),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _email,
-            autofocus: true,
-            enabled: !_busy,
-            keyboardType: TextInputType.emailAddress,
-            decoration: InputDecoration(
-              labelText: t.account.emailLabel,
-              errorText: isPasswordIssue ? null : message,
-            ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        TextField(
+          controller: _email,
+          autofocus: true,
+          enabled: !_busy,
+          keyboardType: TextInputType.emailAddress,
+          decoration: InputDecoration(
+            labelText: t.account.emailLabel,
+            errorText: isPasswordIssue ? null : message,
           ),
-          const SizedBox(height: AppSpacing.sm),
-          TextField(
-            controller: _password,
-            enabled: !_busy,
-            obscureText: true,
-            decoration: InputDecoration(
-              labelText: t.account.passwordLabel,
-              errorText: isPasswordIssue ? message : null,
-            ),
-          ),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: _busy ? null : () => Navigator.of(context).pop(),
-          child: Text(t.common.cancel),
         ),
-        FilledButton(
-          onPressed: _busy ? null : _submit,
-          child: Text(t.common.save),
+        const SizedBox(height: AppSpacing.sm),
+        TextField(
+          controller: _password,
+          enabled: !_busy,
+          obscureText: true,
+          decoration: InputDecoration(
+            labelText: t.account.passwordLabel,
+            errorText: isPasswordIssue ? message : null,
+          ),
         ),
       ],
     );
   }
+
+  /// The emailed code. The text says "if", because the server doesn't tell
+  /// us whether the address already has an account (no enumeration).
+  Widget _codeStep(Translations t, String? message) => Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(t.account.codeSent(email: _email.text.trim())),
+      const SizedBox(height: AppSpacing.sm),
+      TextField(
+        controller: _code,
+        autofocus: true,
+        enabled: !_busy,
+        keyboardType: TextInputType.number,
+        autofillHints: const [AutofillHints.oneTimeCode],
+        decoration: InputDecoration(
+          labelText: t.account.codeLabel,
+          errorText: message,
+        ),
+      ),
+    ],
+  );
 }

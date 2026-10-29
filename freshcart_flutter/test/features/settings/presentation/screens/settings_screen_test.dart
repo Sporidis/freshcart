@@ -85,10 +85,13 @@ void main() {
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField).first, 'me@example.com');
     await tester.enterText(find.byType(TextField).last, 'a good passphrase');
+    await tester.tap(find.text('Send code'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), '12345678');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(auth.linkCalls.single.email, 'me@example.com');
+    expect(auth.finishLinkCalls.single.code, '12345678');
     // Linked: the card goes, and the header carries the address instead.
     expect(find.text('Secure your lists'), findsNothing);
     expect(find.text('me@example.com'), findsOneWidget);

@@ -150,6 +150,7 @@
     "noAccessBody": "Vous ne faites plus partie de cette liste.",
     "unexpectedTitle": "Une erreur est survenue",
     "unexpectedBody": "Réessayez. Si cela persiste, fermez puis rouvrez l’application.",
+    "rateLimited": "Trop de tentatives. Attendez quelques minutes et réessayez.",
     "backToLists": "Retour à vos listes"
   },
   "validation": {
@@ -167,14 +168,19 @@
     "colorInvalid": "Couleur hexadécimale attendue, comme #4CAF50",
     "emailInUse": "Cette adresse e-mail est déjà utilisée",
     "passwordMissing": "Choisissez un mot de passe",
-    "passwordSpacesAtEnds": "Supprimez les espaces au début ou à la fin"
+    "passwordSpacesAtEnds": "Supprimez les espaces au début ou à la fin",
+    "emailInvalid": "Cette adresse e-mail n’est pas valide",
+    "codeInvalid": "Ce code est incorrect ou a expiré"
   },
   "account": {
     "title": "Sécurisez vos listes",
     "body": "Votre compte n'existe que sur cet appareil. Liez une adresse e-mail pour ne pas perdre vos listes.",
     "action": "Lier un e-mail",
     "emailLabel": "E-mail",
-    "passwordLabel": "Mot de passe"
+    "passwordLabel": "Mot de passe",
+    "sendCode": "Envoyer le code",
+    "codeLabel": "Code",
+    "codeSent": "Si {{email}} peut être associée, nous y avons envoyé un code. Cela peut prendre une minute."
   },
   "household": {
     "title": "Foyer",

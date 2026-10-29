@@ -61,17 +61,19 @@ class EndpointAccount extends _i1.EndpointRef {
         {},
       );
 
-  /// Adds an email and password to the caller's account.
+  /// Adds a verified email and a password to the caller's account.
   ///
-  /// The `authUserId` stays the same, so all their lists stay theirs.
-  _i2.Future<List<_i3.LinkedProvider>> linkEmail(
-    String email,
+  /// [registrationToken] comes from `emailIdp.startRegistration` and
+  /// `emailIdp.verifyRegistrationCode`. The `authUserId` stays the same, so
+  /// all their lists stay theirs.
+  _i2.Future<List<_i3.LinkedProvider>> finishLinkEmail(
+    String registrationToken,
     String password,
   ) => caller.callServerEndpoint<List<_i3.LinkedProvider>>(
     'account',
-    'linkEmail',
+    'finishLinkEmail',
     {
-      'email': email,
+      'registrationToken': registrationToken,
       'password': password,
     },
   );

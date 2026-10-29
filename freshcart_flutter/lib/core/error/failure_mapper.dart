@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart'
+    show EmailAccountRequestException, EmailAccountRequestExceptionReason;
 
 /// Turns any exception from the server or network into a domain [Failure].
 ///
@@ -32,6 +34,25 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.EmailAlreadyInUseException() => const Failure.validation(
     ValidationIssue.alreadyInUse(ValidatedInput.email),
   ),
+  // Serverpod's email sign-up steps, used to link an email. The reason is
+  // deliberately vague (no hint whether an address has an account).
+  EmailAccountRequestException(:final reason) => switch (reason) {
+    // Both happen at the code step and have the same fix: a new code.
+    EmailAccountRequestExceptionReason.invalid ||
+    EmailAccountRequestExceptionReason.expired => const Failure.validation(
+      ValidationIssue.invalidFormat(ValidatedInput.verificationCode),
+    ),
+    // The app checks the password with the server's rule first, so in
+    // practice this is a malformed address at the start.
+    EmailAccountRequestExceptionReason.policyViolation =>
+      const Failure.validation(
+        ValidationIssue.invalidFormat(ValidatedInput.email),
+      ),
+    EmailAccountRequestExceptionReason.tooManyAttempts =>
+      const Failure.rateLimited(),
+    // A reason this version doesn't know (a newer server).
+    EmailAccountRequestExceptionReason.unknown => Failure.unexpected(error),
+  },
 
   // Serverpod's built-in HTTP errors.
   dto.ServerpodClientUnauthorized() ||

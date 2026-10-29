@@ -62,41 +62,69 @@ void main() {
     expect(find.text('Secure your lists'), findsNothing);
   });
 
-  testWidgets('linking an email sends the credentials and dismisses', (
+  /// Opens the dialog and fills in the first step.
+  Future<void> enterCredentials(
+    WidgetTester tester, {
+    String password = 'a good passphrase',
+  }) async {
+    await tester.tap(find.text('Link email'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField).first, 'me@example.com');
+    await tester.enterText(find.byType(TextField).last, password);
+    await tester.tap(find.text('Send code'));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('linking sends a code, then links with it and dismisses', (
     tester,
   ) async {
     await pump(tester);
 
-    await tester.tap(find.text('Link email'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, 'me@example.com');
-    await tester.enterText(find.byType(TextField).last, 'a good passphrase');
+    await enterCredentials(tester);
+    expect(auth.startLinkCalls.single, 'me@example.com');
+    await tester.enterText(find.byType(TextField), '12345678');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
-    expect(auth.linkCalls.single.email, 'me@example.com');
+    expect(auth.finishLinkCalls.single, (
+      requestId: 'request-1',
+      code: '12345678',
+      password: 'a good passphrase',
+    ));
     expect(find.byType(AlertDialog), findsNothing);
     // The nudge disappears because the account is no longer anonymous.
     expect(find.text('Secure your lists'), findsNothing);
   });
 
-  testWidgets('a taken email keeps the dialog open with the reason', (
+  testWidgets('a short password is explained before any code is sent', (
     tester,
   ) async {
-    auth.linkResult = const Err(
-      Failure.validation(ValidationIssue.alreadyInUse(ValidatedInput.email)),
+    await pump(tester);
+
+    await enterCredentials(tester, password: 'short');
+
+    expect(auth.startLinkCalls, isEmpty);
+    expect(find.text('Use at least 8 characters'), findsOneWidget);
+    expect(find.text('Send code'), findsOneWidget);
+  });
+
+  testWidgets('a wrong code keeps the dialog open with the reason', (
+    tester,
+  ) async {
+    auth.finishLinkResult = const Err(
+      Failure.validation(
+        ValidationIssue.invalidFormat(ValidatedInput.verificationCode),
+      ),
     );
 
     await pump(tester);
-    await tester.tap(find.text('Link email'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).first, 'taken@example.com');
-    await tester.enterText(find.byType(TextField).last, 'a good passphrase');
+    await enterCredentials(tester);
+    await tester.enterText(find.byType(TextField), '00000000');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
 
     expect(find.byType(AlertDialog), findsOneWidget);
-    expect(find.text('That email is already in use'), findsOneWidget);
+    expect(find.text('That code is wrong or has expired'), findsOneWidget);
   });
 
   testWidgets('the close button dismisses the nudge for good', (

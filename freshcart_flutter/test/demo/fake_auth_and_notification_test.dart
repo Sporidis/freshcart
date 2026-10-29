@@ -37,8 +37,13 @@ void main() {
 
     test('real-account features are blocked, sign-out included', () async {
       expect((await world.a.auth.linkGoogle()).isErr, isTrue);
+      expect((await world.a.auth.startLinkEmail('a@b.c')).isErr, isTrue);
       expect(
-        (await world.a.auth.linkEmail(email: 'a@b.c', password: 'x')).isErr,
+        (await world.a.auth.finishLinkEmail(
+          requestId: 'r',
+          code: '1',
+          password: 'x',
+        )).isErr,
         isTrue,
       );
       expect((await world.a.auth.signOut()).isErr, isTrue);

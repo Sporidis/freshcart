@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_client/freshcart_client.dart' as dto;
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
+import 'package:serverpod_auth_idp_client/serverpod_auth_idp_client.dart';
 
 void main() {
   group('mapExceptionToFailure', () {
@@ -65,6 +66,39 @@ void main() {
           ValidationIssue.alreadyInUse(ValidatedInput.email),
         ),
       );
+    });
+
+    test('maps the email link errors without hinting at existing accounts', () {
+      Failure map(EmailAccountRequestExceptionReason reason) =>
+          mapExceptionToFailure(EmailAccountRequestException(reason: reason));
+      const wrongCode = Failure.validation(
+        ValidationIssue.invalidFormat(ValidatedInput.verificationCode),
+      );
+
+      expect(map(EmailAccountRequestExceptionReason.invalid), wrongCode);
+      expect(map(EmailAccountRequestExceptionReason.expired), wrongCode);
+      expect(
+        map(EmailAccountRequestExceptionReason.policyViolation),
+        const Failure.validation(
+          ValidationIssue.invalidFormat(ValidatedInput.email),
+        ),
+      );
+      expect(
+        map(EmailAccountRequestExceptionReason.tooManyAttempts),
+        const Failure.rateLimited(),
+      );
+      // None of them may say "email in use": that is the enumeration the
+      // server hides on purpose.
+      for (final reason in EmailAccountRequestExceptionReason.values) {
+        expect(
+          map(reason),
+          isNot(
+            const Failure.validation(
+              ValidationIssue.alreadyInUse(ValidatedInput.email),
+            ),
+          ),
+        );
+      }
     });
 
     test('maps transport-level errors', () {

@@ -68,8 +68,13 @@ class FakeAuthRepository implements AuthRepository {
   Future<Result<AuthUser>> linkGoogle() async => const Err(_unavailable);
 
   @override
-  Future<Result<AuthUser>> linkEmail({
-    required String email,
+  Future<Result<String>> startLinkEmail(String email) async =>
+      const Err(_unavailable);
+
+  @override
+  Future<Result<AuthUser>> finishLinkEmail({
+    required String requestId,
+    required String code,
     required String password,
   }) async => const Err(_unavailable);
 

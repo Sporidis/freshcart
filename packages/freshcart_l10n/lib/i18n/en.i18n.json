@@ -150,6 +150,7 @@
     "noAccessBody": "You are not a member of this list any more.",
     "unexpectedTitle": "Something went wrong",
     "unexpectedBody": "Try again. If it keeps happening, close and reopen the app.",
+    "rateLimited": "Too many tries. Wait a few minutes and try again.",
     "backToLists": "Back to your lists"
   },
   "validation": {
@@ -167,14 +168,19 @@
     "colorInvalid": "Expected a hex colour like #4CAF50",
     "emailInUse": "That email is already in use",
     "passwordMissing": "Choose a password",
-    "passwordSpacesAtEnds": "Remove the spaces at the start or end"
+    "passwordSpacesAtEnds": "Remove the spaces at the start or end",
+    "emailInvalid": "That is not a valid email address",
+    "codeInvalid": "That code is wrong or has expired"
   },
   "account": {
     "title": "Secure your lists",
     "body": "Your account only exists on this device. Link an email so you do not lose your lists.",
     "action": "Link email",
     "emailLabel": "Email",
-    "passwordLabel": "Password"
+    "passwordLabel": "Password",
+    "sendCode": "Send code",
+    "codeLabel": "Code",
+    "codeSent": "If {{email}} can be linked, we sent a code to it. It can take a minute to arrive."
   },
   "household": {
     "title": "Household",

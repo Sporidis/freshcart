@@ -150,6 +150,7 @@
     "noAccessBody": "Je bent geen lid meer van deze lijst.",
     "unexpectedTitle": "Er ging iets mis",
     "unexpectedBody": "Probeer het opnieuw. Blijft het misgaan, sluit de app dan even af.",
+    "rateLimited": "Te veel pogingen. Wacht een paar minuten en probeer opnieuw.",
     "backToLists": "Terug naar je lijsten"
   },
   "validation": {
@@ -167,14 +168,19 @@
     "colorInvalid": "Verwacht een hexkleur zoals #4CAF50",
     "emailInUse": "Dat e-mailadres is al in gebruik",
     "passwordMissing": "Kies een wachtwoord",
-    "passwordSpacesAtEnds": "Haal de spaties aan het begin of einde weg"
+    "passwordSpacesAtEnds": "Haal de spaties aan het begin of einde weg",
+    "emailInvalid": "Dat is geen geldig e-mailadres",
+    "codeInvalid": "Die code klopt niet of is verlopen"
   },
   "account": {
     "title": "Beveilig je lijsten",
     "body": "Je account bestaat alleen op dit toestel. Koppel een e-mailadres zodat je je lijsten niet kwijtraakt.",
     "action": "E-mail koppelen",
     "emailLabel": "E-mailadres",
-    "passwordLabel": "Wachtwoord"
+    "passwordLabel": "Wachtwoord",
+    "sendCode": "Code versturen",
+    "codeLabel": "Code",
+    "codeSent": "Als {{email}} gekoppeld kan worden, hebben we er een code naartoe gestuurd. Het kan een minuutje duren."
   },
   "household": {
     "title": "Huishouden",

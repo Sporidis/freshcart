@@ -150,6 +150,7 @@
     "noAccessBody": "Hindi ka na miyembro ng listahang ito.",
     "unexpectedTitle": "May nangyaring mali",
     "unexpectedBody": "Subukan ulit. Kung paulit-ulit, isara at buksan muli ang app.",
+    "rateLimited": "Masyadong maraming subok. Maghintay ng ilang minuto at subukan ulit.",
     "backToLists": "Bumalik sa mga listahan mo"
   },
   "validation": {
@@ -167,14 +168,19 @@
     "colorInvalid": "Hex na kulay ang kailangan, gaya ng #4CAF50",
     "emailInUse": "Ginagamit na ang email na iyan",
     "passwordMissing": "Pumili ng password",
-    "passwordSpacesAtEnds": "Alisin ang mga espasyo sa simula o dulo"
+    "passwordSpacesAtEnds": "Alisin ang mga espasyo sa simula o dulo",
+    "emailInvalid": "Hindi wastong email address iyan",
+    "codeInvalid": "Mali o expired na ang code na iyan"
   },
   "account": {
     "title": "Protektahan ang iyong mga listahan",
     "body": "Nasa device na ito lang ang iyong account. Mag-link ng email para hindi mawala ang iyong mga listahan.",
     "action": "I-link ang email",
     "emailLabel": "Email",
-    "passwordLabel": "Password"
+    "passwordLabel": "Password",
+    "sendCode": "Ipadala ang code",
+    "codeLabel": "Code",
+    "codeSent": "Kung puwedeng i-link ang {{email}}, nagpadala kami ng code doon. Baka umabot ng isang minuto."
   },
   "household": {
     "title": "Sambahayan",

@@ -49,9 +49,21 @@ abstract interface class AuthRepository {
   /// That's why we link instead of making a new account.
   Future<Result<AuthUser>> linkGoogle();
 
-  /// Links an email and password to the current account.
-  Future<Result<AuthUser>> linkEmail({
-    required String email,
+  /// Starts linking [email]: emails it a code, and returns the id of this
+  /// request for [finishLinkEmail].
+  ///
+  /// Succeeds even when [email] already has an account (then no code is
+  /// sent), so nobody can use this to find out who has one.
+  Future<Result<String>> startLinkEmail(String email);
+
+  /// Finishes linking: proves the user read the [code] sent for
+  /// [requestId], then links that email with [password] to the current
+  /// account.
+  ///
+  /// The user id stays the same, so all their lists and items stay theirs.
+  Future<Result<AuthUser>> finishLinkEmail({
+    required String requestId,
+    required String code,
     required String password,
   });
 

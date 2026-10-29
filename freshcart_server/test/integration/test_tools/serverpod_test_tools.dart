@@ -261,24 +261,24 @@ class _AccountEndpoint {
     });
   }
 
-  _i3.Future<List<_i4.LinkedProvider>> linkEmail(
+  _i3.Future<List<_i4.LinkedProvider>> finishLinkEmail(
     _i1.TestSessionBuilder sessionBuilder,
-    String email,
+    String registrationToken,
     String password,
   ) async {
     return _i1.callAwaitableFunctionAndHandleExceptions(() async {
       var _localUniqueSession =
           (sessionBuilder as _i1.InternalTestSessionBuilder).internalBuild(
             endpoint: 'account',
-            method: 'linkEmail',
+            method: 'finishLinkEmail',
           );
       try {
         var _localCallContext = await _endpointDispatch.getMethodCallContext(
           createSessionCallback: (_) => _localUniqueSession,
           endpointPath: 'account',
-          methodName: 'linkEmail',
+          methodName: 'finishLinkEmail',
           parameters: _i1.testObjectToJson({
-            'email': email,
+            'registrationToken': registrationToken,
             'password': password,
           }),
           serializationManager: _serializationManager,

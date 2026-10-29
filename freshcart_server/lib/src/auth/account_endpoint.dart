@@ -12,19 +12,21 @@ class AccountEndpoint extends Endpoint {
   Future<List<LinkedProvider>> linkedProviders(Session session) =>
       AccountLinkService.linkedProviders(session, session.requireUserId);
 
-  /// Adds an email and password to the caller's account.
+  /// Adds a verified email and a password to the caller's account.
   ///
-  /// The `authUserId` stays the same, so all their lists stay theirs.
-  Future<List<LinkedProvider>> linkEmail(
+  /// [registrationToken] comes from `emailIdp.startRegistration` and
+  /// `emailIdp.verifyRegistrationCode`. The `authUserId` stays the same, so
+  /// all their lists stay theirs.
+  Future<List<LinkedProvider>> finishLinkEmail(
     Session session,
-    String email,
+    String registrationToken,
     String password,
   ) async {
     final userId = session.requireUserId;
-    await AccountLinkService.linkEmail(
+    await AccountLinkService.finishLinkEmail(
       session,
       userId,
-      email: email,
+      registrationToken: registrationToken,
       password: password,
     );
     return AccountLinkService.linkedProviders(session, userId);
