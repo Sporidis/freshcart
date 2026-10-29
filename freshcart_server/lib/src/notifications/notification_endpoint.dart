@@ -28,7 +28,7 @@ class NotificationEndpoint extends Endpoint {
 
   /// Stops push notifications to this phone. Called on sign-out.
   Future<void> unregisterDevice(Session session, String token) =>
-      DeviceTokenService.unregister(session, token);
+      DeviceTokenService.unregister(session, session.requireUserId, token);
 
   /// Mutes or unmutes a list for the caller.
   Future<void> setListMuted(

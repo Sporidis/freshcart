@@ -30,11 +30,16 @@ abstract final class DeviceTokenService {
     );
   }
 
-  /// Stops push notifications to the phone with [token].
-  static Future<void> unregister(Session session, String token) async {
+  /// Stops push notifications to the phone with [token], if it's
+  /// registered to [userId].
+  static Future<void> unregister(
+    Session session,
+    UuidValue userId,
+    String token,
+  ) async {
     await DeviceToken.db.deleteWhere(
       session,
-      where: (t) => t.token.equals(token),
+      where: (t) => t.token.equals(token) & t.ownerId.equals(userId),
     );
   }
 }

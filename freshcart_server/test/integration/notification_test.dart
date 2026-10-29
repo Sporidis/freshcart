@@ -170,6 +170,45 @@ void main() {
       expect(moved.ownerId, UuidValue.withValidation(bobId));
     });
 
+    test('unregistering cannot remove someone else\'s token', () async {
+      await endpoints.notification.registerDevice(
+        as(aliceId),
+        'token-alice',
+        DevicePlatform.android,
+      );
+      await endpoints.notification.unregisterDevice(
+        as(bobId),
+        'token-alice',
+      );
+
+      final session = sessionBuilder.build();
+      final all = await DeviceToken.db.find(
+        session,
+        where: (t) => t.token.equals('token-alice'),
+      );
+      expect(all, hasLength(1));
+      expect(all.first.ownerId, UuidValue.withValidation(aliceId));
+    });
+
+    test('unregistering removes the caller\'s own token', () async {
+      await endpoints.notification.registerDevice(
+        as(aliceId),
+        'token-alice-own',
+        DevicePlatform.android,
+      );
+      await endpoints.notification.unregisterDevice(
+        as(aliceId),
+        'token-alice-own',
+      );
+
+      final session = sessionBuilder.build();
+      final all = await DeviceToken.db.find(
+        session,
+        where: (t) => t.token.equals('token-alice-own'),
+      );
+      expect(all, isEmpty);
+    });
+
     test('the actor is never among the recipients', () async {
       final list = await aSharedList();
       for (final entry in {aliceId: 'a', bobId: 'b', carolId: 'c'}.entries) {
