@@ -5,12 +5,12 @@ anonymousIdp:
   - login:
 emailIdp:
   - login:
+  - finishRegistration:
+  - finishPasswordReset:
   - startRegistration:
   - verifyRegistrationCode:
-  - finishRegistration:
   - startPasswordReset:
   - verifyPasswordResetCode:
-  - finishPasswordReset:
   - hasAccount:
 jwtRefresh:
   - refreshAccessToken:

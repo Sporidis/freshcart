@@ -1,3 +1,4 @@
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/auth/business/email_message.dart';
 import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:serverpod/serverpod.dart';
@@ -24,6 +25,10 @@ abstract final class AuthConfiguration {
     // it could be abused to create lots of accounts.
     const AnonymousIdpConfig(),
     EmailIdpConfigFromPasswords(
+      // The domain's rule, so sign-up and reset accept exactly what the app
+      // and linkEmail accept. The endpoint has already normalized it.
+      passwordValidationFunction: (password) =>
+          domain.AuthUser.validatePassword(password).isOk,
       sendRegistrationVerificationCode: sendRegistrationCode,
       sendPasswordResetVerificationCode: sendPasswordResetCode,
     ),

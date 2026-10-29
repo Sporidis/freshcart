@@ -6,6 +6,7 @@ import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/core/validation_issue.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
+import 'package:unorm_dart/unorm_dart.dart';
 
 part 'auth_user.freezed.dart';
 
@@ -73,6 +74,73 @@ abstract class AuthUser with _$AuthUser {
       );
     }
     return Ok(trimmed);
+  }
+
+  /// Minimum password length. Length is what makes a password hard to
+  /// guess (NIST SP 800-63B: at least 8); no "a digit and a symbol" rules,
+  /// they mostly make people reuse or write down passwords.
+  static const int minPasswordLength = 8;
+
+  /// Maximum password length. Generous on purpose, so passphrases and
+  /// password managers fit; it only stops someone sending a huge "password"
+  /// that is expensive to hash.
+  static const int maxPasswordLength = 128;
+
+  /// [password] in Unicode NFKC form: the form it's hashed and compared in.
+  ///
+  /// "é" can be typed as one character or as "e" plus an accent, depending
+  /// on the keyboard. They look the same but are different text, so without
+  /// this a password set on one phone could fail on another (NIST SP
+  /// 800-63B asks for normalizing). Every path that hashes a password must
+  /// use it, login included, or users get locked out.
+  static String normalizePassword(String password) => nfkc(password);
+
+  /// Checks a new password for an email login, and returns it normalized
+  /// ([normalizePassword]): store and hash what this returns.
+  ///
+  /// The one password rule: the app checks it in the form, the server in
+  /// `linkEmail`, and Serverpod's own sign-up and reset use it too. The rules
+  /// apply to the normalized form, since that's what is kept.
+  ///
+  /// Never trimmed: a space someone typed is part of their password, so
+  /// trimming would lock them out. Spaces at the ends are refused instead,
+  /// because they're almost always a copy-paste accident. Any other
+  /// character is allowed, Cyrillic or emoji included.
+  static Result<String> validatePassword(String rawPassword) {
+    final password = normalizePassword(rawPassword);
+    if (password.isEmpty) {
+      return const Err(
+        Failure.validation(ValidationIssue.missing(ValidatedInput.password)),
+      );
+    }
+    if (password.length < minPasswordLength) {
+      return const Err(
+        Failure.validation(
+          ValidationIssue.tooShort(
+            ValidatedInput.password,
+            min: minPasswordLength,
+          ),
+        ),
+      );
+    }
+    if (password.length > maxPasswordLength) {
+      return const Err(
+        Failure.validation(
+          ValidationIssue.tooLong(
+            ValidatedInput.password,
+            max: maxPasswordLength,
+          ),
+        ),
+      );
+    }
+    if (password.trim() != password) {
+      return const Err(
+        Failure.validation(
+          ValidationIssue.invalidFormat(ValidatedInput.password),
+        ),
+      );
+    }
+    return Ok(password);
   }
 
   /// Whether the account would survive losing this phone.

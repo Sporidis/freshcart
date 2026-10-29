@@ -1,3 +1,5 @@
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
+import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
@@ -37,11 +39,18 @@ abstract final class AccountLinkService {
     );
     if (claimed != null) throw EmailAlreadyInUseException();
 
+    // The admin call below skips Serverpod's password check, so the domain
+    // rule runs here. It also returns the password normalized, the form
+    // every login compares against.
+    final validPassword = requireValid(
+      domain.AuthUser.validatePassword(password),
+    );
+
     await AuthServices.instance.emailIdp.admin.createEmailAuthentication(
       session,
       authUserId: authUserId,
       email: email,
-      password: password,
+      password: validPassword,
     );
   }
 

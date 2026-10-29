@@ -187,6 +187,57 @@ class Endpoints extends _i1.EndpointDispatch {
                 password: params['password'],
               ),
         ),
+        'finishRegistration': _i1.MethodConnector(
+          name: 'finishRegistration',
+          params: {
+            'registrationToken': _i1.ParameterDescription(
+              name: 'registrationToken',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'password': _i1.ParameterDescription(
+              name: 'password',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i4.EmailIdpEndpoint)
+                  .finishRegistration(
+                    session,
+                    registrationToken: params['registrationToken'],
+                    password: params['password'],
+                  ),
+        ),
+        'finishPasswordReset': _i1.MethodConnector(
+          name: 'finishPasswordReset',
+          params: {
+            'finishPasswordResetToken': _i1.ParameterDescription(
+              name: 'finishPasswordResetToken',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+            'newPassword': _i1.ParameterDescription(
+              name: 'newPassword',
+              type: _i1.getType<String>(),
+              nullable: false,
+            ),
+          },
+          call:
+              (
+                _i1.Session session,
+                Map<String, dynamic> params,
+              ) async => (endpoints['emailIdp'] as _i4.EmailIdpEndpoint)
+                  .finishPasswordReset(
+                    session,
+                    finishPasswordResetToken:
+                        params['finishPasswordResetToken'],
+                    newPassword: params['newPassword'],
+                  ),
+        ),
         'startRegistration': _i1.MethodConnector(
           name: 'startRegistration',
           params: {
@@ -231,31 +282,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     verificationCode: params['verificationCode'],
                   ),
         ),
-        'finishRegistration': _i1.MethodConnector(
-          name: 'finishRegistration',
-          params: {
-            'registrationToken': _i1.ParameterDescription(
-              name: 'registrationToken',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'password': _i1.ParameterDescription(
-              name: 'password',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i4.EmailIdpEndpoint)
-                  .finishRegistration(
-                    session,
-                    registrationToken: params['registrationToken'],
-                    password: params['password'],
-                  ),
-        ),
         'startPasswordReset': _i1.MethodConnector(
           name: 'startPasswordReset',
           params: {
@@ -298,32 +324,6 @@ class Endpoints extends _i1.EndpointDispatch {
                     session,
                     passwordResetRequestId: params['passwordResetRequestId'],
                     verificationCode: params['verificationCode'],
-                  ),
-        ),
-        'finishPasswordReset': _i1.MethodConnector(
-          name: 'finishPasswordReset',
-          params: {
-            'finishPasswordResetToken': _i1.ParameterDescription(
-              name: 'finishPasswordResetToken',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-            'newPassword': _i1.ParameterDescription(
-              name: 'newPassword',
-              type: _i1.getType<String>(),
-              nullable: false,
-            ),
-          },
-          call:
-              (
-                _i1.Session session,
-                Map<String, dynamic> params,
-              ) async => (endpoints['emailIdp'] as _i4.EmailIdpEndpoint)
-                  .finishPasswordReset(
-                    session,
-                    finishPasswordResetToken:
-                        params['finishPasswordResetToken'],
-                    newPassword: params['newPassword'],
                   ),
         ),
         'hasAccount': _i1.MethodConnector(

@@ -105,8 +105,14 @@ class EndpointAnonymousIdp extends _i4.EndpointAnonymousIdpBase {
       );
 }
 
-/// Endpoint for email login. Just extending [EmailIdpBaseEndpoint] is
-/// enough to make it available.
+/// Endpoint for email login. Extending [EmailIdpBaseEndpoint] is enough to
+/// make it available.
+///
+/// The methods that take a password are overridden only to normalize it
+/// (`AuthUser.normalizePassword`) before Serverpod hashes or compares it.
+/// `linkEmail` stores passwords normalized, so every path has to: a login
+/// that skipped this would fail for someone whose keyboard types "é"
+/// differently from the one they signed up on.
 /// {@category Endpoint}
 class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   EndpointEmailIdp(_i1.EndpointCaller caller) : super(caller);
@@ -114,15 +120,7 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
   @override
   String get name => 'emailIdp';
 
-  /// Logs in the user and returns a new session.
-  ///
-  /// Throws an [EmailAccountLoginException] in case of errors, with reason:
-  /// - [EmailAccountLoginExceptionReason.invalidCredentials] if the email or
-  ///   password is incorrect.
-  /// - [EmailAccountLoginExceptionReason.tooManyAttempts] if there have been
-  ///   too many failed login attempts.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
+  /// {@macro email_account_base_endpoint.login}
   @override
   _i2.Future<_i5.AuthSuccess> login({
     required String email,
@@ -133,6 +131,34 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
     {
       'email': email,
       'password': password,
+    },
+  );
+
+  /// {@macro email_account_base_endpoint.finish_registration}
+  @override
+  _i2.Future<_i5.AuthSuccess> finishRegistration({
+    required String registrationToken,
+    required String password,
+  }) => caller.callServerEndpoint<_i5.AuthSuccess>(
+    'emailIdp',
+    'finishRegistration',
+    {
+      'registrationToken': registrationToken,
+      'password': password,
+    },
+  );
+
+  /// {@macro email_account_base_endpoint.finish_password_reset}
+  @override
+  _i2.Future<void> finishPasswordReset({
+    required String finishPasswordResetToken,
+    required String newPassword,
+  }) => caller.callServerEndpoint<void>(
+    'emailIdp',
+    'finishPasswordReset',
+    {
+      'finishPasswordResetToken': finishPasswordResetToken,
+      'newPassword': newPassword,
     },
   );
 
@@ -174,33 +200,6 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
     {
       'accountRequestId': accountRequestId,
       'verificationCode': verificationCode,
-    },
-  );
-
-  /// Completes a new account registration, creating a new auth user with a
-  /// profile and attaching the given email account to it.
-  ///
-  /// Throws an [EmailAccountRequestException] in case of errors, with reason:
-  /// - [EmailAccountRequestExceptionReason.expired] if the account request has
-  ///   already expired.
-  /// - [EmailAccountRequestExceptionReason.policyViolation] if the password
-  ///   does not comply with the password policy.
-  /// - [EmailAccountRequestExceptionReason.invalid] if the [registrationToken]
-  ///   is invalid.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
-  ///
-  /// Returns a session for the newly created user.
-  @override
-  _i2.Future<_i5.AuthSuccess> finishRegistration({
-    required String registrationToken,
-    required String password,
-  }) => caller.callServerEndpoint<_i5.AuthSuccess>(
-    'emailIdp',
-    'finishRegistration',
-    {
-      'registrationToken': registrationToken,
-      'password': password,
     },
   );
 
@@ -249,33 +248,6 @@ class EndpointEmailIdp extends _i4.EndpointEmailIdpBase {
     {
       'passwordResetRequestId': passwordResetRequestId,
       'verificationCode': verificationCode,
-    },
-  );
-
-  /// Completes a password reset request by setting a new password.
-  ///
-  /// The [verificationCode] returned from [verifyPasswordResetCode] is used to
-  /// validate the password reset request.
-  ///
-  /// Throws an [EmailAccountPasswordResetException] in case of errors, with reason:
-  /// - [EmailAccountPasswordResetExceptionReason.expired] if the password reset
-  ///   request has already expired.
-  /// - [EmailAccountPasswordResetExceptionReason.policyViolation] if the new
-  ///   password does not comply with the password policy.
-  /// - [EmailAccountPasswordResetExceptionReason.invalid] if no request exists
-  ///   for the given [passwordResetRequestId] or [verificationCode] is invalid.
-  ///
-  /// Throws an [AuthUserBlockedException] if the auth user is blocked.
-  @override
-  _i2.Future<void> finishPasswordReset({
-    required String finishPasswordResetToken,
-    required String newPassword,
-  }) => caller.callServerEndpoint<void>(
-    'emailIdp',
-    'finishPasswordReset',
-    {
-      'finishPasswordResetToken': finishPasswordResetToken,
-      'newPassword': newPassword,
     },
   );
 
@@ -441,8 +413,9 @@ class EndpointItem extends _i1.EndpointRef {
   /// Live updates to a list's items.
   ///
   /// Sends only what changed (not the whole list); the app applies it.
-  /// Membership is checked once, when the stream starts. The stream stops
-  /// if the session ends.
+  /// Membership is checked when the stream starts, and again for every
+  /// change: the stream ends once the caller is no longer on the list. It
+  /// also stops if the session ends.
   ///
   /// This is for live updates while the app is open, not push
   /// notifications (those are for a closed app).

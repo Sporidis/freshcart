@@ -121,5 +121,54 @@ void main() {
         throwsA(isA<EmailAlreadyInUseException>()),
       );
     });
+
+    test('a password that breaks the domain rule is refused', () async {
+      // The admin call that links skips Serverpod's own password check, so
+      // without the domain rule any password (even "") would be stored.
+      final user = await anAnonymousUser();
+
+      await expectLater(
+        endpoints.account.linkEmail(as(user), 'short@example.com', 'short'),
+        throwsA(isA<ValidationException>()),
+      );
+      expect(
+        await endpoints.account.linkedProviders(as(user)),
+        [LinkedProvider.anonymous],
+      );
+    });
   });
+
+  // Serverpod's login runs its own transaction, which the default rollback
+  // mode doesn't allow, so this runs without rollback. The email is unique
+  // per run because the account stays in the test database.
+  withServerpod(
+    'Given email login',
+    rollbackDatabase: RollbackDatabase.disabled,
+    (sessionBuilder, endpoints) {
+      test('logging in works however the keyboard types "é"', () async {
+        final user = await AuthServices.instance.authUsers.create(
+          sessionBuilder.build(),
+        );
+        final email = '${const Uuid().v4()}@example.com';
+        await endpoints.account.linkEmail(
+          sessionBuilder.copyWith(
+            authentication: AuthenticationOverride.authenticationInfo(
+              user.id.uuid,
+              {},
+            ),
+          ),
+          email,
+          'caf\u00e9 au lait', // é as one character
+        );
+
+        final success = await endpoints.emailIdp.login(
+          sessionBuilder,
+          email: email,
+          password: 'cafe\u0301 au lait', // e + combining accent
+        );
+
+        expect(success.authUserId, user.id);
+      });
+    },
+  );
 }
