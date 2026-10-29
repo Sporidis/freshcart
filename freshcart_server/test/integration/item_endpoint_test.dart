@@ -632,6 +632,72 @@ void main() {
       expect(renamed.checkedAt, checked.checkedAt);
     });
 
+    group('save attributes the note from the session', () {
+      test('a changed note records the caller, not whoever the client '
+          'claims', () async {
+        final list = await aSharedList();
+        final item = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          noteText: 'the oat one',
+        );
+
+        // Bob rewrites the note but claims Alice wrote it.
+        final saved = await endpoints.item.save(
+          as(bobId),
+          item.copyWith(
+            note: item.note!.copyWith(
+              text: 'the soy one',
+              authorId: UuidValue.withValidation(aliceId),
+            ),
+          ),
+        );
+
+        expect(saved.note?.text, 'the soy one');
+        expect(saved.note?.authorId, UuidValue.withValidation(bobId));
+      });
+
+      test('an unchanged note keeps its author', () async {
+        final list = await aSharedList();
+        final item = await endpoints.item.add(
+          as(aliceId),
+          list.id!,
+          'Milk',
+          noteText: 'the oat one',
+        );
+
+        // Bob ticks it off; the app sends Alice's note back untouched.
+        final saved = await endpoints.item.save(
+          as(bobId),
+          item.copyWith(isChecked: true),
+        );
+
+        expect(saved.note?.authorId, UuidValue.withValidation(aliceId));
+        expect(saved.note?.updatedAt, item.note?.updatedAt);
+      });
+
+      test('a first note on a noteless item is kept', () async {
+        final list = await aSharedList();
+        final item = await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+
+        final saved = await endpoints.item.save(
+          as(bobId),
+          item.copyWith(
+            note: Note(
+              text: 'the oat one',
+              authorId: UuidValue.withValidation(aliceId),
+              updatedAt: DateTime.utc(2000),
+            ),
+          ),
+        );
+
+        expect(saved.note?.text, 'the oat one');
+        expect(saved.note?.authorId, UuidValue.withValidation(bobId));
+        expect(saved.note?.updatedAt, isNot(DateTime.utc(2000)));
+      });
+    });
+
     test('me() reports the caller derived from the session', () async {
       final me = await endpoints.profile.me(as(aliceId));
       expect(me.userId, UuidValue.withValidation(aliceId));

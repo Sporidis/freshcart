@@ -264,9 +264,12 @@ abstract final class ItemService {
         incoming.copyWith(
           name: validName,
           quantity: validQuantity,
-          note: cleanNote == null
-              ? null
-              : incoming.note!.copyWith(text: cleanNote),
+          note: _savedNote(
+            stored: stored.note,
+            cleanText: cleanNote,
+            userId: userId,
+            now: now,
+          ),
           listId: stored.listId,
           addedBy: stored.addedBy,
           createdAt: stored.createdAt,
@@ -310,6 +313,28 @@ abstract final class ItemService {
       }
     }
     return result.saved;
+  }
+
+  /// The note to save, built from the [cleanText] the app sent (null = no
+  /// note).
+  ///
+  /// The app only sends the text. Who wrote it and when is decided here, from
+  /// the session, like `checkedBy`: otherwise someone could make a note look
+  /// like another member wrote it.
+  static Note? _savedNote({
+    required Note? stored,
+    required String? cleanText,
+    required UuidValue userId,
+    required DateTime now,
+  }) {
+    if (cleanText == null) return null;
+    return switch (stored) {
+      // Same text as before: keep who wrote it. Ticking off an item sends
+      // its note back unchanged, and that doesn't make you the author.
+      Note(:final text) when text == cleanText => stored,
+      // A new note, or changed text: the caller wrote it, now.
+      _ => Note(text: cleanText, authorId: userId, updatedAt: now),
+    };
   }
 
   /// Deletes an item (the caller must be on its list).
