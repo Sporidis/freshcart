@@ -93,9 +93,15 @@ class ListEndpoint extends Endpoint {
   /// Sends the whole [ShoppingList] each time (it's one small row). This is
   /// for live updates while the app is open, not push notifications.
   Stream<ShoppingList> watchList(Session session, UuidValue listId) async* {
-    await ListAccess.requireMember(session, listId, session.requireUserId);
-    yield* session.messages.createStream<ShoppingList>(
-      ListBroadcast.channelFor(listId),
+    final userId = session.requireUserId;
+    await ListAccess.requireMember(session, listId, userId);
+    yield* ListAccess.whileMember(
+      session,
+      listId,
+      userId,
+      session.messages.createStream<ShoppingList>(
+        ListBroadcast.channelFor(listId),
+      ),
     );
   }
 }

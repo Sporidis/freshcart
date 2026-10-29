@@ -98,15 +98,22 @@ class ItemEndpoint extends Endpoint {
   /// Live updates to a list's items.
   ///
   /// Sends only what changed (not the whole list); the app applies it.
-  /// Membership is checked once, when the stream starts. The stream stops
-  /// if the session ends.
+  /// Membership is checked when the stream starts, and again for every
+  /// change: the stream ends once the caller is no longer on the list. It
+  /// also stops if the session ends.
   ///
   /// This is for live updates while the app is open, not push
   /// notifications (those are for a closed app).
   Stream<ItemChange> watchList(Session session, UuidValue listId) async* {
-    await ListAccess.requireMember(session, listId, session.requireUserId);
-    yield* session.messages.createStream<ItemChange>(
-      ItemService.channelFor(listId),
+    final userId = session.requireUserId;
+    await ListAccess.requireMember(session, listId, userId);
+    yield* ListAccess.whileMember(
+      session,
+      listId,
+      userId,
+      session.messages.createStream<ItemChange>(
+        ItemService.channelFor(listId),
+      ),
     );
   }
 }

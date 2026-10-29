@@ -303,105 +303,6 @@ void main() {
       });
     });
 
-    group('watchList', () {
-      // MessageCentral.addListener runs synchronously, but the endpoint method
-      // does one DB round trip (the membership check) before reaching it, and
-      // the generated stream is lazy — it does not start running until
-      // something subscribes. A short real delay after subscribing gives that
-      // round trip time to finish before the mutation that should be observed.
-      Future<void> letSubscriptionSettle() =>
-          Future<void>.delayed(const Duration(milliseconds: 100));
-
-      test('emits the updated list when someone renames it', () async {
-        final list = await endpoints.list.create(as(aliceId), 'Groceries');
-
-        final events = <ShoppingList>[];
-        final subscription = endpoints.list
-            .watchList(as(aliceId), list.id!)
-            .listen(events.add);
-        addTearDown(subscription.cancel);
-        await letSubscriptionSettle();
-
-        await endpoints.list.rename(as(aliceId), list.id!, 'Weekend shop');
-        await letSubscriptionSettle();
-
-        expect(events, isNotEmpty);
-        expect(events.last.name, 'Weekend shop');
-      });
-
-      test('emits the updated member list when someone joins', () async {
-        final list = await endpoints.list.create(as(aliceId), 'Groceries');
-
-        final events = <ShoppingList>[];
-        final subscription = endpoints.list
-            .watchList(as(aliceId), list.id!)
-            .listen(events.add);
-        addTearDown(subscription.cancel);
-        await letSubscriptionSettle();
-
-        await endpoints.list.join(as(bobId), list.joinCode);
-        await letSubscriptionSettle();
-
-        expect(events, isNotEmpty);
-        expect(events.last.members, hasLength(2));
-      });
-
-      test('emits the drop when a member leaves', () async {
-        final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
-
-        final events = <ShoppingList>[];
-        final subscription = endpoints.list
-            .watchList(as(aliceId), list.id!)
-            .listen(events.add);
-        addTearDown(subscription.cancel);
-        await letSubscriptionSettle();
-
-        await endpoints.list.leave(as(bobId), list.id!);
-        await letSubscriptionSettle();
-
-        expect(events, isNotEmpty);
-        expect(events.last.members, hasLength(1));
-      });
-
-      test(
-        're-tapping a join link does not emit a duplicate notification',
-        () async {
-          final list = await endpoints.list.create(as(aliceId), 'Groceries');
-          await endpoints.list.join(as(bobId), list.joinCode);
-
-          final events = <ShoppingList>[];
-          final subscription = endpoints.list
-              .watchList(as(aliceId), list.id!)
-              .listen(events.add);
-          addTearDown(subscription.cancel);
-          await letSubscriptionSettle();
-
-          // Bob is already a member; joining again is a documented no-op.
-          await endpoints.list.join(as(bobId), list.joinCode);
-          await letSubscriptionSettle();
-
-          expect(
-            events,
-            isEmpty,
-            reason: 'a no-op join must not wake every other open client',
-          );
-        },
-      );
-
-      test('a non-member cannot open the stream', () async {
-        final list = await endpoints.list.create(as(aliceId), 'Groceries');
-
-        await expectLater(
-          endpoints.list
-              .watchList(as(bobId), list.id!)
-              .listen((_) {})
-              .asFuture<void>(),
-          throwsA(isA<NotAMemberException>()),
-        );
-      });
-    });
-
     group('members show who they are now, not who they were at join', () {
       ListMember memberIn(ShoppingList list, String userId) => list.members!
           .firstWhere((m) => m.userId == UuidValue.withValidation(userId));
@@ -530,4 +431,166 @@ void main() {
       });
     });
   });
+
+  // The live streams check membership for every message, in their own
+  // database call, while the change that triggered the message is still
+  // running. The default rollback mode allows only one database call at a
+  // time, so these tests run without it. Each test makes its own list with
+  // fresh user ids, so leftover rows don't affect other tests.
+  withServerpod(
+    'Given ListEndpoint live streams',
+    rollbackDatabase: RollbackDatabase.disabled,
+    (sessionBuilder, endpoints) {
+      TestSessionBuilder as(String userId) => sessionBuilder.copyWith(
+        authentication: AuthenticationOverride.authenticationInfo(userId, {}),
+      );
+
+      group('watchList', () {
+        // MessageCentral.addListener runs synchronously, but the endpoint method
+        // does one DB round trip (the membership check) before reaching it, and
+        // the generated stream is lazy — it does not start running until
+        // something subscribes. A short real delay after subscribing gives that
+        // round trip time to finish before the mutation that should be observed.
+        Future<void> letSubscriptionSettle() =>
+            Future<void>.delayed(const Duration(milliseconds: 100));
+
+        test('emits the updated list when someone renames it', () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+          final events = <ShoppingList>[];
+          final subscription = endpoints.list
+              .watchList(as(aliceId), list.id!)
+              .listen(events.add);
+          addTearDown(subscription.cancel);
+          await letSubscriptionSettle();
+
+          await endpoints.list.rename(as(aliceId), list.id!, 'Weekend shop');
+          await letSubscriptionSettle();
+
+          expect(events, isNotEmpty);
+          expect(events.last.name, 'Weekend shop');
+        });
+
+        test('emits the updated member list when someone joins', () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+          final events = <ShoppingList>[];
+          final subscription = endpoints.list
+              .watchList(as(aliceId), list.id!)
+              .listen(events.add);
+          addTearDown(subscription.cancel);
+          await letSubscriptionSettle();
+
+          await endpoints.list.join(as(bobId), list.joinCode);
+          await letSubscriptionSettle();
+
+          expect(events, isNotEmpty);
+          expect(events.last.members, hasLength(2));
+        });
+
+        test('emits the drop when a member leaves', () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+          await endpoints.list.join(as(bobId), list.joinCode);
+
+          final events = <ShoppingList>[];
+          final subscription = endpoints.list
+              .watchList(as(aliceId), list.id!)
+              .listen(events.add);
+          addTearDown(subscription.cancel);
+          await letSubscriptionSettle();
+
+          await endpoints.list.leave(as(bobId), list.id!);
+          await letSubscriptionSettle();
+
+          expect(events, isNotEmpty);
+          expect(events.last.members, hasLength(1));
+        });
+
+        test(
+          're-tapping a join link does not emit a duplicate notification',
+          () async {
+            final list = await endpoints.list.create(as(aliceId), 'Groceries');
+            await endpoints.list.join(as(bobId), list.joinCode);
+
+            final events = <ShoppingList>[];
+            final subscription = endpoints.list
+                .watchList(as(aliceId), list.id!)
+                .listen(events.add);
+            addTearDown(subscription.cancel);
+            await letSubscriptionSettle();
+
+            // Bob is already a member; joining again is a documented no-op.
+            await endpoints.list.join(as(bobId), list.joinCode);
+            await letSubscriptionSettle();
+
+            expect(
+              events,
+              isEmpty,
+              reason: 'a no-op join must not wake every other open client',
+            );
+          },
+        );
+
+        test('a non-member cannot open the stream', () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+          await expectLater(
+            endpoints.list
+                .watchList(as(bobId), list.id!)
+                .listen((_) {})
+                .asFuture<void>(),
+            throwsA(isA<NotAMemberException>()),
+          );
+        });
+        test('a removed member\'s stream ends, without the new member '
+            'list', () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+          await endpoints.list.join(as(bobId), list.joinCode);
+
+          final events = <ShoppingList>[];
+          var ended = false;
+          final subscription = endpoints.list
+              .watchList(as(bobId), list.id!)
+              .listen(events.add, onDone: () => ended = true);
+          addTearDown(subscription.cancel);
+          await letSubscriptionSettle();
+
+          await endpoints.list.removeMember(
+            as(aliceId),
+            list.id!,
+            UuidValue.withValidation(bobId),
+          );
+          await endpoints.list.rename(as(aliceId), list.id!, 'Secret plans');
+          await letSubscriptionSettle();
+
+          expect(ended, isTrue);
+          expect(events, isEmpty);
+        });
+
+        test('a removed member\'s item stream ends', () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+          await endpoints.list.join(as(bobId), list.joinCode);
+
+          final events = <ItemChange>[];
+          var ended = false;
+          final subscription = endpoints.item
+              .watchList(as(bobId), list.id!)
+              .listen(events.add, onDone: () => ended = true);
+          addTearDown(subscription.cancel);
+          await letSubscriptionSettle();
+
+          await endpoints.list.removeMember(
+            as(aliceId),
+            list.id!,
+            UuidValue.withValidation(bobId),
+          );
+          await endpoints.item.add(as(aliceId), list.id!, 'Milk');
+          await letSubscriptionSettle();
+
+          expect(ended, isTrue);
+          expect(events, isEmpty);
+        });
+      });
+    },
+  );
 }

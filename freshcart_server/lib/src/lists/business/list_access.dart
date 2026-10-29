@@ -11,14 +11,52 @@ abstract final class ListAccess {
     UuidValue userId, {
     Transaction? transaction,
   }) async {
-    final membership = await ListMember.db.findFirstRow(
+    final membership = await _membership(
       session,
-      where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
+      listId,
+      userId,
       transaction: transaction,
     );
     if (membership == null) throw NotAMemberException();
     return membership;
   }
+
+  /// [messages], passed on only while [userId] is still on [listId].
+  ///
+  /// For live streams. Checking membership once, when the stream starts, is
+  /// not enough: someone removed from the list would keep receiving its
+  /// changes until their app disconnects. The stream ends instead: quietly,
+  /// not with an error, because being removed isn't a failure of the stream.
+  ///
+  /// Built from stream operators, not `async*` with `await for`: an `async*`
+  /// only notices a cancel at its next `yield`, so a closed app would keep
+  /// its listener (and session) alive until the list's next change.
+  static Stream<T> whileMember<T>(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+    Stream<T> messages,
+  ) => messages
+      .asyncMap(
+        (message) async => (
+          message: message,
+          stillMember: await _membership(session, listId, userId) != null,
+        ),
+      )
+      .takeWhile((checked) => checked.stillMember)
+      .map((checked) => checked.message);
+
+  /// [userId]'s membership of [listId], or null if they aren't on it.
+  static Future<ListMember?> _membership(
+    Session session,
+    UuidValue listId,
+    UuidValue userId, {
+    Transaction? transaction,
+  }) => ListMember.db.findFirstRow(
+    session,
+    where: (t) => t.listId.equals(listId) & t.userId.equals(userId),
+    transaction: transaction,
+  );
 
   /// The list, if [userId] owns it.
   ///
