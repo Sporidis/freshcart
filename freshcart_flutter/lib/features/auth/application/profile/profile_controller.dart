@@ -55,7 +55,9 @@ class ProfileController extends _$ProfileController {
   Future<Failure?> linkEmail({
     required String email,
     required String password,
-  }) => _write(() => _auth.linkEmail(email: email, password: password));
+  }) => _write(
+    () => LinkEmail(_auth)(email: email, password: password),
+  );
 
   /// Signs out. If it works, the profile is loaded again from scratch.
   Future<Failure?> signOut() async {

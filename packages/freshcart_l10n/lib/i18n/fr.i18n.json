@@ -165,7 +165,9 @@
     "joinCodeInvalid": "Ce code d'invitation n’est pas valide",
     "joinCodeNotFound": "Ce code d'invitation ne correspond à aucune liste",
     "colorInvalid": "Couleur hexadécimale attendue, comme #4CAF50",
-    "emailInUse": "Cette adresse e-mail est déjà utilisée"
+    "emailInUse": "Cette adresse e-mail est déjà utilisée",
+    "passwordMissing": "Choisissez un mot de passe",
+    "passwordSpacesAtEnds": "Supprimez les espaces au début ou à la fin"
   },
   "account": {
     "title": "Sécurisez vos listes",

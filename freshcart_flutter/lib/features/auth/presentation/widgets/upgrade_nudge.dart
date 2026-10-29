@@ -112,6 +112,17 @@ class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
+    // Translated here (not when the error is saved), so it updates if the
+    // language changes. A password problem goes under the password field,
+    // everything else under the email.
+    final message = _failure?.toMessage(t);
+    final isPasswordIssue = switch (_failure) {
+      ValidationFailure(
+        issue: ValidationIssue(input: ValidatedInput.password),
+      ) =>
+        true,
+      _ => false,
+    };
     return AlertDialog(
       title: Text(t.account.action),
       content: Column(
@@ -124,9 +135,7 @@ class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: t.account.emailLabel,
-              // Translated here (not when the error is saved), so it
-              // updates if the language changes.
-              errorText: _failure?.toMessage(t),
+              errorText: isPasswordIssue ? null : message,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
@@ -134,7 +143,10 @@ class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
             controller: _password,
             enabled: !_busy,
             obscureText: true,
-            decoration: InputDecoration(labelText: t.account.passwordLabel),
+            decoration: InputDecoration(
+              labelText: t.account.passwordLabel,
+              errorText: isPasswordIssue ? message : null,
+            ),
           ),
         ],
       ),

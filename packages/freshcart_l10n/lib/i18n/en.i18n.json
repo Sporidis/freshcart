@@ -165,7 +165,9 @@
     "joinCodeInvalid": "That is not a valid join code",
     "joinCodeNotFound": "That code does not match a list",
     "colorInvalid": "Expected a hex colour like #4CAF50",
-    "emailInUse": "That email is already in use"
+    "emailInUse": "That email is already in use",
+    "passwordMissing": "Choose a password",
+    "passwordSpacesAtEnds": "Remove the spaces at the start or end"
   },
   "account": {
     "title": "Secure your lists",

@@ -165,7 +165,9 @@
     "joinCodeInvalid": "Hindi wastong code ng pagsali iyan",
     "joinCodeNotFound": "Walang listahang tumutugma sa code ng pagsali na iyan",
     "colorInvalid": "Hex na kulay ang kailangan, gaya ng #4CAF50",
-    "emailInUse": "Ginagamit na ang email na iyan"
+    "emailInUse": "Ginagamit na ang email na iyan",
+    "passwordMissing": "Pumili ng password",
+    "passwordSpacesAtEnds": "Alisin ang mga espasyo sa simula o dulo"
   },
   "account": {
     "title": "Protektahan ang iyong mga listahan",

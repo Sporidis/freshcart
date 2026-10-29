@@ -307,7 +307,17 @@ class FakeAuthRepository implements AuthRepository {
   Future<Result<AuthUser>> linkEmail({
     required String email,
     required String password,
-  }) => throw UnimplementedError();
+  }) async {
+    linkEmailCalls.add((email: email, password: password));
+    return linkEmailResult ??
+        Ok(AuthUser(id: testUser, displayName: 'Alex', isAnonymous: false));
+  }
+
+  /// What [linkEmail] will return. Defaults to a now-linked user.
+  Result<AuthUser>? linkEmailResult;
+
+  /// Every email and password [linkEmail] was called with, in order.
+  final List<({String email, String password})> linkEmailCalls = [];
 
   @override
   Future<Result<void>> signOut() => throw UnimplementedError();

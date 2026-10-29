@@ -15,6 +15,8 @@ extension ValidationIssueMessage on ValidationIssue {
       t.validation.displayNameMissing,
     MissingInput(input: ValidatedInput.avatarPhoto) =>
       t.validation.photoMissing,
+    MissingInput(input: ValidatedInput.password) =>
+      t.validation.passwordMissing,
     TooLongInput(:final max) => t.validation.tooLong(max: max),
     TooShortInput(:final min) => t.validation.tooShort(min: min),
     TooFewInput(input: ValidatedInput.quantity, :final min) =>
@@ -25,6 +27,9 @@ extension ValidationIssueMessage on ValidationIssue {
       t.validation.joinCodeInvalid,
     InvalidFormatInput(input: ValidatedInput.color) =>
       t.validation.colorInvalid,
+    // The password rule's only format check.
+    InvalidFormatInput(input: ValidatedInput.password) =>
+      t.validation.passwordSpacesAtEnds,
     NotFoundInput(input: ValidatedInput.joinCode) =>
       t.validation.joinCodeNotFound,
     AlreadyInUseInput(input: ValidatedInput.email) => t.validation.emailInUse,
