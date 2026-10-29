@@ -36,6 +36,10 @@ abstract final class AuthConfiguration {
   /// because it writes codes to the log.
   static EmailSender emailSender = const LoggingEmailSender();
 
+  // TODO: make the login emails more attractive (branded HTML layout, the
+  // code large and easy to copy) and translate them (nl default, en, fr, ru,
+  // tl), instead of the plain English one-liners below.
+
   /// Emails a registration code.
   static Future<void> sendRegistrationCode(
     Session session, {
