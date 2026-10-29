@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
+import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/notifications/business/fcm_push_sender.dart';
@@ -78,6 +79,23 @@ void run(List<String> args) async {
         ),
       ),
       '/app/**',
+    );
+  }
+
+  // Last, once everything is configured: the logging email sender writes
+  // verification codes to the log, so only development and test may run
+  // with it. Staging counts as production.
+  const logOnlyEmailModes = {
+    ServerpodRunMode.development,
+    ServerpodRunMode.test,
+  };
+  if (!logOnlyEmailModes.contains(pod.runMode) &&
+      AuthConfiguration.emailSender is LoggingEmailSender) {
+    throw StateError(
+      'Run mode "${pod.runMode}" needs a real EmailSender, but '
+      'AuthConfiguration.emailSender is LoggingEmailSender, which would '
+      'write verification codes to the log. Configure an email provider '
+      'before deploying.',
     );
   }
 

@@ -1,3 +1,5 @@
+import 'package:freshcart_server/src/auth/business/email_message.dart';
+import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:serverpod_auth_idp_server/providers/anonymous.dart';
@@ -27,28 +29,42 @@ abstract final class AuthConfiguration {
     ),
   ];
 
-  /// Sends a registration code.
+  /// Sends the login emails (verification and password-reset codes).
   ///
-  /// For now it's only logged. A real email service can be added when
-  /// deploying.
-  static void sendRegistrationCode(
+  /// The logging sender until a real one is set in `server.dart`; tests
+  /// keep the logging one. Production must not start with the logging one,
+  /// because it writes codes to the log.
+  static EmailSender emailSender = const LoggingEmailSender();
+
+  /// Emails a registration code.
+  static Future<void> sendRegistrationCode(
     Session session, {
     required String email,
     required UuidValue accountRequestId,
     required String verificationCode,
     required Transaction? transaction,
-  }) {
-    session.log('[EmailIdp] Registration code ($email): $verificationCode');
-  }
+  }) => emailSender.send(
+    session,
+    EmailMessage(
+      to: email,
+      subject: 'Your FreshCart code',
+      body: 'Your code to finish signing up: $verificationCode',
+    ),
+  );
 
-  /// Sends a password reset code (only logged for now).
-  static void sendPasswordResetCode(
+  /// Emails a password-reset code.
+  static Future<void> sendPasswordResetCode(
     Session session, {
     required String email,
     required UuidValue passwordResetRequestId,
     required String verificationCode,
     required Transaction? transaction,
-  }) {
-    session.log('[EmailIdp] Password reset code ($email): $verificationCode');
-  }
+  }) => emailSender.send(
+    session,
+    EmailMessage(
+      to: email,
+      subject: 'Reset your FreshCart password',
+      body: 'Your code to reset your password: $verificationCode',
+    ),
+  );
 }

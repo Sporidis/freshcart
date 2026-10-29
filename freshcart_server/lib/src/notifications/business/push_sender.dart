@@ -46,7 +46,8 @@ class LoggingPushSender implements PushSender {
   @override
   Future<void> send(Session session, PushMessage message) async {
     session.log(
-      '[push] "${message.title}" / "${message.body}" '
+      '[LoggingPushSender] not sent, logged instead: '
+      '"${message.title}" / "${message.body}" '
       '-> ${message.tokens.length} device(s) for list ${message.listId}',
     );
   }
