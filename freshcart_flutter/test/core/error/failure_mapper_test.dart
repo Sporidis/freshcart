@@ -60,12 +60,6 @@ void main() {
           ValidationIssue.notFound(ValidatedInput.joinCode),
         ),
       );
-      expect(
-        mapExceptionToFailure(dto.EmailAlreadyInUseException()),
-        const Failure.validation(
-          ValidationIssue.alreadyInUse(ValidatedInput.email),
-        ),
-      );
     });
 
     test('maps the email link errors without hinting at existing accounts', () {

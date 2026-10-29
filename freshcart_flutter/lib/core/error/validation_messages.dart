@@ -36,7 +36,6 @@ extension ValidationIssueMessage on ValidationIssue {
       t.validation.codeInvalid,
     NotFoundInput(input: ValidatedInput.joinCode) =>
       t.validation.joinCodeNotFound,
-    AlreadyInUseInput(input: ValidatedInput.email) => t.validation.emailInUse,
     // Combinations no rule produces today.
     _ => t.errors.validation,
   };

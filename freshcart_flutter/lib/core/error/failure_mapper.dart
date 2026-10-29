@@ -31,9 +31,6 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.InvalidJoinCodeException() => const Failure.validation(
     ValidationIssue.notFound(ValidatedInput.joinCode),
   ),
-  dto.EmailAlreadyInUseException() => const Failure.validation(
-    ValidationIssue.alreadyInUse(ValidatedInput.email),
-  ),
   // Serverpod's email sign-up steps, used to link an email. The reason is
   // deliberately vague (no hint whether an address has an account).
   EmailAccountRequestException(:final reason) => switch (reason) {

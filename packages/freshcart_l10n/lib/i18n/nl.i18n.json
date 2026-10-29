@@ -166,7 +166,6 @@
     "joinCodeInvalid": "Dat is geen geldige deelcode",
     "joinCodeNotFound": "Die deelcode hoort bij geen enkele lijst",
     "colorInvalid": "Verwacht een hexkleur zoals #4CAF50",
-    "emailInUse": "Dat e-mailadres is al in gebruik",
     "passwordMissing": "Kies een wachtwoord",
     "passwordSpacesAtEnds": "Haal de spaties aan het begin of einde weg",
     "emailInvalid": "Dat is geen geldig e-mailadres",
