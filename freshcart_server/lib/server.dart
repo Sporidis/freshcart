@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
+import 'package:freshcart_server/src/auth/business/brevo_email_sender.dart';
 import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
@@ -40,6 +41,18 @@ void run(List<String> args) async {
   );
   if (fcmSender != null) {
     NotificationService.sender = fcmSender;
+  }
+
+  // Real email (Brevo) if passwords.yaml has a key and a verified sender.
+  // Without them, emails are only logged, which the check before
+  // pod.start() allows only in development and test.
+  final brevoApiKey = pod.getPassword('brevoApiKey');
+  final brevoSenderEmail = pod.getPassword('brevoSenderEmail');
+  if (brevoApiKey != null && brevoSenderEmail != null) {
+    AuthConfiguration.emailSender = BrevoEmailSender(
+      apiKey: brevoApiKey,
+      senderEmail: brevoSenderEmail,
+    );
   }
 
   pod.webServer.addRoute(AppRedirectRoute(), '/');
