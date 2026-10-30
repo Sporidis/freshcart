@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
+import 'package:freshcart_server/src/auth/business/account_retention.dart';
 import 'package:freshcart_server/src/auth/business/email_message.dart';
 import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:serverpod/serverpod.dart';
@@ -13,9 +14,13 @@ import 'package:serverpod_auth_idp_server/providers/email.dart';
 /// code would fail in tests ("AuthServices is not set") but work in
 /// production.
 abstract final class AuthConfiguration {
-  /// Uses JWT for login keys.
+  /// Uses JWT for login keys. A session stays usable for
+  /// [AccountRetention.sessionLifetime] without being used, not Serverpod's
+  /// 14 days: for an anonymous account the session is its only key.
   static List<TokenManagerBuilder> get tokenManagerBuilders => [
-    JwtConfigFromPasswords(),
+    JwtConfigFromPasswords(
+      refreshTokenLifetime: AccountRetention.sessionLifetime,
+    ),
   ];
 
   /// The ways a user can log in.

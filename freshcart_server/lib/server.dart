@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
+import 'package:freshcart_server/src/auth/business/account_retention.dart';
 import 'package:freshcart_server/src/auth/business/brevo_email_sender.dart';
 import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
@@ -114,4 +115,15 @@ void run(List<String> args) async {
 
   // Start the server.
   await pod.start();
+
+  // The daily retention cleanup (AccountRetention). Replaced on every
+  // start, so restarts never pile up copies of the same job.
+  await pod.futureCalls.cancel(AccountRetention.jobId);
+  await pod.futureCalls
+      .callWithDelay(
+        const Duration(minutes: 5),
+        identifier: AccountRetention.jobId,
+      )
+      .accountRetention
+      .run();
 }

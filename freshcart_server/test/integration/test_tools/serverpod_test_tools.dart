@@ -42,6 +42,7 @@ import 'dart:typed_data' as _i16;
 import 'package:freshcart_server/src/generated/shops/models/shop.dart' as _i17;
 import 'package:freshcart_server/src/generated/shops/models/shop_item_disposition.dart'
     as _i18;
+import 'package:freshcart_server/src/generated/future_calls.dart' as _i19;
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:freshcart_server/src/generated/endpoints.dart';
 export 'package:serverpod_test/serverpod_test_public_exports.dart';
@@ -156,6 +157,8 @@ void withServerpod(
 }
 
 class TestEndpoints {
+  late final futureCalls = _FutureCalls();
+
   late final _AccountEndpoint account;
 
   late final _AnonymousIdpEndpoint anonymousIdp;
@@ -219,6 +222,10 @@ class _InternalTestEndpoints extends TestEndpoints
       serializationManager,
     );
   }
+}
+
+class _FutureCalls {
+  late final accountRetention = _AccountRetentionFutureCall();
 }
 
 class _AccountEndpoint {
@@ -2094,5 +2101,20 @@ class _ShopEndpoint {
         await _localUniqueSession.close();
       }
     });
+  }
+}
+
+class _AccountRetentionFutureCall {
+  Future<void> run(_i1.TestSessionBuilder sessionBuilder) async {
+    var _localUniqueSession = (sessionBuilder as _i1.InternalTestSessionBuilder)
+        .internalBuild();
+    try {
+      await _i19.AccountRetentionRunFutureCall().invoke(
+        _localUniqueSession,
+        null,
+      );
+    } finally {
+      await _localUniqueSession.close();
+    }
   }
 }
