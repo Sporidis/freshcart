@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:freshcart_domain/src/auth/entities/auth_user.dart';
 import 'package:freshcart_domain/src/auth/entities/sign_in.dart';
+import 'package:freshcart_domain/src/auth/value_objects/user_id.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 
@@ -13,6 +14,14 @@ import 'package:freshcart_domain/src/shops/value_objects/hex_color.dart';
 abstract interface class AuthRepository {
   /// The current user, or `null` before the first sign-in completes.
   AuthUser? get currentUser;
+
+  /// The id of the account signed in on this phone, known without the
+  /// server (from the saved session), or `null` if there is none.
+  ///
+  /// Unlike [currentUser], it doesn't need the profile to have loaded, so
+  /// it's there after a start without a connection, when work made offline
+  /// still has to say who made it.
+  UserId? get sessionUserId;
 
   /// Sends the user again on every change: sign-in, name change, linking an
   /// email, sign-out.

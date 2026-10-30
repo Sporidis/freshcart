@@ -32,6 +32,12 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthUser? get currentUser => _currentUser;
 
   @override
+  UserId? get sessionUserId {
+    final userId = _client.auth.authInfo?.authUserId;
+    return userId == null ? null : UserId(userId.uuid);
+  }
+
+  @override
   Stream<AuthUser?> authStateChanges() => _changes.stream;
 
   @override

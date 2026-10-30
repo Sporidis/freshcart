@@ -19,6 +19,10 @@ class FakeAuthRepository implements AuthRepository {
   @override
   AuthUser? get currentUser => _db.users[_me];
 
+  /// The demo persona is always signed in on its phone.
+  @override
+  UserId? get sessionUserId => _me;
+
   @override
   Stream<AuthUser?> authStateChanges() => _db.watch(() => currentUser);
 

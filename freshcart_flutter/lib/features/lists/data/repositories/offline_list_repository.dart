@@ -168,8 +168,8 @@ ListRepository listRepository(Ref ref) => OfflineListRepository(
   ref.watch(pendingOperationsQueueProvider),
   ref.watch(cachedListsStoreProvider),
   () =>
-      ref.read(authRepositoryProvider).currentUser?.id ??
+      ref.read(authRepositoryProvider).sessionUserId ??
       (throw StateError(
-        'currentUserId not resolved — cannot queue an offline change without a known user',
+        'sessionUserId not resolved — no session found at all',
       )),
 );

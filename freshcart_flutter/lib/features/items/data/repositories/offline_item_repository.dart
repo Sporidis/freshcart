@@ -266,9 +266,9 @@ ItemRepository itemRepository(Ref ref) {
     remote,
     ref.watch(pendingOperationsQueueProvider),
     () =>
-        ref.read(authRepositoryProvider).currentUser?.id ??
+        ref.read(authRepositoryProvider).sessionUserId ??
         (throw StateError(
-          'currentUserId not resolved — cannot queue an offline add without a known user',
+          'sessionUserId not resolved — no session found at all',
         )),
     watchServer: remote.watchServer,
   );

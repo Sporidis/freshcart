@@ -35,18 +35,24 @@ void main() {
   late StreamController<ConnectivityStatus> status;
   late _FakeReplayer replayer;
 
-  /// Starts the coordinator with a fake connection and replayer.
-  ProviderContainer start({bool signedIn = true}) {
+  /// How many times sign-in ran.
+  late int signIns;
+
+  /// Starts the coordinator with a fake connection and replayer. Sign-in
+  /// fails the first [failingSignIns] times, then works.
+  ProviderContainer start({bool signedIn = true, int failingSignIns = 0}) {
+    signIns = 0;
     status = StreamController<ConnectivityStatus>();
     replayer = _FakeReplayer();
     final container = ProviderContainer(
       overrides: [
         connectivityStatusProvider.overrideWith((ref) => status.stream),
         pendingOperationsReplayerProvider.overrideWithValue(replayer),
-        signInResultProvider.overrideWith(
-          (ref) async =>
-              signedIn ? Ok(aSignIn()) : const Err(Failure.network()),
-        ),
+        signInResultProvider.overrideWith((ref) async {
+          signIns++;
+          final works = signedIn && signIns > failingSignIns;
+          return works ? Ok(aSignIn()) : const Err(Failure.network());
+        }),
       ],
     );
     addTearDown(container.dispose);
@@ -130,5 +136,30 @@ void main() {
     start(signedIn: false);
     await emit(ConnectivityStatus.online);
     expect(replayer.calls, 0);
+  });
+
+  test('a sign-in that failed at start is retried on coming back online, '
+      'and then the queue is sent', () async {
+    final container = start(failingSignIns: 1);
+    // The start: no server, so sign-in failed.
+    await container.read(signInResultProvider.future);
+    expect(signIns, 1);
+
+    await emit(ConnectivityStatus.online);
+
+    expect(signIns, 2);
+    expect(replayer.calls, 1);
+  });
+
+  test('a sign-in that recovers some other way also sends the queue', () async {
+    final container = start(failingSignIns: 1);
+    await container.read(signInResultProvider.future);
+
+    // E.g. retried on coming back to the app, the network never dropped.
+    container.invalidate(signInResultProvider);
+    await container.read(signInResultProvider.future);
+    await pumpEventQueue();
+
+    expect(replayer.calls, 1);
   });
 }

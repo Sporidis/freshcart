@@ -1,8 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/lists/application/lists/lists_controller.dart';
 
-/// Reloads the user's shopping lists when the app returns from the background.
+/// Reloads the user's shopping lists when the app returns from the
+/// background, and retries a sign-in that failed at start.
 ///
 /// The lists overview is fetched once, not streamed live. So if someone
 /// creates, renames or deletes a list on another device while this app is in
@@ -42,6 +44,11 @@ class _SessionResumeObserverState extends ConsumerState<SessionResumeObserver>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     // We only care about the moment the user comes back to the app.
     if (state != AppLifecycleState.resumed) return;
+    // A start without the server left sign-in failed: try again now, or
+    // the profile never loads and the offline queue is never sent.
+    if (signInFailed(ref.read(signInResultProvider))) {
+      ref.invalidate(signInResultProvider);
+    }
     // Throw away the cached lists so the controller fetches them again.
     ref.invalidate(listsControllerProvider);
   }

@@ -30,6 +30,13 @@ class FakeAuthRepository implements AuthRepository {
   @override
   AuthUser? get currentUser => user.valueOrNull;
 
+  /// What [sessionUserId] returns: the id of the session saved on the
+  /// phone, which a test can set while [currentUser] is still unknown.
+  UserId? session;
+
+  @override
+  UserId? get sessionUserId => session;
+
   @override
   Stream<AuthUser?> authStateChanges() => _changes.stream;
 

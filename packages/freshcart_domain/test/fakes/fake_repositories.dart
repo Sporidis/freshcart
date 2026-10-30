@@ -299,6 +299,9 @@ class FakeAuthRepository implements AuthRepository {
   AuthUser? get currentUser => throw UnimplementedError();
 
   @override
+  UserId? get sessionUserId => throw UnimplementedError();
+
+  @override
   Stream<AuthUser?> authStateChanges() => throw UnimplementedError();
 
   @override

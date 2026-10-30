@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/core/offline/replay/pending_operations_replayer.dart';
 import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
@@ -34,6 +35,11 @@ void replayQueueWhenOnline(Ref ref) {
     if (replaying) return;
     replaying = true;
     try {
+      // A start without the server leaves sign-in failed, and nothing else
+      // retries it. Back online is the moment it can work.
+      if (signInFailed(ref.read(signInResultProvider))) {
+        ref.invalidate(signInResultProvider);
+      }
       // At app start we can be online before sign-in is done. Replaying
       // then would fail with "unauthorized", so wait for it.
       final signIn = await ref.read(signInResultProvider.future);
@@ -48,6 +54,17 @@ void replayQueueWhenOnline(Ref ref) {
       replaying = false;
     }
   }
+
+  // A sign-in that worked after failing (retried on coming back to the
+  // app, while the network never dropped) also means: send the queue now.
+  ref.listen(signInResultProvider, (previous, next) {
+    final failedBefore = previous?.value?.isOk == false;
+    final signedInNow = switch (next) {
+      AsyncData(value: Ok(), isLoading: false) => true,
+      _ => false,
+    };
+    if (failedBefore && signedInNow) unawaited(replayOnce());
+  });
 
   ref.listen(connectivityStatusProvider, (previous, next) {
     // Replay only on the switch to online, from anything that isn't online:
