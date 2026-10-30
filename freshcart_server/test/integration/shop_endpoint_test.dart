@@ -2,6 +2,7 @@ import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 
+import 'support/invite_code.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 void main() {
@@ -18,7 +19,10 @@ void main() {
 
     Future<ShoppingList> aSharedList() async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
       return list;
     }
 

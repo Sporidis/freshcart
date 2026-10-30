@@ -7,8 +7,17 @@ fields:
   ### Readable list name.
   name: String
 
-  ### The short code someone types to join this list.
-  joinCode: String
+  ### The code used to join this list, valid until [joinCodeExpiresAt].
+  ###
+  ### Null until the first invite is opened. Always written together with
+  ### [joinCodeExpiresAt]; the pair maps to the domain's `ListInvite`.
+  joinCode: String?
+
+  ### The moment [joinCode] stops being accepted.
+  ###
+  ### Null on rows created before invites expired, which makes their legacy
+  ### codes unusable.
+  joinCodeExpiresAt: DateTime?
 
   ### The `authUserId` of whoever created the list.
   ###
@@ -37,11 +46,11 @@ fields:
   ### suggestion chips.
   itemNameHistory: List<ItemNameHistory>?, relation(name=list_item_names)
 
-  ### Whether checked items clear themselves the moment the whole list is
-  ### checked, instead of waiting for an explicit "Clear checked" tap
-  ### (decisions #79). `defaultPersist=false` so every existing row backfills
-  ### to the same off default a brand-new list gets -- the same pattern
-  ### `Shop.isActive` already used for an added-in-place NOT NULL column.
+  ### Whether checked items are cleared automatically once every item on the
+  ### list is checked, rather than by an explicit "Clear checked" action.
+  ###
+  ### `defaultPersist=false` backfills existing rows with the same default
+  ### as new lists, following the pattern used for `Shop.isActive`.
   clearCheckedAfterShopping: bool, defaultModel=false, defaultPersist=false
 
 indexes:

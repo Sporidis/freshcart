@@ -4,6 +4,7 @@ import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/lists/business/list_broadcast.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
 import 'package:freshcart_server/src/lists/business/member_profiles.dart';
+import 'package:freshcart_server/src/lists/business/shopping_list_invite.dart';
 import 'package:freshcart_server/src/notifications/business/notification_service.dart';
 import 'package:freshcart_server/src/profile/business/profile_service.dart';
 import 'package:serverpod/serverpod.dart';
@@ -33,7 +34,10 @@ abstract final class ListMembershipService {
       session,
       where: (t) => t.joinCode.equals(code),
     );
-    if (list == null) throw InvalidJoinCodeException();
+    // Expired and unknown codes raise the same error, so callers cannot
+    // learn whether a code was ever issued.
+    final isOpen = list?.invite?.isOpenAt(DateTime.now().toUtc()) ?? false;
+    if (list == null || !isOpen) throw InvalidJoinCodeException();
 
     final existing = await ListMember.db.findFirstRow(
       session,

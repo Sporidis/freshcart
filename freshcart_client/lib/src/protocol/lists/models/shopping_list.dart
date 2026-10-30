@@ -25,7 +25,8 @@ abstract class ShoppingList implements _i1.SerializableModel {
   ShoppingList._({
     this.id,
     required this.name,
-    required this.joinCode,
+    this.joinCode,
+    this.joinCodeExpiresAt,
     required this.ownerId,
     DateTime? createdAt,
     this.members,
@@ -41,7 +42,8 @@ abstract class ShoppingList implements _i1.SerializableModel {
   factory ShoppingList({
     _i1.UuidValue? id,
     required String name,
-    required String joinCode,
+    String? joinCode,
+    DateTime? joinCodeExpiresAt,
     required _i1.UuidValue ownerId,
     DateTime? createdAt,
     List<_i2.ListMember>? members,
@@ -59,7 +61,12 @@ abstract class ShoppingList implements _i1.SerializableModel {
           ? null
           : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       name: jsonSerialization['name'] as String,
-      joinCode: jsonSerialization['joinCode'] as String,
+      joinCode: jsonSerialization['joinCode'] as String?,
+      joinCodeExpiresAt: jsonSerialization['joinCodeExpiresAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['joinCodeExpiresAt'],
+            ),
       ownerId: _i1.UuidValueJsonExtension.fromJson(
         jsonSerialization['ownerId'],
       ),
@@ -113,8 +120,17 @@ abstract class ShoppingList implements _i1.SerializableModel {
   /// Readable list name.
   String name;
 
-  /// The short code someone types to join this list.
-  String joinCode;
+  /// The code used to join this list, valid until [joinCodeExpiresAt].
+  ///
+  /// Null until the first invite is opened. Always written together with
+  /// [joinCodeExpiresAt]; the pair maps to the domain's `ListInvite`.
+  String? joinCode;
+
+  /// The moment [joinCode] stops being accepted.
+  ///
+  /// Null on rows created before invites expired, which makes their legacy
+  /// codes unusable.
+  DateTime? joinCodeExpiresAt;
 
   /// The `authUserId` of whoever created the list.
   ///
@@ -143,11 +159,11 @@ abstract class ShoppingList implements _i1.SerializableModel {
   /// suggestion chips.
   List<_i7.ItemNameHistory>? itemNameHistory;
 
-  /// Whether checked items clear themselves the moment the whole list is
-  /// checked, instead of waiting for an explicit "Clear checked" tap
-  /// (decisions #79). `defaultPersist=false` so every existing row backfills
-  /// to the same off default a brand-new list gets -- the same pattern
-  /// `Shop.isActive` already used for an added-in-place NOT NULL column.
+  /// Whether checked items are cleared automatically once every item on the
+  /// list is checked, rather than by an explicit "Clear checked" action.
+  ///
+  /// `defaultPersist=false` backfills existing rows with the same default
+  /// as new lists, following the pattern used for `Shop.isActive`.
   bool clearCheckedAfterShopping;
 
   /// Returns a shallow copy of this [ShoppingList]
@@ -157,6 +173,7 @@ abstract class ShoppingList implements _i1.SerializableModel {
     _i1.UuidValue? id,
     String? name,
     String? joinCode,
+    DateTime? joinCodeExpiresAt,
     _i1.UuidValue? ownerId,
     DateTime? createdAt,
     List<_i2.ListMember>? members,
@@ -173,7 +190,9 @@ abstract class ShoppingList implements _i1.SerializableModel {
       '__className__': 'ShoppingList',
       if (id != null) 'id': id?.toJson(),
       'name': name,
-      'joinCode': joinCode,
+      if (joinCode != null) 'joinCode': joinCode,
+      if (joinCodeExpiresAt != null)
+        'joinCodeExpiresAt': joinCodeExpiresAt?.toJson(),
       'ownerId': ownerId.toJson(),
       'createdAt': createdAt.toJson(),
       if (members != null)
@@ -205,7 +224,8 @@ class _ShoppingListImpl extends ShoppingList {
   _ShoppingListImpl({
     _i1.UuidValue? id,
     required String name,
-    required String joinCode,
+    String? joinCode,
+    DateTime? joinCodeExpiresAt,
     required _i1.UuidValue ownerId,
     DateTime? createdAt,
     List<_i2.ListMember>? members,
@@ -219,6 +239,7 @@ class _ShoppingListImpl extends ShoppingList {
          id: id,
          name: name,
          joinCode: joinCode,
+         joinCodeExpiresAt: joinCodeExpiresAt,
          ownerId: ownerId,
          createdAt: createdAt,
          members: members,
@@ -237,7 +258,8 @@ class _ShoppingListImpl extends ShoppingList {
   ShoppingList copyWith({
     Object? id = _Undefined,
     String? name,
-    String? joinCode,
+    Object? joinCode = _Undefined,
+    Object? joinCodeExpiresAt = _Undefined,
     _i1.UuidValue? ownerId,
     DateTime? createdAt,
     Object? members = _Undefined,
@@ -251,7 +273,10 @@ class _ShoppingListImpl extends ShoppingList {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
       name: name ?? this.name,
-      joinCode: joinCode ?? this.joinCode,
+      joinCode: joinCode is String? ? joinCode : this.joinCode,
+      joinCodeExpiresAt: joinCodeExpiresAt is DateTime?
+          ? joinCodeExpiresAt
+          : this.joinCodeExpiresAt,
       ownerId: ownerId ?? this.ownerId,
       createdAt: createdAt ?? this.createdAt,
       members: members is List<_i2.ListMember>?

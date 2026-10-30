@@ -26,7 +26,8 @@ abstract class ShoppingList
   ShoppingList._({
     this.id,
     required this.name,
-    required this.joinCode,
+    this.joinCode,
+    this.joinCodeExpiresAt,
     required this.ownerId,
     DateTime? createdAt,
     this.members,
@@ -42,7 +43,8 @@ abstract class ShoppingList
   factory ShoppingList({
     _i1.UuidValue? id,
     required String name,
-    required String joinCode,
+    String? joinCode,
+    DateTime? joinCodeExpiresAt,
     required _i1.UuidValue ownerId,
     DateTime? createdAt,
     List<_i2.ListMember>? members,
@@ -60,7 +62,12 @@ abstract class ShoppingList
           ? null
           : _i1.UuidValueJsonExtension.fromJson(jsonSerialization['id']),
       name: jsonSerialization['name'] as String,
-      joinCode: jsonSerialization['joinCode'] as String,
+      joinCode: jsonSerialization['joinCode'] as String?,
+      joinCodeExpiresAt: jsonSerialization['joinCodeExpiresAt'] == null
+          ? null
+          : _i1.DateTimeJsonExtension.fromJson(
+              jsonSerialization['joinCodeExpiresAt'],
+            ),
       ownerId: _i1.UuidValueJsonExtension.fromJson(
         jsonSerialization['ownerId'],
       ),
@@ -116,8 +123,17 @@ abstract class ShoppingList
   /// Readable list name.
   String name;
 
-  /// The short code someone types to join this list.
-  String joinCode;
+  /// The code used to join this list, valid until [joinCodeExpiresAt].
+  ///
+  /// Null until the first invite is opened. Always written together with
+  /// [joinCodeExpiresAt]; the pair maps to the domain's `ListInvite`.
+  String? joinCode;
+
+  /// The moment [joinCode] stops being accepted.
+  ///
+  /// Null on rows created before invites expired, which makes their legacy
+  /// codes unusable.
+  DateTime? joinCodeExpiresAt;
 
   /// The `authUserId` of whoever created the list.
   ///
@@ -146,11 +162,11 @@ abstract class ShoppingList
   /// suggestion chips.
   List<_i7.ItemNameHistory>? itemNameHistory;
 
-  /// Whether checked items clear themselves the moment the whole list is
-  /// checked, instead of waiting for an explicit "Clear checked" tap
-  /// (decisions #79). `defaultPersist=false` so every existing row backfills
-  /// to the same off default a brand-new list gets -- the same pattern
-  /// `Shop.isActive` already used for an added-in-place NOT NULL column.
+  /// Whether checked items are cleared automatically once every item on the
+  /// list is checked, rather than by an explicit "Clear checked" action.
+  ///
+  /// `defaultPersist=false` backfills existing rows with the same default
+  /// as new lists, following the pattern used for `Shop.isActive`.
   bool clearCheckedAfterShopping;
 
   @override
@@ -163,6 +179,7 @@ abstract class ShoppingList
     _i1.UuidValue? id,
     String? name,
     String? joinCode,
+    DateTime? joinCodeExpiresAt,
     _i1.UuidValue? ownerId,
     DateTime? createdAt,
     List<_i2.ListMember>? members,
@@ -179,7 +196,9 @@ abstract class ShoppingList
       '__className__': 'ShoppingList',
       if (id != null) 'id': id?.toJson(),
       'name': name,
-      'joinCode': joinCode,
+      if (joinCode != null) 'joinCode': joinCode,
+      if (joinCodeExpiresAt != null)
+        'joinCodeExpiresAt': joinCodeExpiresAt?.toJson(),
       'ownerId': ownerId.toJson(),
       'createdAt': createdAt.toJson(),
       if (members != null)
@@ -205,7 +224,9 @@ abstract class ShoppingList
       '__className__': 'ShoppingList',
       if (id != null) 'id': id?.toJson(),
       'name': name,
-      'joinCode': joinCode,
+      if (joinCode != null) 'joinCode': joinCode,
+      if (joinCodeExpiresAt != null)
+        'joinCodeExpiresAt': joinCodeExpiresAt?.toJson(),
       'ownerId': ownerId.toJson(),
       'createdAt': createdAt.toJson(),
       if (members != null)
@@ -278,7 +299,8 @@ class _ShoppingListImpl extends ShoppingList {
   _ShoppingListImpl({
     _i1.UuidValue? id,
     required String name,
-    required String joinCode,
+    String? joinCode,
+    DateTime? joinCodeExpiresAt,
     required _i1.UuidValue ownerId,
     DateTime? createdAt,
     List<_i2.ListMember>? members,
@@ -292,6 +314,7 @@ class _ShoppingListImpl extends ShoppingList {
          id: id,
          name: name,
          joinCode: joinCode,
+         joinCodeExpiresAt: joinCodeExpiresAt,
          ownerId: ownerId,
          createdAt: createdAt,
          members: members,
@@ -310,7 +333,8 @@ class _ShoppingListImpl extends ShoppingList {
   ShoppingList copyWith({
     Object? id = _Undefined,
     String? name,
-    String? joinCode,
+    Object? joinCode = _Undefined,
+    Object? joinCodeExpiresAt = _Undefined,
     _i1.UuidValue? ownerId,
     DateTime? createdAt,
     Object? members = _Undefined,
@@ -324,7 +348,10 @@ class _ShoppingListImpl extends ShoppingList {
     return ShoppingList(
       id: id is _i1.UuidValue? ? id : this.id,
       name: name ?? this.name,
-      joinCode: joinCode ?? this.joinCode,
+      joinCode: joinCode is String? ? joinCode : this.joinCode,
+      joinCodeExpiresAt: joinCodeExpiresAt is DateTime?
+          ? joinCodeExpiresAt
+          : this.joinCodeExpiresAt,
       ownerId: ownerId ?? this.ownerId,
       createdAt: createdAt ?? this.createdAt,
       members: members is List<_i2.ListMember>?
@@ -360,10 +387,16 @@ class ShoppingListUpdateTable extends _i1.UpdateTable<ShoppingListTable> {
     value,
   );
 
-  _i1.ColumnValue<String, String> joinCode(String value) => _i1.ColumnValue(
+  _i1.ColumnValue<String, String> joinCode(String? value) => _i1.ColumnValue(
     table.joinCode,
     value,
   );
+
+  _i1.ColumnValue<DateTime, DateTime> joinCodeExpiresAt(DateTime? value) =>
+      _i1.ColumnValue(
+        table.joinCodeExpiresAt,
+        value,
+      );
 
   _i1.ColumnValue<_i1.UuidValue, _i1.UuidValue> ownerId(_i1.UuidValue value) =>
       _i1.ColumnValue(
@@ -396,6 +429,10 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
       'joinCode',
       this,
     );
+    joinCodeExpiresAt = _i1.ColumnDateTime(
+      'joinCodeExpiresAt',
+      this,
+    );
     ownerId = _i1.ColumnUuid(
       'ownerId',
       this,
@@ -416,8 +453,17 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
   /// Readable list name.
   late final _i1.ColumnString name;
 
-  /// The short code someone types to join this list.
+  /// The code used to join this list, valid until [joinCodeExpiresAt].
+  ///
+  /// Null until the first invite is opened. Always written together with
+  /// [joinCodeExpiresAt]; the pair maps to the domain's `ListInvite`.
   late final _i1.ColumnString joinCode;
+
+  /// The moment [joinCode] stops being accepted.
+  ///
+  /// Null on rows created before invites expired, which makes their legacy
+  /// codes unusable.
+  late final _i1.ColumnDateTime joinCodeExpiresAt;
 
   /// The `authUserId` of whoever created the list.
   ///
@@ -465,11 +511,11 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
   /// suggestion chips.
   _i1.ManyRelation<_i7.ItemNameHistoryTable>? _itemNameHistory;
 
-  /// Whether checked items clear themselves the moment the whole list is
-  /// checked, instead of waiting for an explicit "Clear checked" tap
-  /// (decisions #79). `defaultPersist=false` so every existing row backfills
-  /// to the same off default a brand-new list gets -- the same pattern
-  /// `Shop.isActive` already used for an added-in-place NOT NULL column.
+  /// Whether checked items are cleared automatically once every item on the
+  /// list is checked, rather than by an explicit "Clear checked" action.
+  ///
+  /// `defaultPersist=false` backfills existing rows with the same default
+  /// as new lists, following the pattern used for `Shop.isActive`.
   late final _i1.ColumnBool clearCheckedAfterShopping;
 
   _i2.ListMemberTable get __members {
@@ -669,6 +715,7 @@ class ShoppingListTable extends _i1.Table<_i1.UuidValue?> {
     id,
     name,
     joinCode,
+    joinCodeExpiresAt,
     ownerId,
     createdAt,
     clearCheckedAfterShopping,

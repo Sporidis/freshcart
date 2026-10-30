@@ -30,6 +30,7 @@ list:
   - byId:
   - summaries:
   - create:
+  - openInvite:
   - join:
   - rename:
   - setClearCheckedAfterShopping:

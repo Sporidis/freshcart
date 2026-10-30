@@ -5,6 +5,7 @@ import 'package:freshcart_server/src/lists/business/join_code_generator.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/lists/business/list_broadcast.dart';
 import 'package:freshcart_server/src/lists/business/member_profiles.dart';
+import 'package:freshcart_server/src/lists/business/shopping_list_invite.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// The logic for shopping lists.
@@ -65,10 +66,6 @@ abstract final class ListService {
             session,
             ShoppingList(
               name: validName,
-              joinCode: await _uniqueJoinCode(
-                session,
-                transaction: transaction,
-              ),
               ownerId: userId,
               createdAt: DateTime.now().toUtc(),
             ),
@@ -87,6 +84,67 @@ abstract final class ListService {
           return list;
         })
         .then((list) => MemberProfiles.attachTo(session, list));
+  }
+
+  /// Returns [listId] with an invite [userId] can share: the current invite
+  /// if it is worth reusing, otherwise a newly issued one.
+  ///
+  /// Open to any member. The row is locked for the duration of the
+  /// transaction, so concurrent requests receive the same code rather than
+  /// overwriting each other.
+  static Future<ShoppingList> openInvite(
+    Session session,
+    UuidValue listId,
+    UuidValue userId,
+  ) async {
+    await ListAccess.requireMember(session, listId, userId);
+    final now = DateTime.now().toUtc();
+
+    final (:list, :replaced) = await session.db.transaction((
+      transaction,
+    ) async {
+      final current = await ShoppingList.db.findById(
+        session,
+        listId,
+        transaction: transaction,
+        lockMode: LockMode.forUpdate,
+      );
+      if (current == null) throw ListNotFoundException();
+      final list = await _withInviteWorthSharing(
+        session,
+        current,
+        now,
+        transaction: transaction,
+      );
+      return (list: list, replaced: list.joinCode != current.joinCode);
+    });
+
+    // Members currently viewing the list display the code as well.
+    if (replaced) await ListBroadcast.send(session, listId);
+    return MemberProfiles.attachTo(session, list);
+  }
+
+  /// Returns [list] ready to share at [now]: unchanged if its invite is
+  /// worth reusing, otherwise persisted with a new code valid for
+  /// [domain.ListInvite.lifetime].
+  static Future<ShoppingList> _withInviteWorthSharing(
+    Session session,
+    ShoppingList list,
+    DateTime now, {
+    required Transaction transaction,
+  }) async {
+    final invite = list.invite;
+    if (invite != null && invite.isWorthReusingAt(now)) return list;
+
+    final newCode = await _uniqueJoinCode(session, transaction: transaction);
+    return ShoppingList.db.updateRow(
+      session,
+      list.copyWith(
+        joinCode: newCode,
+        joinCodeExpiresAt: now.add(domain.ListInvite.lifetime),
+      ),
+      transaction: transaction,
+    );
   }
 
   /// Renames a list. Owner only.

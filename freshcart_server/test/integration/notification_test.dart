@@ -5,6 +5,7 @@ import 'package:freshcart_server/src/notifications/business/push_sender.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:test/test.dart';
 
+import 'support/invite_code.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 /// Records what would have been pushed, instead of pushing it.
@@ -128,8 +129,14 @@ void main() {
 
     Future<ShoppingList> aSharedList() async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.list.join(as(bobId), list.joinCode);
-      await endpoints.list.join(as(carolId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
+      await endpoints.list.join(
+        as(carolId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
       return list;
     }
 
@@ -485,7 +492,10 @@ void main() {
           DevicePlatform.android,
         );
 
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
         expect(recorder.sent, hasLength(1));
         recorder.sent.clear();
 
@@ -493,7 +503,10 @@ void main() {
           as(aliceId),
           false,
         );
-        await endpoints.list.join(as(carolId), list.joinCode);
+        await endpoints.list.join(
+          as(carolId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
         expect(recorder.sent, isEmpty);
       },
     );
@@ -524,7 +537,10 @@ void main() {
           DevicePlatform.android,
         );
 
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
 
         expect(recorder.sent, hasLength(1));
         expect(recorder.sent.single.tokens, ['token-a6']);
@@ -548,8 +564,14 @@ void main() {
           DevicePlatform.android,
         );
 
-        await endpoints.list.join(as(bobId), list.joinCode);
-        await endpoints.list.join(as(bobId), list.joinCode); // re-tap
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        ); // re-tap
 
         expect(recorder.sent, hasLength(1));
       },

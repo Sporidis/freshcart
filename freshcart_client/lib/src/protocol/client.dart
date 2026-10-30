@@ -473,7 +473,16 @@ class EndpointList extends _i1.EndpointRef {
         {'name': name},
       );
 
-  /// Joins the list matching [joinCode].
+  /// Returns a list the caller belongs to with a shareable join code,
+  /// reusing the current one when enough of its lifetime remains.
+  _i2.Future<_i9.ShoppingList> openInvite(_i1.UuidValue listId) =>
+      caller.callServerEndpoint<_i9.ShoppingList>(
+        'list',
+        'openInvite',
+        {'listId': listId},
+      );
+
+  /// Joins the list matching [joinCode], while that code is open.
   _i2.Future<_i9.ShoppingList> join(String joinCode) =>
       caller.callServerEndpoint<_i9.ShoppingList>(
         'list',

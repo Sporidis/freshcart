@@ -32,7 +32,12 @@ class ListEndpoint extends Endpoint {
   Future<ShoppingList> create(Session session, String name) =>
       ListService.create(session, session.requireUserId, name);
 
-  /// Joins the list matching [joinCode].
+  /// Returns a list the caller belongs to with a shareable join code,
+  /// reusing the current one when enough of its lifetime remains.
+  Future<ShoppingList> openInvite(Session session, UuidValue listId) =>
+      ListService.openInvite(session, listId, session.requireUserId);
+
+  /// Joins the list matching [joinCode], while that code is open.
   Future<ShoppingList> join(Session session, String joinCode) =>
       ListMembershipService.join(session, session.requireUserId, joinCode);
 

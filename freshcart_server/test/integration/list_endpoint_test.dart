@@ -1,11 +1,13 @@
 import 'dart:typed_data';
 
+import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:test/test.dart';
 
+import 'support/invite_code.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 void main() {
@@ -42,19 +44,143 @@ void main() {
       },
     );
 
-    test('create issues a join code from the unambiguous alphabet', () async {
-      final list = await endpoints.list.create(as(aliceId), 'Groceries');
+    group('invites', () {
+      final carolId = const Uuid().v4();
 
-      expect(list.joinCode, hasLength(5));
-      // The domain excludes I, O, 0 and 1 so a spoken code is unambiguous.
-      expect(list.joinCode, isNot(matches(RegExp('[IO01]'))));
-    });
+      /// Moves [list]'s invite expiry to [expiresAt], standing in for time
+      /// passing (or, with null, for a row from before invites expired).
+      Future<void> setInviteExpiry(
+        ShoppingList list,
+        DateTime? expiresAt,
+      ) async {
+        final session = sessionBuilder.build();
+        final row = await ShoppingList.db.findById(session, list.id!);
+        await ShoppingList.db.updateRow(
+          session,
+          row!.copyWith(joinCodeExpiresAt: expiresAt),
+        );
+      }
 
-    test('two lists never share a join code', () async {
-      final first = await endpoints.list.create(as(aliceId), 'One');
-      final second = await endpoints.list.create(as(aliceId), 'Two');
+      test('a new list has no join code until someone invites', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
 
-      expect(first.joinCode, isNot(second.joinCode));
+        expect(list.joinCode, isNull);
+        expect(list.joinCodeExpiresAt, isNull);
+      });
+
+      test(
+        'opening an invite issues a code from the unambiguous alphabet, '
+        'valid for the invite lifetime',
+        () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+          final before = DateTime.now().toUtc();
+
+          final invited = await endpoints.list.openInvite(
+            as(aliceId),
+            list.id!,
+          );
+
+          expect(invited.joinCode, hasLength(5));
+          // The domain excludes I, O, 0 and 1 so a spoken code is
+          // unambiguous.
+          expect(invited.joinCode, isNot(matches(RegExp('[IO01]'))));
+          final lifetime = invited.joinCodeExpiresAt!.difference(before);
+          expect(
+            lifetime.inSeconds,
+            closeTo(domain.ListInvite.lifetime.inSeconds, 60),
+          );
+        },
+      );
+
+      test('two lists never share a join code', () async {
+        final first = await endpoints.list.create(as(aliceId), 'One');
+        final second = await endpoints.list.create(as(aliceId), 'Two');
+
+        expect(
+          await endpoints.inviteCode(as(aliceId), first),
+          isNot(await endpoints.inviteCode(as(aliceId), second)),
+        );
+      });
+
+      test('an open invite is reused, by any member', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+        await endpoints.list.join(as(bobId), code);
+
+        expect(await endpoints.inviteCode(as(aliceId), list), code);
+        expect(await endpoints.inviteCode(as(bobId), list), code);
+      });
+
+      test('a non-member cannot open an invite', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+
+        await expectLater(
+          endpoints.list.openInvite(as(bobId), list.id!),
+          throwsA(isA<NotAMemberException>()),
+        );
+      });
+
+      test('several people can join with the same code', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+
+        await endpoints.list.join(as(bobId), code);
+        final joined = await endpoints.list.join(as(carolId), code);
+
+        expect(joined.members, hasLength(3));
+      });
+
+      test('an expired code is refused like one that never existed', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+        await setInviteExpiry(
+          list,
+          DateTime.now().toUtc().subtract(const Duration(seconds: 1)),
+        );
+
+        await expectLater(
+          endpoints.list.join(as(bobId), code),
+          throwsA(isA<InvalidJoinCodeException>()),
+        );
+      });
+
+      test('a code from before invites expired no longer works', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+        await setInviteExpiry(list, null);
+
+        await expectLater(
+          endpoints.list.join(as(bobId), code),
+          throwsA(isA<InvalidJoinCodeException>()),
+        );
+      });
+
+      test(
+        'an invite close to expiry is replaced, and the old code stops '
+        'working',
+        () async {
+          final list = await endpoints.list.create(as(aliceId), 'Groceries');
+          final oldCode = await endpoints.inviteCode(as(aliceId), list);
+          // Still open, but with less left than is worth handing out.
+          await setInviteExpiry(
+            list,
+            DateTime.now().toUtc().add(
+              domain.ListInvite.minRemainingToReuse -
+                  const Duration(minutes: 1),
+            ),
+          );
+
+          final newCode = await endpoints.inviteCode(as(aliceId), list);
+
+          expect(newCode, isNot(oldCode));
+          await expectLater(
+            endpoints.list.join(as(bobId), oldCode),
+            throwsA(isA<InvalidJoinCodeException>()),
+          );
+          final joined = await endpoints.list.join(as(bobId), newCode);
+          expect(joined.id, list.id);
+        },
+      );
     });
 
     test('myLists returns only lists the caller belongs to', () async {
@@ -67,7 +193,10 @@ void main() {
     test('join adds the caller as a plain member', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
 
-      final joined = await endpoints.list.join(as(bobId), list.joinCode);
+      final joined = await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
 
       expect(joined.id, list.id);
       expect(joined.members, hasLength(2));
@@ -82,7 +211,7 @@ void main() {
 
       final joined = await endpoints.list.join(
         as(bobId),
-        '  ${list.joinCode.toLowerCase()} ',
+        '  ${(await endpoints.inviteCode(as(aliceId), list)).toLowerCase()} ',
       );
 
       expect(joined.id, list.id);
@@ -91,8 +220,14 @@ void main() {
     test('joining twice is a no-op rather than an error', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
 
-      await endpoints.list.join(as(bobId), list.joinCode);
-      final again = await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
+      final again = await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
 
       expect(again.members, hasLength(2));
     });
@@ -144,7 +279,10 @@ void main() {
 
     test('rename is refused for a non-owner member', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
 
       await expectLater(
         endpoints.list.rename(as(bobId), list.id!, 'Hijacked'),
@@ -154,7 +292,10 @@ void main() {
 
     test('leave removes the caller from the list', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
 
       await endpoints.list.leave(as(bobId), list.id!);
 
@@ -164,7 +305,10 @@ void main() {
 
     test('delete removes the list for everyone on it', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
 
       await endpoints.list.delete(as(aliceId), list.id!);
 
@@ -198,7 +342,10 @@ void main() {
 
     test('a member cannot delete the list, only leave it', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
-      await endpoints.list.join(as(bobId), list.joinCode);
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
 
       await expectLater(
         endpoints.list.delete(as(bobId), list.id!),
@@ -210,7 +357,10 @@ void main() {
     group('managing members', () {
       test('the owner can remove another member', () async {
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
 
         await endpoints.list.removeMember(
           as(aliceId),
@@ -224,7 +374,10 @@ void main() {
 
       test('a member cannot remove anyone', () async {
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
 
         await expectLater(
           endpoints.list.removeMember(
@@ -252,7 +405,10 @@ void main() {
 
       test('ownership transfers, and swaps both roles', () async {
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
 
         final after = await endpoints.list.transferOwnership(
           as(aliceId),
@@ -274,7 +430,10 @@ void main() {
 
       test('the new owner can then delete, and the old one cannot', () async {
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
         await endpoints.list.transferOwnership(
           as(aliceId),
           list.id!,
@@ -322,7 +481,10 @@ void main() {
         final bobId = await aUser();
         await endpoints.profile.setDisplayName(as(bobId), 'Bob');
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
 
         await endpoints.profile.setDisplayName(as(bobId), 'Robert');
 
@@ -351,7 +513,10 @@ void main() {
         final aliceId = await aUser();
         final bobId = await aUser();
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        await endpoints.list.join(as(bobId), list.joinCode);
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
 
         final events = <ShoppingList>[];
         final subscription = endpoints.list
@@ -481,7 +646,10 @@ void main() {
           addTearDown(subscription.cancel);
           await letSubscriptionSettle();
 
-          await endpoints.list.join(as(bobId), list.joinCode);
+          await endpoints.list.join(
+            as(bobId),
+            await endpoints.inviteCode(as(aliceId), list),
+          );
           await letSubscriptionSettle();
 
           expect(events, isNotEmpty);
@@ -490,7 +658,10 @@ void main() {
 
         test('emits the drop when a member leaves', () async {
           final list = await endpoints.list.create(as(aliceId), 'Groceries');
-          await endpoints.list.join(as(bobId), list.joinCode);
+          await endpoints.list.join(
+            as(bobId),
+            await endpoints.inviteCode(as(aliceId), list),
+          );
 
           final events = <ShoppingList>[];
           final subscription = endpoints.list
@@ -510,7 +681,10 @@ void main() {
           're-tapping a join link does not emit a duplicate notification',
           () async {
             final list = await endpoints.list.create(as(aliceId), 'Groceries');
-            await endpoints.list.join(as(bobId), list.joinCode);
+            await endpoints.list.join(
+              as(bobId),
+              await endpoints.inviteCode(as(aliceId), list),
+            );
 
             final events = <ShoppingList>[];
             final subscription = endpoints.list
@@ -520,7 +694,10 @@ void main() {
             await letSubscriptionSettle();
 
             // Bob is already a member; joining again is a documented no-op.
-            await endpoints.list.join(as(bobId), list.joinCode);
+            await endpoints.list.join(
+              as(bobId),
+              await endpoints.inviteCode(as(aliceId), list),
+            );
             await letSubscriptionSettle();
 
             expect(
@@ -545,7 +722,10 @@ void main() {
         test('a removed member\'s stream ends, without the new member '
             'list', () async {
           final list = await endpoints.list.create(as(aliceId), 'Groceries');
-          await endpoints.list.join(as(bobId), list.joinCode);
+          await endpoints.list.join(
+            as(bobId),
+            await endpoints.inviteCode(as(aliceId), list),
+          );
 
           final events = <ShoppingList>[];
           var ended = false;
@@ -569,7 +749,10 @@ void main() {
 
         test('a removed member\'s item stream ends', () async {
           final list = await endpoints.list.create(as(aliceId), 'Groceries');
-          await endpoints.list.join(as(bobId), list.joinCode);
+          await endpoints.list.join(
+            as(bobId),
+            await endpoints.inviteCode(as(aliceId), list),
+          );
 
           final events = <ItemChange>[];
           var ended = false;
