@@ -90,6 +90,12 @@ class OfflineItemRepository implements ItemRepository {
 
   @override
   Future<Result<ShoppingItem>> save(ShoppingItem item) async {
+    // Made offline and not sent yet: the server doesn't know this item, so
+    // the change can only wait in the queue behind its creation.
+    if (!_isOnServer(item.id)) {
+      await _queue.enqueue(ItemEdited(item));
+      return Ok(item.copyWith(pending: true));
+    }
     final result = await _remote.save(item);
     if (!_isOffline(result)) return result;
     await _queue.enqueue(ItemEdited(item));
@@ -98,6 +104,10 @@ class OfflineItemRepository implements ItemRepository {
 
   @override
   Future<Result<void>> remove(ItemId id) async {
+    if (!_isOnServer(id)) {
+      await _queue.enqueue(ItemRemoved(id));
+      return const Ok(null);
+    }
     final result = await _remote.remove(id);
     if (!_isOffline(result)) return result;
     await _queue.enqueue(ItemRemoved(id));
@@ -163,16 +173,7 @@ class OfflineItemRepository implements ItemRepository {
       // Nothing from the server or cache yet: wait, rather than show a
       // list made only of queued changes.
       if (current == null || out.isClosed) return;
-      out.add(
-        current.map(
-          (items) => applyQueuedItemChanges(
-            items,
-            queued,
-            listId,
-            me: _currentUserId,
-          ),
-        ),
-      );
+      out.add(_withQueued(current, queued, listId));
     }
 
     out = StreamController<Result<List<ShoppingItem>>>(
@@ -253,9 +254,50 @@ class OfflineItemRepository implements ItemRepository {
     );
   }
 
+  /// What the screen gets for [listId]: the server's (or cache's) items
+  /// [current], with the [queued] changes for this list applied on top.
+  ///
+  /// When the server couldn't be reached and nothing was cached (a new
+  /// account, or right after signing out), [current] is a network failure.
+  /// If changes for this list are waiting in the queue, those should still
+  /// show, as pending items on an otherwise empty list, rather than an
+  /// error page hiding them. Any other failure (not a member any more, the
+  /// list was deleted) still shows as itself.
+  Result<List<ShoppingItem>> _withQueued(
+    Result<List<ShoppingItem>> current,
+    List<PendingOperation> queued,
+    ListId listId,
+  ) {
+    if (current case Err(failure: NetworkFailure())) {
+      final items = applyQueuedItemChanges(
+        const [],
+        queued,
+        listId,
+        me: _currentUserId,
+      );
+      return items.isEmpty ? current : Ok(items);
+    }
+    return current.map(
+      (items) => applyQueuedItemChanges(
+        items,
+        queued,
+        listId,
+        me: _currentUserId,
+      ),
+    );
+  }
+
   /// A temporary id for something created offline, until the server gives
   /// it a real one.
-  static String _newTempId() => 'temp-${DateTime.now().microsecondsSinceEpoch}';
+  static String _newTempId() =>
+      '$_tempPrefix${DateTime.now().microsecondsSinceEpoch}';
+
+  static const String _tempPrefix = 'temp-';
+
+  /// Whether the server knows [id] yet: not while it's a temporary id from
+  /// an add still waiting in the queue. Changes to such an item are queued
+  /// behind its creation; the replayer swaps in the real id (`withRealIds`).
+  static bool _isOnServer(ItemId id) => !id.value.startsWith(_tempPrefix);
 }
 
 /// Supplies the app's [ItemRepository]: the server, kept working offline.

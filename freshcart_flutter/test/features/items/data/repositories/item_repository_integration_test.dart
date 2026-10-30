@@ -334,6 +334,108 @@ void main() {
     );
   });
 
+  group('offline over remote: watchByList — server down, nothing cached', () {
+    /// Watches the list while the server can't be reached at all and
+    /// nothing was ever cached (a new account, or right after sign-out).
+    Future<Result<List<ShoppingItem>>> watchWhileDown({
+      Exception failure = const dto.ServerpodClientException('down', -1),
+    }) async {
+      client.handler = (_, _, _) => throw failure;
+      client.streamHandler = (_, _, _) => Stream<Object?>.error(failure);
+      final events = <Result<List<ShoppingItem>>>[];
+      final subscription = repository
+          .watchByList(ListId(listUuid.uuid))
+          .listen(events.add);
+      addTearDown(subscription.cancel);
+      await pumpEventQueue();
+      return events.last;
+    }
+
+    Future<void> queueEggs({String listId = ''}) =>
+        PendingOperationsQueue(db).enqueue(
+          ItemCreated(
+            tempId: 'temp-1',
+            listId: ListId(listId.isEmpty ? listUuid.uuid : listId),
+            name: 'Eggs',
+            quantity: 1,
+          ),
+        );
+
+    test('items waiting in the queue still show, as pending', () async {
+      await queueEggs();
+
+      final shown = await watchWhileDown();
+
+      final eggs = shown.valueOrNull!.single;
+      expect(eggs.name, 'Eggs');
+      expect(eggs.pending, isTrue);
+    });
+
+    test('with nothing queued for this list, it is still an error', () async {
+      // Queued for another list: not this one's to show.
+      await queueEggs(listId: '00000000-0000-4000-8000-0000000000ff');
+
+      final shown = await watchWhileDown();
+
+      expect(shown.failureOrNull, isA<NetworkFailure>());
+    });
+
+    test('a failure other than the network is never hidden behind the '
+        'queue', () async {
+      await queueEggs();
+
+      final shown = await watchWhileDown(
+        failure: dto.ServerpodClientUnauthorized(),
+      );
+
+      expect(shown.failureOrNull, isA<UnauthorizedFailure>());
+    });
+  });
+
+  group('offline over remote: an item made offline, not sent yet', () {
+    /// An item added while offline: it only exists in the queue, under a
+    /// temporary id.
+    Future<ShoppingItem> addOffline() async {
+      client.handler = (_, _, _) =>
+          throw const dto.ServerpodClientException('down', -1);
+      final added = await repository.add(
+        listId: ListId(listUuid.uuid),
+        name: 'Eggs',
+      );
+      client.calls.clear();
+      return added.valueOrNull!;
+    }
+
+    test('checking it off is queued, without asking the server', () async {
+      final eggs = await addOffline();
+      // The server would be reachable now: still, it can't know this item.
+      client.handler = (_, _, _) => throw StateError('must not be called');
+
+      final result = await repository.save(
+        eggs.toggleChecked(by: UserId(userUuid.uuid), at: testNow),
+      );
+
+      expect(result.valueOrNull?.isChecked, isTrue);
+      expect(result.valueOrNull?.pending, isTrue);
+      expect(client.calls, isEmpty);
+      final queued = await PendingOperationsQueue(db).getAll();
+      expect(queued.map((op) => op.toChange()), [
+        isA<ItemCreated>(),
+        isA<ItemEdited>(),
+      ]);
+    });
+
+    test('removing it is queued, without asking the server', () async {
+      final eggs = await addOffline();
+      client.handler = (_, _, _) => throw StateError('must not be called');
+
+      final result = await repository.remove(eggs.id);
+
+      expect(result.isOk, isTrue);
+      expect(client.calls, isEmpty);
+    });
+  });
+
   group('offline over remote: watchByList — after an offline change syncs', () {
     test(
       'the list re-fetches, so a tick whose live update was missed still '
