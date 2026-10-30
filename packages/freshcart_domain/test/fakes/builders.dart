@@ -42,12 +42,12 @@ ShoppingItem buildItem({
 ShoppingList buildList({
   String id = 'list-1',
   String name = 'Weekly Groceries',
-  String joinCode = 'ABC23',
   List<ListMember> members = const <ListMember>[],
+  ListInvite? invite,
 }) => ShoppingList(
   id: ListId(id),
   name: name,
-  joinCode: JoinCode.parse(joinCode).valueOrNull!,
+  invite: invite,
   ownerId: testUser,
   createdAt: testNow,
   members: members,

@@ -4,6 +4,7 @@ import 'package:freshcart_domain/src/lists/entities/list_summary.dart';
 import 'package:freshcart_domain/src/lists/entities/shopping_list.dart';
 import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
+import 'package:freshcart_domain/src/lists/value_objects/list_invite.dart';
 
 /// The interface for reading and saving shopping lists.
 ///
@@ -22,9 +23,14 @@ abstract interface class ListRepository {
   /// [ids] if the user can't see some of them.
   Future<Result<List<ListSummary>>> summaries(List<ListId> ids);
 
-  /// Creates a list called [name], owned by the signed-in user. The server
-  /// creates the [JoinCode].
+  /// Creates a list called [name], owned by the signed-in user. It has no
+  /// invite yet.
   Future<Result<ShoppingList>> create({required String name});
+
+  /// An invite for list [id]: its open one if that has enough time left,
+  /// otherwise a new one (see [ListInvite.isWorthReusingAt]). Any member
+  /// can ask.
+  Future<Result<ListInvite>> openInvite(ListId id);
 
   /// Joins the list with [code]. The signed-in user becomes a member.
   Future<Result<ShoppingList>> joinByCode(JoinCode code);

@@ -10,7 +10,6 @@ void main() {
   ShoppingList listWith(List<ListMember> members) => ShoppingList(
     id: testList,
     name: 'Groceries',
-    joinCode: JoinCode.parse('ABC23').valueOrNull!,
     ownerId: testUser,
     createdAt: testNow,
     members: members,

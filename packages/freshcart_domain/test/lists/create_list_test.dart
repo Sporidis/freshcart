@@ -15,7 +15,6 @@ void main() {
         ShoppingList(
           id: testList,
           name: 'Groceries',
-          joinCode: JoinCode.parse('ABC23').valueOrNull!,
           ownerId: testUser,
           createdAt: testNow,
         ),

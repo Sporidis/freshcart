@@ -135,6 +135,10 @@ class FakeListRepository implements ListRepository {
   }
 
   @override
+  Future<Result<ListInvite>> openInvite(ListId id) =>
+      throw UnimplementedError();
+
+  @override
   Future<Result<void>> leave(ListId id) => throw UnimplementedError();
 
   @override

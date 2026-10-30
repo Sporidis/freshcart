@@ -47,6 +47,7 @@ export 'src/lists/use_cases/join_list.dart';
 export 'src/lists/use_cases/rename_list.dart';
 export 'src/lists/value_objects/join_code.dart';
 export 'src/lists/value_objects/list_id.dart';
+export 'src/lists/value_objects/list_invite.dart';
 // Notifications
 export 'src/notifications/entities/notification_preferences.dart';
 export 'src/notifications/ports/notification_repository.dart';

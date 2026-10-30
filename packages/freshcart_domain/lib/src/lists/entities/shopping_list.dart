@@ -4,8 +4,8 @@ import 'package:freshcart_domain/src/core/failure.dart';
 import 'package:freshcart_domain/src/core/result.dart';
 import 'package:freshcart_domain/src/core/validation_issue.dart';
 import 'package:freshcart_domain/src/lists/entities/list_member.dart';
-import 'package:freshcart_domain/src/lists/value_objects/join_code.dart';
 import 'package:freshcart_domain/src/lists/value_objects/list_id.dart';
+import 'package:freshcart_domain/src/lists/value_objects/list_invite.dart';
 
 part 'shopping_list.freezed.dart';
 
@@ -19,10 +19,13 @@ abstract class ShoppingList with _$ShoppingList {
   const factory ShoppingList({
     required ListId id,
     required String name,
-    required JoinCode joinCode,
     required UserId ownerId,
     required DateTime createdAt,
     @Default(<ListMember>[]) List<ListMember> members,
+
+    /// The open invite, if a member made one and it's still valid. Null
+    /// otherwise: a list has no code until someone invites.
+    ListInvite? invite,
 
     /// Whether checked items are removed automatically when everything is
     /// checked (instead of tapping "Clear checked") (decisions.md #79). Off
