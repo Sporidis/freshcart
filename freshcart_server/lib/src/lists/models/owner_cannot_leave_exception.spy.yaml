@@ -1,0 +1,4 @@
+### Thrown when the owner of a list tries to leave it: a list must always
+### have an owner who is on it. The owner hands it over first
+### (transferOwnership) or deletes it.
+exception: OwnerCannotLeaveException

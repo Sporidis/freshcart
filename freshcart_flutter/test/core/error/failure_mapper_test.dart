@@ -64,6 +64,11 @@ void main() {
         mapExceptionToFailure(dto.TooManyJoinAttemptsException()),
         const Failure.rateLimited(),
       );
+      // A conflict, so a stale queued "leave" is dropped, not retried.
+      expect(
+        mapExceptionToFailure(dto.OwnerCannotLeaveException()),
+        const Failure.conflict(),
+      );
     });
 
     test('maps the email link errors without hinting at existing accounts', () {

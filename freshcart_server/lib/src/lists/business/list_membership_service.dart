@@ -77,12 +77,16 @@ abstract final class ListMembershipService {
     return MemberProfiles.attachTo(session, list);
   }
 
-  /// Removes [userId] from [listId].
+  /// Removes [userId] from [listId]. The owner can't: they hand the list
+  /// over first, or delete it ([OwnerCannotLeaveException]).
   static Future<void> leave(
     Session session,
     UuidValue listId,
     UuidValue userId,
   ) async {
+    final list = await ShoppingList.db.findById(session, listId);
+    if (list?.ownerId == userId) throw OwnerCannotLeaveException();
+
     await ListMember.db.deleteWhere(
       session,
       where: (t) => t.listId.equals(listId) & t.userId.equals(userId),

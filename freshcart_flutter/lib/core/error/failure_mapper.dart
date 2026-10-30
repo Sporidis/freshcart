@@ -33,6 +33,10 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   ),
   // Too many failed joins: says nothing about the code just tried.
   dto.TooManyJoinAttemptsException() => const Failure.rateLimited(),
+  // The owner tried to leave (the app only offers it to other members, so
+  // this is a queued "leave" replayed after they became owner): a conflict,
+  // so the replayer drops it instead of retrying it forever.
+  dto.OwnerCannotLeaveException() => const Failure.conflict(),
   // Serverpod's email sign-up steps, used to link an email. The reason is
   // deliberately vague (no hint whether an address has an account).
   EmailAccountRequestException(:final reason) => switch (reason) {

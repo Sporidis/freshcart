@@ -399,6 +399,42 @@ void main() {
       expect(await endpoints.list.myLists(as(aliceId)), hasLength(1));
     });
 
+    test('the owner cannot leave, and stays on the list', () async {
+      // Nobody could manage a list whose owner isn't on it.
+      final list = await endpoints.list.create(as(aliceId), 'Groceries');
+      await endpoints.list.join(
+        as(bobId),
+        await endpoints.inviteCode(as(aliceId), list),
+      );
+
+      await expectLater(
+        endpoints.list.leave(as(aliceId), list.id!),
+        throwsA(isA<OwnerCannotLeaveException>()),
+      );
+
+      final after = await endpoints.list.byId(as(aliceId), list.id!);
+      expect(after.ownerId, UuidValue.withValidation(aliceId));
+      expect(after.members, hasLength(2));
+    });
+
+    test(
+      'leaving a list that was deleted meanwhile is a quiet no-op',
+      () async {
+        // A "leave" queued offline can arrive after the owner deleted the
+        // list. It's already done; an error would be retried forever.
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        await endpoints.list.join(
+          as(bobId),
+          await endpoints.inviteCode(as(aliceId), list),
+        );
+        await endpoints.list.delete(as(aliceId), list.id!);
+
+        await endpoints.list.leave(as(bobId), list.id!);
+
+        expect(await endpoints.list.myLists(as(bobId)), isEmpty);
+      },
+    );
+
     test('delete removes the list for everyone on it', () async {
       final list = await endpoints.list.create(as(aliceId), 'Groceries');
       await endpoints.list.join(
