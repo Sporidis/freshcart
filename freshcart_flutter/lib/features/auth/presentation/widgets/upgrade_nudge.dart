@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_fill.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
+import 'package:freshcart_flutter/core/ui/app_dialog.dart';
 import 'package:freshcart_flutter/features/auth/application/profile/profile_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/upgrade_nudge/upgrade_nudge_providers.dart';
@@ -148,7 +149,7 @@ class _LinkEmailDialogState extends ConsumerState<_LinkEmailDialog> {
     // language changes.
     final message = _failure?.toMessage(t);
     final requestId = _requestId;
-    return AlertDialog(
+    return AppDialog(
       title: Text(t.account.action),
       content: requestId == null
           ? _credentialsStep(t, message)

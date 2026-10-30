@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/router/app_router.dart';
+import 'package:freshcart_flutter/core/ui/app_dialog.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
@@ -27,7 +28,7 @@ Future<void> confirmDeleteList(
 }) async {
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => AppDialog(
       title: Text(t.lists.deleteConfirmTitle(name: list.name)),
       content: Text(
         t.lists.deleteConfirmBody(items: itemCount, n: list.members.length),
@@ -65,7 +66,7 @@ Future<void> confirmLeaveList(
 }) async {
   final confirmed = await showDialog<bool>(
     context: context,
-    builder: (context) => AlertDialog(
+    builder: (context) => AppDialog(
       title: Text(t.lists.leaveConfirmTitle),
       content: Text(t.lists.leaveConfirmBody(name: list.name)),
       actions: [

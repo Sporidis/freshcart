@@ -4,6 +4,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_messages.dart';
 import 'package:freshcart_flutter/core/error/shakes_on.dart';
 import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
+import 'package:freshcart_flutter/core/ui/app_dialog.dart';
 import 'package:freshcart_flutter/core/ui/feedback/shake_on_error.dart';
 
 /// A dialog with one text field and one button, whose action can fail
@@ -82,7 +83,7 @@ class _TextPromptDialogState extends ConsumerState<TextPromptDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return AppDialog(
       title: Text(widget.title),
       content: ShakeOnError(
         errorText: _errorText,

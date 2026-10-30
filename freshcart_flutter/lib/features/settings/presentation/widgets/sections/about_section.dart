@@ -5,6 +5,7 @@ import 'package:freshcart_flutter/app/router/app_router.dart';
 import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
+import 'package:freshcart_flutter/core/ui/app_dialog.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
 import 'package:freshcart_flutter/core/ui/feedback/failure_snack_bar.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_row.dart';
@@ -41,7 +42,7 @@ class AboutSection extends ConsumerWidget {
     if (!context.mounted) return false;
     return await showDialog<bool>(
           context: context,
-          builder: (context) => AlertDialog(
+          builder: (context) => AppDialog(
             title: Text(t.settings.signOutConfirmTitle),
             // One row per thing that would be lost, each with its own
             // icon, so two separate warnings don't read as one paragraph.
@@ -61,7 +62,6 @@ class AboutSection extends ConsumerWidget {
                   ),
               ],
             ),
-            actionsAlignment: MainAxisAlignment.center,
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(false),

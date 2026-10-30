@@ -8,6 +8,7 @@ import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_radii.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_spacing.dart';
 import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
+import 'package:freshcart_flutter/core/ui/app_dialog.dart';
 import 'package:freshcart_flutter/core/ui/avatar/initial_for.dart';
 import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/core/ui/destructive_button.dart';
@@ -214,7 +215,7 @@ class _MemberRow extends StatelessWidget {
   }) async =>
       await showDialog<bool>(
         context: context,
-        builder: (context) => AlertDialog(
+        builder: (context) => AppDialog(
           title: Text(title),
           content: Text(body),
           actions: [
