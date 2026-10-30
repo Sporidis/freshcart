@@ -81,4 +81,11 @@ abstract interface class AuthRepository {
   /// For an anonymous account this can't be undone (there's no way to sign
   /// back in), so always ask the user first.
   Future<Result<void>> signOut();
+
+  /// Deletes the account on the server, and everything about the person
+  /// (decisions.md #119), then forgets the session on this phone.
+  ///
+  /// An [Err] means the server didn't delete it: the account and its
+  /// session are still there.
+  Future<Result<void>> deleteAccount();
 }

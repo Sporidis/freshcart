@@ -86,6 +86,9 @@ class FakeAuthRepository implements AuthRepository {
   @override
   Future<Result<void>> signOut() async => const Err(_unavailable);
 
+  @override
+  Future<Result<void>> deleteAccount() async => const Err(_unavailable);
+
   /// Changes the user, and their member record on every list, so the other
   /// phone sees the new profile (the real server fills members in on read).
   Result<AuthUser> _update(

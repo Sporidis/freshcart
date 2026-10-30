@@ -148,6 +148,18 @@ class FakeAuthRepository implements AuthRepository {
     return signOutResult;
   }
 
+  /// What [deleteAccount] returns.
+  Result<void> deleteAccountResult = const Ok<void>(null);
+
+  /// How many times [deleteAccount] was called.
+  int deleteAccountCalls = 0;
+
+  @override
+  Future<Result<void>> deleteAccount() async {
+    deleteAccountCalls++;
+    return deleteAccountResult;
+  }
+
   /// Closes the change stream. Call from a test teardown.
   Future<void> dispose() => _changes.close();
 }

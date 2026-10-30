@@ -131,6 +131,15 @@ class AuthRepositoryImpl implements AuthRepository {
     _changes.add(null);
   });
 
+  /// Deletes the current user's account on the server and forgets the session locally.
+  @override
+  Future<Result<void>> deleteAccount() => _guard(() async {
+    await _client.account.deleteAccount();
+    await _client.auth.updateSignedInUser(null);
+    _currentUser = null;
+    _changes.add(null);
+  });
+
   /// Gets the current user from the server again and tells listeners.
   Future<AuthUser> _refresh() async => _publish(await _client.profile.me());
 

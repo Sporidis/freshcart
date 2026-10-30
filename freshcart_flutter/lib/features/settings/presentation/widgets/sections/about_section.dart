@@ -14,7 +14,8 @@ import 'package:freshcart_flutter/features/auth/application/profile/profile_cont
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:go_router/go_router.dart';
 
-/// The "About" section in Settings: sign out, and the app version.
+/// The "About" section in Settings: sign out, delete the account, and the
+/// app version.
 ///
 /// No "Terms" or "Help" rows yet, because there's nowhere for them to go.
 /// A row that does nothing looks broken.
@@ -51,12 +52,12 @@ class AboutSection extends ConsumerWidget {
               spacing: AppSpacing.lg,
               children: [
                 if (isAnonymous)
-                  _SignOutLoss(
+                  _Loss(
                     icon: Icons.no_accounts_outlined,
                     text: t.settings.signOutConfirmBody,
                   ),
                 if (pending > 0)
-                  _SignOutLoss(
+                  _Loss(
                     icon: Icons.cloud_off_outlined,
                     text: t.settings.signOutPendingChanges(n: pending),
                   ),
@@ -105,6 +106,83 @@ class AboutSection extends ConsumerWidget {
     }
   }
 
+  /// Asks "are you sure?" before deleting the account. Always asks: it
+  /// can't be undone. Says what goes and what stays (decisions.md #119).
+  Future<bool> _confirmDeleteAccount(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    final pending = await ref
+        .read(profileControllerProvider.notifier)
+        .pendingChangeCount();
+    if (!context.mounted) return false;
+    return await showDialog<bool>(
+          context: context,
+          builder: (context) => AppDialog(
+            title: Text(t.settings.deleteAccountConfirmTitle),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              spacing: AppSpacing.lg,
+              children: [
+                _Loss(
+                  icon: Icons.person_remove_outlined,
+                  text: t.settings.deleteAccountPersonal,
+                ),
+                _Loss(
+                  icon: Icons.delete_outline,
+                  text: t.settings.deleteAccountSoloLists,
+                ),
+                _Loss(
+                  icon: Icons.group_outlined,
+                  text: t.settings.deleteAccountSharedLists,
+                ),
+                if (pending > 0)
+                  _Loss(
+                    icon: Icons.cloud_off_outlined,
+                    text: t.settings.signOutPendingChanges(n: pending),
+                  ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: Text(t.common.cancel),
+              ),
+              DestructiveButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                child: Text(t.settings.deleteAccount),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _deleteAccount(BuildContext context, WidgetRef ref) async {
+    if (!await _confirmDeleteAccount(context, ref)) return;
+    final failure = await ref
+        .read(profileControllerProvider.notifier)
+        .deleteAccount();
+    if (!context.mounted) return;
+    if (failure != null) {
+      showFailureSnackBar(
+        context,
+        failure: failure,
+        t: t,
+        message: failure is NetworkFailure
+            ? t.settings.deleteAccountFailedOffline
+            : null,
+      );
+      return;
+    }
+    final router = GoRouter.maybeOf(context);
+    if (router != null) {
+      router.go(Routes.welcome);
+    } else {
+      await Navigator.of(context).maybePop();
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
@@ -130,17 +208,27 @@ class AboutSection extends ConsumerWidget {
           ),
           onTap: offline ? null : () => _signOut(context, ref),
         ),
+        // Needs the server like signing out, so the same offline state.
+        SettingRow(
+          title: t.settings.deleteAccount,
+          titleStyle: AppTextStyles.body.copyWith(
+            color: offline ? scheme.onSurfaceVariant : scheme.error,
+          ),
+          subtitle: offline ? t.settings.signOutNeedsConnection : null,
+          onTap: offline ? null : () => _deleteAccount(context, ref),
+        ),
       ],
     );
   }
 }
 
-/// One thing signing out would lose: an icon, and the sentence saying what.
+/// One thing signing out or deleting the account would lose: an icon, and
+/// the sentence saying what.
 ///
 /// The icon sits in a box exactly one line of text tall, so it lines up
 /// with the middle of the first line, however many lines the text wraps to.
-class _SignOutLoss extends StatelessWidget {
-  const _SignOutLoss({required this.icon, required this.text});
+class _Loss extends StatelessWidget {
+  const _Loss({required this.icon, required this.text});
 
   final IconData icon;
   final String text;

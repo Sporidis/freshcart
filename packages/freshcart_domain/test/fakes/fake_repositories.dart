@@ -351,6 +351,15 @@ class FakeAuthRepository implements AuthRepository {
     calls.add('signOut');
     return signOutResult;
   }
+
+  /// What [deleteAccount] will return. Defaults to success.
+  Result<void> deleteAccountResult = const Ok(null);
+
+  @override
+  Future<Result<void>> deleteAccount() async {
+    calls.add('deleteAccount');
+    return deleteAccountResult;
+  }
 }
 
 /// A [NotificationRepository] for the sign-out tests: only

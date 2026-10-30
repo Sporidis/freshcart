@@ -123,6 +123,79 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> tapDeleteAccountRow(WidgetTester tester) async {
+    await tester.dragUntilVisible(
+      find.text('Delete account'),
+      find.byType(ListView),
+      const Offset(0, -200),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Delete account'));
+    await tester.pumpAndSettle();
+  }
+
+  group('Delete account', () {
+    testWidgets('always confirms first, saying what goes and what stays', (
+      tester,
+    ) async {
+      auth.user = Ok(linkedUser());
+      await pump(tester);
+      await tapDeleteAccountRow(tester);
+
+      expect(find.text('Delete your account?'), findsOneWidget);
+      expect(find.textContaining('deleted for good'), findsOneWidget);
+      expect(find.textContaining('Shared lists stay'), findsOneWidget);
+      expect(auth.deleteAccountCalls, 0);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(auth.deleteAccountCalls, 0);
+    });
+
+    testWidgets('confirming deletes it, then clears this phone', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tapDeleteAccountRow(tester);
+
+      // The dialog's own destructive button, not the row behind it.
+      await tester.tap(find.text('Delete account').last);
+      await tester.pumpAndSettle();
+
+      expect(auth.deleteAccountCalls, 1);
+      expect(localData.clearCalls, 1);
+    });
+
+    testWidgets('a deletion the server never got says nothing was deleted', (
+      tester,
+    ) async {
+      auth.deleteAccountResult = const Err(Failure.network());
+      await pump(tester);
+      await tapDeleteAccountRow(tester);
+      await tester.tap(find.text('Delete account').last);
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(
+          'Deleting your account needs a connection to the server. '
+          'Nothing was deleted.',
+        ),
+        findsOneWidget,
+      );
+      expect(localData.clearCalls, 0);
+    });
+
+    testWidgets('offline, the row says why, and does nothing when tapped', (
+      tester,
+    ) async {
+      await pump(tester, online: false);
+      await tapDeleteAccountRow(tester);
+
+      expect(find.text('Delete your account?'), findsNothing);
+      expect(auth.deleteAccountCalls, 0);
+    });
+  });
+
   group('Sign out', () {
     testWidgets('an anonymous account confirms first, then signs out', (
       tester,
@@ -232,7 +305,11 @@ void main() {
       await pump(tester, online: false);
       await tapSignOutRow(tester);
 
-      expect(find.text('Needs a connection to the server'), findsOneWidget);
+      // Both sign out and delete account need the server, so both say so.
+      expect(
+        find.text('Needs a connection to the server'),
+        findsNWidgets(2),
+      );
       expect(find.text('Sign out?'), findsNothing);
       expect(auth.signOutCalls, 0);
     });

@@ -99,6 +99,23 @@ class ProfileController extends _$ProfileController {
     }
   }
 
+  /// Deletes the account and everything this phone keeps of it
+  /// ([DeleteAccount]). If it works, a fresh anonymous account starts, the
+  /// same as a first launch.
+  Future<Failure?> deleteAccount() async {
+    final deleteAccount = DeleteAccount(
+      _auth,
+      ref.read(localDataRepositoryProvider),
+    );
+    switch (await deleteAccount()) {
+      case Ok():
+        ref.invalidate(signInResultProvider);
+        return null;
+      case Err(:final failure):
+        return failure;
+    }
+  }
+
   /// Runs one profile change and updates [state] with the result.
   Future<Failure?> _write(
     Future<Result<AuthUser>> Function() action,

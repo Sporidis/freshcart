@@ -245,6 +245,12 @@
     "signOutPendingChanges": {"one": "{{n}} offline wijziging staat nog niet op de server en gaat verloren.", "other": "{{n}} offline wijzigingen staan nog niet op de server en gaan verloren."},
     "signOutNeedsConnection": "Vereist een verbinding met de server",
     "signOutFailedOffline": "Afmelden lukt alleen met een verbinding met de server. Er is niets gewijzigd op deze telefoon.",
+    "deleteAccount": "Account verwijderen",
+    "deleteAccountConfirmTitle": "Je account verwijderen?",
+    "deleteAccountPersonal": "Je naam, foto en login worden definitief verwijderd. Dit kan niet ongedaan worden gemaakt.",
+    "deleteAccountSoloLists": "Lijsten waar alleen jij op staat, worden verwijderd met hun items.",
+    "deleteAccountSharedLists": "Gedeelde lijsten blijven voor de anderen. Items die jij toevoegde, blijven staan, zonder je naam.",
+    "deleteAccountFailedOffline": "Je account verwijderen lukt alleen met een verbinding met de server. Er is niets verwijderd.",
     "termsOfService": "Voorwaarden",
     "signOut": "Uitloggen",
     "appVersion": "Appversie: {{version}}"

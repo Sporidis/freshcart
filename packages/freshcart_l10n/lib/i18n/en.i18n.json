@@ -245,6 +245,12 @@
     "signOutPendingChanges": {"one": "{{n}} change made offline hasn't reached the server yet and will be lost.", "other": "{{n}} changes made offline haven't reached the server yet and will be lost."},
     "signOutNeedsConnection": "Needs a connection to the server",
     "signOutFailedOffline": "Signing out needs a connection to the server. Nothing was changed on this phone.",
+    "deleteAccount": "Delete account",
+    "deleteAccountConfirmTitle": "Delete your account?",
+    "deleteAccountPersonal": "Your name, photo and login are deleted for good. This can't be undone.",
+    "deleteAccountSoloLists": "Lists only you are on are deleted, with their items.",
+    "deleteAccountSharedLists": "Shared lists stay for the others. Items you added stay on them, without your name.",
+    "deleteAccountFailedOffline": "Deleting your account needs a connection to the server. Nothing was deleted.",
     "termsOfService": "Terms of Service",
     "signOut": "Sign out",
     "appVersion": "App version: {{version}}"

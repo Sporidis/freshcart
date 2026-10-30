@@ -245,6 +245,12 @@
     "signOutPendingChanges": {"one": "{{n}} pagbabagong ginawa offline ang wala pa sa server at mawawala.", "other": "{{n}} pagbabagong ginawa offline ang wala pa sa server at mawawala."},
     "signOutNeedsConnection": "Kailangan ng koneksyon sa server",
     "signOutFailedOffline": "Kailangan ng koneksyon sa server para mag-sign out. Walang nabago sa phone na ito.",
+    "deleteAccount": "Burahin ang account",
+    "deleteAccountConfirmTitle": "Burahin ang iyong account?",
+    "deleteAccountPersonal": "Tuluyang mabubura ang iyong pangalan, larawan at login. Hindi na ito maibabalik.",
+    "deleteAccountSoloLists": "Mabubura ang mga listahang ikaw lang ang miyembro, kasama ang mga item nito.",
+    "deleteAccountSharedLists": "Mananatili ang mga shared na listahan para sa iba. Mananatili roon ang mga item na idinagdag mo, nang wala ang iyong pangalan.",
+    "deleteAccountFailedOffline": "Kailangan ng koneksyon sa server para burahin ang account. Walang nabura.",
     "termsOfService": "Mga Tuntunin ng Serbisyo",
     "signOut": "Mag-sign out",
     "appVersion": "Bersyon ng app: {{version}}"
