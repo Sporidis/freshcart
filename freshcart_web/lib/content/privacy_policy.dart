@@ -73,7 +73,7 @@ abstract final class PolicyFacts {
   /// Where privacy questions and requests go.
   static const String contactEmail = 'nikosporidis@gmail.com';
 
-  /// Where the server and database run. Not decided yet: must be filled in
-  /// before the policy is published (security plan, phase 7).
-  static const String hosting = '[HOSTING PROVIDER, REGION]';
+  /// Who runs the server and the database (the hosting processor). Where
+  /// it is, is said in each language's own words.
+  static const String hosting = 'Oracle Cloud Infrastructure';
 }

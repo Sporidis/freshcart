@@ -59,7 +59,8 @@ const PrivacyPolicy privacyPolicyNl = PrivacyPolicy(
       ),
       Bullets([
         'Hosting: de server en de database draaien bij '
-            '${PolicyFacts.hosting}.',
+            '${PolicyFacts.hosting}, in Amsterdam, Nederland. Je gegevens '
+            'blijven in de EU.',
         'Brevo (Parijs, Frankrijk): verstuurt de verificatiecodes wanneer je '
             'een e-mailadres toevoegt. Krijgt je e-mailadres en de code.',
         'Google Firebase Cloud Messaging: bezorgt meldingen op '

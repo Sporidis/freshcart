@@ -53,7 +53,8 @@ const PrivacyPolicy privacyPolicyEn = PrivacyPolicy(
         'Only the services needed to run FreshCart, each only for its task:',
       ),
       Bullets([
-        'Hosting: the server and database run at ${PolicyFacts.hosting}.',
+        'Hosting: the server and database run at ${PolicyFacts.hosting}, '
+            'in Amsterdam, the Netherlands. Your data stays in the EU.',
         'Brevo (Paris, France): sends the verification codes when you add an '
             'email address. Receives your email address and the code.',
         'Google Firebase Cloud Messaging: delivers notifications to Android '
