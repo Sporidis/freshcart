@@ -34,38 +34,74 @@ class SyncBanner extends ConsumerStatefulWidget {
   /// How long "Up to date" stays (v3).
   static const Duration upToDateHold = Duration(milliseconds: 1600);
 
+  /// The least time "Syncing" stays up once it starts.
+  ///
+  /// A replay can finish faster than a frame (one item, a fast network), so
+  /// without this the bar would jump straight from "Waiting" to "Up to
+  /// date" and the user would never see it sync. Same idea as
+  /// [upToDateHold], for the state before it.
+  static const Duration minSyncingHold = Duration(milliseconds: 500);
+
   @override
   ConsumerState<SyncBanner> createState() => _OfflineSyncingBannerState();
 }
 
 class _OfflineSyncingBannerState extends ConsumerState<SyncBanner> {
+  // Both "Syncing" and "Up to date" can be too brief to land on their own
+  // frame; holding whichever is current for a minimum stretch is what makes
+  // it visible to a user rather than just to a trace. The two never
+  // overlap, so one timer covers both.
+  SyncBannerState? _holdSyncing;
   bool _upToDate = false;
-  Timer? _hold;
+  Timer? _holdTimer;
 
   @override
   void dispose() {
-    _hold?.cancel();
+    _holdTimer?.cancel();
     super.dispose();
   }
 
-  void _showUpToDate() {
-    _hold?.cancel();
-    setState(() => _upToDate = true);
-    _hold = Timer(SyncBanner.upToDateHold, () {
-      if (mounted) setState(() => _upToDate = false);
+  void _hold(Duration duration, VoidCallback onExpire) {
+    _holdTimer?.cancel();
+    _holdTimer = Timer(duration, () {
+      _holdTimer = null;
+      if (mounted) onExpire();
     });
+  }
+
+  void _showUpToDate() {
+    setState(() => _upToDate = true);
+    _hold(SyncBanner.upToDateHold, () => setState(() => _upToDate = false));
   }
 
   @override
   Widget build(BuildContext context) {
     final t = ref.watch(translationsProvider);
-    // Syncing just finished: say so briefly. Anything else coming in (a
-    // new drop, more to send) replaces it straight away.
+    // Everything waiting just got sent: say so briefly. From "waiting" too,
+    // not only "syncing": the queue count arrives from the database a
+    // moment after the replay reports it's done, so the last step is
+    // usually waiting → hidden. Online, the count only reaches zero by
+    // being sent. Anything else coming in replaces it straight away.
     ref.listen(syncBannerStateProvider, (previous, next) {
-      if (previous is SyncBannerSyncing && next is SyncBannerHidden) {
+      if (next is SyncBannerSyncing) {
+        // A new (or still-running) replay: show it, and hold it up for at
+        // least `minSyncingHold` from here, in case it's about to finish.
+        setState(() => _holdSyncing = next);
+        _hold(SyncBanner.minSyncingHold, () {
+          setState(() => _holdSyncing = null);
+          if (ref.read(syncBannerStateProvider) is SyncBannerHidden) {
+            _showUpToDate();
+          }
+        });
+        return;
+      }
+      if (_holdSyncing != null) return; // Still held; settled once it ends.
+
+      final wasSending =
+          previous is SyncBannerSyncing || previous is SyncBannerWaiting;
+      if (wasSending && next is SyncBannerHidden) {
         _showUpToDate();
       } else if (next is! SyncBannerHidden && _upToDate) {
-        _hold?.cancel();
         setState(() => _upToDate = false);
       }
     });
@@ -80,7 +116,10 @@ class _OfflineSyncingBannerState extends ConsumerState<SyncBanner> {
       );
     });
 
-    final banner = ref.watch(syncBannerStateProvider);
+    // Always watched, even while "Syncing" is held: a build that skips the
+    // watch would drop this widget's subscription to it.
+    final live = ref.watch(syncBannerStateProvider);
+    final banner = _holdSyncing ?? live;
     final content = switch (banner) {
       SyncBannerOffline(:final pending) => _Bar(
         key: const ValueKey('offline'),
@@ -88,6 +127,11 @@ class _OfflineSyncingBannerState extends ConsumerState<SyncBanner> {
         message: pending == 0
             ? t.sync.offline
             : t.sync.offlineWaiting(n: pending),
+      ),
+      SyncBannerWaiting(:final pending) => _Bar(
+        key: const ValueKey('waiting'),
+        icon: Icons.cloud_upload_outlined,
+        message: t.sync.waiting(n: pending),
       ),
       SyncBannerSyncing(:final pending) => _Bar(
         key: const ValueKey('syncing'),

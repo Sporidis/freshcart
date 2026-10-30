@@ -67,6 +67,67 @@ void main() {
     );
 
     test(
+      'rebases an edit onto the real updatedAt the server gave an item '
+      'created earlier in the same replay, so it never conflicts with '
+      'itself',
+      () async {
+        // The server always stamps its own `updatedAt` on create (and on
+        // save), unrelated to anything the device guessed while offline.
+        final createdOnServer = buildItem(
+          id: 'real-item-id',
+          updatedAt: DateTime.utc(2026, 10, 30, 18),
+        );
+        items.addResult = Ok(createdOnServer);
+
+        await queue.enqueue(
+          ItemCreated(
+            tempId: 'temp-item-1',
+            listId: ListId('00000000-0000-4000-8000-000000000001'),
+            name: 'Milk',
+            quantity: 1,
+          ),
+        );
+        // Queued with the stale `updatedAt` the device guessed when the
+        // item was created offline — long before the server's real one.
+        final staleEdit = buildItem(
+          id: 'temp-item-1',
+          updatedAt: DateTime.utc(2026, 10, 30, 17, 55),
+        ).copyWith(name: 'Oat milk');
+        await queue.enqueue(ItemEdited(staleEdit));
+
+        final conflicted = await replayer.replayAll();
+
+        expect(conflicted, isEmpty);
+        expect(items.savedItems.single.updatedAt, createdOnServer.updatedAt);
+        expect(await queue.getAll(), isEmpty);
+      },
+    );
+
+    test(
+      'rebases a second queued edit onto the updatedAt the server gave '
+      'the first',
+      () async {
+        final item = buildItem(id: 'real-item-id');
+        final afterFirstEdit = item.copyWith(
+          updatedAt: DateTime.utc(2026, 10, 30, 18),
+        );
+        items.saveResults.add(Ok(afterFirstEdit));
+
+        await queue.enqueue(ItemEdited(item.copyWith(name: 'Skim milk')));
+        // Queued with the same stale `updatedAt` as the original item:
+        // right offline, but no longer what the server has after the
+        // first edit above lands.
+        await queue.enqueue(ItemEdited(item.copyWith(quantity: 2)));
+
+        final conflicted = await replayer.replayAll();
+
+        expect(conflicted, isEmpty);
+        expect(items.savedItems, hasLength(2));
+        expect(items.savedItems[1].updatedAt, afterFirstEdit.updatedAt);
+      },
+    );
+
+    test(
       'rewrites a listId that points at a list created earlier in the '
       'same replay',
       () async {

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
+import 'package:freshcart_flutter/core/offline/status/replay_activity_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_banner_state.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -36,15 +37,19 @@ Stream<int> pendingWriteCount(Ref ref) =>
 
 /// Which banner to show above the list.
 ///
-/// Combines two providers (online status and waiting changes), so the
-/// widget doesn't have to.
+/// Combines three providers (online status, waiting changes, and whether a
+/// replay is running), so the widget doesn't have to. "Syncing" only while
+/// changes are really being sent: online is no promise the server answers.
 @riverpod
 SyncBannerState syncBannerState(Ref ref) {
   final status = ref.watch(connectivityStatusProvider).value;
   final pending = ref.watch(pendingWriteCountProvider).value ?? 0;
+  final replaying = ref.watch(replayActivityControllerProvider);
   return switch (status) {
     ConnectivityStatus.offline => SyncBannerOffline(pending),
-    ConnectivityStatus.online when pending > 0 => SyncBannerSyncing(pending),
+    ConnectivityStatus.online when pending > 0 && replaying =>
+      SyncBannerSyncing(pending),
+    ConnectivityStatus.online when pending > 0 => SyncBannerWaiting(pending),
     _ => const SyncBannerHidden(),
   };
 }

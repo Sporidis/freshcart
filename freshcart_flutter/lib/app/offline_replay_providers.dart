@@ -4,6 +4,7 @@ import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_operations_queue.dart';
 import 'package:freshcart_flutter/core/offline/replay/pending_operations_replayer.dart';
 import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/replay_activity_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/remote_item_repository.dart';
@@ -20,6 +21,11 @@ PendingOperationsReplayer pendingOperationsReplayer(Ref ref) =>
       ref.watch(remoteItemRepositoryProvider),
       ref.watch(remoteListRepositoryProvider),
     );
+
+/// How long to wait before trying again to send changes that are still
+/// waiting while online. A provider so tests can make it short.
+@Riverpod(keepAlive: true)
+Duration replayRetryInterval(Ref ref) => const Duration(seconds: 30);
 
 /// Sends saved offline changes to the server when we become online.
 ///
@@ -46,10 +52,20 @@ void replayQueueWhenOnline(Ref ref) {
       if (!signIn.isOk) return;
       // Changes the server turned down (someone changed the same thing
       // first) are dropped from the queue; tell the user.
-      final conflicted = await ref
-          .read(pendingOperationsReplayerProvider)
-          .replayAll();
-      ref.read(syncConflictsControllerProvider.notifier).add(conflicted.length);
+      final activity = ref.read(replayActivityControllerProvider.notifier)
+        ..started();
+      try {
+        final conflicted = await ref
+            .read(pendingOperationsReplayerProvider)
+            .replayAll();
+        ref
+            .read(syncConflictsControllerProvider.notifier)
+            .add(conflicted.length);
+      } finally {
+        // Also when the server couldn't be reached halfway: the banner
+        // must not keep saying "Syncing".
+        activity.finished();
+      }
     } finally {
       replaying = false;
     }
@@ -66,6 +82,27 @@ void replayQueueWhenOnline(Ref ref) {
     if (failedBefore && signedInNow) unawaited(replayOnce());
   });
 
+  // Online with changes still waiting, and nothing else will try again:
+  // the server came back while the network never dropped, or it failed
+  // halfway. Retry now and then, but only while there is something to
+  // send, so an empty queue keeps no timer running.
+  Timer? retry;
+  void scheduleRetry() {
+    retry?.cancel();
+    retry = null;
+    final online =
+        ref.read(connectivityStatusProvider).value == ConnectivityStatus.online;
+    final waiting = ref.read(pendingWriteCountProvider).value ?? 0;
+    if (!online || waiting == 0) return;
+    retry = Timer(ref.read(replayRetryIntervalProvider), () {
+      unawaited(replayOnce().whenComplete(scheduleRetry));
+    });
+  }
+
+  ref
+    ..onDispose(() => retry?.cancel())
+    ..listen(pendingWriteCountProvider, (_, _) => scheduleRetry());
+
   ref.listen(connectivityStatusProvider, (previous, next) {
     // Replay only on the switch to online, from anything that isn't online:
     // offline, or still loading at app start. Staying online doesn't
@@ -74,5 +111,6 @@ void replayQueueWhenOnline(Ref ref) {
     if (!wasOnline && next.value == ConnectivityStatus.online) {
       unawaited(replayOnce());
     }
+    scheduleRetry();
   });
 }

@@ -329,6 +329,7 @@
       "other": "Offline – masi-sync mamaya ang {{n}} na pagbabago"
     },
     "upToDate": "Updated na",
+    "waiting": {"one": "{{n}} pagbabago ang naghihintay ma-sync", "other": "{{n}} pagbabago ang naghihintay ma-sync"},
     "conflicts": {
       "one": "Hindi nailapat ang {{n}} pagbabago – may nauna nang nagbago nito",
       "other": "Hindi nailapat ang {{n}} na pagbabago – may nauna nang nagbago nito"

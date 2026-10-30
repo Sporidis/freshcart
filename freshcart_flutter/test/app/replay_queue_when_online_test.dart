@@ -9,6 +9,7 @@ import 'package:freshcart_flutter/core/offline/queue/pending_entity_type.dart';
 import 'package:freshcart_flutter/core/offline/queue/pending_op_type.dart';
 import 'package:freshcart_flutter/core/offline/replay/pending_operations_replayer.dart';
 import 'package:freshcart_flutter/core/offline/status/offline_status_providers.dart';
+import 'package:freshcart_flutter/core/offline/status/replay_activity_controller.dart';
 import 'package:freshcart_flutter/core/offline/status/sync_conflicts_controller.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 
@@ -40,7 +41,11 @@ void main() {
 
   /// Starts the coordinator with a fake connection and replayer. Sign-in
   /// fails the first [failingSignIns] times, then works.
-  ProviderContainer start({bool signedIn = true, int failingSignIns = 0}) {
+  ProviderContainer start({
+    bool signedIn = true,
+    int failingSignIns = 0,
+    int waiting = 0,
+  }) {
     signIns = 0;
     status = StreamController<ConnectivityStatus>();
     replayer = _FakeReplayer();
@@ -48,6 +53,10 @@ void main() {
       overrides: [
         connectivityStatusProvider.overrideWith((ref) => status.stream),
         pendingOperationsReplayerProvider.overrideWithValue(replayer),
+        pendingWriteCountProvider.overrideWith((ref) => Stream.value(waiting)),
+        replayRetryIntervalProvider.overrideWithValue(
+          const Duration(milliseconds: 10),
+        ),
         signInResultProvider.overrideWith((ref) async {
           signIns++;
           final works = signedIn && signIns > failingSignIns;
@@ -119,6 +128,17 @@ void main() {
     expect(replayer.calls, 1);
   });
 
+  test('says a replay is running only while it runs', () async {
+    final container = start();
+    replayer.gate = Completer<void>();
+    await emit(ConnectivityStatus.online);
+    expect(container.read(replayActivityControllerProvider), isTrue);
+
+    replayer.gate!.complete();
+    await pumpEventQueue();
+    expect(container.read(replayActivityControllerProvider), isFalse);
+  });
+
   test('never runs two replays at the same time', () async {
     start();
     replayGate() => replayer.gate = Completer<void>();
@@ -161,5 +181,31 @@ void main() {
     await pumpEventQueue();
 
     expect(replayer.calls, 1);
+  });
+
+  test('while online with changes waiting, it tries again by itself', () async {
+    // The server was down at start, then came back while Wi-Fi stayed on:
+    // nothing else triggers a replay.
+    // Fails at start and on the retry when coming online, so only the
+    // timer can get it through.
+    final container = start(failingSignIns: 2, waiting: 2);
+    await container.read(signInResultProvider.future);
+    await emit(ConnectivityStatus.online);
+    expect(replayer.calls, 0);
+
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    expect(signIns, greaterThanOrEqualTo(3));
+    expect(replayer.calls, greaterThanOrEqualTo(1));
+  });
+
+  test('with nothing waiting, no retry timer runs', () async {
+    start();
+    await emit(ConnectivityStatus.online);
+    final callsAfterComingOnline = replayer.calls;
+
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    expect(replayer.calls, callsAfterComingOnline);
   });
 }

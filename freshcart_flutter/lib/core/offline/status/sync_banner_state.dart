@@ -20,7 +20,15 @@ final class SyncBannerOffline extends SyncBannerState {
   final int pending;
 }
 
-/// Back online, still sending [pending] saved changes to the server.
+/// Online, with [pending] saved changes waiting, but not being sent right
+/// now: the server may be unreachable. Said as "waiting", not "syncing".
+final class SyncBannerWaiting extends SyncBannerState {
+  const SyncBannerWaiting(this.pending);
+
+  final int pending;
+}
+
+/// Sending [pending] saved changes to the server right now.
 final class SyncBannerSyncing extends SyncBannerState {
   const SyncBannerSyncing(this.pending);
 

@@ -329,6 +329,7 @@
       "other": "Hors ligne – {{n}} modifications seront synchronisées"
     },
     "upToDate": "À jour",
+    "waiting": {"one": "{{n}} modification en attente de synchronisation", "other": "{{n}} modifications en attente de synchronisation"},
     "conflicts": {
       "one": "{{n}} modification n'a pas pu être appliquée – quelqu'un l'a modifiée avant vous",
       "other": "{{n}} modifications n'ont pas pu être appliquées – quelqu'un les a modifiées avant vous"

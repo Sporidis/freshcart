@@ -11,6 +11,11 @@ class FakeItemRepository implements ItemRepository {
   /// would after a successful write.
   Result<ShoppingItem>? saveResult;
 
+  /// What consecutive [save] calls return, in order; falls back to
+  /// [saveResult] once exhausted. For tests where the server's answer
+  /// differs call to call.
+  final List<Result<ShoppingItem>> saveResults = [];
+
   /// What [add] returns.
   Result<ShoppingItem>? addResult;
 
@@ -104,6 +109,9 @@ class FakeItemRepository implements ItemRepository {
   Future<Result<ShoppingItem>> save(ShoppingItem item) async {
     savedItems.add(item);
     if (savePause != null) await savePause;
+    if (savedItems.length <= saveResults.length) {
+      return saveResults[savedItems.length - 1];
+    }
     return saveResult ?? Ok(item);
   }
 

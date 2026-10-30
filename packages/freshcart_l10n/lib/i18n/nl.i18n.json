@@ -329,6 +329,7 @@
       "other": "Offline – {{n}} wijzigingen worden later gesynchroniseerd"
     },
     "upToDate": "Bijgewerkt",
+    "waiting": {"one": "{{n}} wijziging wacht om te synchroniseren", "other": "{{n}} wijzigingen wachten om te synchroniseren"},
     "conflicts": {
       "one": "{{n}} wijziging kon niet worden toegepast – iemand anders was je voor",
       "other": "{{n}} wijzigingen konden niet worden toegepast – iemand anders was je voor"

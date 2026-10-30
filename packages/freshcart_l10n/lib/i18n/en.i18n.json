@@ -329,6 +329,7 @@
       "other": "Offline – {{n}} changes will sync"
     },
     "upToDate": "Up to date",
+    "waiting": {"one": "{{n}} change waiting to sync", "other": "{{n}} changes waiting to sync"},
     "conflicts": {
       "one": "{{n}} change couldn't be applied – someone changed it first",
       "other": "{{n}} changes couldn't be applied – someone changed them first"
