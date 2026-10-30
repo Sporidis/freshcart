@@ -144,13 +144,59 @@ Release builds differ from debug builds: test the release APK on a phone once be
 it out. (1.0.0 lacked the INTERNET permission — Flutter's template only declares it for
 debug and profile — and couldn't reach the server at all.)
 
+## Releasing the web app (iPhones)
+
+iPhones use the web app: `https://freshcart-nikos.duckdns.org/app/`, opened in Safari and
+added to the home screen (Share → Add to Home Screen). No push notifications there.
+
+The VM has no Flutter, so the web app is built on the Mac and copied over. Serverpod's web
+server (port 8082) serves `freshcart_server/web/app` under `/app`; that folder is gitignored,
+so a `git reset --hard` on the VM leaves it alone.
+
+```bash
+# On the Mac: build for the live server, under /app
+cd freshcart_flutter
+flutter build web --release --base-href /app/ \
+  --dart-define=SERVER_URL=https://freshcart-nikos.duckdns.org/
+
+# Copy it into the server's web/app folder (the trailing slashes matter)
+rsync -az --delete -e "ssh -i ~/.ssh/oracle_freshcart" \
+  build/web/ ubuntu@134.98.159.244:freshcart/freshcart_server/web/app/
+```
+
+On the VM, only the first time: Caddy must send `/app` to the web server, everything else
+to the API, and the server must restart once to notice the new folder.
+
+```bash
+# /etc/caddy/Caddyfile
+freshcart-nikos.duckdns.org {
+    handle /app* {
+        reverse_proxy localhost:8082
+    }
+    handle {
+        reverse_proxy localhost:8080
+    }
+}
+```
+
+```bash
+sudo caddy validate --config /etc/caddy/Caddyfile
+sudo systemctl reload caddy
+sudo systemctl restart freshcart-server
+```
+
+The offline database runs in the browser on `web/sqlite3.wasm` and `web/drift_worker.js`.
+They must match the drift and sqlite3 versions in `pubspec.lock`: after upgrading either
+package, download them again from the matching GitHub releases
+(`simolus3/sqlite3.dart` → `sqlite3-<version>/sqlite3.wasm`,
+`simolus3/drift` → `drift-<version>/drift_worker.js`).
+
 ## Known gaps
 
 Tracked in the security plan; listed here so an update doesn't come as a surprise.
 
 - **No database backups.** A lost disk loses every list.
 - **Ubuntu 20.04 and Postgres 12** no longer get standard security updates.
-- **iPhones can't use FreshCart yet:** Caddy forwards only the API, not the web app.
 - **Every request looks like it comes from `localhost`** to the server (Caddy forwards it), so
   the per-IP limits (failed joins, new accounts) are shared by all users together.
 - Ports 8080–8082 listen on all interfaces; only the firewall keeps them private.

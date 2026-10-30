@@ -16,5 +16,13 @@ AppDatabase appDatabase(Ref ref) => AppDatabase(
       // data.
       databaseDirectory: getApplicationSupportDirectory,
     ),
+    // In a browser (the web app iPhones use), the database runs on sqlite
+    // compiled to WebAssembly, in a worker. Both files live in web/ and
+    // must match the drift (2.35.0) and sqlite3 (3.6.0) versions in
+    // pubspec.lock; download them again from those releases on upgrade.
+    web: DriftWebOptions(
+      sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+      driftWorker: Uri.parse('drift_worker.js'),
+    ),
   ),
 );
