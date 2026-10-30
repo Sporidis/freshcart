@@ -31,6 +31,8 @@ Failure mapExceptionToFailure(Object error) => switch (error) {
   dto.InvalidJoinCodeException() => const Failure.validation(
     ValidationIssue.notFound(ValidatedInput.joinCode),
   ),
+  // Too many failed joins: says nothing about the code just tried.
+  dto.TooManyJoinAttemptsException() => const Failure.rateLimited(),
   // Serverpod's email sign-up steps, used to link an email. The reason is
   // deliberately vague (no hint whether an address has an account).
   EmailAccountRequestException(:final reason) => switch (reason) {

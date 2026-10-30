@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/lists/business/join_attempts.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:test/test.dart';
@@ -181,6 +182,102 @@ void main() {
           expect(joined.id, list.id);
         },
       );
+    });
+
+    group('failed join limit', () {
+      final carolId = const Uuid().v4();
+
+      /// Makes [userId] fail [times] joins with a well-formed code that
+      /// matches nothing.
+      Future<void> failJoins(String userId, int times) async {
+        for (var i = 0; i < times; i++) {
+          await expectLater(
+            endpoints.list.join(as(userId), 'ZZZZZ'),
+            throwsA(isA<InvalidJoinCodeException>()),
+          );
+        }
+      }
+
+      test('a user gets the limit in failed joins, then is refused', () async {
+        await failJoins(bobId, JoinAttempts.maxPerUser);
+
+        await expectLater(
+          endpoints.list.join(as(bobId), 'ZZZZZ'),
+          throwsA(isA<TooManyJoinAttemptsException>()),
+        );
+      });
+
+      test('over the limit, even a correct code is refused', () async {
+        // Otherwise the limit itself would tell a guesser when a code is
+        // right.
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+        await failJoins(bobId, JoinAttempts.maxPerUser);
+
+        await expectLater(
+          endpoints.list.join(as(bobId), code),
+          throwsA(isA<TooManyJoinAttemptsException>()),
+        );
+      });
+
+      test('malformed codes count as failed joins too', () async {
+        for (var i = 0; i < JoinAttempts.maxPerUser; i++) {
+          await expectLater(
+            endpoints.list.join(as(bobId), 'nope'),
+            throwsA(isA<InvalidJoinCodeException>()),
+          );
+        }
+
+        await expectLater(
+          endpoints.list.join(as(bobId), 'nope'),
+          throwsA(isA<TooManyJoinAttemptsException>()),
+        );
+      });
+
+      test('successful joins do not use the budget', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+        for (var i = 0; i <= JoinAttempts.maxPerUser; i++) {
+          await endpoints.list.join(as(bobId), code);
+        }
+
+        // Still the ordinary answer, not the limit.
+        await expectLater(
+          endpoints.list.join(as(bobId), 'ZZZZZ'),
+          throwsA(isA<InvalidJoinCodeException>()),
+        );
+      });
+
+      test('the limit is per user', () async {
+        final list = await endpoints.list.create(as(aliceId), 'Groceries');
+        final code = await endpoints.inviteCode(as(aliceId), list);
+        await failJoins(bobId, JoinAttempts.maxPerUser);
+
+        final joined = await endpoints.list.join(as(carolId), code);
+        expect(joined.id, list.id);
+      });
+
+      test('failures older than the window no longer count', () async {
+        await failJoins(bobId, JoinAttempts.maxPerUser);
+        // Stands in for an hour passing: moves the recorded failures back.
+        final session = sessionBuilder.build();
+        await RateLimitedRequestAttempt.db.updateWhere(
+          session,
+          where: (t) => t.nonce.equals(bobId),
+          columnValues: (t) => [
+            t.attemptedAt(
+              DateTime.now().toUtc().subtract(
+                JoinAttempts.window + const Duration(minutes: 1),
+              ),
+            ),
+          ],
+        );
+
+        await expectLater(
+          endpoints.list.join(as(bobId), 'ZZZZZ'),
+          throwsA(isA<InvalidJoinCodeException>()),
+        );
+      });
     });
 
     test('myLists returns only lists the caller belongs to', () async {

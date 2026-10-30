@@ -1,0 +1,3 @@
+### Thrown when a user or IP address has had too many failed joins
+### recently. Says nothing about whether the code itself was right.
+exception: TooManyJoinAttemptsException

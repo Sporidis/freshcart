@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/lists/business/join_attempts.dart';
 import 'package:freshcart_server/src/lists/business/list_access.dart';
 import 'package:freshcart_server/src/lists/business/list_broadcast.dart';
 import 'package:freshcart_server/src/lists/business/list_service.dart';
@@ -19,25 +20,32 @@ abstract final class ListMembershipService {
   ///
   /// The code is checked first (with the domain's parser), so a typo never
   /// reaches the database.
+  ///
+  /// Failed joins are limited ([JoinAttempts]); once over the limit, every
+  /// join is refused before the code is looked at.
   static Future<ShoppingList> join(
     Session session,
     UuidValue userId,
     String rawCode,
   ) async {
-    final parsed = domain.JoinCode.parse(rawCode);
-    final code = switch (parsed) {
-      domain.Ok<domain.JoinCode>(:final value) => value.value,
-      domain.Err<domain.JoinCode>() => throw InvalidJoinCodeException(),
-    };
+    // Before anything else: over the limit, the code is never looked at
+    await JoinAttempts.requireUnderLimit(session, userId);
 
-    final list = await ShoppingList.db.findFirstRow(
-      session,
-      where: (t) => t.joinCode.equals(code),
-    );
-    // Expired and unknown codes raise the same error, so callers cannot
-    // learn whether a code was ever issued.
+    final code = domain.JoinCode.parse(rawCode).valueOrNull?.value;
+    final list = code == null
+        ? null
+        : await ShoppingList.db.findFirstRow(
+            session,
+            where: (t) => t.joinCode.equals(code),
+          );
+    // Malformed, unknown and expired codes all count as a failed join and
+    // raise the same error, so callers cannot learn whether a code was ever
+    // issued.
     final isOpen = list?.invite?.isOpenAt(DateTime.now().toUtc()) ?? false;
-    if (list == null || !isOpen) throw InvalidJoinCodeException();
+    if (list == null || !isOpen) {
+      await JoinAttempts.recordFailure(session, userId);
+      throw InvalidJoinCodeException();
+    }
 
     final existing = await ListMember.db.findFirstRow(
       session,

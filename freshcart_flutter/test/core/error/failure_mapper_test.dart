@@ -60,6 +60,10 @@ void main() {
           ValidationIssue.notFound(ValidatedInput.joinCode),
         ),
       );
+      expect(
+        mapExceptionToFailure(dto.TooManyJoinAttemptsException()),
+        const Failure.rateLimited(),
+      );
     });
 
     test('maps the email link errors without hinting at existing accounts', () {
