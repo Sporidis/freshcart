@@ -16,10 +16,6 @@ import 'package:go_router/go_router.dart';
 /// The first screen of the app. Shown only while sign-in
 /// ([needsOnboardingProvider]) is running, never longer. If sign-in is fast,
 /// you barely see it.
-///
-/// It's a real route (not something shown before `runApp`), so the logo
-/// ([BasketMark]) can fly over to the Welcome screen with a `Hero`
-/// animation.
 class SplashScreen extends ConsumerWidget {
   /// Creates the splash screen.
   const SplashScreen({super.key});
@@ -65,12 +61,7 @@ class SplashScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(AppRadii.appIcon),
                 ),
                 alignment: Alignment.center,
-                // Only the logo flies to Welcome. The tile around it fades
-                // out with this screen.
-                child: Hero(
-                  tag: BasketMark.heroTag,
-                  child: BasketMark(size: 44, color: mark),
-                ),
+                child: BasketMark(size: 44, color: mark),
               ),
               const SizedBox(height: 18),
               Text(

@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 /// The app logo: a basket, drawn in code (not an image file), so it can be
 /// any colour.
 ///
-/// Used by [SplashScreen] and [WelcomeScreen]. The logo flies from one to
-/// the other with a `Hero` animation (see [heroTag]).
+/// Used by [SplashScreen].
 class BasketMark extends StatelessWidget {
   /// Creates the mark at [size] logical pixels, stroked in [color].
   const BasketMark({required this.size, required this.color, super.key});
@@ -14,9 +13,6 @@ class BasketMark extends StatelessWidget {
 
   /// The stroke colour.
   final Color color;
-
-  /// The `Hero` tag. Same on both screens, so the logo flies between them.
-  static const String heroTag = 'basket-mark';
 
   @override
   Widget build(BuildContext context) {

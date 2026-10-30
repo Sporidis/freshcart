@@ -11,7 +11,6 @@ import 'package:freshcart_flutter/core/theme/tokens/app_text_styles.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_shop_draft.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/preset_shops.dart';
-import 'package:freshcart_flutter/features/onboarding/presentation/widgets/basket_mark.dart';
 import 'package:freshcart_flutter/features/onboarding/presentation/widgets/onboarding_primary_button.dart';
 import 'package:go_router/go_router.dart';
 
@@ -35,11 +34,8 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
   /// [Interval] of it, so they stay in step.
   late final AnimationController _intro = AnimationController(vsync: this);
 
-  /// Side margin (24px, v3). Logo, text and buttons line up on it.
+  /// Side margin (24px, v3). Text and buttons line up on it.
   static const double _sideInset = AppSpacing.xxl;
-
-  /// The logo's size here (after flying in from the splash screen).
-  static const double _markSize = 28;
 
   // v3 timings: cards 620ms, 90ms apart; text 420ms, starting at 280ms,
   // 60ms apart.
@@ -128,26 +124,6 @@ class _WelcomeScreenState extends ConsumerState<WelcomeScreen>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Where the splash logo lands. The Hero tag must match the
-            // splash screen's, or it would just fade instead of fly.
-            Padding(
-              padding: const EdgeInsets.fromLTRB(
-                _sideInset,
-                AppSpacing.md,
-                _sideInset,
-                0,
-              ),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Hero(
-                  tag: BasketMark.heroTag,
-                  child: BasketMark(
-                    size: _markSize,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-              ),
-            ),
             Expanded(
               child: _ShopCardsScene(cards: _card, reduced: reduced),
             ),
