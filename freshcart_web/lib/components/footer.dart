@@ -11,6 +11,11 @@ class SiteFooter extends StatelessComponent {
   Component build(BuildContext context) {
     return const footer(classes: 'site', [
       p([Component.text('${Site.name} — built with Dart, end to end.')]),
+      p([
+        a(href: '/privacy', [Component.text('Privacy policy')]),
+        Component.text(' · '),
+        a(href: '/nl/privacy', [Component.text('Privacybeleid')]),
+      ]),
     ]);
   }
 }

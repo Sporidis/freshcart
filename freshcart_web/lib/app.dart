@@ -1,6 +1,9 @@
 import 'package:freshcart_web/components/footer.dart';
 import 'package:freshcart_web/components/header.dart';
+import 'package:freshcart_web/content/privacy_policy_en.dart';
+import 'package:freshcart_web/content/privacy_policy_nl.dart';
 import 'package:freshcart_web/pages/home.dart';
+import 'package:freshcart_web/pages/privacy.dart';
 import 'package:jaspr/dom.dart';
 import 'package:jaspr/jaspr.dart';
 import 'package:jaspr_router/jaspr_router.dart';
@@ -25,6 +28,22 @@ class App extends StatelessComponent {
               path: '/',
               title: 'FreshCart',
               builder: (context, state) => const Home(),
+            ),
+            Route(
+              path: '/privacy',
+              title: 'Privacy policy',
+              builder: (context, state) => const PrivacyPage(
+                policy: privacyPolicyEn,
+                otherLanguage: ('Nederlands', '/nl/privacy'),
+              ),
+            ),
+            Route(
+              path: '/nl/privacy',
+              title: 'Privacybeleid',
+              builder: (context, state) => const PrivacyPage(
+                policy: privacyPolicyNl,
+                otherLanguage: ('English', '/privacy'),
+              ),
             ),
           ],
         ),

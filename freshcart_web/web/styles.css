@@ -100,3 +100,14 @@ footer.site {
   }
   .cta { color: #08130d; }
 }
+
+/* The privacy policy: a readable column of text. */
+.policy {
+  max-width: 44rem;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 3rem;
+}
+.policy h2 { margin-top: 2rem; font-size: 1.15rem; }
+.policy .updated { color: var(--faint); font-size: .9rem; }
+.policy li { margin-bottom: .5rem; }
+footer.site a { color: var(--muted); }
