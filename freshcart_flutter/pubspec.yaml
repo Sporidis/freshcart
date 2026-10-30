@@ -129,13 +129,14 @@ flutter_launcher_icons:
   # Apple's own guidance: this one stays transparent, no baked-in background.
   image_path_ios_dark_transparent: assets/icon/basket_light.png
   # The installed web app (iPhones, and Android's "Install app"): its icons,
-  # and the colours the browser paints around the app and on the launch
-  # screen. Same as the splash, so it isn't Flutter blue.
+  # and the one colour Android paints its launch screen and navigation bar
+  # with. A manifest has no light/dark pair (Chrome ignored the experimental
+  # one), so dark: a dark bar in light mode beats a white one in dark mode.
   web:
     generate: true
     image_path: assets/icon/app_icon_flat.png
-    background_color: "#FAFAF8"
-    theme_color: "#FAFAF8"
+    background_color: "#1A1A18"
+    theme_color: "#1A1A18"
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
