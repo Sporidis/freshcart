@@ -24,14 +24,20 @@ final dto.UuidValue shopUuid = dto.UuidValue.withValidation(
 );
 
 /// Builds a wire [dto.ShoppingList].
+///
+/// Has an invite with [joinCode] valid for a day from `testNow`, unless
+/// [joinCode] is null.
 dto.ShoppingList buildListDto({
   String name = 'Groceries',
-  String joinCode = 'ABC23',
+  String? joinCode = 'ABC23',
   List<dto.ListMember>? members,
 }) => dto.ShoppingList(
   id: listUuid,
   name: name,
   joinCode: joinCode,
+  joinCodeExpiresAt: joinCode == null
+      ? null
+      : testNow.add(const Duration(days: 1)),
   ownerId: userUuid,
   createdAt: testNow,
   members: members,

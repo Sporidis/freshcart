@@ -41,7 +41,6 @@ class FakeListRepository implements ListRepository {
     final list = ShoppingList(
       id: ListId(_db.newId('list')),
       name: name,
-      joinCode: _db.newJoinCode(),
       ownerId: me.id,
       createdAt: _db.now(),
       members: [_memberFor(me, MemberRole.owner)],
@@ -54,8 +53,12 @@ class FakeListRepository implements ListRepository {
   @override
   Future<Result<ShoppingList>> joinByCode(JoinCode code) async {
     await _db.latency();
-    final list = _db.lists.values.where((l) => l.joinCode == code).firstOrNull;
-    // Same failure the real app gets (core/error/failure_mapper.dart).
+    final now = _db.now();
+    final list = _db.lists.values
+        .where((l) => l.invite?.code == code && l.invite!.isOpenAt(now))
+        .firstOrNull;
+    // Same failure the real app gets (core/error/failure_mapper.dart), for
+    // an expired code as for a wrong one.
     if (list == null) {
       return const Err(
         Failure.validation(ValidationIssue.notFound(ValidatedInput.joinCode)),
@@ -72,6 +75,22 @@ class FakeListRepository implements ListRepository {
     _db.lists[joined.id] = joined;
     _db.notify();
     return Ok(joined);
+  }
+
+  /// Like the server: any member may ask; the open invite is reused while
+  /// it's worth it, otherwise replaced by a new code.
+  @override
+  Future<Result<ListInvite>> openInvite(ListId id) async {
+    await _db.latency();
+    return _visible(id).map((list) {
+      final now = _db.now();
+      final current = list.invite;
+      if (current != null && current.isWorthReusingAt(now)) return current;
+      final invite = ListInvite.openAt(_db.newJoinCode(), now);
+      _db.lists[id] = list.copyWith(invite: invite);
+      _db.notify();
+      return invite;
+    });
   }
 
   @override

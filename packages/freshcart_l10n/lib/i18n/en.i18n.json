@@ -191,6 +191,7 @@
     "copyCode": "Copy code",
     "copied": "Copied",
     "inviteCode": "Invite code",
+    "validFor": {"one": "Works for {{n}} more hour", "other": "Works for {{n}} more hours"},
     "makeOwner": "Make owner",
     "removeMember": "Remove from list",
     "removeTitle": "Remove {{name}}?",

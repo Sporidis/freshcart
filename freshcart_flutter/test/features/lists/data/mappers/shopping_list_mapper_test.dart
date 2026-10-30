@@ -14,7 +14,8 @@ void main() {
 
       expect(domain.id.value, listUuid.uuid);
       expect(domain.name, 'Groceries');
-      expect(domain.joinCode.value, 'ABC23');
+      expect(domain.invite?.code.value, 'ABC23');
+      expect(domain.invite?.expiresAt, testNow.add(const Duration(days: 1)));
       expect(domain.ownerId.value, userUuid.uuid);
       expect(domain.createdAt, testNow);
       expect(domain.members, hasLength(1));
@@ -28,9 +29,26 @@ void main() {
 
     test('re-parses the join code into a validated value object', () {
       expect(
-        buildListDto(joinCode: 'ABC23').toDomain().joinCode,
+        buildListDto(joinCode: 'ABC23').toDomain().invite?.code,
         JoinCode.parse('ABC23').valueOrNull,
       );
+    });
+
+    test('a list no one has invited to yet has no invite', () {
+      expect(buildListDto(joinCode: null).toDomain().invite, isNull);
+    });
+
+    test('a code without an expiry is not an invite', () {
+      // A row from before invites expired: its old code no longer works on
+      // the server, so the app must not offer it either.
+      final legacy = dto.ShoppingList(
+        id: listUuid,
+        name: 'Groceries',
+        joinCode: 'ABC23',
+        ownerId: userUuid,
+        createdAt: testNow,
+      );
+      expect(legacy.toDomain().invite, isNull);
     });
 
     test('rejects a join code the domain would refuse', () {
@@ -45,7 +63,6 @@ void main() {
     test('rejects a list with no id', () {
       final noId = dto.ShoppingList(
         name: 'Groceries',
-        joinCode: 'ABC23',
         ownerId: userUuid,
         createdAt: testNow,
       );

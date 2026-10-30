@@ -191,6 +191,7 @@
     "copyCode": "Copier le code",
     "copied": "Copié",
     "inviteCode": "Code d'invitation",
+    "validFor": {"one": "Valable encore {{n}} heure", "other": "Valable encore {{n}} heures"},
     "makeOwner": "Rendre propriétaire",
     "removeMember": "Retirer de la liste",
     "removeTitle": "Retirer {{name}} ?",

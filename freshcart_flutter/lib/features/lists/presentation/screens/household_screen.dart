@@ -96,7 +96,7 @@ class _Household extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.gapSmall),
-        InviteCard(joinCode: list.joinCode.value, t: t),
+        InviteCard(listId: list.id, t: t),
       ],
     );
   }

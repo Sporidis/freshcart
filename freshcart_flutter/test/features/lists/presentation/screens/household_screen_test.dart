@@ -161,10 +161,43 @@ void main() {
     });
   });
 
-  testWidgets('the invite code can be copied', (tester) async {
+  testWidgets('no code is issued until a member taps Invite someone', (
+    tester,
+  ) async {
     await pump(tester, asUserId: aliceId);
 
     expect(find.byType(InviteCard), findsOneWidget);
+    expect(repository.openInviteCalls, isEmpty);
+    expect(find.text('ABC23'), findsNothing);
+
+    await tester.ensureVisible(find.text('Invite someone'));
+    await tester.tap(find.text('Invite someone'));
+    await tester.pumpAndSettle();
+
+    expect(repository.openInviteCalls, hasLength(1));
+    expect(find.text('ABC23'), findsOneWidget);
+    expect(find.textContaining('more hours'), findsOneWidget);
+  });
+
+  testWidgets('a failed invite shows why, and can be tried again', (
+    tester,
+  ) async {
+    repository.openInviteResult = const Err(Failure.network());
+    await pump(tester, asUserId: aliceId);
+
+    await tester.ensureVisible(find.text('Invite someone'));
+    await tester.tap(find.text('Invite someone'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ABC23'), findsNothing);
+    expect(find.text('Invite someone'), findsOneWidget);
+    expect(find.byType(InviteCard), findsOneWidget);
+
+    repository.openInviteResult = null;
+    await tester.tap(find.text('Invite someone'));
+    await tester.pumpAndSettle();
+
+    expect(repository.openInviteCalls, hasLength(2));
     expect(find.text('ABC23'), findsOneWidget);
   });
 }

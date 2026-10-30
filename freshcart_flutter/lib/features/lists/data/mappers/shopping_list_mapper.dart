@@ -9,8 +9,8 @@ extension ShoppingListDtoX on dto.ShoppingList {
   /// Two checks happen here:
   /// - Serverpod's `id` can be null (for rows not saved yet). Ours can't,
   ///   because a list from the server always has an id.
-  /// - `joinCode` comes as a plain `String`. We turn it into a [JoinCode],
-  ///   which checks it's valid.
+  /// - `joinCode` and `joinCodeExpiresAt` come as two nullable columns. We
+  ///   turn them into one [ListInvite], whose code is checked to be valid.
   ///
   /// Throws [StateError] if either check fails. That means the server is
   /// broken (a bug), not a normal failure, so it's not a `Result`.
@@ -19,20 +19,30 @@ extension ShoppingListDtoX on dto.ShoppingList {
     if (rawId == null) {
       throw StateError('Server returned a ShoppingList without an id');
     }
-    final parsedCode = JoinCode.parse(joinCode);
     return ShoppingList(
       id: ListId(rawId.uuid),
       name: name,
-      joinCode: switch (parsedCode) {
-        Ok<JoinCode>(:final value) => value,
-        Err<JoinCode>() => throw StateError(
-          'Server returned an invalid join code: $joinCode',
-        ),
-      },
+      invite: _invite(),
       ownerId: UserId(ownerId.uuid),
       createdAt: createdAt,
       members: (members ?? const []).map((m) => m.toDomain()).toList(),
       clearCheckedAfterShopping: clearCheckedAfterShopping,
     );
+  }
+
+  /// The list's invite, or null if it has none.
+  ListInvite? _invite() {
+    if ((joinCode, joinCodeExpiresAt) case (final code?, final expiresAt?)) {
+      return switch (JoinCode.parse(code)) {
+        Ok<JoinCode>(:final value) => ListInvite(
+          code: value,
+          expiresAt: expiresAt,
+        ),
+        Err<JoinCode>() => throw StateError(
+          'Server returned an invalid join code: $code',
+        ),
+      };
+    }
+    return null;
   }
 }

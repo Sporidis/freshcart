@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/offline/cache/cached_lists_store.dart';
@@ -63,6 +62,11 @@ class OfflineListRepository implements ListRepository {
   @override
   Future<Result<ShoppingList>> joinByCode(JoinCode code) =>
       _remote.joinByCode(code);
+
+  /// An invite needs the server: a code only exists once the server has
+  /// stored it, so it's never queued or made up offline.
+  @override
+  Future<Result<ListInvite>> openInvite(ListId id) => _remote.openInvite(id);
 
   // ── Writes: pass through, queue when offline ─────────────────────────
 
@@ -137,19 +141,13 @@ class OfflineListRepository implements ListRepository {
     _ => false,
   };
 
-  /// The list to show for a create that's waiting in the queue. Its join
-  /// code is a stand-in: the server picks the real one.
+  /// The list to show for a create that's waiting in the queue. It has no
+  /// invite yet: a member opens one once the list is on the server.
   ShoppingList _pendingNewList(ListId id, String name) {
-    final random = Random();
-    final code = List.generate(
-      JoinCode.length,
-      (_) => JoinCode.alphabet[random.nextInt(JoinCode.alphabet.length)],
-    ).join();
     return ShoppingList(
       id: id,
       name: name,
       createdAt: DateTime.now().toUtc(),
-      joinCode: JoinCode.parse(code).valueOrNull!,
       ownerId: _currentUserId(),
       pending: true,
     );

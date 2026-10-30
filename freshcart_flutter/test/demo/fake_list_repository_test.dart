@@ -26,8 +26,28 @@ void main() {
     final list = await world.sharedList();
     expect(list.memberFor(DemoWorld.bId)?.role, MemberRole.member);
 
-    final again = await world.b.lists.joinByCode(list.joinCode);
+    final again = await world.b.lists.joinByCode(list.invite!.code);
     expect(again.valueOrNull?.members, hasLength(2));
+  });
+
+  test('a new list has no invite until a member opens one', () async {
+    final list = (await world.a.lists.create(name: 'Home')).valueOrNull!;
+    expect(list.invite, isNull);
+  });
+
+  test('opening an invite twice gives the same code', () async {
+    final list = (await world.a.lists.create(name: 'Home')).valueOrNull!;
+    final first = (await world.a.lists.openInvite(list.id)).valueOrNull!;
+    final second = (await world.a.lists.openInvite(list.id)).valueOrNull!;
+    expect(second, first);
+  });
+
+  test('someone not on the list cannot open an invite', () async {
+    final list = (await world.a.lists.create(name: 'Home')).valueOrNull!;
+    expect(
+      (await world.b.lists.openInvite(list.id)).failureOrNull,
+      isA<UnauthorizedFailure>(),
+    );
   });
 
   test('a list is invisible to people who are not on it', () async {

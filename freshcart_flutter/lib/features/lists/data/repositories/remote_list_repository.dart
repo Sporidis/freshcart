@@ -57,6 +57,13 @@ class RemoteListRepository implements ListRepository {
       _guard(() async => (await _client.list.join(code.value)).toDomain());
 
   @override
+  Future<Result<ListInvite>> openInvite(ListId id) => _guard(
+    () async =>
+        (await _client.list.openInvite(_uuid(id.value))).toDomain().invite ??
+        (throw StateError('Server opened an invite but returned none')),
+  );
+
+  @override
   Future<Result<void>> rename(ListId id, String name) =>
       _guard(() => _client.list.rename(_uuid(id.value), name));
 

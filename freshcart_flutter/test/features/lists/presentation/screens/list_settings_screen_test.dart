@@ -381,7 +381,7 @@ void main() {
     expect(find.byType(HouseholdScreen), findsOneWidget);
   });
 
-  testWidgets('the invite code is shown inline, and a tap copies it', (
+  testWidgets('the invite code is shown once asked for, and a tap copies it', (
     tester,
   ) async {
     String? copied;
@@ -404,6 +404,13 @@ void main() {
       tester,
       list: buildList(name: 'Groceries', members: [buildMember()]),
     );
+
+    // No code until a member asks for one.
+    expect(find.text('ABC23'), findsNothing);
+    await tester.ensureVisible(find.text('Invite someone'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Invite someone'));
+    await tester.pumpAndSettle();
 
     final code = find.text('ABC23');
     await tester.ensureVisible(code);

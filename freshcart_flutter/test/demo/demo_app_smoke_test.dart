@@ -61,7 +61,10 @@ void main() {
     final shown = AppColors.avatarHexColorFor('Nikolaos');
     expect(db.users[DemoPersona.a.id]?.avatarColor, shown);
     expect(list.memberFor(DemoPersona.a.id)?.avatarColor, shown);
-    expect(find.bySemanticsLabel(list.joinCode.value), findsOneWidget);
+    await tester.tap(find.text('Invite someone'));
+    await tester.pumpAndSettle();
+    final code = db.lists[list.id]!.invite!.code;
+    expect(find.bySemanticsLabel(code.value), findsOneWidget);
 
     await tester.tap(find.text('Start my list'));
     await tester.pumpAndSettle();
@@ -69,7 +72,7 @@ void main() {
     // "Phone B" joins and adds an item straight through its own fakes.
     final b = DemoPersona.b.id;
     db.users[b] = AuthUser(id: b, displayName: 'Anna', isAnonymous: true);
-    await FakeListRepository(db, b).joinByCode(list.joinCode);
+    await FakeListRepository(db, b).joinByCode(code);
     await FakeItemRepository(db, b).add(listId: list.id, name: 'Milk');
     await tester.pumpAndSettle();
 

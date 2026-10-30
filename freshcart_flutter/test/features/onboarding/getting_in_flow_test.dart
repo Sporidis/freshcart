@@ -152,10 +152,13 @@ void main() {
         expect(auth.setAvatarColorCalls, [AppColors.avatarHexColorFor('Alex')]);
         expect(shops.createCalls, hasLength(2));
 
-        // Invite — the fourth dot, showing the real list's join code (one
-        // box per character, read out as the whole code).
+        // Invite — the fourth dot. No code until asked for; then the
+        // server's code, one box per character, read out as the whole code.
         expect(onStep(4), findsOneWidget);
         expect(find.text('Shopping with someone?'), findsOneWidget);
+        expect(find.bySemanticsLabel('ABC23'), findsNothing);
+        await tester.tap(find.text('Invite someone'));
+        await tester.pumpAndSettle();
         expect(find.bySemanticsLabel('ABC23'), findsOneWidget);
 
         await tester.tap(find.text('Start my list'));

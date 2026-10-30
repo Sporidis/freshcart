@@ -58,6 +58,13 @@ class FakeListRepository implements ListRepository {
   /// Codes passed to [joinByCode], in order.
   final List<JoinCode> joinCalls = [];
 
+  /// What [openInvite] returns. Defaults to a fresh invite with code
+  /// `ABC23`.
+  Result<ListInvite>? openInviteResult;
+
+  /// Every id [openInvite] was called with, in order.
+  final List<ListId> openInviteCalls = [];
+
   /// How many times [myLists] was read, to assert on refreshes.
   int myListsCallCount = 0;
 
@@ -87,6 +94,12 @@ class FakeListRepository implements ListRepository {
   Future<Result<ShoppingList>> joinByCode(JoinCode code) async {
     joinCalls.add(code);
     return joinResult ?? const Err(Failure.notFound());
+  }
+
+  @override
+  Future<Result<ListInvite>> openInvite(ListId id) async {
+    openInviteCalls.add(id);
+    return openInviteResult ?? Ok(buildInvite());
   }
 
   @override
@@ -157,18 +170,22 @@ class FakeListRepository implements ListRepository {
   Future<void> dispose() => live.close();
 }
 
+/// A fresh invite with [code], opened now.
+ListInvite buildInvite({String code = 'ABC23'}) =>
+    ListInvite.openAt(JoinCode.parse(code).valueOrNull!, DateTime.now());
+
 /// Builds a domain [ShoppingList] for tests.
 ShoppingList buildList({
   String id = '00000000-0000-4000-8000-000000000001',
   String name = 'Groceries',
-  String joinCode = 'ABC23',
+  ListInvite? invite,
   String ownerId = 'user-1',
   List<ListMember> members = const [],
   bool clearCheckedAfterShopping = false,
 }) => ShoppingList(
   id: ListId(id),
   name: name,
-  joinCode: JoinCode.parse(joinCode).valueOrNull!,
+  invite: invite,
   ownerId: UserId(ownerId),
   createdAt: DateTime.utc(2026, 9, 9),
   members: members,

@@ -10,6 +10,7 @@ import 'package:freshcart_flutter/core/demo_hooks/scripted_text_controller.dart'
 import 'package:freshcart_flutter/demo/demo_persona.dart';
 import 'package:freshcart_flutter/demo/demo_stage.dart';
 import 'package:freshcart_flutter/features/items/data/repositories/offline_item_repository.dart';
+import 'package:freshcart_flutter/features/lists/application/invite_section/invite_section_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_controller.dart';
 import 'package:freshcart_flutter/features/onboarding/application/join_flow/join_flow_step.dart';
 import 'package:freshcart_flutter/features/onboarding/application/onboarding/onboarding_controller.dart';
@@ -62,8 +63,8 @@ class DemoDirector {
     await _waitFor(() => _path(b) == Routes.welcome);
     await _pause(_linger);
 
-    final list = await _onboard(a);
-    await _join(b, list.joinCode);
+    final (:list, :code) = await _onboard(a);
+    await _join(b, code);
     _router(b).go(Routes.listDetail(list.id));
     await _pause(_beat);
 
@@ -74,8 +75,11 @@ class DemoDirector {
     await _pause(_beat);
   }
 
-  /// Phone A: Welcome -> onboarding -> the new list.
-  Future<ShoppingList> _onboard(ProviderContainer a) async {
+  /// Phone A: Welcome -> onboarding -> the new list, with the invite code
+  /// it opened on the way.
+  Future<({ShoppingList list, JoinCode code})> _onboard(
+    ProviderContainer a,
+  ) async {
     _router(a).go(Routes.onboarding);
     await _waitFor(() => a.exists(onboardingControllerProvider));
     await WidgetsBinding.instance.endOfFrame;
@@ -100,12 +104,22 @@ class DemoDirector {
     await _pause(_linger);
     _check(await onboarding.submit(), 'onboarding');
 
-    // Invite: let the join code be seen before leaving.
-    await _pause(_linger);
+    // Invite: tap "Invite someone", then let the code be seen before
+    // leaving.
     final list = state().createdList!;
+    await _pause(_beat);
+    final invite = inviteSectionControllerProvider(list.id);
+    // Listened to, like the step's widget does: when skipping, the step may
+    // not be on screen yet, and an unwatched controller drops its answer.
+    final keepAlive = a.listen(invite, (_, _) {});
+    await a.read(invite.notifier).open();
+    final opened = a.read(invite)!.requireValue;
+    keepAlive.close();
+    _check(opened, 'opening an invite');
+    await _pause(_linger);
     _router(a).go(Routes.listDetail(list.id));
     await _pause(_beat);
-    return list;
+    return (list: list, code: opened.valueOrNull!.code);
   }
 
   /// Phone B: Welcome -> join flow with [code]. Stays on the confirmation.

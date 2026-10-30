@@ -7,7 +7,10 @@ extension ShoppingListCachePayload on ShoppingList {
   Map<String, dynamic> toCachePayload() => {
     'id': id.value,
     'name': name,
-    'joinCode': joinCode.value,
+    // New keys, not 'joinCode': payloads cached before invites expired
+    // still have that key, and must not read as an open invite.
+    'inviteCode': invite?.code.value,
+    'inviteExpiresAt': invite?.expiresAt.toIso8601String(),
     'ownerId': ownerId.value,
     'createdAt': createdAt.toIso8601String(),
     'clearCheckedAfterShopping': clearCheckedAfterShopping,
@@ -31,7 +34,7 @@ ShoppingList shoppingListFromCachePayload(Map<String, dynamic> payload) {
   return ShoppingList(
     id: ListId(payload['id'] as String),
     name: payload['name'] as String,
-    joinCode: JoinCode.parse(payload['joinCode'] as String).valueOrNull!,
+    invite: _inviteFromJson(payload),
     ownerId: UserId(payload['ownerId'] as String),
     createdAt: DateTime.parse(payload['createdAt'] as String),
     clearCheckedAfterShopping: payload['clearCheckedAfterShopping'] as bool,
@@ -40,6 +43,25 @@ ShoppingList shoppingListFromCachePayload(Map<String, dynamic> payload) {
         _memberFromJson(raw as Map<String, dynamic>),
     ],
   );
+}
+
+/// The cached invite, or null if the list had none when it was cached.
+ListInvite? _inviteFromJson(Map<String, dynamic> payload) {
+  final code = payload['inviteCode'] as String?;
+  final expiresAtStr = payload['inviteExpiresAt'] as String?;
+  if (code != null && expiresAtStr != null) {
+    final expiresAt = DateTime.parse(expiresAtStr);
+    return switch (JoinCode.parse(code)) {
+      Ok<JoinCode>(:final value) => ListInvite(
+        code: value,
+        expiresAt: expiresAt,
+      ),
+      Err<JoinCode>() => throw StateError(
+        'Cached an invalid join code: $code',
+      ),
+    };
+  }
+  return null;
 }
 
 ListMember _memberFromJson(Map<String, dynamic> json) => ListMember(

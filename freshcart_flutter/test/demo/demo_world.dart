@@ -49,6 +49,7 @@ class DemoWorld {
   /// A creates list "Home" and B joins it. Returns the list as B sees it.
   Future<ShoppingList> sharedList() async {
     final created = (await a.lists.create(name: 'Home')).valueOrNull!;
-    return (await b.lists.joinByCode(created.joinCode)).valueOrNull!;
+    final invite = (await a.lists.openInvite(created.id)).valueOrNull!;
+    return (await b.lists.joinByCode(invite.code)).valueOrNull!;
   }
 }

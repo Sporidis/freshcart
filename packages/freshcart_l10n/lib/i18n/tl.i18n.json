@@ -191,6 +191,7 @@
     "copyCode": "Kopyahin ang code",
     "copied": "Nakopya",
     "inviteCode": "Code ng imbitasyon",
+    "validFor": {"one": "Gumagana pa nang {{n}} oras", "other": "Gumagana pa nang {{n}} oras"},
     "makeOwner": "Gawing may-ari",
     "removeMember": "Alisin sa listahan",
     "removeTitle": "Alisin si {{name}}?",

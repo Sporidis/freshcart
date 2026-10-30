@@ -191,6 +191,7 @@
     "copyCode": "Code kopiëren",
     "copied": "Gekopieerd",
     "inviteCode": "Uitnodigingscode",
+    "validFor": {"one": "Nog {{n}} uur geldig", "other": "Nog {{n}} uur geldig"},
     "makeOwner": "Eigenaar maken",
     "removeMember": "Uit lijst verwijderen",
     "removeTitle": "{{name}} verwijderen?",

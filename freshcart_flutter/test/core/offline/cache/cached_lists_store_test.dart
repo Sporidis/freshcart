@@ -40,7 +40,7 @@ void main() {
 
         expect(cached, isNotNull);
         expect(cached!.name, list.name);
-        expect(cached.joinCode, list.joinCode);
+        expect(cached.invite, list.invite);
         expect(cached.members.single.displayName, 'Mom');
       },
     );
@@ -82,5 +82,25 @@ void main() {
 
       expect(rebuilt, list);
     });
+
+    test('round-trips a list without an invite', () {
+      final list = buildListDto(joinCode: null).toDomain();
+
+      expect(shoppingListFromCachePayload(list.toCachePayload()), list);
+    });
+
+    test(
+      'a payload cached before invites expired reads as having no invite',
+      () {
+        // Older app versions stored a permanent 'joinCode'. The server no
+        // longer accepts those codes, so the cache must not bring one back.
+        final payload = buildListDto().toDomain().toCachePayload()
+          ..remove('inviteCode')
+          ..remove('inviteExpiresAt')
+          ..['joinCode'] = 'ABC23';
+
+        expect(shoppingListFromCachePayload(payload).invite, isNull);
+      },
+    );
   });
 }
