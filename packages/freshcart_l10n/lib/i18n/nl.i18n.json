@@ -163,6 +163,7 @@
     "tooShort": "Gebruik minstens {{min}} tekens",
     "quantityTooFew": "Voeg er minstens {{min}} toe",
     "photoTooLarge": "Die foto is te groot (maximaal {{megabytes}} MB)",
+    "photoInvalid": "Dat bestand is geen foto die we kunnen gebruiken. Probeer een andere.",
     "joinCodeInvalid": "Dat is geen geldige deelcode",
     "joinCodeNotFound": "Die deelcode hoort bij geen enkele lijst",
     "colorInvalid": "Verwacht een hexkleur zoals #4CAF50",

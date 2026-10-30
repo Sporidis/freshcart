@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
@@ -7,6 +5,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:test/test.dart';
 
 import 'support/invite_code.dart';
+import 'support/test_photo.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 /// Deleting an account, as decided in decisions.md #119: everything about
@@ -88,7 +87,7 @@ void main() {
 
     test('their avatar photo file is deleted too', () async {
       final alice = await aUser();
-      final photo = ByteData.view(Uint8List.fromList([1, 2, 3]).buffer);
+      final photo = aPhoto();
       await endpoints.profile.setAvatarPhoto(as(alice), photo);
       final session = sessionBuilder.build();
       final path = (await MemberProfile.db.findFirstRow(

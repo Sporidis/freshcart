@@ -3,6 +3,7 @@ import 'dart:typed_data';
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/common/business/require_valid.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
+import 'package:freshcart_server/src/profile/business/avatar_photo_sanitizer.dart';
 import 'package:serverpod/serverpod.dart';
 
 /// Where avatar photos are stored.
@@ -138,12 +139,17 @@ abstract final class ProfileService {
     if (bytes.lengthInBytes > maxAvatarPhotoBytes) {
       throw AvatarPhotoTooLargeException();
     }
+    // Only the pixels are published: no EXIF (GPS, device), no arbitrary
+    // bytes posing as a photo.
+    final clean = AvatarPhotoSanitizer.sanitize(
+      bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+    );
     final path =
         'avatars/$authUserId-${DateTime.now().microsecondsSinceEpoch}.jpg';
     await session.storage.storeFile(
       storageId: _avatarStorageId,
       path: path,
-      byteData: bytes,
+      byteData: ByteData.sublistView(clean),
     );
 
     final existing = await _profileFor(session, authUserId);

@@ -27,6 +27,9 @@ extension ValidationIssueMessage on ValidationIssue {
       t.validation.joinCodeInvalid,
     InvalidFormatInput(input: ValidatedInput.color) =>
       t.validation.colorInvalid,
+    // The server couldn't read the upload as a photo.
+    InvalidFormatInput(input: ValidatedInput.avatarPhoto) =>
+      t.validation.photoInvalid,
     // The password rule's only format check.
     InvalidFormatInput(input: ValidatedInput.password) =>
       t.validation.passwordSpacesAtEnds,

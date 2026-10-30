@@ -1,5 +1,3 @@
-import 'dart:typed_data';
-
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/auth/auth_configuration.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
@@ -9,6 +7,7 @@ import 'package:serverpod_auth_idp_server/core.dart';
 import 'package:test/test.dart';
 
 import 'support/invite_code.dart';
+import 'support/test_photo.dart';
 import 'test_tools/serverpod_test_tools.dart';
 
 void main() {
@@ -633,7 +632,7 @@ void main() {
           'old one', () async {
         final aliceId = await aUser();
         final list = await endpoints.list.create(as(aliceId), 'Groceries');
-        final photo = ByteData.view(Uint8List.fromList([1, 2, 3]).buffer);
+        final photo = aPhoto();
 
         await endpoints.profile.setAvatarPhoto(as(aliceId), photo);
         final first = memberIn(

@@ -163,6 +163,7 @@
     "tooShort": "Use at least {{min}} characters",
     "quantityTooFew": "Add at least {{min}}",
     "photoTooLarge": "That photo is too large (at most {{megabytes}} MB)",
+    "photoInvalid": "That file isn't a photo we can use. Try another one.",
     "joinCodeInvalid": "That is not a valid join code",
     "joinCodeNotFound": "That code does not match a list",
     "colorInvalid": "Expected a hex colour like #4CAF50",

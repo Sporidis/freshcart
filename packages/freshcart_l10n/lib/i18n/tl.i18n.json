@@ -163,6 +163,7 @@
     "tooShort": "Gumamit ng hindi bababa sa {{min}} na character",
     "quantityTooFew": "Magdagdag ng hindi bababa sa {{min}}",
     "photoTooLarge": "Masyadong malaki ang larawan (hanggang {{megabytes}} MB)",
+    "photoInvalid": "Hindi magagamit na larawan ang file na iyan. Subukan ang iba.",
     "joinCodeInvalid": "Hindi wastong code ng pagsali iyan",
     "joinCodeNotFound": "Walang listahang tumutugma sa code ng pagsali na iyan",
     "colorInvalid": "Hex na kulay ang kailangan, gaya ng #4CAF50",

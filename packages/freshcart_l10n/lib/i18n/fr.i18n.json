@@ -163,6 +163,7 @@
     "tooShort": "Utilisez au moins {{min}} caractères",
     "quantityTooFew": "Ajoutez-en au moins {{min}}",
     "photoTooLarge": "Cette photo est trop lourde ({{megabytes}} Mo maximum)",
+    "photoInvalid": "Ce fichier n'est pas une photo utilisable. Essayez-en une autre.",
     "joinCodeInvalid": "Ce code d'invitation n’est pas valide",
     "joinCodeNotFound": "Ce code d'invitation ne correspond à aucune liste",
     "colorInvalid": "Couleur hexadécimale attendue, comme #4CAF50",
