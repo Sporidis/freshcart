@@ -31,8 +31,13 @@ class ProfileController extends _$ProfileController {
       if (user != null) state = AsyncData(Ok(user));
     });
     ref.onDispose(subscription.cancel);
+    // The user as it is now, not as it was at sign-in: this controller is
+    // only created when something first reads it (say, opening the
+    // drawer), which can be after onboarding gave the user a name. The
+    // sign-in result still holds the nameless user from app start; the
+    // repository keeps the latest one.
     return (await ref.watch(signInResultProvider.future)).map(
-      (signIn) => signIn.user,
+      (signIn) => auth.currentUser ?? signIn.user,
     );
   }
 

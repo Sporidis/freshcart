@@ -81,6 +81,17 @@ void main() {
     expect(auth.signIns, 2);
   });
 
+  test('shows the user as they are now, not as they were at sign-in', () async {
+    // Signed in at app start, nameless; onboarding then names them before
+    // anything has read the profile (it's only created when first read).
+    await container.read(signInResultProvider.future);
+    await auth.setDisplayName('Alex');
+
+    final profile = await container.read(profileControllerProvider.future);
+
+    expect(profile.valueOrNull?.displayName, 'Alex');
+  });
+
   test('signs in once, not again on its own published change', () async {
     final sub = container.listen(profileControllerProvider, (_, _) {});
     addTearDown(sub.close);
