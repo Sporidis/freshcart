@@ -1,6 +1,7 @@
 account:
   - linkedProviders:
   - finishLinkEmail:
+  - deleteAccount:
 anonymousIdp:
   - login:
 emailIdp:

@@ -45,7 +45,8 @@ import 'package:freshcart_client/src/protocol/shops/models/shop_item_disposition
     as _i18;
 import 'protocol.dart' as _i19;
 
-/// Endpoint to upgrade an anonymous account by adding a login (email).
+/// Endpoint for the caller's account: adding a login (email) to an
+/// anonymous account, and deleting the account.
 /// {@category Endpoint}
 class EndpointAccount extends _i1.EndpointRef {
   EndpointAccount(_i1.EndpointCaller caller) : super(caller);
@@ -76,6 +77,14 @@ class EndpointAccount extends _i1.EndpointRef {
       'registrationToken': registrationToken,
       'password': password,
     },
+  );
+
+  /// Deletes the caller's account and everything about them
+  /// (decisions.md #119). Their session ends with it.
+  _i2.Future<void> deleteAccount() => caller.callServerEndpoint<void>(
+    'account',
+    'deleteAccount',
+    {},
   );
 }
 

@@ -70,6 +70,11 @@ abstract final class JoinAttempts {
     if (ip != null) await _perIp.recordAttempt(session, nonce: ip);
   }
 
+  /// Forgets [userId]'s failed joins, when their account is deleted. (The
+  /// per-IP counts aren't theirs alone, and expire within the window.)
+  static Future<void> forget(Session session, UuidValue userId) =>
+      _perUser.deleteAttempts(session, nonce: userId.uuid);
+
   /// The caller's IP address, or null outside an HTTP request (tests,
   /// future calls). Then only the per-user limit applies.
   static String? _ipOf(Session session) =>

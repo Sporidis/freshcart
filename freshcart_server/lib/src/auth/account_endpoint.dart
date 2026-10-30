@@ -1,9 +1,11 @@
+import 'package:freshcart_server/src/auth/business/account_deletion_service.dart';
 import 'package:freshcart_server/src/auth/business/account_link_service.dart';
 import 'package:freshcart_server/src/common/business/session_user.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 
-/// Endpoint to upgrade an anonymous account by adding a login (email).
+/// Endpoint for the caller's account: adding a login (email) to an
+/// anonymous account, and deleting the account.
 class AccountEndpoint extends Endpoint {
   @override
   bool get requireLogin => true;
@@ -31,4 +33,9 @@ class AccountEndpoint extends Endpoint {
     );
     return AccountLinkService.linkedProviders(session, userId);
   }
+
+  /// Deletes the caller's account and everything about them
+  /// (decisions.md #119). Their session ends with it.
+  Future<void> deleteAccount(Session session) =>
+      AccountDeletionService.delete(session, session.requireUserId);
 }

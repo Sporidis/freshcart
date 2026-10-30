@@ -184,6 +184,17 @@ abstract final class ProfileService {
     );
   }
 
+  /// Where the user's avatar photo is stored, or null if they have none.
+  /// Read before deleting an account, whose profile row goes with it.
+  static Future<String?> avatarPhotoPathFor(
+    Session session,
+    UuidValue authUserId,
+  ) async => (await _profileFor(session, authUserId))?.avatarPhotoPath;
+
+  /// Deletes the avatar photo file at [path] from storage.
+  static Future<void> deleteAvatarFile(Session session, String path) =>
+      session.storage.deleteFile(storageId: _avatarStorageId, path: path);
+
   /// Applies [change] to [existing], or to a new profile (named
   /// [fallbackDisplayName]) when the user has none yet, and saves it.
   static Future<MemberProfile> _upsert(
