@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/async/async_outcome.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/items/application/items/items_controller.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_mode.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_state.dart';
@@ -90,8 +91,12 @@ class ItemsSectionController extends _$ItemsSectionController {
     return ItemsMode.browse;
   }
 
-  /// Loads the items again. Used by the Retry button.
-  void retryLoad() => ref.invalidate(itemsControllerProvider(_listId));
+  /// Loads the items again: "Try again" after they failed to load. Signs
+  /// in again first if that is what failed.
+  Future<void> retryLoad() async {
+    await retrySignInIfFailed(ref);
+    if (ref.mounted) ref.invalidate(itemsControllerProvider(_listId));
+  }
 
   // ── Rows ────────────────────────────────────────────────────────────────
 

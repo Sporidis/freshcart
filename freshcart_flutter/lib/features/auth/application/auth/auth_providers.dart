@@ -59,3 +59,16 @@ bool signInFailed(AsyncValue<Result<SignIn>> signIn) => switch (signIn) {
   AsyncData(value: Err(), isLoading: false) => true,
   _ => false,
 };
+
+/// Starts a new sign-in if the last one failed, and waits for it.
+///
+/// For a "Try again" on data that needs a session: when sign-in itself
+/// failed (the server was down at start), reloading only the data fails
+/// the same way, with "no access", because there is no session to send.
+/// Sign-in otherwise only retries on coming back online or back into the
+/// app, neither of which happens while the user is looking at the error.
+Future<void> retrySignInIfFailed(Ref ref) async {
+  if (!signInFailed(ref.read(signInResultProvider))) return;
+  ref.invalidate(signInResultProvider);
+  await ref.read(signInResultProvider.future);
+}

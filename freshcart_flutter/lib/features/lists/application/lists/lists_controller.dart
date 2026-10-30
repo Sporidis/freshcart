@@ -1,4 +1,5 @@
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/lists/data/repositories/offline_list_repository.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -66,6 +67,10 @@ class ListsController extends _$ListsController {
     return result;
   }
 
-  /// Reloads the lists (pull-to-refresh, after leaving a list).
-  Future<void> refresh() async => ref.invalidateSelf();
+  /// Reloads the lists (pull-to-refresh, after leaving a list, "Try
+  /// again"). Signs in again first if that is what failed.
+  Future<void> refresh() async {
+    await retrySignInIfFailed(ref);
+    if (ref.mounted) ref.invalidateSelf();
+  }
 }
