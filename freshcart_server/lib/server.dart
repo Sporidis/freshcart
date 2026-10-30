@@ -13,6 +13,7 @@ import 'package:freshcart_server/src/web/routes/app_config_route.dart';
 import 'package:freshcart_server/src/web/routes/app_redirect_route.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
+import 'package:serverpod_shared/serverpod_shared.dart' show ServerpodRole;
 
 /// The starting point of the Serverpod server.
 void run(List<String> args) async {
@@ -103,7 +104,10 @@ void run(List<String> args) async {
     ServerpodRunMode.development,
     ServerpodRunMode.test,
   };
+  // `--role maintenance` only applies migrations and exits: it never sends
+  // email, so it mustn't be blocked by a missing email provider.
   if (!logOnlyEmailModes.contains(pod.runMode) &&
+      pod.config.role != ServerpodRole.maintenance &&
       AuthConfiguration.emailSender is LoggingEmailSender) {
     throw StateError(
       'Run mode "${pod.runMode}" needs a real EmailSender, but '
