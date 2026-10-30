@@ -191,12 +191,69 @@ package, download them again from the matching GitHub releases
 (`simolus3/sqlite3.dart` → `sqlite3-<version>/sqlite3.wasm`,
 `simolus3/drift` → `drift-<version>/drift_worker.js`).
 
+## Moving to a new server
+
+How the server moved from Ubuntu 20.04 / Postgres 12 to a fresh Ubuntu 24.04 / Postgres 16
+VM, and how to do it again. The old VM keeps running until the new one works; the switch
+is moving the **reserved public IP**, so DuckDNS, the certificate's domain and the apps
+don't change.
+
+1. **Create the VM** (Oracle Cloud console → Compute → Instances → Create). Image: *Canonical
+   Ubuntu 24.04* (aarch64). Shape: `VM.Standard.A1.Flex` — Always Free allows 4 OCPUs and
+   24 GB in total across your instances, so give it what the old VM leaves free (1 OCPU /
+   6 GB is plenty). Same VCN and subnet as the old VM. Public IP: a temporary (ephemeral)
+   one for now. SSH key: upload `~/.ssh/oracle_freshcart.pub`.
+2. **Run the setup script** (from the Mac, with the new VM's temporary IP):
+   ```bash
+   scp -i ~/.ssh/oracle_freshcart deploy/setup-vm.sh ubuntu@<NEW_IP>:
+   ssh -i ~/.ssh/oracle_freshcart ubuntu@<NEW_IP> 'bash setup-vm.sh'
+   ```
+   It asks for the database password (the `database` value under `production:` in the old
+   VM's `passwords.yaml`) and for adding a deploy key on GitHub.
+3. **Copy the secrets and the VM's config**, old VM → Mac → new VM, then delete the copies:
+   ```bash
+   mkdir -p /tmp/fc && cd /tmp/fc
+   scp -i ~/.ssh/oracle_freshcart ubuntu@134.98.159.244:freshcart/freshcart_server/config/{passwords,production}.yaml .
+   scp -i ~/.ssh/oracle_freshcart passwords.yaml production.yaml ubuntu@<NEW_IP>:freshcart/freshcart_server/config/
+   rm -rf /tmp/fc
+   ```
+4. **Build on the new VM** (steps 2–3 of "Updating the server"):
+   ```bash
+   cd ~/freshcart && sed -i '/- freshcart_flutter/d' pubspec.yaml && dart pub get
+   cd packages/freshcart_domain && dart run build_runner build && cd ../../freshcart_server
+   ```
+5. **Copy the web app** from the Mac: the `rsync` of "Releasing the web app", to `<NEW_IP>`.
+6. **Move the data** — the old server stops here, so nothing written meanwhile is lost:
+   ```bash
+   # old VM
+   sudo systemctl stop freshcart-server
+   sudo -u postgres pg_dump -Fc freshcart > ~/freshcart.dump
+   # Mac: old → new
+   scp -i ~/.ssh/oracle_freshcart ubuntu@134.98.159.244:freshcart.dump /tmp/
+   scp -i ~/.ssh/oracle_freshcart /tmp/freshcart.dump ubuntu@<NEW_IP>: && rm /tmp/freshcart.dump
+   # new VM: restore into the empty database, then apply any newer migrations (usually none)
+   sudo -u postgres pg_restore --no-owner --role=freshcart -d freshcart ~/freshcart.dump
+   cd ~/freshcart/freshcart_server
+   dart run bin/main.dart --mode production --role maintenance --apply-migrations
+   sudo systemctl start freshcart-server
+   curl -s localhost:8080/          # OK <time>
+   ```
+7. **Move the reserved IP** (console): old instance → Attached VNICs → its VNIC → IPv4
+   addresses → Edit → *No public IP* (this frees the reserved IP). Then new instance → its
+   VNIC → IPv4 addresses → Edit → *Reserved public IP* → pick `134.98.159.244`. Caddy gets a
+   certificate for the domain by itself within a minute.
+8. **Check from the Mac:** `ssh-keygen -R 134.98.159.244` (the address now has a new host
+   key), then `curl https://freshcart-nikos.duckdns.org/` and open the app.
+9. **Keep the old VM stopped for a week**, then terminate it (and its boot volume, so it
+   doesn't count against the free storage).
+
 ## Known gaps
 
 Tracked in the security plan; listed here so an update doesn't come as a surprise.
 
 - **No database backups.** A lost disk loses every list.
-- **Ubuntu 20.04 and Postgres 12** no longer get standard security updates.
+- **Ubuntu 20.04 and Postgres 12** no longer get standard security updates (until the move
+  in "Moving to a new server" is done).
 - **Every request looks like it comes from `localhost`** to the server (Caddy forwards it), so
   the per-IP limits (failed joins, new accounts) are shared by all users together.
 - Ports 8080–8082 listen on all interfaces; only the firewall keeps them private.
