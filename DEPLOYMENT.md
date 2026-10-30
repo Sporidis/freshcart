@@ -35,6 +35,12 @@ on the VM (never in git) and in the Android key files on the developer's Mac.
 The server reads **only the section of its run mode**. A key that exists under
 `development:` but not under `production:` doesn't exist for the live server.
 
+Because the VM keeps its own `production.yaml`, a change to that file in the repo does
+**not** reach the VM by itself: compare after updating
+(`diff ~/production.yaml.vm freshcart_server/config/production.yaml` before copying it back)
+and carry such changes over by hand. Example: `maxRequestSize` went from 512 KB to 2 MB
+(2097152) on 30 October 2026, so avatar photos up to 1 MB fit.
+
 ## Updating the server
 
 Run on the VM. Each step says how to see that it worked: a command that runs without an

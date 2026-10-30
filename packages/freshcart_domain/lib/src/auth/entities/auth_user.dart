@@ -151,9 +151,12 @@ abstract class AuthUser with _$AuthUser {
 
   /// The biggest avatar photo allowed, in bytes.
   ///
-  /// The app already makes photos smaller before uploading. This limit is
-  /// just a safety net (decisions.md #65).
-  static const int maxAvatarPhotoBytes = 5 * 1024 * 1024;
+  /// The app already makes photos smaller before uploading (512px, usually
+  /// well under 200 KB). This limit is just a safety net (decisions.md #65).
+  /// It must stay well below the server's `maxRequestSize`: the photo
+  /// travels as base64 (a third bigger), and a request over that size is
+  /// cut off before this rule can give its own, clearer message.
+  static const int maxAvatarPhotoBytes = 1024 * 1024;
 
   /// Checks an avatar photo: not empty, and not bigger than
   /// [maxAvatarPhotoBytes]. Doesn't check the file type; that's done where

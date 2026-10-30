@@ -21,11 +21,10 @@ abstract final class ProfileService {
   /// one early (a list full of "Someone" isn't helpful).
   static const String fallbackDisplayName = 'Someone';
 
-  /// The biggest avatar photo allowed, in bytes.
-  ///
-  /// Same as `AuthUser.maxAvatarPhotoBytes` in the app. Checked here too, in
-  /// case an app doesn't make the photo smaller first.
-  static const int maxAvatarPhotoBytes = 5 * 1024 * 1024;
+  /// The biggest avatar photo allowed, in bytes: the domain's rule, so the
+  /// app and the server can't drift apart. Checked here too, in case an app
+  /// doesn't make the photo smaller first.
+  static const int maxAvatarPhotoBytes = domain.AuthUser.maxAvatarPhotoBytes;
 
   static Future<MemberProfile?> _profileFor(
     Session session,

@@ -45,7 +45,9 @@ redis:
   #user: # defaults to empty
   #requireSsl: true # defaults to false
 
-maxRequestSize: 524288 # The maximum size of requests allowed in bytes
+# The maximum size of requests allowed in bytes. 2 MB: room for the
+# biggest avatar photo (AuthUser.maxAvatarPhotoBytes, 1 MB) as base64.
+maxRequestSize: 2097152
 
 sessionLogs:
   persistentEnabled: true
