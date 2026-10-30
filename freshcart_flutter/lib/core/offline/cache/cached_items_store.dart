@@ -55,6 +55,9 @@ class CachedItemsStore {
         ),
     ];
   }
+
+  /// Deletes every saved item. Used on sign-out.
+  Future<void> clear() => _db.delete(_db.cachedItems).go();
 }
 
 /// Supplies the [CachedItemsStore], backed by [appDatabaseProvider].

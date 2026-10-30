@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/app/app.dart';
 import 'package:freshcart_flutter/core/l10n/locale_controller.dart';
+import 'package:freshcart_flutter/core/offline/connectivity/connectivity_adapter.dart';
+import 'package:freshcart_flutter/core/offline/repositories/local_data_repository_impl.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_status_option.dart';
 import 'package:freshcart_flutter/core/ui/settings/setting_toggle_option.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
@@ -18,8 +20,10 @@ import 'package:freshcart_l10n/freshcart_l10n.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../../fakes/fake_auth_repository.dart';
+import '../../../../fakes/fake_connectivity_adapter.dart';
 import '../../../../fakes/fake_item_repository.dart';
 import '../../../../fakes/fake_list_repository.dart';
+import '../../../../fakes/fake_local_data_repository.dart';
 import '../../../../fakes/fake_notification_repository.dart';
 import '../../../../fakes/fake_shop_repository.dart';
 
@@ -27,16 +31,27 @@ void main() {
   setUpAll(configurePluralResolvers);
 
   late FakeAuthRepository auth;
+  late FakeNotificationRepository notifications;
+  late FakeLocalDataRepository localData;
 
   setUp(() {
     auth = FakeAuthRepository();
+    notifications = FakeNotificationRepository();
+    localData = FakeLocalDataRepository();
     SharedPreferences.setMockInitialValues({});
   });
   tearDown(() => auth.dispose());
 
-  Future<void> pump(WidgetTester tester) async {
+  Future<void> pump(WidgetTester tester, {bool online = true}) async {
     final container = ProviderContainer(
-      overrides: [authRepositoryProvider.overrideWithValue(auth)],
+      overrides: [
+        connectivityAdapterProvider.overrideWithValue(
+          FakeConnectivityAdapter(Stream.value(online)),
+        ),
+        authRepositoryProvider.overrideWithValue(auth),
+        notificationRepositoryProvider.overrideWithValue(notifications),
+        localDataRepositoryProvider.overrideWithValue(localData),
+      ],
     );
     addTearDown(container.dispose);
     container.read(localeControllerProvider.notifier).select(AppLocale.en);
@@ -125,6 +140,36 @@ void main() {
       expect(auth.signOutCalls, 1);
     });
 
+    testWidgets('signing out stops push and clears this phone\'s data', (
+      tester,
+    ) async {
+      auth.user = Ok(linkedUser());
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      expect(notifications.unregisterDeviceCallCount, 1);
+      expect(auth.signOutCalls, 1);
+      expect(localData.clearCalls, 1);
+    });
+
+    testWidgets('a linked account with unsynced changes is warned first', (
+      tester,
+    ) async {
+      auth.user = Ok(linkedUser());
+      localData.pending = 3;
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      expect(find.text('Sign out?'), findsOneWidget);
+      expect(
+        find.textContaining("3 changes made offline haven't reached"),
+        findsOneWidget,
+      );
+      // Only the unsynced part: a linked account can sign back in.
+      expect(find.textContaining('only exist on this device'), findsNothing);
+      expect(auth.signOutCalls, 0);
+    });
+
     testWidgets('cancelling the confirmation keeps the account', (
       tester,
     ) async {
@@ -158,6 +203,38 @@ void main() {
       await tapSignOutRow(tester);
 
       expect(find.byType(SnackBar), findsOneWidget);
+      // Still signed in, so nothing on this phone is deleted.
+      expect(localData.clearCalls, 0);
+    });
+
+    testWidgets('a sign-out the server never got says nothing changed', (
+      tester,
+    ) async {
+      auth
+        ..user = Ok(linkedUser())
+        ..signOutResult = const Err(Failure.network());
+      await pump(tester);
+      await tapSignOutRow(tester);
+
+      expect(
+        find.text(
+          'Signing out needs a connection to the server. Nothing was '
+          'changed on this phone.',
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('offline, the row says why, and does nothing when tapped', (
+      tester,
+    ) async {
+      auth.user = Ok(linkedUser());
+      await pump(tester, online: false);
+      await tapSignOutRow(tester);
+
+      expect(find.text('Needs a connection to the server'), findsOneWidget);
+      expect(find.text('Sign out?'), findsNothing);
+      expect(auth.signOutCalls, 0);
     });
   });
 

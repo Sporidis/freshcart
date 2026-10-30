@@ -110,9 +110,17 @@ class AuthRepositoryImpl implements AuthRepository {
     );
   }
 
+  /// Signs out on the server first, and only then forgets the session on
+  /// this phone. Not `client.auth.signOutDevice()`: that one never throws
+  /// and signs the phone out even when the server can't be reached (it
+  /// only returns false). Then a failed sign-out would look like a success,
+  /// and the caller would delete this phone's data for a user who is, as
+  /// far as the server knows, still signed in.
   @override
   Future<Result<void>> signOut() => _guard(() async {
-    await _client.auth.signOutDevice();
+    // Throws when the server can't be reached: nothing below runs.
+    await _client.modules.serverpod_auth_core.status.signOutDevice();
+    await _client.auth.updateSignedInUser(null);
     _currentUser = null;
     _changes.add(null);
   });

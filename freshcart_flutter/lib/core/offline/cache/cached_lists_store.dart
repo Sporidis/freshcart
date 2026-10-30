@@ -64,6 +64,9 @@ class CachedListsStore {
         ),
     ];
   }
+
+  /// Deletes every saved list. Used on sign-out.
+  Future<void> clear() => _db.delete(_db.cachedLists).go();
 }
 
 /// Supplies the [CachedListsStore], backed by [appDatabaseProvider].

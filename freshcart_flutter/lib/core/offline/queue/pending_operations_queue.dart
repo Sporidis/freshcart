@@ -64,6 +64,12 @@ class PendingOperationsQueue {
   Stream<int> watchCount() {
     return _db.select(_db.pendingOperations).watch().map((rows) => rows.length);
   }
+
+  /// How many changes are waiting to be sent.
+  Future<int> count() => _db.pendingOperations.count().getSingle();
+
+  /// Deletes every waiting change. Used on sign-out.
+  Future<void> clear() => _db.delete(_db.pendingOperations).go();
 }
 
 /// Reads a queue row back as the [PendingChange] it was stored from.

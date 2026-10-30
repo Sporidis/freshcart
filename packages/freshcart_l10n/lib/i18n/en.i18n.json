@@ -242,6 +242,9 @@
     "helpFeedback": "Help & feedback",
     "signOutConfirmTitle": "Sign out?",
     "signOutConfirmBody": "Your lists only exist on this device. Signing out without linking an email loses them for good.",
+    "signOutPendingChanges": {"one": "{{n}} change made offline hasn't reached the server yet and will be lost.", "other": "{{n}} changes made offline haven't reached the server yet and will be lost."},
+    "signOutNeedsConnection": "Needs a connection to the server",
+    "signOutFailedOffline": "Signing out needs a connection to the server. Nothing was changed on this phone.",
     "termsOfService": "Terms of Service",
     "signOut": "Sign out",
     "appVersion": "App version: {{version}}"

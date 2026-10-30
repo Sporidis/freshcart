@@ -62,18 +62,9 @@ Future<void> main() async {
   // Start signing in now, but don't wait for it. The SplashScreen shows while
   // sign-in is running. Starting it here, instead of letting the splash
   // screen start it, just saves one frame.
-  unawaited(
-    container.read(signInResultProvider.future).then((signIn) {
-      // Registering for push needs a signed-in user, so it waits for sign-in.
-      // We don't wait for it to finish: if it fails, the app still works,
-      // the user just won't get push notifications.
-      if (signIn.isOk) {
-        unawaited(
-          container.read(notificationRepositoryProvider).registerDevice(),
-        );
-      }
-    }),
-  );
+  // Registering for push follows sign-in on its own (registerPushOnSignIn,
+  // started by the app), after this sign-in and every later one.
+  unawaited(container.read(signInResultProvider.future));
 
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(

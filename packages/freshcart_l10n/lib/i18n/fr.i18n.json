@@ -242,6 +242,9 @@
     "helpFeedback": "Aide & commentaires",
     "signOutConfirmTitle": "Se déconnecter ?",
     "signOutConfirmBody": "Vos listes n'existent que sur cet appareil. Si vous vous déconnectez sans associer d'e-mail, vous les perdrez définitivement.",
+    "signOutPendingChanges": {"one": "{{n}} modification faite hors ligne n'est pas encore sur le serveur et sera perdue.", "other": "{{n}} modifications faites hors ligne ne sont pas encore sur le serveur et seront perdues."},
+    "signOutNeedsConnection": "Nécessite une connexion au serveur",
+    "signOutFailedOffline": "La déconnexion nécessite une connexion au serveur. Rien n'a été modifié sur ce téléphone.",
     "termsOfService": "Conditions d'utilisation",
     "signOut": "Se déconnecter",
     "appVersion": "Version de l'application : {{version}}"

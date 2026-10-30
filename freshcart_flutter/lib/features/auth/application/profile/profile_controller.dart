@@ -1,8 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:freshcart_domain/freshcart_domain.dart';
+import 'package:freshcart_flutter/core/offline/repositories/local_data_repository_impl.dart';
 import 'package:freshcart_flutter/features/auth/application/auth/auth_providers.dart';
 import 'package:freshcart_flutter/features/auth/data/repositories/auth_repository_impl.dart';
+import 'package:freshcart_flutter/features/notifications/data/repositories/notification_repository_impl.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'profile_controller.g.dart';
@@ -21,14 +23,12 @@ class ProfileController extends _$ProfileController {
   @override
   Future<Result<AuthUser>> build() async {
     final auth = ref.watch(authRepositoryProvider);
-    // When a new user arrives, just put it in the state. Only a sign-out
-    // (null) needs a fresh sign-in, which rebuilds this.
+    // When a new user arrives, just put it in the state. A sign-out (null)
+    // is left to [signOut], which signs in again only once this phone's
+    // data is cleared. Signing in here too would start a second sign-in
+    // (a second anonymous account) while the first one is running.
     final subscription = auth.authStateChanges().listen((user) {
-      if (user == null) {
-        ref.invalidate(signInResultProvider);
-      } else {
-        state = AsyncData(Ok(user));
-      }
+      if (user != null) state = AsyncData(Ok(user));
     });
     ref.onDispose(subscription.cancel);
     return (await ref.watch(signInResultProvider.future)).map(
@@ -74,11 +74,24 @@ class ProfileController extends _$ProfileController {
     ),
   );
 
-  /// Signs out. If it works, the profile is loaded again from scratch.
+  /// How many changes made offline would be lost by signing out now, for
+  /// the "are you sure?" question.
+  Future<int> pendingChangeCount() =>
+      ref.read(localDataRepositoryProvider).pendingChangeCount();
+
+  /// Signs out, leaving nothing of the account on this phone ([SignOut]).
+  /// If it works, the profile is loaded again from scratch.
   Future<Failure?> signOut() async {
-    switch (await _auth.signOut()) {
+    final signOut = SignOut(
+      _auth,
+      ref.read(notificationRepositoryProvider),
+      ref.read(localDataRepositoryProvider),
+    );
+    switch (await signOut()) {
       case Ok():
-        // A fresh anonymous account, the same as a first launch.
+        // A fresh anonymous account, the same as a first launch. The only
+        // place a sign-out signs in again, and only now that the old
+        // account's data is gone from this phone.
         ref.invalidate(signInResultProvider);
         return null;
       case Err(:final failure):

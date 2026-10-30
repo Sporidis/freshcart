@@ -242,6 +242,9 @@
     "helpFeedback": "Help & feedback",
     "signOutConfirmTitle": "Afmelden?",
     "signOutConfirmBody": "Je lijsten bestaan alleen op dit apparaat. Als je je afmeldt zonder een e-mailadres te koppelen, ben je ze voorgoed kwijt.",
+    "signOutPendingChanges": {"one": "{{n}} offline wijziging staat nog niet op de server en gaat verloren.", "other": "{{n}} offline wijzigingen staan nog niet op de server en gaan verloren."},
+    "signOutNeedsConnection": "Vereist een verbinding met de server",
+    "signOutFailedOffline": "Afmelden lukt alleen met een verbinding met de server. Er is niets gewijzigd op deze telefoon.",
     "termsOfService": "Voorwaarden",
     "signOut": "Uitloggen",
     "appVersion": "Appversie: {{version}}"

@@ -242,6 +242,9 @@
     "helpFeedback": "Tulong at feedback",
     "signOutConfirmTitle": "Mag-sign out?",
     "signOutConfirmBody": "Nasa device na ito lang ang iyong mga listahan. Kapag nag-sign out ka nang hindi nagli-link ng email, tuluyan na itong mawawala.",
+    "signOutPendingChanges": {"one": "{{n}} pagbabagong ginawa offline ang wala pa sa server at mawawala.", "other": "{{n}} pagbabagong ginawa offline ang wala pa sa server at mawawala."},
+    "signOutNeedsConnection": "Kailangan ng koneksyon sa server",
+    "signOutFailedOffline": "Kailangan ng koneksyon sa server para mag-sign out. Walang nabago sa phone na ito.",
     "termsOfService": "Mga Tuntunin ng Serbisyo",
     "signOut": "Mag-sign out",
     "appVersion": "Bersyon ng app: {{version}}"
