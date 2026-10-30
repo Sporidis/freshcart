@@ -1,9 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Release builds only get what this manifest declares: Flutter's
+         template adds INTERNET to the debug and profile manifests (for hot
+         reload), so without this line a release APK can't reach the server. -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Android 13+ requires this to be declared before FirebaseMessaging's
          getToken() can prompt for it at runtime; see PushTokenSource. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <application
-        android:label="freshcart_flutter"
+        android:label="FreshCart"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
