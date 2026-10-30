@@ -5,6 +5,12 @@
     "display": "standalone",
     "background_color": "#FAFAF8",
     "theme_color": "#FAFAF8",
+    "user_preferences": {
+        "color_scheme_dark": {
+            "theme_color": "#1A1A18",
+            "background_color": "#1A1A18"
+        }
+    },
     "description": "A shared shopping list your whole household keeps up to date.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
