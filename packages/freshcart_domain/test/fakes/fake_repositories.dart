@@ -336,6 +336,56 @@ class FakeAuthRepository implements AuthRepository {
   final List<({String requestId, String code, String password})>
   finishLinkEmailCalls = [];
 
+  /// What [signOut] will return. Defaults to success.
+  Result<void> signOutResult = const Ok(null);
+
+  /// Every call, in order, to the methods that sign-out uses, shared with
+  /// the other fakes through [calls] so a test can check their order.
+  List<String> calls = [];
+
   @override
-  Future<Result<void>> signOut() => throw UnimplementedError();
+  Future<Result<void>> signOut() async {
+    calls.add('signOut');
+    return signOutResult;
+  }
+}
+
+/// A [NotificationRepository] for the sign-out tests: only
+/// [unregisterDevice] is used.
+class FakeNotificationRepository implements NotificationRepository {
+  /// Creates the fake, recording into [calls].
+  FakeNotificationRepository(this.calls);
+
+  /// Shared call log (see [FakeAuthRepository.calls]).
+  final List<String> calls;
+
+  /// What [unregisterDevice] will return. Defaults to success.
+  Result<void> unregisterResult = const Ok(null);
+
+  @override
+  Future<Result<void>> unregisterDevice() async {
+    calls.add('unregisterDevice');
+    return unregisterResult;
+  }
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => throw UnimplementedError();
+}
+
+/// A [LocalDataRepository] that records its calls.
+class FakeLocalDataRepository implements LocalDataRepository {
+  /// Creates the fake, recording into [calls].
+  FakeLocalDataRepository(this.calls);
+
+  /// Shared call log (see [FakeAuthRepository.calls]).
+  final List<String> calls;
+
+  /// What [pendingChangeCount] returns.
+  int pending = 0;
+
+  @override
+  Future<int> pendingChangeCount() async => pending;
+
+  @override
+  Future<void> clear() async => calls.add('clear');
 }
