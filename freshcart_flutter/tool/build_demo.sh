@@ -47,12 +47,13 @@ cp -R build/web/. "$out/"
 rm -f "$out/index.html" "$out/demo.html" "$out/manifest.json" \
   "$out/flutter_service_worker.js"
 
-# The portfolio commits this folder, so drop renderer files the demo never
-# fetches (checked in flutter.js's loader). This is a dart2js build with the
-# canvaskit renderer: it loads canvaskit/chromium/ in Chromium browsers and
-# canvaskit/canvaskit.* elsewhere. skwasm*, wimp* (skwasm renderer) and
-# webparagraph/ (only with preferWebParagraph) are unused, and *.symbols are
-# only for symbolising stack traces. Revisit if the build moves to --wasm.
+# Drop renderer files the demo never fetches (checked in flutter.js's
+# loader): they would only make the release zip and the deployed portfolio
+# bigger. This is a dart2js build with the canvaskit renderer: it loads
+# canvaskit/chromium/ in Chromium browsers and canvaskit/canvaskit.*
+# elsewhere. skwasm*, wimp* (skwasm renderer) and webparagraph/ (only with
+# preferWebParagraph) are unused, and *.symbols are only for symbolising
+# stack traces. Revisit if the build moves to --wasm.
 rm -rf "$out/canvaskit/webparagraph"
 rm -f "$out"/canvaskit/skwasm* "$out"/canvaskit/wimp.*
 find "$out/canvaskit" -name '*.symbols' -delete
