@@ -1,25 +1,24 @@
 name: Release
 
-# Pushing a version tag (`git tag v0.1.0 && git push origin v0.1.0`) publishes
-# a GitHub Release with the web demo attached as freshcart-demo-web.zip. The
-# portfolio site pins one of these releases and embeds that demo. The Android
-# APK can be attached to the same release later.
+# Pushing a version tag (`git tag v1.0.4 && git push origin v1.0.4`) builds
+# the signed Android APK and the web demo, then publishes one GitHub Release
+# with both: freshcart-<version>.apk for the family's phones, and
+# freshcart-demo-web.zip, which the portfolio site pins and embeds.
 on:
   push:
     tags: ['v*']
 
-# Creating the release and uploading its assets.
-permissions:
-  contents: write
-
 env:
   # Keep in step with ci.yml.
   FLUTTER_VERSION: '3.47.2'
+  SERVER_URL: 'https://freshcart-nikos.duckdns.org/'
 
 jobs:
   web-demo:
     name: Web demo
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
       - uses: subosito/flutter-action@v2
@@ -53,9 +52,120 @@ jobs:
         working-directory: ${{ runner.temp }}/site/web/demo/freshcart
         run: zip -qr "$GITHUB_WORKSPACE/freshcart-demo-web.zip" .
 
-      - name: Publish release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-demo
+          path: freshcart-demo-web.zip
+          if-no-files-found: error
+
+  android:
+    name: Android APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      # The APK's versionCode comes from pubspec.yaml, and Android refuses an
+      # update whose versionCode isn't higher. A tag that doesn't match the
+      # pubspec would publish "1.0.4" containing 1.0.3.
+      - name: Check the tag matches pubspec.yaml
+        working-directory: freshcart_flutter
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          pubspec="$(grep '^version:' pubspec.yaml | cut -d' ' -f2)"
+          if [[ "$tag" != "${pubspec%%+*}" ]]; then
+            echo "::error::Tag $GITHUB_REF_NAME, but pubspec.yaml says $pubspec. Bump the pubspec version (name and the number after +), commit, and tag again."
+            exit 1
+          fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+      - run: flutter pub get
+
+      - name: Generate domain code
+        working-directory: packages/freshcart_domain
+        run: dart run build_runner build
+      - name: Generate translations
+        working-directory: packages/freshcart_l10n
+        run: dart run slang
+      - name: Generate app code
+        working-directory: freshcart_flutter
+        run: dart run build_runner build
+
+      # The four gitignored files a release build needs, from the repo's
+      # secrets. The keystore goes to the runner's temp folder, outside the
+      # checkout, so no later step can pick it up by accident.
+      - name: Write signing key and Firebase config
+        working-directory: freshcart_flutter
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          FIREBASE_OPTIONS_DART: ${{ secrets.FIREBASE_OPTIONS_DART }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          cat > android/key.properties <<EOF
+          storeFile=$RUNNER_TEMP/release.jks
+          storePassword=$STORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          EOF
+          printf '%s\n' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+          printf '%s\n' "$FIREBASE_OPTIONS_DART" > lib/firebase_options.dart
+
+      - name: Build APK
+        working-directory: freshcart_flutter
+        run: |
+          flutter build apk --release --dart-define=SERVER_URL="$SERVER_URL"
+          mv build/app/outputs/flutter-apk/app-release.apk \
+            "$GITHUB_WORKSPACE/freshcart-${GITHUB_REF_NAME#v}.apk"
+
+      # build.gradle.kts falls back to the debug key when key.properties is
+      # missing or unreadable, and the build still passes. An APK signed with
+      # any key but the release one can't update the phones, so fail here
+      # instead of publishing it. The fingerprint is public (any APK shows it).
+      - name: Check the APK has the release signature
+        env:
+          RELEASE_CERT_SHA256: a4d50e53e7de14afe65cea5e7c3ab279eab2189c02502a82c2571666a98f07a4
+        run: |
+          apksigner="$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -1)"
+          if ! "$apksigner" verify --print-certs freshcart-*.apk \
+              | grep -q "SHA-256 digest: $RELEASE_CERT_SHA256"; then
+            echo "::error::The APK isn't signed with the FreshCart release key"
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: freshcart-*.apk
+          if-no-files-found: error
+
+  publish:
+    name: Publish release
+    needs: [web-demo, android]
+    runs-on: ubuntu-latest
+    # The only job that can write to the repo, and it never sees the secrets.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          merge-multiple: true
+      - name: Create release
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          gh release create "$GITHUB_REF_NAME" freshcart-demo-web.zip \
-            --title "$GITHUB_REF_NAME" --generate-notes
+          gh release create "$GITHUB_REF_NAME" \
+            freshcart-*.apk freshcart-demo-web.zip \
+            --title "FreshCart ${GITHUB_REF_NAME#v}" --generate-notes

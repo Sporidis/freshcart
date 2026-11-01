@@ -113,31 +113,49 @@ journalctl -u freshcart-server --since "15 minutes ago" --no-pager | grep -iE -A
 
 ## Releasing the Android app
 
-On the Mac. The APK is signed with the release key, which lives **outside the repo**:
-`~/.android/freshcart-release.jks`, password in `freshcart_flutter/android/key.properties`
-(gitignored). **Back both up.** Without them no new build can install over the old one,
-and every phone has to uninstall and start over.
+GitHub Actions builds it: pushing a `v*` tag runs `.github/workflows/release.yml`, which
+publishes one release with the signed APK (`freshcart-<version>.apk`) and the portfolio's
+web demo (`freshcart-demo-web.zip`).
 
 ```bash
-# 1. Raise the version: the build number (+N) must go up, or Android won't update.
-#    freshcart_flutter/pubspec.yaml → version: 1.0.3+4
+# 1. Raise the version in freshcart_flutter/pubspec.yaml, e.g. 1.0.3+4 → 1.0.4+5.
+#    Both parts: the tag must equal the name (1.0.4), and Android only updates
+#    when the build number (+N) goes up. The workflow refuses a mismatch.
 
-# 2. Build against the live server
+# 2. Commit, push, tag
+git commit -am "chore(release): 1.0.4" && git push origin main
+git tag v1.0.4 && git push origin v1.0.4
+
+# 3. Watch it (about 10 minutes), then check the release has both files
+gh run watch "$(gh run list --workflow release.yml --limit 1 --json databaseId --jq '.[0].databaseId')"
+gh release view v1.0.4
+```
+
+The workflow fails instead of publishing when the APK isn't signed with the release key
+(SHA-256 `a4d50e53…`, checked in full). It also needs these repository secrets, set from
+the Mac with `gh secret set`:
+
+| Secret | From |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | `base64 -i ~/.android/freshcart-release.jks` |
+| `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS` | `freshcart_flutter/android/key.properties` |
+| `GOOGLE_SERVICES_JSON` | `freshcart_flutter/android/app/google-services.json` |
+| `FIREBASE_OPTIONS_DART` | `freshcart_flutter/lib/firebase_options.dart` |
+
+The key itself still lives **outside the repo** on the Mac: `~/.android/freshcart-release.jks`,
+password in `freshcart_flutter/android/key.properties` (gitignored). **Back both up.** GitHub
+secrets can't be read back, so they are no backup. Without the key no new build can install
+over the old one, and every phone has to uninstall and start over.
+
+Releases up to 1.0.3 were built by hand on the Mac and tagged `android-x.y.z`. To build one
+locally (for a test on a phone):
+
+```bash
 cd freshcart_flutter
 flutter build apk --release --dart-define=SERVER_URL=https://freshcart-nikos.duckdns.org/
-
-# 3. Check before handing it out
-#    - signed with the release key (SHA-256 a4d50e53…)
-$(ls -d ~/Library/Android/sdk/build-tools/*/apksigner | sort -V | tail -1) \
-  verify --print-certs build/app/outputs/flutter-apk/app-release.apk | grep SHA-256
-#    - version, INTERNET permission, app name
+# version, INTERNET permission, app name
 $(ls -d ~/Library/Android/sdk/build-tools/*/aapt2 | sort -V | tail -1) \
   dump badging build/app/outputs/flutter-apk/app-release.apk | grep -E "^package:|INTERNET|application-label:"
-
-# 4. Commit the version, push, and publish under an android-x.y.z tag.
-#    Not v*: that tag triggers release.yml (the web demo) for the same release.
-gh release create android-1.0.3 build/app/outputs/flutter-apk/app-release.apk \
-  --target "$(git rev-parse HEAD)" --title "FreshCart 1.0.3 (Android)" --notes "…"
 ```
 
 Release builds differ from debug builds: test the release APK on a phone once before handing
