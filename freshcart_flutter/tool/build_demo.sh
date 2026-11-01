@@ -12,6 +12,9 @@ set -euo pipefail
 cd "$(dirname "$0")/.." # freshcart_flutter/
 PORTFOLIO="${PORTFOLIO:-$HOME/Documents/Portfolio/Website/nikolaos_sporidis_portfolio}"
 PORT="${PORT:-8090}"
+# Not build/web: that is the real app's, which the server serves at /app/.
+# --output must be absolute.
+build="$PWD/build/demo"
 
 case "${1:-}" in
   "" | --serve) ;;
@@ -21,12 +24,12 @@ case "${1:-}" in
     ;;
 esac
 
-flutter build web --release -t lib/main_demo.dart
+flutter build web --release -t lib/main_demo.dart --output "$build"
 
 if [[ "${1:-}" == "--serve" ]]; then
-  cp tool/demo/demo.html build/web/demo.html
+  cp tool/demo/demo.html "$build/demo.html"
   echo "Serving http://localhost:$PORT/demo.html (Ctrl-C to stop)"
-  cd build/web
+  cd "$build"
   exec python3 -m http.server "$PORT"
 fi
 
@@ -39,11 +42,11 @@ out="$PORTFOLIO/web/demo/freshcart"
 # Start clean, so files from an older build never linger.
 rm -rf "$out"
 mkdir -p "$out"
-cp -R build/web/. "$out/"
+cp -R "$build/." "$out/"
 
 # The portfolio's page hosts the demo, so the PWA's own page, manifest and
 # service worker don't belong there (nor the dev host page, if a --serve
-# run left it in build/web).
+# run left it in build/demo).
 rm -f "$out/index.html" "$out/demo.html" "$out/manifest.json" \
   "$out/flutter_service_worker.js"
 
