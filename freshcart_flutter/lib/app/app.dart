@@ -27,7 +27,11 @@ const _largeTextScale = TextScaler.linear(1.15);
 /// smoothly instead of jumping.
 class FreshCartApp extends ConsumerWidget {
   /// Creates the app root.
-  const FreshCartApp({super.key});
+  const FreshCartApp({super.key, this.embedded = false});
+
+  /// Whether the app runs inside another page (the web demo). Then it
+  /// leaves page-level things, like the tab title, to that page.
+  final bool embedded;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -47,7 +51,8 @@ class FreshCartApp extends ConsumerWidget {
 
     return SessionResumeObserver(
       child: MaterialApp.router(
-        title: t.appName,
+        // Embedded, the host page owns the browser-tab title; null leaves it alone.
+        title: embedded ? null : t.appName,
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(AppTheme.brandSeed),
         darkTheme: AppTheme.dark(AppTheme.brandSeed),

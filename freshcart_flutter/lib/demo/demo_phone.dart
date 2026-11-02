@@ -61,7 +61,7 @@ class _DemoPhoneState extends State<DemoPhone> {
         data: _withPhoneInsets(MediaQuery.of(context)),
         child: UncontrolledProviderScope(
           container: _container!,
-          child: const FreshCartApp(),
+          child: const FreshCartApp(embedded: true),
         ),
       ),
       builder: (context, locked, app) => Stack(
