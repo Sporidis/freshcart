@@ -17,12 +17,13 @@ class ImagePickerAvatarPhotoSource implements AvatarPhotoSource {
     try {
       final picked = await ImagePicker().pickImage(
         source: ImageSource.gallery,
-        // Make the photo smaller. Camera photos can be several MB, way too
-        // big for an avatar. The server also has a size limit, but that's
-        // just a safety net.
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
+        // Smaller than a camera photo (several MB), but still big enough
+        // to zoom into: the user crops next, and the crop step shrinks the
+        // result to avatar size. Shrinking to 512 here already would make
+        // a zoomed-in avatar blurry.
+        maxWidth: 1600,
+        maxHeight: 1600,
+        imageQuality: 90,
       );
       if (picked == null) return const Ok(null);
       return Ok(await picked.readAsBytes());

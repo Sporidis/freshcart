@@ -281,7 +281,9 @@
     "colorLabel": "Цвет аватара",
     "photoLabel": "Фото аватара",
     "choosePhoto": "Выбрать фото",
-    "removePhoto": "Удалить фото"
+    "removePhoto": "Удалить фото",
+    "cropTitle": "Переместите и увеличьте",
+    "usePhoto": "Использовать фото"
   },
   "splash": {
     "loading": "Загрузка FreshCart"

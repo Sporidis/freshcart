@@ -263,7 +263,9 @@
     "colorLabel": "Kulay ng avatar",
     "photoLabel": "Larawan ng avatar",
     "choosePhoto": "Pumili ng larawan",
-    "removePhoto": "Alisin ang larawan"
+    "removePhoto": "Alisin ang larawan",
+    "cropTitle": "Ilipat at i-zoom",
+    "usePhoto": "Gamitin ang larawan"
   },
   "splash": {
     "loading": "Naglo-load ang FreshCart"

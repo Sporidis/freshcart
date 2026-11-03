@@ -53,34 +53,77 @@ void main() {
   }
 
   group('choosePhoto', () {
-    test('uploads the picked bytes and reports success', () async {
-      final bytes = Uint8List.fromList([1, 2, 3]);
-      final vm = await vmPicking(Ok(bytes));
+    final picked = Uint8List.fromList([1, 2, 3]);
+    final cropped = Uint8List.fromList([4, 5]);
 
-      expect(await vm.choosePhoto(), isNull);
-      expect(auth.setAvatarPhotoCalls, [bytes]);
+    /// A crop step that answers with [result], and remembers what it was
+    /// given -- standing in for the crop screen.
+    final cropCalls = <Uint8List>[];
+    Future<Result<Uint8List?>> Function(Uint8List) cropAnswering(
+      Result<Uint8List?> result,
+    ) => (photo) async {
+      cropCalls.add(photo);
+      return result;
+    };
+
+    setUp(cropCalls.clear);
+
+    test('crops the picked photo and uploads the cropped bytes', () async {
+      final vm = await vmPicking(Ok(picked));
+
+      expect(await vm.choosePhoto(crop: cropAnswering(Ok(cropped))), isNull);
+      expect(cropCalls, [picked]);
+      expect(auth.setAvatarPhotoCalls, [cropped]);
     });
 
-    test('a cancelled pick is not an error and uploads nothing', () async {
+    test('a cancelled pick never opens the cropper', () async {
       final vm = await vmPicking(const Ok(null));
 
-      expect(await vm.choosePhoto(), isNull);
+      expect(await vm.choosePhoto(crop: cropAnswering(Ok(cropped))), isNull);
+      expect(cropCalls, isEmpty);
       expect(auth.setAvatarPhotoCalls, isEmpty);
     });
 
-    test('a failed pick returns its failure and uploads nothing', () async {
+    test('a failed pick returns its failure and never opens the cropper', () async {
       final vm = await vmPicking(const Err(Failure.unexpected()));
 
-      expect(await vm.choosePhoto(), isA<UnexpectedFailure>());
+      expect(
+        await vm.choosePhoto(crop: cropAnswering(Ok(cropped))),
+        isA<UnexpectedFailure>(),
+      );
+      expect(cropCalls, isEmpty);
+      expect(auth.setAvatarPhotoCalls, isEmpty);
+    });
+
+    test('a cancelled crop is not an error and uploads nothing', () async {
+      final vm = await vmPicking(Ok(picked));
+
+      expect(await vm.choosePhoto(crop: cropAnswering(const Ok(null))), isNull);
+      expect(auth.setAvatarPhotoCalls, isEmpty);
+    });
+
+    test('a failed crop returns its failure and uploads nothing', () async {
+      final vm = await vmPicking(Ok(picked));
+
+      expect(
+        await vm.choosePhoto(
+          crop: cropAnswering(const Err(Failure.unexpected())),
+        ),
+        isA<UnexpectedFailure>(),
+      );
       expect(auth.setAvatarPhotoCalls, isEmpty);
     });
 
     test("a photo the domain rejects returns the upload's failure", () async {
-      // Empty bytes pass the picker but fail AuthUser.validateAvatarPhoto,
-      // so this is the upload step's failure, not the pick's.
-      final vm = await vmPicking(Ok(Uint8List(0)));
+      // Empty bytes pass the crop step but fail
+      // AuthUser.validateAvatarPhoto, so this is the upload step's
+      // failure, not the pick's or the crop's.
+      final vm = await vmPicking(Ok(picked));
 
-      expect(await vm.choosePhoto(), isA<ValidationFailure>());
+      expect(
+        await vm.choosePhoto(crop: cropAnswering(Ok(Uint8List(0)))),
+        isA<ValidationFailure>(),
+      );
       expect(auth.setAvatarPhotoCalls, isEmpty);
     });
   });

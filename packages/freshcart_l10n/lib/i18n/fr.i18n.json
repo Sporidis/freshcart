@@ -263,7 +263,9 @@
     "colorLabel": "Couleur de l’avatar",
     "photoLabel": "Photo de l’avatar",
     "choosePhoto": "Choisir une photo",
-    "removePhoto": "Supprimer la photo"
+    "removePhoto": "Supprimer la photo",
+    "cropTitle": "Déplacer et zoomer",
+    "usePhoto": "Utiliser la photo"
   },
   "splash": {
     "loading": "Chargement de FreshCart"

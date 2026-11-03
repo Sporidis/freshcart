@@ -263,7 +263,9 @@
     "colorLabel": "Avatarkleur",
     "photoLabel": "Avatarfoto",
     "choosePhoto": "Foto kiezen",
-    "removePhoto": "Foto verwijderen"
+    "removePhoto": "Foto verwijderen",
+    "cropTitle": "Verschuif en zoom",
+    "usePhoto": "Foto gebruiken"
   },
   "splash": {
     "loading": "FreshCart laden"

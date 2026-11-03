@@ -12,6 +12,7 @@ import 'package:freshcart_flutter/core/ui/avatar/user_avatar.dart';
 import 'package:freshcart_flutter/core/ui/color_swatch_picker.dart';
 import 'package:freshcart_flutter/core/ui/sheet/app_sheet.dart';
 import 'package:freshcart_flutter/features/auth/application/edit_profile_sheet/edit_profile_sheet_controller.dart';
+import 'package:freshcart_flutter/features/auth/presentation/widgets/avatar_crop_dialog.dart';
 import 'package:freshcart_l10n/freshcart_l10n.dart';
 
 /// Opens [EditProfileSheet]. Used by the drawer header and by Settings.
@@ -156,7 +157,15 @@ class _EditProfileSheetState extends ConsumerState<EditProfileSheet> {
           user: user,
           busy: _busyAvatar,
           t: t,
-          onChoosePhoto: () => _runAvatarAction(_vm.choosePhoto),
+          onChoosePhoto: () => _runAvatarAction(
+            () => _vm.choosePhoto(
+              // Runs after the gallery closes. If the sheet was closed
+              // meanwhile, its context is gone: treat it as a cancel.
+              crop: (photo) async => mounted
+                  ? showAvatarCropDialog(context, photo)
+                  : const Ok(null),
+            ),
+          ),
           onRemovePhoto: () => _runAvatarAction(_vm.removePhoto),
         ),
         const SizedBox(height: AppSpacing.sm),
