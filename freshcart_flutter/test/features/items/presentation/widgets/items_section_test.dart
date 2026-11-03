@@ -109,6 +109,36 @@ void main() {
     },
   );
 
+  group('when the items could not load', () {
+    testWidgets(
+      'offline, a list never loaded on this phone says so calmly, without '
+      'an error or a Retry: it loads by itself once back online',
+      (tester) async {
+        items.byListResult = const Err(Failure.network());
+
+        await pump(tester);
+
+        expect(find.text("You're offline"), findsOneWidget);
+        expect(find.text('Something went wrong'), findsNothing);
+        expect(find.text('Try again'), findsNothing);
+        // Not the empty state either: the list may well have items.
+        expect(find.byType(ItemsEmptyState), findsNothing);
+      },
+    );
+
+    testWidgets('any other failure is still an error, with Retry', (
+      tester,
+    ) async {
+      items.byListResult = const Err(Failure.unexpected());
+
+      await pump(tester);
+
+      expect(find.text('Something went wrong'), findsOneWidget);
+      expect(find.text('Try again'), findsOneWidget);
+      expect(find.text("You're offline"), findsNothing);
+    });
+  });
+
   testWidgets('an empty list (no shop filter) shows the generic empty state', (
     tester,
   ) async {

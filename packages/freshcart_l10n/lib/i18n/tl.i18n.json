@@ -50,6 +50,8 @@
     "checkedBy": "Minarkahan ni {{name}}",
     "emptyTitle": "Walang laman ang listahan mo",
     "emptyBody": "Idagdag ang unang produkto. Makikita ito agad ng buong sambahayan.",
+    "offlineTitle": "Offline ka",
+    "offlineBody": "Maglo-load ang listahang ito pagbalik mo online. Masi-sync din noon ang anumang idagdag mo ngayon.",
     "emptyShopTitle": "Wala pa para sa {{shop}}",
     "emptyShopBody": "Diretso sa tindahang ito ang mga produktong idaragdag mo rito.",
     "emptyShopAction": "Magdagdag ng produkto",

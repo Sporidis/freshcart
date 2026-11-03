@@ -50,6 +50,8 @@
     "checkedBy": "Afgevinkt door {{name}}",
     "emptyTitle": "Je lijst is leeg",
     "emptyBody": "Voeg het eerste product toe. Iedereen in het huishouden ziet het meteen.",
+    "offlineTitle": "Je bent offline",
+    "offlineBody": "Deze lijst laadt zodra je weer online bent. Wat je nu toevoegt, wordt dan gesynchroniseerd.",
     "emptyShopTitle": "Nog niets voor {{shop}}",
     "emptyShopBody": "Wat je hier toevoegt, gaat meteen naar deze winkel.",
     "emptyShopAction": "Product toevoegen",

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/l10n/translations_provider.dart';
 import 'package:freshcart_flutter/core/theme/tokens/hex_color_x.dart';
+import 'package:freshcart_flutter/core/ui/feedback/empty_state.dart';
 import 'package:freshcart_flutter/core/ui/feedback/undo_toast.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_mode.dart';
 import 'package:freshcart_flutter/features/items/application/items_section/items_section_controller.dart';
@@ -58,6 +59,15 @@ class ItemsSection extends ConsumerWidget {
     Color? dotFor(ShopId? shopId) => s.shopFor(shopId)?.color.toColor();
 
     final body = switch (s) {
+      // Offline, and this phone never saved the list: a state, not an
+      // error. Not the empty state either, since the list may have items.
+      // No Retry: the items load by themselves once the server answers,
+      // and anything added meanwhile shows at once (it's queued).
+      ItemsSectionState(loadFailure: NetworkFailure()) => EmptyState(
+        icon: Icons.wifi_off,
+        title: t.items.offlineTitle,
+        body: t.items.offlineBody,
+      ),
       ItemsSectionState(loadFailure: final failure?) => ListFailureState(
         failure: failure,
         t: t,

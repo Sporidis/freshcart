@@ -50,6 +50,8 @@
     "checkedBy": "Coché par {{name}}",
     "emptyTitle": "Votre liste est vide",
     "emptyBody": "Ajoutez le premier produit. Tout le foyer le voit aussitôt.",
+    "offlineTitle": "Vous êtes hors ligne",
+    "offlineBody": "Cette liste se chargera dès votre retour en ligne. Ce que vous ajoutez maintenant sera alors synchronisé.",
     "emptyShopTitle": "Rien pour {{shop}} pour l'instant",
     "emptyShopBody": "Les produits ajoutés ici vont directement dans ce magasin.",
     "emptyShopAction": "Ajouter un produit",

@@ -50,6 +50,8 @@
     "checkedBy": "Checked off by {{name}}",
     "emptyTitle": "Your list is empty",
     "emptyBody": "Add the first product. Everyone in the household sees it straight away.",
+    "offlineTitle": "You're offline",
+    "offlineBody": "This list loads as soon as you're back online. Anything you add now will sync then.",
     "emptyShopTitle": "Nothing for {{shop}} yet",
     "emptyShopBody": "Products you add here go straight to this shop.",
     "emptyShopAction": "Add a product",
