@@ -213,6 +213,11 @@ without a new APK.
 - **Why both build with the same `SERVER_URL`:** a patch replaces all the
   Dart code, compile-time defines included, so a patch built without it would
   point phones at the wrong server.
+- **Patch where the release was built.** A release built in CI only takes
+  patches built in CI, and the same for one built on a Mac. A different
+  machine (another JDK, Gradle cache) compiles the plugins' Java code
+  differently, and Shorebird then refuses the patch as "native changes",
+  though no native code changed. Releases before `1.1.1` were built on a Mac.
 
 > After changing anything Serverpod-modelled or any `@riverpod` / `freezed` / slang source,
 > **regenerate before you analyze**: most "phantom" errors are stale generated code.
