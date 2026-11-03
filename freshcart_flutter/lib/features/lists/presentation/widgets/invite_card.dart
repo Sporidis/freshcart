@@ -42,7 +42,7 @@ class InviteCard extends ConsumerWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            OpenInviteButton(loading: false, onPressed: open, t: t),
+            OpenInviteButton(onPressed: open, t: t),
             const SizedBox(height: AppSpacing.gapSmall),
             Text(
               failure.toMessage(t),
@@ -53,11 +53,7 @@ class InviteCard extends ConsumerWidget {
           ],
         );
       default:
-        return OpenInviteButton(
-          loading: false,
-          onPressed: open,
-          t: t,
-        );
+        return OpenInviteButton(onPressed: open, t: t);
     }
   }
 }
