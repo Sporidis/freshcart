@@ -1,0 +1,78 @@
+name: Patch
+
+# Ships a Dart-only fix to phones that already run a release, without a new
+# APK. Started by hand (Actions → Patch → Run workflow), on the branch whose
+# code should go out: a patch reaches every phone on that release at its
+# next restart, so it's a choice, not something a push should do.
+#
+# Before running it: deploy any server change the patch relies on. Phones
+# pick up the patch within a day; the server has to be there first.
+on:
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: The release to patch, as Shorebird lists it (e.g. 1.1.1+10)
+        required: true
+        type: string
+
+env:
+  # Must match release.yml. Shorebird builds the patch with the release's
+  # own Flutter version; FLUTTER_VERSION here only runs the codegen.
+  FLUTTER_VERSION: '3.47.2'
+  SERVER_URL: 'https://freshcart-nikos.duckdns.org/'
+
+# Two patches for one release at once would race for the same number.
+concurrency:
+  group: patch-${{ inputs.release-version }}
+
+jobs:
+  android:
+    name: Android patch
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      patch-number: ${{ steps.patch.outputs.patch-number }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: ./.github/actions/prepare-android-build
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          google-services-json: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          firebase-options-dart: ${{ secrets.FIREBASE_OPTIONS_DART }}
+
+      # No separate dry run: run without a terminal, `shorebird patch`
+      # stops by itself when the patch changes native code or assets,
+      # which phones can't take without a new release.
+      - name: Publish patch
+        id: patch
+        uses: shorebirdtech/shorebird-patch@v1
+        env:
+          SHOREBIRD_TOKEN: ${{ secrets.SHOREBIRD_TOKEN }}
+        with:
+          platform: android
+          release-version: ${{ inputs.release-version }}
+          track: stable
+          working-directory: freshcart_flutter
+          # The release's SERVER_URL (see release.yml).
+          args: -- --dart-define=SERVER_URL=${{ env.SERVER_URL }}
+
+  # Tags what the patch was built from, so the code behind a bug report on
+  # "1.1.1 patch 2" is a checkout away. A separate job, as in release.yml:
+  # the one that can write to the repo never sees the secrets.
+  tag:
+    name: Tag patch
+    needs: android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      # android-*, not v*: a v* tag would start release.yml.
+      - name: Push tag
+        env:
+          TAG: android-${{ inputs.release-version }}-patch${{ needs.android.outputs.patch-number }}
+        run: |
+          git tag "$TAG"
+          git push origin "$TAG"

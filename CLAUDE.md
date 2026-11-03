@@ -198,5 +198,21 @@ jaspr serve                          # dev
 jaspr build                          # static/SSR build
 ```
 
+## Shipping to phones: release or patch?
+
+The Android app is a Shorebird release, so phones can take Dart-only fixes
+without a new APK.
+
+- **Patch** (Actions → Patch → Run workflow, with the release version such as
+  `1.1.1+10`): Dart code only. Phones download it in the background and run it
+  from the next restart. It refuses native, plugin, asset or Flutter-version
+  changes on its own. **Deploy any server change the patch needs first.**
+- **Release** (bump `version:` in `freshcart_flutter/pubspec.yaml`, commit
+  `chore(release): X`, tag `vX`, push the tag): anything a patch can't carry.
+  It publishes the APK, the web demo and the Shorebird release in one go.
+- **Why both build with the same `SERVER_URL`:** a patch replaces all the
+  Dart code, compile-time defines included, so a patch built without it would
+  point phones at the wrong server.
+
 > After changing anything Serverpod-modelled or any `@riverpod` / `freezed` / slang source,
 > **regenerate before you analyze**: most "phantom" errors are stale generated code.

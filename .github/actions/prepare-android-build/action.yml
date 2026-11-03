@@ -1,0 +1,66 @@
+name: Prepare Android build
+description: >-
+  Everything an Android build of the app needs before the build itself:
+  Java, Flutter, Shorebird, the generated code and the Firebase config.
+
+# Shared by release.yml and patch.yml. Shorebird refuses a patch that was
+# built differently from its release (other generated code, other Firebase
+# config), so both must prepare the build the same way. One place to change.
+#
+# Signing is not in here: only a release needs the keystore. A patch ships
+# only the changed Dart code, which phones fetch from Shorebird and check
+# against its hash. The APK's signature plays no part, so patch.yml never
+# sees the release key (and its build falls back to the debug key).
+
+inputs:
+  flutter-version:
+    description: The Flutter version for codegen. Keep in step with ci.yml.
+    required: true
+  google-services-json:
+    description: android/app/google-services.json, from the repo's secrets.
+    required: true
+  firebase-options-dart:
+    description: lib/firebase_options.dart, from the repo's secrets.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-java@v4
+      with:
+        distribution: temurin
+        java-version: '17'
+    - uses: subosito/flutter-action@v2
+      with:
+        flutter-version: ${{ inputs.flutter-version }}
+        cache: true
+    - uses: shorebirdtech/setup-shorebird@v1
+      with:
+        cache: true
+
+    - run: flutter pub get
+      shell: bash
+
+    # Same generated code as ci.yml: none of it is committed.
+    - name: Generate domain code
+      shell: bash
+      working-directory: packages/freshcart_domain
+      run: dart run build_runner build
+    - name: Generate translations
+      shell: bash
+      working-directory: packages/freshcart_l10n
+      run: dart run slang
+    - name: Generate app code
+      shell: bash
+      working-directory: freshcart_flutter
+      run: dart run build_runner build
+
+    - name: Write Firebase config
+      shell: bash
+      working-directory: freshcart_flutter
+      env:
+        GOOGLE_SERVICES_JSON: ${{ inputs.google-services-json }}
+        FIREBASE_OPTIONS_DART: ${{ inputs.firebase-options-dart }}
+      run: |
+        printf '%s\n' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json
+        printf '%s\n' "$FIREBASE_OPTIONS_DART" > lib/firebase_options.dart
