@@ -31,8 +31,11 @@ void main() {
       client,
       PendingOperationsQueue(db),
       // Only the reconnect-specific tests below need a controllable
-      // online/offline stream -- every other test here never touches it.
-      FakeConnectivityAdapter(const Stream.empty()),
+      // online/offline stream. The rest get one that stays open and never
+      // says "online", like a phone that stays offline: watching while the
+      // server is down waits on it. (An empty stream would end, which a
+      // real one never does.)
+      FakeConnectivityAdapter(Stream<bool>.multi((_) {})),
       () => UserId(userUuid.uuid),
       CachedItemsStore(db),
     );

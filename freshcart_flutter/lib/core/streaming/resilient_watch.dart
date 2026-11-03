@@ -3,50 +3,51 @@ import 'dart:async';
 import 'package:freshcart_domain/freshcart_domain.dart';
 import 'package:freshcart_flutter/core/error/failure_mapper.dart';
 
-/// A live data stream that survives losing the internet connection.
+/// A live data stream that keeps working when the internet goes away.
 ///
-/// How it works:
-/// 1. It starts listening to [watch] (the small changes), holding them
-///    back for now.
-/// 2. [fetch] loads the full data once. Then the held changes are applied
-///    with [reduce], and every later change as it arrives.
-/// 3. If the connection drops, the user keeps seeing the last data. When
-///    [online] says we're back, it does 1 and 2 again (to catch up on what
-///    was missed).
+/// ## How it works
 ///
-/// Why listen before fetching: a change that happens while the snapshot is
-/// loading would otherwise be in neither, and lost until the next reload.
-/// That's exactly what happened after coming back online: the offline
-/// queue replays your changes at the same moment the list reloads, so some
-/// of them landed in that gap and the list kept showing them undone (and a
-/// later edit was refused as out of date). Listening first means such a
-/// change may arrive twice (in the snapshot and as a change); [reduce]
-/// must cope with that, which ours does, since each change carries the
-/// item's whole new state.
+/// 1. Start listening to [watch] (the small changes), but hold them back.
+/// 2. Load everything once with [fetch]. Apply the held-back changes with
+///    [reduce], then every new change as it arrives.
+/// 3. Connection lost? Keep showing the last data. When [online] says
+///    we're back, do steps 1 and 2 again to catch up.
 ///
-/// Only network errors are retried. Other errors (list deleted, no access)
-/// end the stream with an [Err], because retrying won't fix them.
+/// ## When things go wrong
 ///
-/// [reconnectBackoff] is the wait between retries when the phone is online
-/// but the server still can't be reached. Without it we'd retry nonstop.
+/// - **Network errors** are temporary. The stream sends an [Err] (or the
+///   last data it had) and stays open, ready to recover.
+/// - **Other errors** (list deleted, no access) end the stream with an
+///   [Err]. Retrying won't fix them.
 ///
-/// [cacheWrite] and [cacheRead] are optional. If given, every new value is
-/// saved to disk. Then if the app starts without internet, it can show the
-/// saved data instead of an error.
+/// ## Options
 ///
-/// [resync] asks for a fresh snapshot while staying subscribed. Listening
-/// first only closes the gap on our side: the server starts sending a
-/// moment after we subscribe, and a change landing in that moment is
-/// still missed. So when we *know* a change just reached the server (an
-/// offline change that just synced), a resync fetches the list again, which
-/// is sure to include it. Several requests while one is running are folded
-/// into one more fetch.
+/// - [cacheWrite] / [cacheRead]: save every value to disk, so a start
+///   without internet can show the saved data.
+/// - [reconnectBackoff]: how long to wait between retries when the phone
+///   is online but the server is not. Without it we'd retry nonstop.
+/// - [resync]: fetch everything again, while staying subscribed. Use it
+///   when you *know* a change just reached the server (an offline change
+///   that just synced). Several requests at once become one extra fetch.
 ///
-/// Built on a [StreamController], not an `async*` generator: cancelling a
-/// generator that's waiting inside `await for` only takes effect at its
-/// next event, so leaving a list kept its live connection open until that
-/// list changed again. Here, cancelling cancels the live subscription at
-/// once.
+/// ## Why it's built this way
+///
+/// **Listen first, then fetch.** Otherwise a change made while the data
+/// is loading lands in neither, and is lost until the next reload. This
+/// really happened: after coming back online, the offline queue replays
+/// at the same moment the list reloads, so some changes showed as undone.
+/// The catch is that a change can now arrive twice (in the data and as a
+/// change), so [reduce] must handle duplicates. Ours does: every change
+/// carries the item's full new state.
+///
+/// **Why [resync] is still needed.** Listening first only closes the gap
+/// on our side. The server starts sending a moment after we subscribe,
+/// and a change in that moment is still missed.
+///
+/// **A [StreamController], not `async*`.** Cancelling a generator stuck
+/// in `await for` only takes effect at its next event, so leaving a list
+/// kept the connection open until that list changed again. Here,
+/// cancelling closes the connection straight away.
 Stream<Result<T>> resilientWatch<T, E>({
   required Future<T> Function() fetch,
   required Stream<E> Function() watch,
@@ -155,7 +156,7 @@ Stream<Result<T>> resilientWatch<T, E>({
 
   Future<void> run() async {
     // Step 1: the first full load, listening already.
-    var live = listenLive();
+    Stream<E> live = listenLive();
     try {
       final value = await fetch();
       if (stopped) return;
@@ -166,11 +167,18 @@ Stream<Result<T>> resilientWatch<T, E>({
       // Only fall back to the saved copy if the problem is the network.
       final cached = failure is NetworkFailure ? await cacheRead?.call() : null;
       if (stopped) return;
-      if (cached == null) return finish(failure);
+      // Not a network problem: retrying won't help, so the stream ends.
+      if (failure is! NetworkFailure) return finish(failure);
 
-      // Offline at startup, but we have saved data: show it, then wait
+      // Offline at startup. Show the saved data if there is any, or else
+      // say we're offline, but keep the stream open either way. Then wait
       // until we're online and load the real data.
-      show(cached, save: false);
+      if (cached case final saved?) {
+        show(saved, save: false);
+      } else {
+        // Not show(): there is no value for later changes to build on.
+        out.add(Err(failure));
+      }
       final result = await reconnect();
       if (result == null || stopped) return;
       switch (result) {

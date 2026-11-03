@@ -7,21 +7,32 @@ import 'package:freshcart_flutter/core/streaming/resilient_watch.dart';
 void main() {
   group('resilientWatch', () {
     test(
-      'a fetch failure on the very first call ends the stream with one Err',
+      'a network failure on the very first call sends one Err but keeps '
+      'the stream open: offline is a state, not the end',
       () async {
-        final events = await resilientWatch<int, int>(
+        // Stays open and never says "online", like a phone that stays
+        // offline. (An empty stream would end, which a real one never does.)
+        final onlineController = StreamController<bool>.broadcast();
+        final events = <Result<int>>[];
+        var done = false;
+        final sub = resilientWatch<int, int>(
           fetch: () async => throw TimeoutException('down'),
           watch: () => const Stream<int>.empty(),
           reduce: (current, event) => current + event,
-          online: () => const Stream<bool>.empty(),
-        ).toList();
+          online: () => onlineController.stream,
+        ).listen(events.add, onDone: () => done = true);
+
+        await Future<void>.delayed(Duration.zero);
 
         expect(events, hasLength(1));
-        expect(events.single, isA<Err<int>>());
         expect(
           (events.single as Err<int>).failure,
           isA<NetworkFailure>(),
         );
+        expect(done, isFalse);
+
+        await onlineController.close();
+        await sub.cancel();
       },
     );
 
@@ -364,19 +375,58 @@ void main() {
     );
 
     test(
-      'a fetch failure on cold start with nothing cached ends the stream '
-      'with one Err, same as if cacheRead were never provided',
+      'a fetch failure on cold start with nothing cached sends one Err, '
+      'then recovers with a fresh snapshot once back online',
       () async {
-        final events = await resilientWatch<int, int>(
-          fetch: () async => throw TimeoutException('down'),
-          watch: () => const Stream<int>.empty(),
-          reduce: (current, event) => current + event,
-          online: () => const Stream<bool>.empty(),
-          cacheRead: () async => null,
-        ).toList();
+        final onlineController = StreamController<bool>.broadcast();
+        var fetchCallCount = 0;
+        final watchControllers = <StreamController<int>>[];
 
-        expect(events, hasLength(1));
-        expect(events.single, isA<Err<int>>());
+        Future<int> fetch() async {
+          fetchCallCount++;
+          if (fetchCallCount == 1) throw TimeoutException('down');
+          return 100;
+        }
+
+        final events = <Result<int>>[];
+        final sub = resilientWatch<int, int>(
+          fetch: fetch,
+          watch: () {
+            final controller = StreamController<int>();
+            watchControllers.add(controller);
+            return controller.stream;
+          },
+          reduce: (current, event) => current + event,
+          online: () => onlineController.stream,
+          cacheRead: () async => null,
+        ).listen(events.add);
+
+        await Future<void>.delayed(Duration.zero);
+        expect(
+          (events.single as Err<int>).failure,
+          isA<NetworkFailure>(),
+        );
+        // Still offline: nothing is listening live.
+        expect(watchControllers.where((c) => c.hasListener), isEmpty);
+
+        // Reconnect.
+        onlineController.add(true);
+        await Future<void>.delayed(Duration.zero);
+
+        expect(fetchCallCount, 2);
+        expect(events.last.valueOrNull, 100);
+        expect(watchControllers.where((c) => c.hasListener), hasLength(1));
+
+        // Live changes apply to the fresh snapshot, not to the failure.
+        watchControllers.last.add(5);
+        await Future<void>.delayed(Duration.zero);
+        expect(events.last.valueOrNull, 105);
+
+        for (final c in watchControllers) {
+          await c.close();
+        }
+        await onlineController.close();
+        await sub.cancel();
       },
     );
 
