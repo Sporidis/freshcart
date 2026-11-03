@@ -84,16 +84,19 @@ void main() {
       expect(auth.setAvatarPhotoCalls, isEmpty);
     });
 
-    test('a failed pick returns its failure and never opens the cropper', () async {
-      final vm = await vmPicking(const Err(Failure.unexpected()));
+    test(
+      'a failed pick returns its failure and never opens the cropper',
+      () async {
+        final vm = await vmPicking(const Err(Failure.unexpected()));
 
-      expect(
-        await vm.choosePhoto(crop: cropAnswering(Ok(cropped))),
-        isA<UnexpectedFailure>(),
-      );
-      expect(cropCalls, isEmpty);
-      expect(auth.setAvatarPhotoCalls, isEmpty);
-    });
+        expect(
+          await vm.choosePhoto(crop: cropAnswering(Ok(cropped))),
+          isA<UnexpectedFailure>(),
+        );
+        expect(cropCalls, isEmpty);
+        expect(auth.setAvatarPhotoCalls, isEmpty);
+      },
+    );
 
     test('a cancelled crop is not an error and uploads nothing', () async {
       final vm = await vmPicking(Ok(picked));
