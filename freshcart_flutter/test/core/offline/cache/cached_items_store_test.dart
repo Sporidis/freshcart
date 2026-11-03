@@ -54,6 +54,26 @@ void main() {
       },
     );
 
+    test(
+      'a list saved as empty reads back empty, not as never saved',
+      () async {
+        // The offline bug: an empty list opened without internet showed
+        // "something went wrong", because nothing saved looked like this.
+        final listId = ListId(listUuid.uuid);
+        await store.replaceForList(listId, []);
+
+        expect(await store.readForList(listId), isEmpty);
+      },
+    );
+
+    test('a list emptied since its last save reads back empty', () async {
+      final listId = ListId(listUuid.uuid);
+      await store.replaceForList(listId, [buildItemDto().toDomain()]);
+      await store.replaceForList(listId, []);
+
+      expect(await store.readForList(listId), isEmpty);
+    });
+
     test('replaceForList only touches rows for its own list id', () async {
       final otherListId = ListId(userUuid.uuid);
       await store.replaceForList(
@@ -64,6 +84,15 @@ void main() {
 
       final cached = await store.readForList(ListId(listUuid.uuid));
       expect(cached, hasLength(1));
+      expect(await store.readForList(otherListId), isEmpty);
+    });
+
+    test('clear forgets every list, empty ones too', () async {
+      final listId = ListId(listUuid.uuid);
+      await store.replaceForList(listId, []);
+      await store.clear();
+
+      expect(await store.readForList(listId), isNull);
     });
   });
 }
