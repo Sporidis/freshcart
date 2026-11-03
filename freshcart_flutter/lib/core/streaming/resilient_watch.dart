@@ -154,6 +154,22 @@ Stream<Result<T>> resilientWatch<T, E>({
     return null;
   }
 
+  /// [reconnect]s, then shows the fresh value. Returns the new live
+  /// stream to keep reading, or null when there's nothing left to do:
+  /// stopped, or ended with a failure that retrying won't fix.
+  Future<Stream<E>?> recover() async {
+    final result = await reconnect();
+    if (result == null || stopped) return null;
+    switch (result) {
+      case Ok(value: (final value, final stream)):
+        show(value);
+        return stream;
+      case Err(:final failure):
+        finish(failure);
+        return null;
+    }
+  }
+
   Future<void> run() async {
     // Step 1: the first full load, listening already.
     Stream<E> live = listenLive();
@@ -163,31 +179,25 @@ Stream<Result<T>> resilientWatch<T, E>({
       show(value);
     } on Object catch (error) {
       stopLive();
-      final failure = mapExceptionToFailure(error);
-      // Only fall back to the saved copy if the problem is the network.
-      final cached = failure is NetworkFailure ? await cacheRead?.call() : null;
       if (stopped) return;
+      final failure = mapExceptionToFailure(error);
       // Not a network problem: retrying won't help, so the stream ends.
       if (failure is! NetworkFailure) return finish(failure);
 
       // Offline at startup. Show the saved data if there is any, or else
       // say we're offline, but keep the stream open either way. Then wait
       // until we're online and load the real data.
+      final cached = await cacheRead?.call();
+      if (stopped) return;
       if (cached case final saved?) {
         show(saved, save: false);
       } else {
         // Not show(): there is no value for later changes to build on.
         out.add(Err(failure));
       }
-      final result = await reconnect();
-      if (result == null || stopped) return;
-      switch (result) {
-        case Ok(value: (final value, final stream)):
-          live = stream;
-          show(value);
-        case Err(:final failure):
-          return finish(failure);
-      }
+      final next = await recover();
+      if (next == null) return;
+      live = next;
     }
 
     // Step 2: apply the changes, the held-back ones first, forever.
@@ -207,15 +217,9 @@ Stream<Result<T>> resilientWatch<T, E>({
 
         // Step 3: connection lost. Keep the last data, wait to be online,
         // reload, keep going.
-        final result = await reconnect();
-        if (result == null || stopped) return;
-        switch (result) {
-          case Ok(value: (final value, final stream)):
-            live = stream;
-            show(value);
-          case Err(:final failure):
-            return finish(failure);
-        }
+        final next = await recover();
+        if (next == null) return;
+        live = next;
       }
     }
   }
