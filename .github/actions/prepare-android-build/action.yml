@@ -26,6 +26,17 @@ inputs:
 runs:
   using: composite
   steps:
+    # The runner has about 14 GB free, and this build needs two Flutter SDKs
+    # (one for codegen, Shorebird's own for the build), the Android SDK and
+    # Gradle's caches. v1.1.1's first run ran out of disk. These tools come
+    # with the runner image and nothing here uses them: about 10 GB back.
+    - name: Free disk space
+      shell: bash
+      run: |
+        sudo rm -rf /usr/share/dotnet /opt/ghc /usr/local/.ghcup \
+          /opt/hostedtoolcache/CodeQL /usr/local/share/boost
+        df -h /
+
     - uses: actions/setup-java@v6
       with:
         distribution: temurin
