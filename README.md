@@ -16,6 +16,8 @@
 
 iOS and Android app · marketing site · backend — **one Dart monorepo**
 
+**[Try the live app](https://freshcart-nikos.duckdns.org/app#/welcome)**: no sign-up, you start as a guest.
+
 <br>
 
 <img src=".github/readme/realtime-sync.gif" width="720" alt="Two phones on one list: Nikolaos adds bananas and coffee beans under Albert Heijn, Anna adds pasta and tomatoes under Colruyt, Anna checks off the bananas and Nikolaos finishes the Albert Heijn run.">
