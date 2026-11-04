@@ -1,5 +1,6 @@
 import 'package:freshcart_domain/freshcart_domain.dart' as domain;
 import 'package:freshcart_server/src/auth/business/account_retention.dart';
+import 'package:freshcart_server/src/auth/business/anonymous_signup_limit.dart';
 import 'package:freshcart_server/src/auth/business/email_message.dart';
 import 'package:freshcart_server/src/auth/business/email_sender.dart';
 import 'package:serverpod/serverpod.dart';
@@ -25,10 +26,12 @@ abstract final class AuthConfiguration {
 
   /// The ways a user can log in.
   static List<IdentityProviderBuilder> get identityProviderBuilders => [
-    // Anonymous login, so there's no signup form. The default limit per IP
-    // address is kept, because anyone can call this without logging in, so
-    // it could be abused to create lots of accounts.
-    const AnonymousIdpConfig(),
+    // Anonymous login, so there's no signup form. The built-in limit is off
+    // because it can't see past Caddy; AnonymousSignupLimit replaces it.
+    const AnonymousIdpConfig(
+      perIpAddressRateLimit: null,
+      onBeforeAnonymousAccountCreated: AnonymousSignupLimit.check,
+    ),
     EmailIdpConfigFromPasswords(
       // The domain's rule, so sign-up and reset accept exactly what the app
       // and linkEmail accept. The endpoint has already normalized it.

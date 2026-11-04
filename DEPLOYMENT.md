@@ -272,6 +272,6 @@ Tracked in the security plan; listed here so an update doesn't come as a surpris
 - **No database backups.** A lost disk loses every list.
 - **Ubuntu 20.04 and Postgres 12** no longer get standard security updates (until the move
   in "Moving to a new server" is done).
-- **Every request looks like it comes from `localhost`** to the server (Caddy forwards it), so
-  the per-IP limits (failed joins, new accounts) are shared by all users together.
-- Ports 8080–8082 listen on all interfaces; only the firewall keeps them private.
+- Ports 8080–8082 listen on all interfaces; only the firewall keeps them private. The per-IP
+  limits only believe `X-Forwarded-For` on a loopback connection (`ClientIp`), so reaching a
+  port directly doesn't let a caller fake an address.
