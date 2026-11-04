@@ -139,6 +139,7 @@
     "done": "Terminé"
   },
   "errors": {
+    "offlineTitle": "Vous êtes hors ligne",
     "network": "Impossible de joindre le serveur.",
     "notFound": "Introuvable.",
     "unauthorized": "Vous n'avez pas accès à ceci.",

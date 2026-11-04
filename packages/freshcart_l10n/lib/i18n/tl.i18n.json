@@ -139,6 +139,7 @@
     "done": "Tapos na"
   },
   "errors": {
+    "offlineTitle": "Offline ka",
     "network": "Hindi maabot ang server.",
     "notFound": "Hindi natagpuan.",
     "unauthorized": "Wala kang access dito.",

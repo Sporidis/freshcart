@@ -143,7 +143,9 @@ void main() {
 
       await pump(tester);
 
+      expect(find.text("You're offline"), findsOneWidget);
       expect(find.text('Could not reach the server.'), findsOneWidget);
+      // Kept: the lists don't reload by themselves on reconnect.
       expect(find.text('Try again'), findsOneWidget);
     });
   });

@@ -139,6 +139,7 @@
     "done": "Done"
   },
   "errors": {
+    "offlineTitle": "You're offline",
     "network": "Could not reach the server.",
     "notFound": "Not found.",
     "unauthorized": "You do not have access to this.",

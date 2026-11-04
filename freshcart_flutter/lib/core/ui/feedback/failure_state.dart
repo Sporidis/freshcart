@@ -51,9 +51,11 @@ class FailureState extends StatelessWidget {
         noAccess?.title ?? t.errors.unexpectedTitle,
         noAccess?.body ?? t.errors.unauthorized,
       ),
+      // Offline is a state the app handles, not something that broke: the
+      // same word as the sync banner, not "Something went wrong".
       NetworkFailure() => (
         Icons.wifi_off,
-        t.errors.unexpectedTitle,
+        t.errors.offlineTitle,
         t.errors.network,
       ),
       // Never show the raw error text. It doesn't help the user and could

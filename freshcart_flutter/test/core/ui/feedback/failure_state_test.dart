@@ -38,6 +38,16 @@ void main() {
     expect(find.text(t.errors.unauthorized), findsOneWidget);
   });
 
+  testWidgets('not reaching the server says offline, not "something went '
+      'wrong"', (tester) async {
+    // Offline is a state the app handles (the sync banner says the same),
+    // not something that broke.
+    await pump(tester, const Failure.network());
+
+    expect(find.text("You're offline"), findsOneWidget);
+    expect(find.text(t.errors.unexpectedTitle), findsNothing);
+  });
+
   // Core knows nothing about lists: "This list was deleted" is the
   // caller's wording, not a default.
   testWidgets('the screen can say what was lost', (tester) async {

@@ -139,6 +139,7 @@
     "done": "Klaar"
   },
   "errors": {
+    "offlineTitle": "Je bent offline",
     "network": "Geen verbinding met de server.",
     "notFound": "Niet gevonden.",
     "unauthorized": "Je hebt hier geen toegang toe.",
