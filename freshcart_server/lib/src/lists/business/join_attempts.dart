@@ -1,3 +1,4 @@
+import 'package:freshcart_server/src/common/business/client_ip.dart';
 import 'package:freshcart_server/src/generated/protocol.dart';
 import 'package:serverpod/serverpod.dart';
 import 'package:serverpod_auth_idp_server/core.dart';
@@ -54,7 +55,7 @@ abstract final class JoinAttempts {
       session,
       nonce: userId.uuid,
     );
-    final ip = _ipOf(session);
+    final ip = ClientIp.of(session);
     final ipFailures = ip == null
         ? 0
         : await _perIp.countAttempts(session, nonce: ip);
@@ -66,7 +67,7 @@ abstract final class JoinAttempts {
   /// Records a failed join by [userId] from the caller's IP address.
   static Future<void> recordFailure(Session session, UuidValue userId) async {
     await _perUser.recordAttempt(session, nonce: userId.uuid);
-    final ip = _ipOf(session);
+    final ip = ClientIp.of(session);
     if (ip != null) await _perIp.recordAttempt(session, nonce: ip);
   }
 
@@ -74,9 +75,4 @@ abstract final class JoinAttempts {
   /// per-IP counts aren't theirs alone, and expire within the window.)
   static Future<void> forget(Session session, UuidValue userId) =>
       _perUser.deleteAttempts(session, nonce: userId.uuid);
-
-  /// The caller's IP address, or null outside an HTTP request (tests,
-  /// future calls). Then only the per-user limit applies.
-  static String? _ipOf(Session session) =>
-      session.request?.connectionInfo.remote.address.toString();
 }
